@@ -9,6 +9,7 @@ from .procedural_curve import ProceduralCurve
 from .rfunction_curve import RFunctionCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
 from .composite_curve import CompositeCurve
+from .area_region import AreaRegion
 
 # Import high-level wrapper functions for constructive geometry
 from .rfunction_curve import union, intersect, difference, blend
@@ -27,6 +28,7 @@ __all__ = [
     'RFunctionCurve',
     'TrimmedImplicitCurve',
     'CompositeCurve',
+    'AreaRegion',
     
     # Constructive geometry functions
     'union',
