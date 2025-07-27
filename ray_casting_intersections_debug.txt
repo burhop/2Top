@@ -1,0 +1,44 @@
+﻿=== Debugging Ray-casting Intersections ===
+Test point: (0, 0)
+Square bounds: (-3, -3) to (3, 3)
+Expected: ray from (0,0) to right should intersect right edge at (3,0)
+
+=== Ray-casting Intersection Analysis ===
+
+Segment 0:
+  Original curve: y + 3
+  Reconstructed curve: y + 3
+  Original intersections: 0
+  Reconstructed intersections: 0
+
+Segment 1:
+  Original curve: x - 3
+  Reconstructed curve: x - 3
+  Original intersections: 1
+  Reconstructed intersections: 0
+  DIFFERENCE FOUND! Debugging segment 1...
+  Curve equation at y=0: x - 3
+  X solutions: [3]
+    Solution x=3.0
+      x_val > ray_x: 3.0 > 0 = True
+      Original segment contains (3.0, 0): True
+      Reconstructed segment contains (3.0, 0): False
+      CONTAINS DIFFERENCE!
+        Original: curve_val=0.0, mask=True
+        Reconstructed: curve_val=0.0, mask=False
+
+Segment 2:
+  Original curve: y - 3
+  Reconstructed curve: y - 3
+  Original intersections: 0
+  Reconstructed intersections: 0
+
+Segment 3:
+  Original curve: x + 3
+  Reconstructed curve: x + 3
+  Original intersections: 0
+  Reconstructed intersections: 0
+
+=== Final Results ===
+Original ray-casting: True
+Reconstructed ray-casting: False

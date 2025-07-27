@@ -1,0 +1,18 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\markb\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\repos\2Top
+plugins: anyio-3.7.1, hydra-core-1.3.2, langsmith-0.3.18, mock-3.14.0
+collecting ... collected 1 item
+
+tests/test_composite_curve.py::TestCompositeCurveContainsMethod::test_contains_points_not_on_curve FAILED [100%]
+
+================================== FAILURES ===================================
+_____ TestCompositeCurveContainsMethod.test_contains_points_not_on_curve ______
+tests\test_composite_curve.py:241: in test_contains_points_not_on_curve
+    assert result == expected, f"Failed for {description}: point ({x}, {y})"
+E   AssertionError: Failed for Point inside circle but not on boundary: point (0.5, 0.5)
+E   assert True == False
+=========================== short test summary info ===========================
+FAILED tests/test_composite_curve.py::TestCompositeCurveContainsMethod::test_contains_points_not_on_curve
+============================== 1 failed in 2.72s ==============================

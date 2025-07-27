@@ -1,0 +1,10 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\markb\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\repos\2Top
+plugins: anyio-3.7.1, hydra-core-1.3.2, langsmith-0.3.18, mock-3.14.0
+collecting ... collected 1 item
+
+tests/test_sprint5_serialization.py::TestTrimmedImplicitCurveSerialization::test_serialization_mask_limitation_documentation PASSED [100%]
+
+============================== 1 passed in 1.77s ==============================

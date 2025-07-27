@@ -53,10 +53,14 @@ class AreaRegion:
             raise TypeError("outer_boundary must be a CompositeCurve instance")
         
         # Validate that outer boundary is closed
-        # Note: We'll be more lenient here since CompositeCurve.is_closed() can be unreliable
-        # for certain geometric shapes. We'll do a basic validation instead.
-        if len(outer_boundary.segments) < 3:
-            raise ValueError("outer_boundary must have at least 3 segments to form a closed region")
+        # Check closure first to allow proper testing of closure validation
+        if not outer_boundary.is_closed():
+            raise ValueError("outer_boundary must be closed")
+        
+        # For multi-segment curves, check minimum segments for practical closed regions
+        # Single-segment curves can be inherently closed (like circles)
+        if len(outer_boundary.segments) > 1 and len(outer_boundary.segments) < 3:
+            raise ValueError("outer_boundary must have at least 3 segments to form a closed region (or be a single inherently closed segment)")
         
         self.outer_boundary = outer_boundary
         
@@ -71,8 +75,13 @@ class AreaRegion:
             for i, hole in enumerate(holes):
                 if not isinstance(hole, CompositeCurve):
                     raise TypeError(f"holes[{i}] must be a CompositeCurve instance")
-                if len(hole.segments) < 3:
-                    raise ValueError(f"holes[{i}] must have at least 3 segments to form a closed region")
+                # Check if the hole is actually closed first
+                if not hole.is_closed():
+                    raise ValueError(f"holes[{i}] must be closed")
+                # For multi-segment curves, check minimum segments for practical closed regions
+                # Single-segment curves can be inherently closed (like circles)
+                if len(hole.segments) > 1 and len(hole.segments) < 3:
+                    raise ValueError(f"holes[{i}] must have at least 3 segments to form a closed region (or be a single inherently closed segment)")
             
             self.holes = holes.copy()  # Create a copy to avoid external modification
     
@@ -105,10 +114,11 @@ class AreaRegion:
     
     def _point_in_curve(self, x: float, y: float, curve: CompositeCurve) -> bool:
         """
-        Test if a point is inside a closed curve using a robust geometric approach.
+        Test if a point is inside a closed curve.
         
-        This method implements point-in-polygon testing by creating a simple
-        polygon approximation and using ray-casting to determine containment.
+        This method delegates to the CompositeCurve.contains() method which
+        properly handles both single-segment closed curves (like circles) and
+        multi-segment curves using the correct containment logic.
         
         Args:
             x (float): X-coordinate of the test point
@@ -118,12 +128,9 @@ class AreaRegion:
         Returns:
             bool: True if the point is inside the curve, False otherwise
         """
-        # For squares created by create_square_from_edges, use a direct approach
-        if len(curve.segments) == 4:
-            return self._point_in_square_heuristic(x, y, curve)
-        else:
-            # Use polygon-based approach for other shapes
-            return self._point_in_polygon_fallback(x, y, curve)
+        # Delegate to the CompositeCurve.contains() method with region_containment=True
+        # to check if the point is inside the enclosed region, not just on the boundary
+        return curve.contains(x, y, region_containment=True)
     
     def _point_in_square_heuristic(self, x: float, y: float, curve: CompositeCurve) -> bool:
         """
@@ -451,3 +458,36 @@ class AreaRegion:
     def __repr__(self) -> str:
         """Detailed string representation of the AreaRegion."""
         return f"AreaRegion(outer_boundary={repr(self.outer_boundary)}, holes={repr(self.holes)})"
+    
+    def get_field(self, strategy: 'FieldStrategy') -> 'BaseField':
+        """
+        Generate a scalar field from this AreaRegion using the specified strategy.
+        
+        This method implements the FieldStrategy pattern, allowing different
+        algorithms for generating scalar fields from the region. Common strategies
+        include signed distance fields and occupancy fields.
+        
+        Args:
+            strategy (FieldStrategy): The strategy to use for field generation
+            
+        Returns:
+            BaseField: The generated scalar field
+            
+        Example:
+            >>> from geometry.field_strategy import SignedDistanceStrategy, OccupancyFillStrategy
+            >>> region = AreaRegion(square_boundary)
+            >>> 
+            >>> # Generate a signed distance field
+            >>> sdf_strategy = SignedDistanceStrategy(resolution=0.1)
+            >>> sdf = region.get_field(sdf_strategy)
+            >>> 
+            >>> # Generate an occupancy field
+            >>> occ_strategy = OccupancyFillStrategy(inside_value=1.0, outside_value=0.0)
+            >>> occupancy = region.get_field(occ_strategy)
+        """
+        from .field_strategy import FieldStrategy
+        
+        if not isinstance(strategy, FieldStrategy):
+            raise TypeError("strategy must be a FieldStrategy instance")
+        
+        return strategy.generate_field(self)

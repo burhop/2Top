@@ -150,7 +150,7 @@ class TestMixedCurveTypeInteractions:
         # Create different curve types
         self.conic = ConicSection(x**2 + y**2 - 1, (x, y))
         self.poly = PolynomialCurve(x + y - 1, (x, y))
-        self.superellipse = Superellipse(a=1.0, b=1.0, n=2.0, (x, y))
+        self.superellipse = Superellipse(a=1.0, b=1.0, n=2.0, variables=(x, y))
         self.procedural = ProceduralCurve(lambda x, y: x**2 + y**2 - 1, (x, y))
     
     def test_mixed_composite_creation(self):

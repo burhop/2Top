@@ -1,0 +1,24 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\markb\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\repos\2Top
+plugins: anyio-3.7.1, hydra-core-1.3.2, langsmith-0.3.18, mock-3.14.0
+python : ERROR: not found: C:\repos\2Top\tests\te
+st_sprint5_edge_cases.py::TestError
+At line:1 char:1
++ python -m pytest 
+tests/test_sprint5_edge_cases.py::TestError -v 
+--tb= ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERR 
+   OR: not foun...s.py::TestError:String) [], R  
+  emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(no match in any of [<Module 
+test_sprint5_edge_cases.py>])
+
+collecting ... collected 0 items
+
+============================ no tests ran in 1.82s ============================

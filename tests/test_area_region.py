@@ -198,11 +198,11 @@ class TestAreaRegionContains:
     def test_contains_multiple_holes(self):
         """Test contains method with multiple holes."""
         # Create outer boundary (6x6 square)
-        outer = create_square_from_edges(-3, 3, -3, 3)
+        outer = create_square_from_edges((-3, -3), (3, 3))
         
         # Create two square holes
-        hole1 = create_square_from_edges(-2, -1, -2, -1)  # Bottom-left
-        hole2 = create_square_from_edges(1, 2, 1, 2)      # Top-right
+        hole1 = create_square_from_edges((-2, -2), (-1, -1))  # Bottom-left
+        hole2 = create_square_from_edges((1, 1), (2, 2))      # Top-right
         
         region = AreaRegion(outer, [hole1, hole2])
         
@@ -370,9 +370,9 @@ class TestAreaRegionSerialization:
     def test_serialization_round_trip(self):
         """Test complete serialization round-trip."""
         # Create a complex region
-        outer = create_square_from_edges(-3, 3, -3, 3)
-        hole1 = create_square_from_edges(-2, -1, -2, -1)
-        hole2 = create_square_from_edges(1, 2, 1, 2)
+        outer = create_square_from_edges((-3, -3), (3, 3))
+        hole1 = create_square_from_edges((-2, -2), (-1, -1))
+        hole2 = create_square_from_edges((1, 1), (2, 2))
         original = AreaRegion(outer, [hole1, hole2])
         
         # Round-trip serialization

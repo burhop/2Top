@@ -1,0 +1,28 @@
+﻿=== Debugging Area Region Serialization Test Case ===
+Test point: (0, 0)
+Expected: point should be inside outer boundary but not in any hole
+Original region contains point: True
+
+=== Serialization ===
+Serialized data keys: ['type', 'outer_boundary', 'holes']
+Outer boundary type: CompositeCurve
+Number of holes: 2
+
+=== Deserialization ===
+Reconstructed region contains point: False
+
+=== Component Analysis ===
+Outer boundary:
+  Original outer contains point: True
+  Reconstructed outer contains point: False
+Holes:
+  Hole 1 original contains point: False
+  Hole 1 reconstructed contains point: False
+  Hole 2 original contains point: False
+  Hole 2 reconstructed contains point: False
+
+=== Mask Function Analysis ===
+Original segment mask at (0, 0): True
+Reconstructed segment mask at (0, 0): True
+Original curve evaluation: 3
+Reconstructed curve evaluation: 3

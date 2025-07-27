@@ -1,0 +1,43 @@
+﻿=== Debugging Outer Boundary Containment ===
+Test point: (0, 0)
+Square bounds: (-3, -3) to (3, 3)
+
+=== Original Outer Boundary ===
+Is closed: True
+Number of segments: 4
+  Segment 0: contains=False, mask=True, curve_eval=3
+  Segment 1: contains=False, mask=True, curve_eval=-3
+  Segment 2: contains=False, mask=True, curve_eval=-3
+  Segment 3: contains=False, mask=True, curve_eval=3
+Region containment: True
+Boundary containment: False
+
+=== Serialization/Deserialization ===
+
+=== Reconstructed Outer Boundary ===
+Is closed: True
+Number of segments: 4
+  Segment 0: contains=False, mask=True, curve_eval=3
+  Segment 1: contains=False, mask=True, curve_eval=-3
+  Segment 2: contains=False, mask=True, curve_eval=-3
+  Segment 3: contains=False, mask=True, curve_eval=3
+Region containment: False
+Boundary containment: False
+
+=== Ray-casting Analysis ===
+Original ray-casting result: True
+Reconstructed ray-casting result: False
+
+=== Mask Function Comparison ===
+Segment 0:
+  Original mask type: <class 'function'>
+  Reconstructed mask type: <class 'function'>
+Segment 1:
+  Original mask type: <class 'function'>
+  Reconstructed mask type: <class 'function'>
+Segment 2:
+  Original mask type: <class 'function'>
+  Reconstructed mask type: <class 'function'>
+Segment 3:
+  Original mask type: <class 'function'>
+  Reconstructed mask type: <class 'function'>

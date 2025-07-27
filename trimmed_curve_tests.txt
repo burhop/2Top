@@ -1,0 +1,18 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- C:\Users\markb\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\repos\2Top
+plugins: anyio-3.7.1, hydra-core-1.3.2, langsmith-0.3.18, mock-3.14.0
+collecting ... collected 7 items
+
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_right_half_circle PASSED [ 14%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_upper_half_circle PASSED [ 28%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_first_quadrant_circle PASSED [ 42%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_line_segment PASSED [ 57%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_tolerance_handling FAILED [ 71%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_vectorized_input PASSED [ 85%]
+tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_edge_cases PASSED [100%]
+
+=========================== short test summary info ===========================
+FAILED tests/test_trimmed_implicit_curve.py::TestTrimmedImplicitCurveContains::test_contains_tolerance_handling
+========================= 1 failed, 6 passed in 1.72s =========================

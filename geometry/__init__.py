@@ -17,6 +17,18 @@ from .rfunction_curve import union, intersect, difference, blend
 # Import utility functions for piecewise curves
 from .composite_curve import create_circle_from_quarters, create_square_from_edges
 
+# Import scalar field classes
+from .base_field import BaseField, CurveField, BlendedField
+
+# Import field strategy classes
+from .field_strategy import (
+    FieldStrategy, 
+    SignedDistanceStrategy, 
+    OccupancyFillStrategy,
+    SignedDistanceField,
+    OccupancyField
+)
+
 # Define what gets imported with "from geometry import *"
 __all__ = [
     # Core curve classes
@@ -38,5 +50,17 @@ __all__ = [
     
     # Piecewise curve utilities
     'create_circle_from_quarters',
-    'create_square_from_edges'
+    'create_square_from_edges',
+    
+    # Scalar field classes
+    'BaseField',
+    'CurveField',
+    'BlendedField',
+    
+    # Field strategy classes
+    'FieldStrategy',
+    'SignedDistanceStrategy',
+    'OccupancyFillStrategy',
+    'SignedDistanceField',
+    'OccupancyField'
 ]

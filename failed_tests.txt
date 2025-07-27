@@ -1,0 +1,238 @@
+﻿
+tests/test_area_region.py::TestAreaRegionContains
+::test_contains_simple_square_no_holes FAILED [  
+3%]
+tests/test_area_region.py::TestAreaRegionContains
+::test_contains_square_with_circular_hole FAILED 
+[  3%]
+tests/test_area_region.py::TestAreaRegionContains
+::test_contains_multiple_holes FAILED [  3%]
+tests/test_base_field.py::TestFieldEdgeCases::tes
+t_field_evaluation_with_infinity FAILED [ 14%]
+tests/test_composite_curve.py::TestCompositeCurve
+IsClosedMethod::test_is_closed_for_single_segment
+ FAILED [ 16%]
+tests/test_composite_curve.py::TestCompositeCurve
+ContainsMethod::test_contains_points_on_each_segm
+ent FAILED [ 17%]
+tests/test_composite_curve.py::TestCompositeCurve
+ContainsMethod::test_contains_with_partial_segmen
+ts FAILED [ 18%]
+tests/test_composite_curve.py::TestCompositeCurve
+ContainsMethod::test_contains_vectorized_input 
+FAILED [ 18%]
+tests/test_composite_curve.py::TestCompositeCurve
+ContainsMethod::test_contains_tolerance_handling 
+FAILED [ 18%]
+tests/test_composite_curve.py::TestCompositeCurve
+EdgeCases::test_single_segment_composite FAILED 
+[ 21%]
+tests/test_composite_curve.py::TestCompositeCurve
+EdgeCases::test_overlapping_segments FAILED [ 
+21%]
+tests/test_field_strategy.py::TestSignedDistanceF
+ield::test_evaluate_scalar_inside FAILED [ 29%]
+tests/test_field_strategy.py::TestSignedDistanceF
+ield::test_evaluate_vectorized FAILED [ 30%]
+tests/test_field_strategy.py::TestOccupancyField:
+:test_evaluate_scalar_inside FAILED [ 32%]
+tests/test_field_strategy.py::TestOccupancyField:
+:test_evaluate_vectorized FAILED [ 32%]
+tests/test_field_strategy.py::TestAreaRegionField
+Integration::test_get_field_signed_distance 
+FAILED [ 34%]
+tests/test_field_strategy.py::TestAreaRegionField
+Integration::test_get_field_occupancy FAILED [ 
+34%]
+tests/test_field_strategy.py::TestAreaRegionField
+Integration::test_get_field_with_hole_signed_dist
+ance FAILED [ 34%]
+tests/test_field_strategy.py::TestAreaRegionField
+Integration::test_get_field_with_hole_occupancy 
+FAILED [ 34%]
+tests/test_implicit_curve.py::TestImplicitCurveEv
+aluate::test_evaluate_2d_numpy_array_input 
+FAILED [ 38%]
+tests/test_implicit_curve.py::TestImplicitCurveSe
+rialization::test_from_dict_invalid_data_handling
+ FAILED [ 42%]
+tests/test_procedural_curve.py::TestProceduralCur
+veEvaluation::test_evaluate_vectorized_inputs 
+FAILED [ 50%]
+tests/test_procedural_curve.py::TestProceduralCur
+veEvaluation::test_evaluate_mixed_array_shapes 
+FAILED [ 50%]
+tests/test_procedural_curve.py::TestProceduralCur
+veGradient::test_gradient_vectorized_inputs 
+FAILED [ 51%]
+tests/test_procedural_curve.py::TestProceduralCur
+veSerialization::test_to_dict_contains_placeholde
+r FAILED [ 52%]
+tests/test_procedural_curve.py::TestProceduralCur
+veSerialization::test_serialization_documentation
+_compliance FAILED [ 53%]
+tests/test_procedural_curve.py::TestProceduralCur
+veInheritedMethods::test_plot_method_inherited 
+FAILED [ 54%]
+tests/test_rfunction_curve.py::TestRFunctionCurve
+InheritedMethods::test_normal_method_inherited 
+FAILED [ 58%]
+tests/test_sprint2_regression.py::TestSprint2Edge
+Cases::test_serialization_error_handling FAILED 
+[ 63%]
+tests/test_sprint3_regression.py::TestSprint3Vect
+orizedOperations::test_superellipse_vectorized_gr
+adient FAILED [ 67%]
+tests/test_sprint3_regression.py::TestSprint3Vect
+orizedOperations::test_procedural_curve_vectorize
+d_evaluation FAILED [ 68%]
+tests/test_sprint3_regression.py::TestSprint3Vect
+orizedOperations::test_procedural_curve_vectorize
+d_gradient FAILED [ 68%]
+tests/test_sprint5_edge_cases.py::TestErrorHandli
+ngAndBoundaryConditions::test_nan_inf_inputs 
+FAILED [ 75%]
+tests/test_sprint5_edge_cases.py::TestSpecialCase
+s::test_degenerate_masks FAILED [ 77%]
+tests/test_sprint5_regression.py::TestTrimmedImpl
+icitCurveInterfaceConsistency::test_plotting_inte
+rface FAILED [ 82%]
+tests/test_sprint5_regression.py::TestUtilityFunc
+tions::test_create_square_from_edges FAILED [ 
+84%]
+tests/test_sprint5_regression.py::TestEdgeCases::
+test_mask_always_true FAILED [ 86%]
+tests/test_superellipse.py::TestSuperellipseSpeci
+alizedMethods::test_string_representations 
+FAILED [ 93%]
+tests/test_trimmed_implicit_curve.py::TestTrimmed
+ImplicitCurveContains::test_contains_right_half_c
+ircle FAILED [ 96%]
+tests/test_trimmed_implicit_curve.py::TestTrimmed
+ImplicitCurveContains::test_contains_upper_half_c
+ircle FAILED [ 96%]
+tests/test_trimmed_implicit_curve.py::TestTrimmed
+ImplicitCurveContains::test_contains_first_quadra
+nt_circle FAILED [ 96%]
+tests/test_trimmed_implicit_curve.py::TestTrimmed
+ImplicitCurveContains::test_contains_tolerance_ha
+ndling FAILED [ 97%]
+tests/test_trimmed_implicit_curve.py::TestTrimmed
+ImplicitCurveContains::test_contains_vectorized_i
+nput FAILED [ 97%]
+FAILED tests/test_area_region.py::TestAreaRegionC
+ontains::test_contains_simple_square_no_holes
+FAILED tests/test_area_region.py::TestAreaRegionC
+ontains::test_contains_square_with_circular_hole
+FAILED tests/test_area_region.py::TestAreaRegionC
+ontains::test_contains_multiple_holes
+FAILED tests/test_base_field.py::TestFieldEdgeCas
+es::test_field_evaluation_with_infinity
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveIsClosedMethod::test_is_closed_for_single_
+segment
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveContainsMethod::test_contains_points_on_ea
+ch_segment
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveContainsMethod::test_contains_with_partial
+_segments
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveContainsMethod::test_contains_vectorized_i
+nput
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveContainsMethod::test_contains_tolerance_ha
+ndling
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveEdgeCases::test_single_segment_composite
+FAILED tests/test_composite_curve.py::TestComposi
+teCurveEdgeCases::test_overlapping_segments
+FAILED tests/test_field_strategy.py::TestSignedDi
+stanceField::test_evaluate_scalar_inside
+FAILED tests/test_field_strategy.py::TestSignedDi
+stanceField::test_evaluate_vectorized
+FAILED tests/test_field_strategy.py::TestOccupanc
+yField::test_evaluate_scalar_inside
+FAILED tests/test_field_strategy.py::TestOccupanc
+yField::test_evaluate_vectorized
+FAILED tests/test_field_strategy.py::TestAreaRegi
+onFieldIntegration::test_get_field_signed_distanc
+e
+FAILED tests/test_field_strategy.py::TestAreaRegi
+onFieldIntegration::test_get_field_occupancy
+FAILED tests/test_field_strategy.py::TestAreaRegi
+onFieldIntegration::test_get_field_with_hole_sign
+ed_distance
+FAILED tests/test_field_strategy.py::TestAreaRegi
+onFieldIntegration::test_get_field_with_hole_occu
+pancy
+FAILED tests/test_implicit_curve.py::TestImplicit
+CurveEvaluate::test_evaluate_2d_numpy_array_input
+FAILED tests/test_implicit_curve.py::TestImplicit
+CurveSerialization::test_from_dict_invalid_data_h
+andling
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveEvaluation::test_evaluate_vectorized_inp
+uts
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveEvaluation::test_evaluate_mixed_array_sh
+apes
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveGradient::test_gradient_vectorized_input
+s
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveSerialization::test_to_dict_contains_pla
+ceholder
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveSerialization::test_serialization_docume
+ntation_compliance
+FAILED tests/test_procedural_curve.py::TestProced
+uralCurveInheritedMethods::test_plot_method_inher
+ited
+FAILED tests/test_rfunction_curve.py::TestRFuncti
+onCurveInheritedMethods::test_normal_method_inher
+ited
+FAILED tests/test_sprint2_regression.py::TestSpri
+nt2EdgeCases::test_serialization_error_handling
+FAILED tests/test_sprint3_regression.py::TestSpri
+nt3VectorizedOperations::test_superellipse_vector
+ized_gradient
+FAILED tests/test_sprint3_regression.py::TestSpri
+nt3VectorizedOperations::test_procedural_curve_ve
+ctorized_evaluation
+FAILED tests/test_sprint3_regression.py::TestSpri
+nt3VectorizedOperations::test_procedural_curve_ve
+ctorized_gradient
+FAILED tests/test_sprint5_edge_cases.py::TestErro
+rHandlingAndBoundaryConditions::test_nan_inf_inpu
+ts
+FAILED tests/test_sprint5_edge_cases.py::TestSpec
+ialCases::test_degenerate_masks
+FAILED tests/test_sprint5_regression.py::TestTrim
+medImplicitCurveInterfaceConsistency::test_plotti
+ng_interface
+FAILED tests/test_sprint5_regression.py::TestUtil
+ityFunctions::test_create_square_from_edges
+FAILED tests/test_sprint5_regression.py::TestEdge
+Cases::test_mask_always_true
+FAILED tests/test_superellipse.py::TestSuperellip
+seSpecializedMethods::test_string_representations
+FAILED tests/test_trimmed_implicit_curve.py::Test
+TrimmedImplicitCurveContains::test_contains_right
+_half_circle
+FAILED tests/test_trimmed_implicit_curve.py::Test
+TrimmedImplicitCurveContains::test_contains_upper
+_half_circle
+FAILED tests/test_trimmed_implicit_curve.py::Test
+TrimmedImplicitCurveContains::test_contains_first
+_quadrant_circle
+FAILED tests/test_trimmed_implicit_curve.py::Test
+TrimmedImplicitCurveContains::test_contains_toler
+ance_handling
+FAILED tests/test_trimmed_implicit_curve.py::Test
+TrimmedImplicitCurveContains::test_contains_vecto
+rized_input
+================= 43 failed, 394 passed, 1 
+warning in 11.07s ==================
+
+

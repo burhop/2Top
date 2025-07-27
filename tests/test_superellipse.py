@@ -136,7 +136,10 @@ class TestSuperellipseEvaluation:
         assert self.square.evaluate(0.0, 0.0) < 0
         
         # Points that would be outside a circle but inside a square
-        assert self.square.evaluate(0.9, 0.9) < 0  # Inside square, outside circle
+        # For n=4: |0.9|^4 + |0.9|^4 = 1.3122 > 1, so (0.9,0.9) is outside
+        assert self.square.evaluate(0.9, 0.9) > 0  # Outside - was incorrectly expecting inside
+        # Use a point that's actually inside: |0.8|^4 + |0.8|^4 = 0.8192 < 1
+        assert self.square.evaluate(0.8, 0.8) < 0  # Inside square, outside circle
         
         # Points clearly outside
         assert self.square.evaluate(1.5, 0.0) > 0

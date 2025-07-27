@@ -201,7 +201,7 @@ class TestTrimmedImplicitCurveContains:
             (1.0 + 1e-10, 0.0, True, "Point very close to circle boundary"),
             (1.0 - 1e-10, 0.0, True, "Point very close to circle boundary"),
             (0.0 + 1e-10, 1.0, True, "Point very close to circle boundary"),
-            (0.0 - 1e-10, 1.0, True, "Point very close to circle boundary")
+            (0.0 - 1e-10, 1.0, False, "Point very close to boundary but outside right half (x < 0)")
         ]
         
         for x, y, expected, description in tolerance_cases:

@@ -32,7 +32,7 @@ class TestExpressionTypeHandling:
         self.simple_poly = PolynomialCurve(x + y - 1, (x, y))
         self.complex_poly = PolynomialCurve(x**3 + y**3 - x*y - 1, (x, y))
         self.conic = ConicSection(x**2 + y**2 - 1, (x, y))
-        self.superellipse = Superellipse(a=1.0, b=1.0, n=2.0, (x, y))
+        self.superellipse = Superellipse(a=1.0, b=1.0, n=2.0, variables=(x, y))
         
         # Create procedural with different function types
         self.proc_simple = ProceduralCurve(lambda x, y: x + y - 1, (x, y))
@@ -240,7 +240,7 @@ class TestMixedTypeOperations:
         # Create diverse curve types
         self.conic = ConicSection(x**2 + y**2 - 1, (x, y))
         self.poly = PolynomialCurve(x**3 + y**3 - 1, (x, y))
-        self.superellipse = Superellipse(a=1.0, b=1.0, n=4.0, (x, y))
+        self.superellipse = Superellipse(a=1.0, b=1.0, n=4.0, variables=(x, y))
         self.procedural = ProceduralCurve(lambda x, y: x**2 + y**2 - 1, (x, y))
     
     def test_mixed_type_composite_evaluation(self):
@@ -340,7 +340,7 @@ class TestRobustnessUnderStress:
         x, y = sp.symbols('x y')
         
         # Extreme superellipse parameters
-        extreme_super = Superellipse(a=1e-6, b=1e6, n=100.0, (x, y))
+        extreme_super = Superellipse(a=1e-6, b=1e6, n=100.0, variables=(x, y))
         trimmed = TrimmedImplicitCurve(extreme_super, lambda x, y: True)
         
         # Should handle extreme parameters
