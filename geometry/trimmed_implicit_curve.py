@@ -158,6 +158,16 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         return self.contains(x, y, tolerance)
     
+    def get_endpoints(self) -> List[Tuple[float, float]]:
+        """
+        Get the endpoints of the trimmed curve segment.
+        
+        Returns:
+            List of (x, y) tuples representing the endpoints of the curve segment.
+            Returns empty list if no endpoints were explicitly provided.
+        """
+        return self.endpoints.copy() if self.endpoints else []
+    
     def evaluate(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """
         Evaluate the trimmed curve at given point(s).
