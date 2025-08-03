@@ -1,0 +1,48 @@
+✅ Your Plan is Solid
+Let me reinforce that the idea to explicitly store known bounding boxes for well-defined shapes like squares or rectangles is a best-practice approach used in many CAD kernels and FEA codes. You’re taking control instead of relying on error-prone sampling.
+
+Your 4-step plan covers:
+
+Defining bounds at creation
+
+Prioritizing explicit over sampled bounding boxes
+
+Propagating through shape constructors
+
+Making it serialization-safe
+
+This creates a strong foundation for downstream algorithms like ray-casting.
+
+🧠 My Suggestions (Complementary Ideas)
+Here are some enhancements or alternatives you could optionally explore:
+
+🔁 1. Hybrid Bounding Box: Combine Explicit + Sampled
+Sometimes you have:
+
+A symbolic bound (square edge)
+
+But the mask is more complex (e.g. trimmed circle)
+
+So make bounding_box() do this:
+
+python
+Copy
+Edit
+def bounding_box(self):
+    if self._explicit_bounds is not None:
+        return self._explicit_bounds
+    return self._compute_sampled_bounds()
+Or even:
+
+python
+Copy
+Edit
+def bounding_box(self):
+    if self._explicit_bounds:
+        return self._explicit_bounds
+    elif self._is_axis_aligned_box_like():
+        return self._infer_axis_bounds()
+    else:
+        return self._sampled_bounds()
+This gives you fast, precise handling for known cases, but still degrades gracefully for general curves.
+

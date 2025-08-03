@@ -267,6 +267,18 @@ class SignedDistanceField(BaseField):
             # Vectorized case
             x_array = np.asarray(x)
             y_array = np.asarray(y)
+
+            # Handle NaN inputs by propagating them
+            if np.isnan(x_array).any() or np.isnan(y_array).any():
+                result = np.full_like(x_array, np.nan, dtype=float)
+                # Only compute for non-NaN points
+                valid_mask = ~np.isnan(x_array) & ~np.isnan(y_array)
+                if np.any(valid_mask):
+                    valid_x = x_array[valid_mask]
+                    valid_y = y_array[valid_mask]
+                    valid_result = np.array([self._compute_signed_distance(vx, vy) for vx, vy in zip(valid_x, valid_y)])
+                    result[valid_mask] = valid_result
+                return result
             
             # Compute signed distance for each point
             result = np.zeros_like(x_array, dtype=float)
@@ -303,9 +315,6 @@ class SignedDistanceField(BaseField):
         """
         Compute the unsigned distance from a point to the region boundary.
         
-        For square regions, we can compute this analytically. For other regions,
-        we fall back to boundary point sampling.
-        
         Args:
             x: x-coordinate
             y: y-coordinate
@@ -313,15 +322,11 @@ class SignedDistanceField(BaseField):
         Returns:
             Unsigned distance to the boundary
         """
-        # For square regions, compute distance analytically
-        if len(self.region.outer_boundary.segments) == 4:
-            return self._compute_square_distance(x, y)
-        
-        # Get boundary approximation for non-square regions
-        boundary_points = self._get_boundary_points()
+        # Get boundary approximation from the region
+        boundary_points = self.region._curve_to_polygon(self.region.outer_boundary)
         
         if not boundary_points:
-            # Fallback: return a reasonable default distance
+            # Fallback: return a reasonable default distance if no boundary points
             return 1.0
         
         # Find minimum distance to any boundary point
@@ -331,181 +336,6 @@ class SignedDistanceField(BaseField):
             min_distance = min(min_distance, distance)
         
         return min_distance if min_distance != float('inf') else 1.0
-    
-    def _compute_square_distance(self, x: float, y: float) -> float:
-        """
-        Compute the distance from a point to a square boundary analytically.
-        
-        For a square region created by create_square_from_edges((x1,y1), (x2,y2)),
-        the distance is the minimum distance to any of the four edges.
-        
-        Args:
-            x: x-coordinate
-            y: y-coordinate
-            
-        Returns:
-            Unsigned distance to the square boundary
-        """
-        # For the standard square from (0,0) to (4,4), the boundaries are:
-        # Bottom: y = 0, Top: y = 4, Left: x = 0, Right: x = 4
-        
-        # Use a simple approach: assume square is from (0,0) to (4,4)
-        # This works for the test case and can be generalized later
-        x_min, x_max = 0.0, 4.0
-        y_min, y_max = 0.0, 4.0
-        
-        # Compute distance to each edge
-        dist_left = abs(x - x_min)
-        dist_right = abs(x - x_max)
-        dist_bottom = abs(y - y_min)
-        dist_top = abs(y - y_max)
-        
-        # If point is inside the square, return distance to nearest edge
-        if x_min < x < x_max and y_min < y < y_max:
-            return min(dist_left, dist_right, dist_bottom, dist_top)
-        
-        # If point is outside, compute distance to nearest corner or edge
-        if x < x_min:
-            if y < y_min:
-                # Bottom-left corner
-                return np.sqrt((x - x_min)**2 + (y - y_min)**2)
-            elif y > y_max:
-                # Top-left corner
-                return np.sqrt((x - x_min)**2 + (y - y_max)**2)
-            else:
-                # Left edge
-                return dist_left
-        elif x > x_max:
-            if y < y_min:
-                # Bottom-right corner
-                return np.sqrt((x - x_max)**2 + (y - y_min)**2)
-            elif y > y_max:
-                # Top-right corner
-                return np.sqrt((x - x_max)**2 + (y - y_max)**2)
-            else:
-                # Right edge
-                return dist_right
-        else:  # x_min <= x <= x_max
-            if y < y_min:
-                # Bottom edge
-                return dist_bottom
-            else:  # y > y_max
-                # Top edge
-                return dist_top
-    
-    def _get_boundary_points(self):
-        """
-        Get a set of points approximating the region boundary.
-        
-        Returns:
-            List of (x, y) points on the boundary
-        """
-        # Use the polygon approximation from the region
-        try:
-            boundary_points = self.region._curve_to_polygon(self.region.outer_boundary)
-            if boundary_points:
-                return boundary_points
-        except:
-            pass
-        
-        # Fallback: For square regions, generate boundary points manually
-        if len(self.region.outer_boundary.segments) == 4:
-            return self._get_square_boundary_points()
-        
-        # Final fallback: return empty list
-        return []
-    
-    def _get_square_boundary_points(self):
-        """
-        Generate boundary points for a square region using a simple sampling approach.
-        
-        For square regions created by create_square_from_edges, we know they should
-        form a rectangle. We'll sample the boundary by testing points and finding
-        those that are on the boundary.
-        
-        Returns:
-            List of (x, y) points forming the square boundary
-        """
-        # Use a simple approach: sample a grid and find boundary points
-        # This is more robust than trying to parse segment equations
-        
-        # Estimate bounding box by testing some points
-        test_points = [
-            (0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5),
-            (-1, -1), (-2, -2), (0, 4), (4, 0), (0, 2), (2, 0)
-        ]
-        
-        inside_points = []
-        outside_points = []
-        
-        for px, py in test_points:
-            if self.region.contains(px, py):
-                inside_points.append((px, py))
-            else:
-                outside_points.append((px, py))
-        
-        if not inside_points:
-            # Fallback: return a simple square boundary
-            return [(0, 0), (4, 0), (4, 4), (0, 4)]
-        
-        # Estimate bounds from inside points
-        x_coords = [p[0] for p in inside_points]
-        y_coords = [p[1] for p in inside_points]
-        
-        # Expand bounds slightly to ensure we capture the boundary
-        x_min = min(x_coords) - 1
-        x_max = max(x_coords) + 1
-        y_min = min(y_coords) - 1
-        y_max = max(y_coords) + 1
-        
-        # Generate boundary points by sampling the perimeter
-        boundary_points = []
-        points_per_side = max(10, int(1.0 / self.resolution))
-        
-        # Sample bottom edge
-        for i in range(points_per_side):
-            t = i / (points_per_side - 1) if points_per_side > 1 else 0
-            x = x_min + t * (x_max - x_min)
-            y = y_min
-            # Test if this point is actually on the boundary
-            if not self.region.contains(x, y) and self.region.contains(x, y + 0.1):
-                boundary_points.append((x, y))
-        
-        # Sample right edge
-        for i in range(1, points_per_side):
-            t = i / (points_per_side - 1)
-            x = x_max
-            y = y_min + t * (y_max - y_min)
-            if not self.region.contains(x, y) and self.region.contains(x - 0.1, y):
-                boundary_points.append((x, y))
-        
-        # Sample top edge
-        for i in range(1, points_per_side):
-            t = i / (points_per_side - 1)
-            x = x_max - t * (x_max - x_min)
-            y = y_max
-            if not self.region.contains(x, y) and self.region.contains(x, y - 0.1):
-                boundary_points.append((x, y))
-        
-        # Sample left edge
-        for i in range(1, points_per_side - 1):
-            t = i / (points_per_side - 1)
-            x = x_min
-            y = y_max - t * (y_max - y_min)
-            if not self.region.contains(x, y) and self.region.contains(x + 0.1, y):
-                boundary_points.append((x, y))
-        
-        # If we didn't find enough boundary points, use a simple fallback
-        if len(boundary_points) < 4:
-            # For a square from (0,0) to (4,4), use known boundary
-            return [
-                (0, 0), (1, 0), (2, 0), (3, 0), (4, 0),
-                (4, 1), (4, 2), (4, 3), (4, 4),
-                (3, 4), (2, 4), (1, 4), (0, 4),
-                (0, 3), (0, 2), (0, 1)
-            ]
-        
-        return boundary_points
     
     def gradient(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[tuple, tuple]:
         """

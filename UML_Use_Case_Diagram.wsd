@@ -1,0 +1,167 @@
+@startuml 2Top_Use_Case_Diagram
+!theme plain
+skinparam actorStyle awesome
+skinparam usecaseStyle rectangle
+
+title 2D Implicit Geometry Library - Use Cases
+
+left to right direction
+
+actor "Mathematician" as math
+actor "Game Developer" as game
+actor "CAD Engineer" as cad
+actor "Data Scientist" as data
+actor "Graphics Programmer" as graphics
+
+package "2D Implicit Geometry System" {
+    
+    package "Curve Operations" {
+        usecase "Create Basic Curves" as UC1
+        usecase "Evaluate Curves" as UC2
+        usecase "Compute Gradients" as UC3
+        usecase "Visualize Curves" as UC4
+        usecase "Serialize Curves" as UC5
+        
+        note right of UC1
+            - Circles, ellipses, parabolas
+            - Polynomial curves
+            - Superellipses
+            - Custom procedural curves
+        end note
+    }
+    
+    package "Curve Composition" {
+        usecase "Trim Curves" as UC6
+        usecase "Combine Segments" as UC7
+        usecase "Boolean Operations" as UC8
+        usecase "Check Continuity" as UC9
+        
+        note right of UC6
+            Apply mask functions to
+            create curve segments
+        end note
+    }
+    
+    package "Region Operations" {
+        usecase "Define 2D Regions" as UC10
+        usecase "Test Point Containment" as UC11
+        usecase "Calculate Areas" as UC12
+        usecase "Handle Holes" as UC13
+        
+        note right of UC10
+            Regions with outer boundaries
+            and optional holes
+        end note
+    }
+    
+    package "Field Generation" {
+        usecase "Generate Distance Fields" as UC14
+        usecase "Create Occupancy Fields" as UC15
+        usecase "Blend Multiple Fields" as UC16
+        usecase "Extract Level Sets" as UC17
+        
+        note right of UC14
+            Signed distance fields for
+            collision detection, rendering
+        end note
+    }
+    
+    package "Advanced Operations" {
+        usecase "Vectorized Evaluation" as UC18
+        usecase "Numerical Integration" as UC19
+        usecase "Curve Intersection" as UC20
+        usecase "Morphological Operations" as UC21
+        
+        note right of UC18
+            Efficient batch processing
+            of multiple points
+        end note
+    }
+    
+    package "Persistence & I/O" {
+        usecase "Save/Load Scenes" as UC22
+        usecase "Export Visualizations" as UC23
+        usecase "Import External Data" as UC24
+        
+        note right of UC22
+            JSON serialization for
+            complex geometric scenes
+        end note
+    }
+}
+
+' User relationships
+math --> UC1 : Define mathematical curves
+math --> UC2 : Analyze curve properties
+math --> UC3 : Study differential geometry
+math --> UC4 : Visualize mathematical concepts
+
+game --> UC8 : Create game world boundaries
+game --> UC11 : Collision detection
+game --> UC14 : Distance-based AI navigation
+game --> UC18 : Performance optimization
+
+cad --> UC6 : Design curve segments
+cad --> UC7 : Assemble complex shapes
+cad --> UC12 : Calculate material areas
+cad --> UC22 : Save design files
+
+data --> UC15 : Binary classification fields
+data --> UC16 : Combine multiple datasets
+data --> UC17 : Extract feature boundaries
+data --> UC18 : Process large datasets
+
+graphics --> UC14 : Ray marching rendering
+graphics --> UC16 : Procedural texturing
+graphics --> UC20 : Shape intersections
+graphics --> UC21 : Image morphology
+
+' Use case relationships
+UC1 .> UC2 : <<include>>
+UC1 .> UC4 : <<include>>
+UC1 .> UC5 : <<include>>
+
+UC6 .> UC1 : <<extend>>
+UC7 .> UC6 : <<include>>
+UC8 .> UC7 : <<extend>>
+
+UC10 .> UC7 : <<include>>
+UC11 .> UC10 : <<include>>
+UC12 .> UC10 : <<include>>
+UC13 .> UC10 : <<extend>>
+
+UC14 .> UC10 : <<include>>
+UC15 .> UC10 : <<include>>
+UC16 .> UC14 : <<extend>>
+UC16 .> UC15 : <<extend>>
+UC17 .> UC14 : <<extend>>
+UC17 .> UC15 : <<extend>>
+
+UC18 .> UC2 : <<extend>>
+UC18 .> UC11 : <<extend>>
+UC18 .> UC14 : <<extend>>
+UC18 .> UC15 : <<extend>>
+
+UC19 .> UC12 : <<extend>>
+UC20 .> UC2 : <<extend>>
+UC21 .> UC14 : <<extend>>
+
+UC22 .> UC5 : <<include>>
+UC23 .> UC4 : <<extend>>
+
+note as complexity_note
+**Complexity Levels:**
+
+**Basic**: Create and evaluate simple curves
+**Intermediate**: Compose complex shapes, regions
+**Advanced**: Field generation, boolean operations
+**Expert**: Custom algorithms, performance optimization
+
+**Key Benefits:**
+- Mathematical rigor with practical usability
+- Extensible architecture for custom curves
+- High-performance vectorized operations
+- Complete serialization for persistence
+end note
+
+@enduml

@@ -85,10 +85,9 @@ class AreaRegion:
             
             self.holes = holes.copy()  # Create a copy to avoid external modification
     
-    def contains(self, x: float, y: float) -> bool:
+    def contains(self, x: float, y: float, tolerance: float = 1e-3) -> bool:
         """
         Test if a point is inside the region (accounting for holes).
-        
         Uses a robust point-in-polygon algorithm (ray-casting) to determine if a point
         is contained within the region. A point is considered inside if:
         1. It is inside the outer boundary, AND
@@ -97,128 +96,45 @@ class AreaRegion:
         Args:
             x (float): X-coordinate of the test point
             y (float): Y-coordinate of the test point
+            tolerance: Tolerance for containment test
             
         Returns:
             bool: True if the point is inside the region, False otherwise
         """
-        # First check if point is inside outer boundary
-        if not self._point_in_curve(x, y, self.outer_boundary):
+        # Check if point is inside outer boundary (region containment)
+        # This will use CompositeCurve's _point_in_polygon_scalar
+        if not self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=True):
             return False
         
         # Check if point is inside any hole (if so, it's not in the region)
         for hole in self.holes:
-            if self._point_in_curve(x, y, hole):
+            if hole.contains(x, y, tolerance=tolerance, region_containment=True):
                 return False
         
         return True
     
-    def _point_in_curve(self, x: float, y: float, curve: CompositeCurve) -> bool:
+    def contains_boundary(self, x: float, y: float, tolerance: float = 1e-3) -> bool:
         """
-        Test if a point is inside a closed curve.
-        
-        This method delegates to the CompositeCurve.contains() method which
-        properly handles both single-segment closed curves (like circles) and
-        multi-segment curves using the correct containment logic.
+        Test if a point is on the boundary of the region (outer boundary or hole boundaries).
         
         Args:
             x (float): X-coordinate of the test point
             y (float): Y-coordinate of the test point
-            curve (CompositeCurve): The closed curve to test against
+            tolerance: Tolerance for containment test
             
         Returns:
-            bool: True if the point is inside the curve, False otherwise
+            bool: True if the point is on any boundary, False otherwise
         """
-        # Delegate to the CompositeCurve.contains() method with region_containment=True
-        # to check if the point is inside the enclosed region, not just on the boundary
-        return curve.contains(x, y, region_containment=True)
-    
-    def _point_in_square_heuristic(self, x: float, y: float, curve: CompositeCurve) -> bool:
-        """
-        Heuristic method for testing point containment in square-like shapes.
+        # Check if point is on the outer boundary
+        if self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=False):
+            return True
         
-        This method assumes the curve represents a square created by create_square_from_edges
-        and uses the segment equations to determine containment.
+        # Check if point is on any hole boundary
+        for hole in self.holes:
+            if hole.contains(x, y, tolerance=tolerance, region_containment=False):
+                return True
         
-        Args:
-            x (float): X-coordinate of the test point
-            y (float): Y-coordinate of the test point
-            curve (CompositeCurve): The square curve with 4 segments
-            
-        Returns:
-            bool: True if the point is inside the square, False otherwise
-        """
-        # For a square created by create_square_from_edges, the segments represent:
-        # - Bottom edge: y = y_min
-        # - Right edge: x = x_max  
-        # - Top edge: y = y_max
-        # - Left edge: x = x_min
-        
-        # Extract bounds from segment equations
-        bounds = []
-        for segment in curve.segments:
-            expr = segment.base_curve.expression
-            # Try to extract the boundary value from expressions like "y + 1" or "x - 1"
-            if 'y' in str(expr) and 'x' not in str(expr):
-                # This is a horizontal line (y = constant)
-                # For "y + 1", the line is y = -1
-                # For "y - 1", the line is y = 1
-                const_term = float(expr.subs({'y': 0}))
-                y_val = -const_term
-                bounds.append(('y', y_val))
-            elif 'x' in str(expr) and 'y' not in str(expr):
-                # This is a vertical line (x = constant)
-                const_term = float(expr.subs({'x': 0}))
-                x_val = -const_term
-                bounds.append(('x', x_val))
-        
-        # Extract x and y bounds
-        x_bounds = [val for var, val in bounds if var == 'x']
-        y_bounds = [val for var, val in bounds if var == 'y']
-        
-        if len(x_bounds) >= 2 and len(y_bounds) >= 2:
-            x_min, x_max = min(x_bounds), max(x_bounds)
-            y_min, y_max = min(y_bounds), max(y_bounds)
-            
-            # Check if point is inside the rectangle
-            return x_min < x < x_max and y_min < y < y_max
-        else:
-            # Fallback to polygon method if we can't extract bounds
-            return self._point_in_polygon_fallback(x, y, curve)
-    
-    def _point_in_polygon_fallback(self, x: float, y: float, curve: CompositeCurve) -> bool:
-        """
-        Fallback method for point-in-polygon testing using ray-casting.
-        
-        Args:
-            x (float): X-coordinate of the test point
-            y (float): Y-coordinate of the test point
-            curve (CompositeCurve): The closed curve to test against
-            
-        Returns:
-            bool: True if the point is inside the curve, False otherwise
-        """
-        # Get a polygonal approximation of the curve for ray-casting
-        polygon_points = self._curve_to_polygon(curve)
-        
-        # Implement ray-casting algorithm
-        inside = False
-        n = len(polygon_points)
-        
-        if n < 3:
-            return False  # Not enough points for a polygon
-        
-        j = n - 1  # Last vertex
-        for i in range(n):
-            xi, yi = polygon_points[i]
-            xj, yj = polygon_points[j]
-            
-            # Check if ray crosses this edge
-            if ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
-                inside = not inside
-            
-            j = i
-        
-        return inside
+        return False
     
     def _curve_to_polygon(self, curve: CompositeCurve, resolution: int = 100) -> List[Tuple[float, float]]:
         """
@@ -273,7 +189,47 @@ class AreaRegion:
                 if segment.contains(x_val, y_val, tolerance):
                     boundary_points.append((x_val, y_val))
         
-        # If we don't have enough points, create a simple line approximation
+        # If we didn't find enough points, create a simple line approximation
+        if len(boundary_points) < 3:
+            # Create a simple line segment as fallback
+            for i in range(num_points):
+                t = i / (num_points - 1) if num_points > 1 else 0
+                x_val = x_min + t * (x_max - x_min)
+                y_val = y_min + t * (y_max - y_min)
+                boundary_points.append((x_val, y_val))
+        
+        return boundary_points[:num_points]  # Limit to requested number of points
+    
+    def _sample_segment_boundary(self, segment, num_points: int = 20) -> List[Tuple[float, float]]:
+        """
+        Sample points along a trimmed curve segment boundary.
+        
+        Args:
+            segment: TrimmedImplicitCurve segment
+            num_points: Number of points to sample
+            
+        Returns:
+            List of (x, y) points on the segment boundary
+        """
+        # Get a reasonable bounding box for the segment
+        bbox = self._get_segment_bbox(segment)
+        x_min, x_max, y_min, y_max = bbox
+        
+        boundary_points = []
+        tolerance = 0.05  # Tolerance for being "on" the curve
+        
+        # Sample points in a grid and find those on the segment boundary
+        grid_size = int(np.sqrt(num_points * 4))  # Oversample to ensure we find boundary points
+        x_vals = np.linspace(x_min, x_max, grid_size)
+        y_vals = np.linspace(y_min, y_max, grid_size)
+        
+        for x_val in x_vals:
+            for y_val in y_vals:
+                # Check if point is on the segment boundary
+                if segment.contains(x_val, y_val, tolerance):
+                    boundary_points.append((x_val, y_val))
+        
+        # If we didn't find enough points, create a simple line approximation
         if len(boundary_points) < 3:
             # Create a simple line segment as fallback
             for i in range(num_points):
@@ -294,9 +250,7 @@ class AreaRegion:
         Returns:
             Tuple[float, float, float, float]: (x_min, x_max, y_min, y_max)
         """
-        # Simple bounding box estimation for segments
-        # In practice, this could be more sophisticated based on the segment type
-        return (-5.0, 5.0, -5.0, 5.0)
+        return segment.bounding_box()
     
     def _get_curve_bbox(self, curve: CompositeCurve) -> Tuple[float, float, float, float]:
         """
@@ -308,9 +262,7 @@ class AreaRegion:
         Returns:
             Tuple[float, float, float, float]: (x_min, x_max, y_min, y_max)
         """
-        # Simple bounding box estimation
-        # In practice, this could be more sophisticated
-        return (-10.0, 10.0, -10.0, 10.0)
+        return curve.bounding_box()
     
     def area(self) -> float:
         """
@@ -345,7 +297,7 @@ class AreaRegion:
     
     def _calculate_square_area(self, curve: CompositeCurve) -> float:
         """
-        Calculate the area of a square directly from its segment equations.
+        Calculate the area of a square directly from its bounding box.
         
         Args:
             curve (CompositeCurve): The square curve with 4 segments
@@ -353,35 +305,10 @@ class AreaRegion:
         Returns:
             float: The area of the square
         """
-        # Extract bounds from segment equations (same logic as in _point_in_square_heuristic)
-        bounds = []
-        for segment in curve.segments:
-            expr = segment.base_curve.expression
-            if 'y' in str(expr) and 'x' not in str(expr):
-                const_term = float(expr.subs({'y': 0}))
-                y_val = -const_term
-                bounds.append(('y', y_val))
-            elif 'x' in str(expr) and 'y' not in str(expr):
-                const_term = float(expr.subs({'x': 0}))
-                x_val = -const_term
-                bounds.append(('x', x_val))
-        
-        # Extract x and y bounds
-        x_bounds = [val for var, val in bounds if var == 'x']
-        y_bounds = [val for var, val in bounds if var == 'y']
-        
-        if len(x_bounds) >= 2 and len(y_bounds) >= 2:
-            x_min, x_max = min(x_bounds), max(x_bounds)
-            y_min, y_max = min(y_bounds), max(y_bounds)
-            
-            # Calculate area as width * height
-            width = x_max - x_min
-            height = y_max - y_min
-            return width * height
-        else:
-            # Fallback to polygon method if we can't extract bounds
-            polygon = self._curve_to_polygon(curve)
-            return self._polygon_area(polygon)
+        x_min, x_max, y_min, y_max = curve.bounding_box()
+        width = x_max - x_min
+        height = y_max - y_min
+        return width * height
     
     def _polygon_area(self, polygon: List[Tuple[float, float]]) -> float:
         """

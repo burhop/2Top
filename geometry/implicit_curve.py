@@ -11,6 +11,7 @@ import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, Union, Optional
+from abc import abstractmethod
 
 
 class ImplicitCurve:
@@ -112,6 +113,7 @@ class ImplicitCurve:
                     result = np.where(np.isposinf(result), 1e100, result)
                     result = np.where(np.isneginf(result), -1e100, result)
                 return result
+            return result
         except OverflowError:
             # Handle overflow during computation
             if np.isscalar(x_val) and np.isscalar(y_val):
@@ -238,6 +240,23 @@ class ImplicitCurve:
         plt.axis('equal')
         plt.show()
     
+    def bounding_box(self) -> Tuple[float, float, float, float]:
+        """
+        Returns a bounding box (xmin, xmax, ymin, ymax) for the implicit curve.
+        This is a placeholder and should be implemented more robustly in subclasses.
+        """
+        # For now, return a large default bounding box
+        return (-1000.0, 1000.0, -1000.0, 1000.0)
+
+    @abstractmethod
+    def coefficients(self) -> dict:
+        """
+        Returns a dictionary of coefficients for the implicit curve expression.
+        Keys are sympy symbols or 1 for the constant term, values are coefficients.
+        Subclasses must implement this method.
+        """
+        pass
+
     def to_dict(self) -> dict:
         """
         Serialize the curve to a dictionary for persistence.

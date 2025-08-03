@@ -1,0 +1,144 @@
+@startuml 2Top_Package_Architecture
+!theme plain
+skinparam packageStyle rectangle
+skinparam packageFontSize 14
+skinparam classFontSize 10
+
+title 2D Implicit Geometry Library - Package Architecture
+
+package "geometry" as geometry_pkg {
+    
+    package "Core Curves" as core {
+        class ImplicitCurve <<abstract>>
+        class PolynomialCurve
+        class ConicSection
+        class Superellipse
+        class ProceduralCurve
+        class RFunctionCurve
+        
+        note top of ImplicitCurve
+            Base class for all implicit curves
+            Provides: evaluation, gradient, 
+            normal, plotting, serialization
+        end note
+    }
+    
+    package "Curve Composition" as composition {
+        class TrimmedImplicitCurve
+        class CompositeCurve
+        
+        note top of TrimmedImplicitCurve
+            Applies mask functions to
+            base curves for segmentation
+        end note
+        
+        note bottom of CompositeCurve
+            Multi-segment curves with
+            continuity and closure checking
+        end note
+    }
+    
+    package "2D Regions" as regions {
+        class AreaRegion
+        
+        note top of AreaRegion
+            2D filled areas with outer
+            boundary and optional holes
+        end note
+    }
+    
+    package "Scalar Fields" as fields {
+        class BaseField <<abstract>>
+        class CurveField
+        class BlendedField
+        class SignedDistanceField
+        class OccupancyField
+        
+        note top of BaseField
+            Scalar field operations:
+            evaluation, gradient, level sets
+        end note
+    }
+    
+    package "Field Generation" as strategies {
+        class FieldStrategy <<abstract>>
+        class SignedDistanceStrategy
+        class OccupancyFillStrategy
+        
+        note top of FieldStrategy
+            Strategy pattern for
+            pluggable field generation
+        end note
+    }
+    
+    package "Utility Functions" as utils {
+        class "create_circle_from_quarters()" as circle_util
+        class "create_square_from_edges()" as square_util
+        class "union()" as union_util
+        class "intersect()" as intersect_util
+        class "difference()" as diff_util
+        class "blend()" as blend_util
+        
+        note top of circle_util
+            High-level constructors
+            for common shapes
+        end note
+    }
+}
+
+package "External Dependencies" as deps {
+    class sympy
+    class numpy
+    class matplotlib
+    class typing
+    
+    note top of sympy
+        Symbolic mathematics
+        Expression manipulation
+    end note
+}
+
+package "tests" as test_pkg {
+    class "Test Suites" as tests {
+        test_implicit_curve.py
+        test_area_region.py
+        test_field_strategy.py
+        test_composite_curve.py
+        ... (44 test files)
+    }
+    
+    note top of tests
+        Comprehensive test coverage
+        with edge cases and regression tests
+    end note
+}
+
+' Dependencies between packages
+core --> deps : uses
+composition --> core : extends
+composition --> deps : uses
+regions --> composition : uses
+fields --> core : uses
+fields --> regions : uses
+strategies --> fields : creates
+strategies --> regions : uses
+utils --> core : uses
+utils --> composition : uses
+
+test_pkg --> geometry_pkg : tests
+
+' Key architectural flows
+note as arch_note
+**Key Architectural Patterns:**
+
+1. **Inheritance Hierarchy**: All curves inherit from ImplicitCurve
+2. **Composition Pattern**: Complex structures built from simpler ones
+3. **Strategy Pattern**: Pluggable field generation algorithms
+4. **Template Method**: Consistent serialization across all classes
+5. **Factory Pattern**: Utility functions for common constructions
+
+**Data Flow:**
+ImplicitCurve → TrimmedImplicitCurve → CompositeCurve → AreaRegion → Fields
+end note
+
+@enduml

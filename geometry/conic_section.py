@@ -144,6 +144,259 @@ class ConicSection(ImplicitCurve):
         # A full implementation would involve complex coordinate transformations
         return ConicSection(self.expression, self.variables)
     
+    def bounding_box(self) -> Tuple[float, float, float, float]:
+        """
+        Calculate the bounding box for the conic section.
+        
+        Returns:
+            Tuple (xmin, xmax, ymin, ymax) representing the bounding box
+            
+        Note:
+            For circles and ellipses, calculates exact bounds.
+            For other conics, falls back to a conservative estimate.
+        """
+        coeffs = self._extract_coefficients()
+        A, B, C, D, E, F = coeffs['A'], coeffs['B'], coeffs['C'], coeffs['D'], coeffs['E'], coeffs['F']
+        
+        conic_type = self.conic_type()
+        
+        if conic_type == "circle":
+            # For a circle: (x-h)² + (y-k)² = r²
+            # General form: x² + y² + Dx + Ey + F = 0
+            # Center: (-D/2, -E/2), Radius: sqrt((D²+E²)/4 - F)
+            
+            # Assert circle properties: A = C ≠ 0, B = 0
+            assert abs(A - C) < 1e-12, f"Circle must have A = C, but A={A}, C={C}"
+            assert abs(B) < 1e-12, f"Circle must have B = 0, but B={B}"
+            assert abs(A) > 1e-12, f"Circle must have A ≠ 0, but A={A}"
+            
+            if abs(A) < 1e-12:  # Degenerate case (should not reach here due to assertion)
+                return (-1000.0, 1000.0, -1000.0, 1000.0)
+            
+            # Normalize coefficients (divide by A to get standard form)
+            d_norm = D / A
+            e_norm = E / A
+            f_norm = F / A
+            
+            center_x = -d_norm / 2
+            center_y = -e_norm / 2
+            
+            # Calculate radius squared
+            radius_sq = (d_norm**2 + e_norm**2) / 4 - f_norm
+            
+            if radius_sq <= 0:
+                # Degenerate circle (point or no real solution)
+                return (center_x, center_x, center_y, center_y)
+            
+            radius = np.sqrt(radius_sq)
+            
+            return (center_x - radius, center_x + radius, 
+                   center_y - radius, center_y + radius)
+        
+        elif conic_type == "ellipse":
+            # Assert ellipse properties: A and C have same sign, A ≠ C, discriminant < 0
+            assert abs(A) > 1e-12 and abs(C) > 1e-12, f"Ellipse must have A ≠ 0 and C ≠ 0, but A={A}, C={C}"
+            assert A * C > 0, f"Ellipse must have A and C same sign, but A={A}, C={C}"
+            
+            if abs(B) < 1e-12:  # Axis-aligned ellipse
+                # Complete the square for x and y
+                center_x = -D / (2 * A)
+                center_y = -E / (2 * C)
+                
+                # Calculate semi-axes
+                # After completing the square: A(x-h)² + C(y-k)² = constant
+                constant = A * center_x**2 + C * center_y**2 - F
+                
+                if constant <= 0:
+                    # Degenerate ellipse (point or no real solution)
+                    return (center_x, center_x, center_y, center_y)
+                
+                a_sq = constant / A  # Semi-axis in x direction squared
+                b_sq = constant / C  # Semi-axis in y direction squared
+                
+                if a_sq <= 0 or b_sq <= 0:
+                    return (center_x, center_x, center_y, center_y)
+                
+                a = np.sqrt(a_sq)
+                b = np.sqrt(b_sq)
+                
+                return (center_x - a, center_x + a, center_y - b, center_y + b)
+            
+            else:
+                # Rotated ellipse - calculate exact bounds using eigenvalue method
+                # For general ellipse Ax² + Bxy + Cy² + Dx + Ey + F = 0
+                
+                # First, find the center by completing the square
+                # The center satisfies: 2Ax + By + D = 0 and Bx + 2Cy + E = 0
+                det = 4*A*C - B**2
+                if abs(det) < 1e-12:
+                    return (-100.0, 100.0, -100.0, 100.0)  # Degenerate
+                
+                center_x = (B*E - 2*C*D) / det
+                center_y = (B*D - 2*A*E) / det
+                
+                # Translate to center and find the ellipse matrix
+                # At center: [x y] * [[A B/2] [B/2 C]] * [x y]^T = constant
+                constant = A*center_x**2 + B*center_x*center_y + C*center_y**2 - F
+                
+                if constant <= 0:
+                    return (center_x, center_x, center_y, center_y)
+                
+                # Find eigenvalues of the matrix [[A B/2] [B/2 C]]
+                # These give us the squared reciprocals of the semi-axes
+                trace = A + C
+                det_matrix = A*C - (B/2)**2
+                discriminant = trace**2 - 4*det_matrix
+                
+                if discriminant < 0:
+                    return (-100.0, 100.0, -100.0, 100.0)  # Should not happen for ellipse
+                
+                lambda1 = (trace + np.sqrt(discriminant)) / 2
+                lambda2 = (trace - np.sqrt(discriminant)) / 2
+                
+                if lambda1 <= 0 or lambda2 <= 0:
+                    return (center_x, center_x, center_y, center_y)
+                
+                # Semi-axes lengths
+                a = np.sqrt(constant / lambda1)
+                b = np.sqrt(constant / lambda2)
+                
+                # For rotated ellipse, the bounding box is larger than the axis-aligned case
+                # The maximum extent is the larger of the two semi-axes
+                max_extent = max(a, b)
+                
+                return (center_x - max_extent, center_x + max_extent,
+                       center_y - max_extent, center_y + max_extent)
+        
+        elif conic_type == "parabola":
+            # Parabolas are unbounded in one direction
+            # Try to determine the axis and vertex
+            
+            if abs(A) < 1e-12:  # A = 0, parabola opens horizontally
+                # Form: Cy² + Dx + Ey + F = 0 -> x = -(Cy² + Ey + F)/D
+                if abs(D) < 1e-12:
+                    return (-100.0, 100.0, -100.0, 100.0)  # Degenerate
+                
+                # Vertex y-coordinate: -E/(2C)
+                if abs(C) > 1e-12:
+                    vertex_y = -E / (2 * C)
+                    vertex_x = -(C * vertex_y**2 + E * vertex_y + F) / D
+                    
+                    # Bounded in y around vertex, unbounded in x
+                    y_range = 50.0  # Reasonable range around vertex
+                    if D > 0:  # Opens to the right
+                        return (vertex_x, float('inf'), vertex_y - y_range, vertex_y + y_range)
+                    else:  # Opens to the left
+                        return (float('-inf'), vertex_x, vertex_y - y_range, vertex_y + y_range)
+                else:
+                    return (float('-inf'), float('inf'), -100.0, 100.0)
+            
+            elif abs(C) < 1e-12:  # C = 0, parabola opens vertically
+                # Form: Ax² + Dx + Ey + F = 0 -> y = -(Ax² + Dx + F)/E
+                if abs(E) < 1e-12:
+                    return (-100.0, 100.0, -100.0, 100.0)  # Degenerate
+                
+                # Vertex x-coordinate: -D/(2A)
+                if abs(A) > 1e-12:
+                    vertex_x = -D / (2 * A)
+                    vertex_y = -(A * vertex_x**2 + D * vertex_x + F) / E
+                    
+                    # Bounded in x around vertex, unbounded in y
+                    x_range = 50.0  # Reasonable range around vertex
+                    if E > 0:  # Opens upward
+                        return (vertex_x - x_range, vertex_x + x_range, vertex_y, float('inf'))
+                    else:  # Opens downward
+                        return (vertex_x - x_range, vertex_x + x_range, float('-inf'), vertex_y)
+                else:
+                    return (-100.0, 100.0, float('-inf'), float('inf'))
+            
+            else:
+                # General parabola case - use conservative bounds
+                return (-100.0, 100.0, -100.0, 100.0)
+        
+        elif conic_type == "hyperbola":
+            # Hyperbolas are unbounded in both directions
+            # For now, return infinite bounds (mathematically correct)
+            # Could be improved to find center and asymptotes
+            return (float('-inf'), float('inf'), float('-inf'), float('inf'))
+        
+        elif conic_type == "degenerate":
+            # Handle degenerate cases: lines, points, empty sets, etc.
+            
+            # Check if it's a line (one of A, B, C is zero and it's degree 1)
+            if abs(A) < 1e-12 and abs(C) < 1e-12:  # Linear in both x and y
+                if abs(B) < 1e-12:  # Dx + Ey + F = 0 (line)
+                    if abs(D) > 1e-12 or abs(E) > 1e-12:
+                        # This is a line - unbounded
+                        return (float('-inf'), float('inf'), float('-inf'), float('inf'))
+                    else:
+                        # F = 0 (everything) or F ≠ 0 (nothing)
+                        return (-100.0, 100.0, -100.0, 100.0)
+                else:
+                    # Bxy + Dx + Ey + F = 0 - hyperbola-like, unbounded
+                    return (float('-inf'), float('inf'), float('-inf'), float('inf'))
+            
+            elif abs(A) < 1e-12:  # Only C and possibly B non-zero
+                if abs(B) < 1e-12:  # Cy² + Ey + F = 0
+                    # This is a parabola opening horizontally or parallel lines
+                    if abs(C) > 1e-12:
+                        # Solve for y: y = (-E ± √(E² - 4CF)) / (2C)
+                        discriminant = E**2 - 4*C*F
+                        if discriminant >= 0:
+                            y1 = (-E + np.sqrt(discriminant)) / (2*C)
+                            y2 = (-E - np.sqrt(discriminant)) / (2*C)
+                            y_min, y_max = min(y1, y2), max(y1, y2)
+                            return (float('-inf'), float('inf'), y_min, y_max)
+                        else:
+                            # No real solutions
+                            return (0.0, 0.0, 0.0, 0.0)
+                    else:
+                        # Linear: Ey + F = 0
+                        if abs(E) > 1e-12:
+                            y_val = -F / E
+                            return (float('-inf'), float('inf'), y_val, y_val)
+                        else:
+                            return (-100.0, 100.0, -100.0, 100.0)
+                else:
+                    # Bxy + Cy² + Dx + Ey + F = 0 - complex case
+                    return (float('-inf'), float('inf'), float('-inf'), float('inf'))
+            
+            elif abs(C) < 1e-12:  # Only A and possibly B non-zero
+                if abs(B) < 1e-12:  # Ax² + Dx + F = 0
+                    # This is a parabola opening vertically or parallel lines
+                    if abs(A) > 1e-12:
+                        # Solve for x: x = (-D ± √(D² - 4AF)) / (2A)
+                        discriminant = D**2 - 4*A*F
+                        if discriminant >= 0:
+                            x1 = (-D + np.sqrt(discriminant)) / (2*A)
+                            x2 = (-D - np.sqrt(discriminant)) / (2*A)
+                            x_min, x_max = min(x1, x2), max(x1, x2)
+                            return (x_min, x_max, float('-inf'), float('inf'))
+                        else:
+                            # No real solutions
+                            return (0.0, 0.0, 0.0, 0.0)
+                    else:
+                        # Linear: Dx + F = 0
+                        if abs(D) > 1e-12:
+                            x_val = -F / D
+                            return (x_val, x_val, float('-inf'), float('inf'))
+                        else:
+                            return (-100.0, 100.0, -100.0, 100.0)
+                else:
+                    # Ax² + Bxy + Dx + Ey + F = 0 - complex case
+                    return (float('-inf'), float('inf'), float('-inf'), float('inf'))
+            
+            else:
+                # All of A, B, C non-zero but still degenerate
+                # Could be intersecting lines, point, etc.
+                # Use conservative bounds
+                return (-100.0, 100.0, -100.0, 100.0)
+        
+        else:
+            # For unknown types
+            # Use a conservative bounding box
+            return (-100.0, 100.0, -100.0, 100.0)
+    
     def to_dict(self) -> dict:
         """
         Serialize the conic section to a dictionary.

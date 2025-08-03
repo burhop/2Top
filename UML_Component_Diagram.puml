@@ -1,0 +1,166 @@
+@startuml 2Top_Component_Diagram
+!theme plain
+skinparam componentStyle rectangle
+skinparam componentFontSize 12
+skinparam interfaceFontSize 10
+
+title 2D Implicit Geometry Library - Component Architecture
+
+package "2D Implicit Geometry Library" {
+    
+    component "Core Curves" as core_comp {
+        interface "ICurve" as ICurve
+        interface "ISerializable" as ISerializable
+        interface "IPlottable" as IPlottable
+        
+        component "ImplicitCurve" as implicit
+        component "PolynomialCurve" as poly
+        component "ConicSection" as conic
+        component "Superellipse" as super
+        component "ProceduralCurve" as proc
+        component "RFunctionCurve" as rfunc
+        
+        implicit -up-> ICurve
+        implicit -up-> ISerializable
+        implicit -up-> IPlottable
+        
+        poly -up-> implicit
+        conic -up-> implicit
+        super -up-> implicit
+        proc -up-> implicit
+        rfunc -up-> implicit
+    }
+    
+    component "Curve Composition" as comp_comp {
+        interface "IComposite" as IComposite
+        interface "IContainment" as IContainment
+        
+        component "TrimmedImplicitCurve" as trimmed
+        component "CompositeCurve" as composite
+        
+        trimmed -up-> implicit
+        trimmed -up-> IContainment
+        
+        composite -up-> IComposite
+        composite -up-> IContainment
+        composite -up-> ISerializable
+        composite -up-> IPlottable
+    }
+    
+    component "2D Regions" as region_comp {
+        interface "IRegion" as IRegion
+        
+        component "AreaRegion" as area
+        
+        area -up-> IRegion
+        area -up-> IContainment
+        area -up-> ISerializable
+    }
+    
+    component "Scalar Fields" as field_comp {
+        interface "IField" as IField
+        interface "IEvaluable" as IEvaluable
+        interface "IDifferentiable" as IDifferentiable
+        
+        component "BaseField" as base_field
+        component "CurveField" as curve_field
+        component "BlendedField" as blended_field
+        component "SignedDistanceField" as sdf_field
+        component "OccupancyField" as occ_field
+        
+        base_field -up-> IField
+        base_field -up-> IEvaluable
+        base_field -up-> IDifferentiable
+        base_field -up-> ISerializable
+        
+        curve_field -up-> base_field
+        blended_field -up-> base_field
+        sdf_field -up-> base_field
+        occ_field -up-> base_field
+    }
+    
+    component "Field Strategies" as strategy_comp {
+        interface "IStrategy" as IStrategy
+        
+        component "FieldStrategy" as field_strategy
+        component "SignedDistanceStrategy" as sdf_strategy
+        component "OccupancyFillStrategy" as occ_strategy
+        
+        field_strategy -up-> IStrategy
+        field_strategy -up-> ISerializable
+        
+        sdf_strategy -up-> field_strategy
+        occ_strategy -up-> field_strategy
+    }
+    
+    component "Utility Functions" as util_comp {
+        interface "IFactory" as IFactory
+        interface "IConstructive" as IConstructive
+        
+        component "Shape Factories" as factories
+        component "Boolean Operations" as boolean_ops
+        
+        factories -up-> IFactory
+        boolean_ops -up-> IConstructive
+    }
+}
+
+package "External Libraries" {
+    component "SymPy" as sympy_comp
+    component "NumPy" as numpy_comp  
+    component "Matplotlib" as mpl_comp
+    component "Python Standard Library" as stdlib_comp
+}
+
+package "Test Framework" {
+    component "PyTest" as pytest_comp
+    component "Test Suites" as test_comp
+}
+
+' Dependencies
+core_comp --> sympy_comp : symbolic math
+core_comp --> numpy_comp : numerical computation
+core_comp --> mpl_comp : plotting
+
+comp_comp --> core_comp : uses curves
+comp_comp --> numpy_comp : array operations
+
+region_comp --> comp_comp : uses composite curves
+region_comp --> numpy_comp : numerical operations
+
+field_comp --> region_comp : evaluates regions
+field_comp --> core_comp : creates curve fields
+field_comp --> numpy_comp : vectorized operations
+
+strategy_comp --> field_comp : creates fields
+strategy_comp --> region_comp : analyzes regions
+
+util_comp --> core_comp : creates curves
+util_comp --> comp_comp : creates composites
+
+test_comp --> pytest_comp : test framework
+test_comp --> core_comp : tests
+test_comp --> comp_comp : tests
+test_comp --> region_comp : tests
+test_comp --> field_comp : tests
+test_comp --> strategy_comp : tests
+
+note as arch_principles
+**Architectural Principles:**
+
+1. **Separation of Concerns**: Each component has a single responsibility
+2. **Interface Segregation**: Small, focused interfaces
+3. **Dependency Inversion**: Depend on abstractions, not concretions
+4. **Open/Closed**: Open for extension, closed for modification
+5. **Strategy Pattern**: Pluggable algorithms for field generation
+6. **Template Method**: Consistent patterns across components
+
+**Key Interfaces:**
+- ICurve: Basic curve operations (evaluate, gradient, normal)
+- ISerializable: Persistence (to_dict, from_dict)
+- IContainment: Point-in-shape testing
+- IField: Scalar field operations
+- IStrategy: Field generation algorithms
+end note
+
+@enduml

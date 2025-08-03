@@ -183,3 +183,12 @@ class PolynomialCurve(ImplicitCurve):
             return f"<PolynomialCurve (degree {degree}): {self.expression} = 0>"
         except ValueError:
             return f"<PolynomialCurve: {self.expression} = 0>"
+
+    def coefficients(self) -> dict:
+        """
+        Returns a dictionary of coefficients for the polynomial expression.
+        Keys are sympy symbols or 1 for the constant term, values are coefficients.
+        """
+        x, y = self.variables
+        poly = sp.Poly(self.expression, x, y)
+        return poly.as_dict()

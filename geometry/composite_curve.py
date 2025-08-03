@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from typing import List, Tuple, Union, Dict, Any
 from .implicit_curve import ImplicitCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
+from scipy.optimize import brentq
 
 
 class CompositeCurve(ImplicitCurve):
@@ -173,32 +174,108 @@ class CompositeCurve(ImplicitCurve):
     
     def _is_closed_general(self, tolerance: float) -> bool:
         """
-        General heuristic for checking if a curve is closed.
+        Check if curve is closed by verifying endpoint connectivity.
+        
+        A curve is closed if the endpoints of consecutive segments are connected,
+        and the last segment connects back to the first segment.
         
         Args:
             tolerance: Distance tolerance for connectivity check
-            
+        
         Returns:
-            True if the curve appears to be closed
+            True if all segment endpoints are properly connected
         """
-        # Sample points around a circle to test coverage
-        n_test_points = 36  # Every 10 degrees
-        angles = np.linspace(0, 2*np.pi, n_test_points, endpoint=False)
+        if len(self.segments) < 3:
+            return False
         
-        # Test points on unit circle (this is a heuristic for common cases)
-        test_points = [(np.cos(angle), np.sin(angle)) for angle in angles]
+        # For each consecutive pair of segments, check if they share an endpoint
+        for i in range(len(self.segments)):
+            current_segment = self.segments[i]
+            next_segment = self.segments[(i + 1) % len(self.segments)]  # Wrap around for last segment
+            
+            # Try to find endpoints by sampling the segment boundaries
+            current_endpoints = self._get_segment_endpoints(current_segment, tolerance)
+            next_endpoints = self._get_segment_endpoints(next_segment, tolerance)
+            
+            if not current_endpoints or not next_endpoints:
+                # If we can't find endpoints, assume not closed
+                return False
+            
+            # Check if any endpoint of current segment is close to any endpoint of next segment
+            connected = False
+            for curr_end in current_endpoints:
+                for next_end in next_endpoints:
+                    distance = np.sqrt((curr_end[0] - next_end[0])**2 + (curr_end[1] - next_end[1])**2)
+                    if distance <= tolerance:
+                        connected = True
+                        break
+                if connected:
+                    break
+            
+            if not connected:
+                return False
         
-        # Count how many test points are contained in the composite curve
-        contained_count = 0
-        for x, y in test_points:
-            if self.contains(x, y):
-                contained_count += 1
+        return True
+
+    def _get_segment_endpoints(self, segment, tolerance: float):
+        """
+        Try to extract endpoints from a segment by sampling.
         
-        # If most test points are contained, likely closed
-        coverage_ratio = contained_count / n_test_points
+        Args:
+            segment: TrimmedImplicitCurve segment
+            tolerance: Tolerance for finding endpoints
         
-        # Consider closed if coverage is high (> 80%)
-        return coverage_ratio > 0.8
+        Returns:
+            List of (x, y) tuples representing endpoints, or empty list if not found
+        """
+        # Sample a grid of points and find those that lie on the segment
+        # Use the segment's bounding box if available
+        try:
+            x_min, x_max, y_min, y_max = segment.bounding_box()
+            
+            # Clamp infinite bounds to reasonable values
+            if x_min == float('-inf'):
+                x_min = -10
+            if x_max == float('inf'):
+                x_max = 10
+            if y_min == float('-inf'):
+                y_min = -10
+            if y_max == float('inf'):
+                y_max = 10
+                
+            # Sample points in the bounding box
+            n_samples = 20
+            x_vals = np.linspace(x_min, x_max, n_samples)
+            y_vals = np.linspace(y_min, y_max, n_samples)
+            
+            points_on_segment = []
+            for x in x_vals:
+                for y in y_vals:
+                    if segment.contains(x, y, tolerance):
+                        points_on_segment.append((x, y))
+            
+            if len(points_on_segment) < 2:
+                return []
+            
+            # Find the two points that are farthest apart (likely endpoints)
+            max_distance = 0
+            endpoint1, endpoint2 = None, None
+            
+            for i, p1 in enumerate(points_on_segment):
+                for j, p2 in enumerate(points_on_segment[i+1:], i+1):
+                    distance = np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+                    if distance > max_distance:
+                        max_distance = distance
+                        endpoint1, endpoint2 = p1, p2
+            
+            if endpoint1 and endpoint2:
+                return [endpoint1, endpoint2]
+            else:
+                return []
+                
+        except Exception:
+            # If anything fails, return empty list
+            return []
     
     def contains(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
                  tolerance: float = 1e-3, region_containment: bool = False) -> Union[bool, np.ndarray]:
@@ -593,105 +670,270 @@ class CompositeCurve(ImplicitCurve):
         Returns:
             True if point is inside, False otherwise
         """
-        intersection_count = 0
-        
-        # Cast horizontal ray from (x, y) to the right
+        intersections = 0
         for segment in self.segments:
-            # Find intersections between the ray y = test_y and this segment
-            intersections = self._find_ray_segment_intersections(x, y, segment)
-            intersection_count += intersections
-        
-        # Point is inside if intersection count is odd
-        return (intersection_count % 2) == 1
-    
-    def _find_ray_segment_intersections(self, ray_x: float, ray_y: float, segment) -> int:
+            intersections += self._numerical_ray_intersection(x, y, segment)
+
+        return (intersections % 2) == 1
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'CompositeCurve':
         """
-        Find intersections between a horizontal ray and a curve segment.
+        Deserialize CompositeCurve from dictionary.
         
         Args:
-            ray_x: x-coordinate of ray start point
-            ray_y: y-coordinate of ray (horizontal)
-            segment: TrimmedImplicitCurve segment to intersect with
+            data: Dictionary containing serialized curve data
             
         Returns:
-            Number of valid intersections to the right of ray_x
-        """
-        # For line segments (which is what create_square_from_edges creates),
-        # we can solve this analytically
-        
-        # Get the base curve equation
-        base_curve = segment.base_curve
-        
-        # For polynomial curves (lines), we can solve directly
-        if hasattr(base_curve, 'expression'):
-            expr = base_curve.expression
-            x_var, y_var = base_curve.variables
+            CompositeCurve instance
             
-            # Substitute y = ray_y into the curve equation and solve for x
-            try:
-                # Substitute the ray's y-coordinate
-                expr_at_y = expr.subs(y_var, ray_y)
-                
-                # Solve for x where the curve intersects the ray
-                x_solutions = sp.solve(expr_at_y, x_var)
-                
-                valid_intersections = 0
-                for x_sol in x_solutions:
-                    try:
-                        x_val = float(x_sol)
-                        
-                        # Only count intersections to the right of the ray start
-                        if x_val > ray_x:
-                            # Check if this intersection point is within the segment's domain
-                            # Use a more robust tolerance for reconstructed segments
-                            if segment.contains(x_val, ray_y, tolerance=1e-3):
-                                valid_intersections += 1
-                                
-                    except (ValueError, TypeError):
-                        # Skip complex or non-numeric solutions
-                        continue
-                        
-                return valid_intersections
-                
-            except Exception:
-                # Fall back to numerical approach if symbolic solving fails
-                pass
+        Raises:
+            ValueError: If data is invalid or missing required fields
+        """
+        if data.get("type") != "CompositeCurve":
+            raise ValueError(f"Invalid type: expected 'CompositeCurve', got {data.get('type')}")
         
-        # Fallback: numerical approach by sampling
-        return self._numerical_ray_intersection(ray_x, ray_y, segment)
-    
+        # Reconstruct variables
+        var_names = data["variables"]
+        variables = tuple(sp.Symbol(name) for name in var_names)
+        
+        # Reconstruct segments
+        segments = []
+        for segment_data in data["segments"]:
+            segment = TrimmedImplicitCurve.from_dict(segment_data)
+            segments.append(segment)
+        
+        # Create CompositeCurve
+        return cls(segments, variables)
+
+    def get_segment_count(self) -> int:
+        """
+        Get the number of segments in the composite curve.
+        
+        Returns:
+            Number of segments
+        """
+        return len(self.segments)
+
+    def get_segment(self, index: int) -> TrimmedImplicitCurve:
+        """
+        Get a specific segment by index.
+        
+        Args:
+            index: Index of the segment to retrieve
+            
+        Returns:
+            TrimmedImplicitCurve at the specified index
+            
+        Raises:
+            IndexError: If index is out of range
+        """
+        if not 0 <= index < len(self.segments):
+            raise IndexError(f"Segment index {index} out of range [0, {len(self.segments)})")
+        
+        return self.segments[index]
+
+    def add_segment(self, segment: TrimmedImplicitCurve):
+        """
+        Add a new segment to the end of the composite curve.
+        
+        Args:
+            segment: TrimmedImplicitCurve to add
+            
+        Raises:
+            TypeError: If segment is not a TrimmedImplicitCurve
+        """
+        if not isinstance(segment, TrimmedImplicitCurve):
+            raise TypeError("Segment must be TrimmedImplicitCurve instance")
+        
+        self.segments.append(segment)
+
+    def remove_segment(self, index: int):
+        """
+        Remove a segment by index.
+        
+        Args:
+            index: Index of the segment to remove
+            
+        Raises:
+            IndexError: If index is out of range
+            ValueError: If trying to remove the last remaining segment
+        """
+        if not 0 <= index < len(self.segments):
+            raise IndexError(f"Segment index {index} out of range [0, {len(self.segments)})")
+        
+        if len(self.segments) <= 1:
+            raise ValueError("Cannot remove the last remaining segment")
+        
+        self.segments.pop(index)
+
+    def __str__(self) -> str:
+        """String representation of CompositeCurve"""
+        return f"CompositeCurve({len(self.segments)} segments)"
+
+    def __repr__(self) -> str:
+        """Detailed string representation"""
+        return f"CompositeCurve(segments={self.segments})"
+
+    def __len__(self) -> int:
+        """Return number of segments"""
+        return len(self.segments)
+
+    def __getitem__(self, index: int) -> TrimmedImplicitCurve:
+        """Get segment by index using bracket notation"""
+        return self.get_segment(index)
+
+    def __iter__(self):
+        """Iterate over segments"""
+        return iter(self.segments)
+
+    def bounding_box(self) -> Tuple[float, float, float, float]:
+        """
+        Compute the bounding box of the composite curve.
+        
+        Returns:
+            Tuple[float, float, float, float]: (x_min, x_max, y_min, y_max)
+        """
+        if not self.segments:
+            return (np.inf, -np.inf, np.inf, -np.inf)  # Empty bounding box
+        
+        x_min, x_max, y_min, y_max = self.segments[0].bounding_box()
+        
+        for segment in self.segments[1:]:
+            seg_x_min, seg_x_max, seg_y_min, seg_y_max = segment.bounding_box()
+            x_min = min(x_min, seg_x_min)
+            x_max = max(x_max, seg_x_max)
+            y_min = min(y_min, seg_y_min)
+            y_max = max(y_max, seg_y_max)
+            
+        return (x_min, x_max, y_min, y_max)
+
+    def _point_in_polygon_scalar(self, x: float, y: float) -> bool:
+        """
+        Ray-casting algorithm to determine if a point is inside a closed region defined by the composite curve.
+        
+        Casts a horizontal ray from the test point to the right and counts
+        how many times it intersects the curve segments. An odd count means
+        the point is inside; an even count means it's outside.
+        
+        Args:
+            x: x-coordinate of test point
+            y: y-coordinate of test point
+            
+        Returns:
+            True if point is inside the region, False otherwise
+        """
+        intersections = 0
+        for segment in self.segments:
+            intersections += self._numerical_ray_intersection(x, y, segment)
+
+        return (intersections % 2) == 1
+
+    def _point_in_polygon_vectorized(self, x_array: np.ndarray, y_array: np.ndarray) -> np.ndarray:
+        """
+        Vectorized version of point-in-polygon test.
+        
+        Args:
+            x_array: Array of x-coordinates
+            y_array: Array of y-coordinates
+            
+        Returns:
+            Boolean array indicating containment for each point
+        """
+        result = np.zeros_like(x_array, dtype=bool)
+        flat_x = x_array.flatten()
+        flat_y = y_array.flatten()
+        
+        for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
+            result.flat[i] = self._point_in_polygon_scalar(float(xi), float(yi))
+        
+        return result.reshape(x_array.shape)
+
     def _numerical_ray_intersection(self, ray_x: float, ray_y: float, segment) -> int:
         """
-        Numerical fallback to find ray-segment intersections by sampling.
-        
+        Robust and accurate ray-intersection test for implicit curves.
+
         Args:
-            ray_x: x-coordinate of ray start point
-            ray_y: y-coordinate of ray (horizontal)
-            segment: TrimmedImplicitCurve segment to intersect with
-            
+            ray_x: x-coordinate of ray origin (horizontal ray goes right)
+            ray_y: y-coordinate of ray (constant)
+            segment: TrimmedImplicitCurve segment
+
         Returns:
             Number of valid intersections to the right of ray_x
         """
-        # Sample x-coordinates to the right of the ray start
-        x_samples = np.linspace(ray_x + 1e-6, ray_x + 100, 1000)
-        
         intersections = 0
-        prev_on_curve = False
+
+        # Get the bounding box of the segment
+        bbox = segment.bounding_box()
+        xmin, xmax, ymin, ymax = bbox
+
+        # If the ray is outside the y-range of the bounding box, no intersection
+        if ray_y < ymin - 1e-6 or ray_y > ymax + 1e-6:
+            return 0
+
+        # Special handling for horizontal line segments:
+        # Horizontal segments collinear with the ray are generally ignored in ray casting
+        # to avoid issues with horizontal boundaries and double counting.
+        if np.isclose(ymin, ymax, atol=1e-6) and np.isclose(ray_y, ymin, atol=1e-6):
+            return 0
+
+        # Special handling for vertical line segments:
+        # Count an intersection if the vertical segment's x-value is to the right of the ray origin
+        # AND the ray's y-coordinate is within the segment's y-bounds.
+        if np.isclose(xmin, xmax, atol=1e-6):
+            segment_x_val = xmin  # For a vertical segment, xmin and xmax are the same
+            if segment_x_val > ray_x and ymin <= ray_y <= ymax:
+                return 1
+            return 0
+
+        # For other curve types, use numerical root finding
+        # Define sliced implicit function
+        def f(x_val): return segment.evaluate(x_val, ray_y)
+
+        # Search for roots within the x-range of the bounding box, to the right of ray_x
+        x_search_min = max(ray_x + 1e-6, xmin)
+        x_search_max = xmax
+
+        if x_search_max <= x_search_min:
+            return 0 # No valid search range
+
+        # Coarse sampling to find intervals for brentq
+        num_samples = 100
+        x_samples = np.linspace(x_search_min, x_search_max, num_samples)
         
-        for x_val in x_samples:
-            # Check if this point is on the curve segment
-            curve_value = segment.evaluate(x_val, ray_y)
-            on_curve = abs(curve_value) < 1e-6
-            
-            # Check if this point is within the segment's domain
-            if on_curve and segment.contains(x_val, ray_y, tolerance=1e-6):
-                # Count transition from off-curve to on-curve as an intersection
-                if not prev_on_curve:
+        # Evaluate function at sample points
+        f_values = np.array([f(x_val) for x_val in x_samples])
+
+        roots_found = []
+        for i in range(len(x_samples) - 1):
+            x0, x1 = x_samples[i], x_samples[i+1]
+            f0, f1 = f_values[i], f_values[i+1]
+
+            # Check for sign change
+            if f0 * f1 < 0:
+                try:
+                    # Use brentq to find the root precisely
+                    root = brentq(f, x0, x1)
+                    
+                    # Check if the root is valid (to the right of ray_x and within segment mask)
+                    if root > ray_x and segment.mask(root, ray_y):
+                        # Avoid counting very close roots multiple times
+                        if not any(abs(root - r) < 1e-6 for r in roots_found):
+                            intersections += 1
+                            roots_found.append(root)
+                except ValueError:
+                    # brentq can fail if no root in interval or if interval is degenerate
+                    pass
+            # Handle cases where f0 or f1 is exactly zero and within mask
+            elif f0 == 0 and segment.mask(x0, ray_y) and x0 > ray_x:
+                if not any(abs(x0 - r) < 1e-6 for r in roots_found):
                     intersections += 1
-                prev_on_curve = True
-            else:
-                prev_on_curve = False
-        
+                    roots_found.append(x0)
+            elif f1 == 0 and segment.mask(x1, ray_y) and x1 > ray_x:
+                if not any(abs(x1 - r) < 1e-6 for r in roots_found):
+                    intersections += 1
+                    roots_found.append(x1)
+
         return intersections
 
 
@@ -770,10 +1012,10 @@ def create_square_from_edges(corner1: Tuple[float, float] = (0, 0),
     
     # Create edge segments with proper mask functions that constrain both x and y
     segments = [
-        TrimmedImplicitCurve(bottom_line, lambda x, y: xmin <= x <= xmax and abs(y - ymin) < 1e-6),  # Bottom edge: y = ymin, x in [xmin, xmax]
-        TrimmedImplicitCurve(right_line, lambda x, y: ymin <= y <= ymax and abs(x - xmax) < 1e-6),   # Right edge: x = xmax, y in [ymin, ymax]
-        TrimmedImplicitCurve(top_line, lambda x, y: xmin <= x <= xmax and abs(y - ymax) < 1e-6),     # Top edge: y = ymax, x in [xmin, xmax]
-        TrimmedImplicitCurve(left_line, lambda x, y: ymin <= y <= ymax and abs(x - xmin) < 1e-6),    # Left edge: x = xmin, y in [ymin, ymax]
+        TrimmedImplicitCurve(bottom_line, lambda x, y: xmin <= x <= xmax and abs(y - ymin) < 1e-6, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymin),  # Bottom edge: y = ymin, x in [xmin, xmax]
+        TrimmedImplicitCurve(right_line, lambda x, y: ymin <= y <= ymax and abs(x - xmax) < 1e-6, xmin=xmax, xmax=xmax, ymin=ymin, ymax=ymax),   # Right edge: x = xmax, y in [ymin, ymax]
+        TrimmedImplicitCurve(top_line, lambda x, y: xmin <= x <= xmax and abs(y - ymax) < 1e-6, xmin=xmin, xmax=xmax, ymin=ymax, ymax=ymax),     # Top edge: y = ymax, x in [xmin, xmax]
+        TrimmedImplicitCurve(left_line, lambda x, y: ymin <= y <= ymax and abs(x - xmin) < 1e-6, xmin=xmin, xmax=xmin, ymin=ymin, ymax=ymax),    # Left edge: x = xmin, y in [ymin, ymax]
     ]
     
     return CompositeCurve(segments, variables)

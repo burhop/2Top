@@ -1,0 +1,252 @@
+@startuml 2Top_Class_Hierarchy
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam packageFontSize 12
+
+title 2D Implicit Geometry Library - Class Hierarchy
+
+package "Core Curves" {
+    abstract class ImplicitCurve {
+        - expression: sympy.Expr
+        - variables: Tuple[sympy.Symbol, sympy.Symbol]
+        - _lambdified_func: Callable
+        - _gradient_funcs: Tuple[Callable, Callable]
+        --
+        + __init__(expression, variables)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + normal(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + contains(x, y, tolerance): Union[bool, np.ndarray]
+        + plot(xlim, ylim, resolution): None
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): ImplicitCurve
+        + __str__(): str
+        + __repr__(): str
+    }
+
+    class PolynomialCurve {
+        - degree: int
+        --
+        + __init__(expression, variables, degree)
+        + get_degree(): int
+        + get_coefficients(): Dict[Tuple[int, int], float]
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): PolynomialCurve
+    }
+
+    class ConicSection {
+        - conic_type: str
+        - center: Tuple[float, float]
+        - parameters: Dict[str, float]
+        --
+        + __init__(expression, variables)
+        + get_conic_type(): str
+        + get_center(): Tuple[float, float]
+        + get_parameters(): Dict[str, float]
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): ConicSection
+    }
+
+    class Superellipse {
+        - center: Tuple[float, float]
+        - a: float
+        - b: float
+        - n: float
+        --
+        + __init__(center, a, b, n)
+        + get_center(): Tuple[float, float]
+        + get_semi_axes(): Tuple[float, float]
+        + get_exponent(): float
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): Superellipse
+    }
+
+    class ProceduralCurve {
+        - func: Callable[[float, float], float]
+        - variables: Tuple[sympy.Symbol, sympy.Symbol]
+        --
+        + __init__(func, variables)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): ProceduralCurve
+    }
+
+    class RFunctionCurve {
+        - left_curve: ImplicitCurve
+        - right_curve: ImplicitCurve
+        - operation: str
+        - alpha: float
+        --
+        + __init__(left_curve, right_curve, operation, alpha)
+        + get_operation(): str
+        + get_alpha(): float
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): RFunctionCurve
+    }
+}
+
+package "Composite Structures" {
+    class TrimmedImplicitCurve {
+        - base_curve: ImplicitCurve
+        - mask: Callable[[float, float], bool]
+        --
+        + __init__(base_curve, mask)
+        + get_base_curve(): ImplicitCurve
+        + get_mask(): Callable
+        + contains(x, y, tolerance): Union[bool, np.ndarray]
+        + get_points_on_curve(num_points): List[Tuple[float, float]]
+        + bounding_box(): Tuple[float, float, float, float]
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): TrimmedImplicitCurve
+    }
+
+    class CompositeCurve {
+        - segments: List[TrimmedImplicitCurve]
+        --
+        + __init__(segments)
+        + add_segment(segment): None
+        + is_closed(tolerance): bool
+        + contains(x, y, tolerance, region_containment): Union[bool, np.ndarray]
+        + get_segments(): List[TrimmedImplicitCurve]
+        + plot(xlim, ylim, resolution): None
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): CompositeCurve
+    }
+
+    class AreaRegion {
+        - outer_boundary: CompositeCurve
+        - holes: List[CompositeCurve]
+        --
+        + __init__(outer_boundary, holes)
+        + contains(x, y, tolerance): bool
+        + contains_boundary(x, y, tolerance): bool
+        + area(): float
+        + get_field(strategy): BaseField
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): AreaRegion
+    }
+}
+
+package "Scalar Fields" {
+    abstract class BaseField {
+        --
+        + {abstract} evaluate(x, y): Union[float, np.ndarray]
+        + {abstract} gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + {abstract} level_set(level): ImplicitCurve
+        + {abstract} to_dict(): Dict[str, Any]
+        + {static} {abstract} from_dict(data): BaseField
+    }
+
+    class CurveField {
+        - curve: ImplicitCurve
+        --
+        + __init__(curve)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + level_set(level): ImplicitCurve
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): CurveField
+    }
+
+    class BlendedField {
+        - fields: List[BaseField]
+        - operation: str
+        --
+        + __init__(fields, operation)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + level_set(level): ImplicitCurve
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): BlendedField
+    }
+
+    class SignedDistanceField {
+        - region: AreaRegion
+        - resolution: float
+        --
+        + __init__(region, resolution)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + level_set(level): ImplicitCurve
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): SignedDistanceField
+    }
+
+    class OccupancyField {
+        - region: AreaRegion
+        - inside_value: float
+        - outside_value: float
+        --
+        + __init__(region, inside_value, outside_value)
+        + evaluate(x, y): Union[float, np.ndarray]
+        + gradient(x, y): Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+        + level_set(level): ImplicitCurve
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): OccupancyField
+    }
+}
+
+package "Field Strategies" {
+    abstract class FieldStrategy {
+        --
+        + {abstract} generate_field(region): BaseField
+        + {abstract} to_dict(): Dict[str, Any]
+        + {static} {abstract} from_dict(data): FieldStrategy
+    }
+
+    class SignedDistanceStrategy {
+        - resolution: float
+        --
+        + __init__(resolution)
+        + generate_field(region): SignedDistanceField
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): SignedDistanceStrategy
+    }
+
+    class OccupancyFillStrategy {
+        - inside_value: float
+        - outside_value: float
+        --
+        + __init__(inside_value, outside_value)
+        + generate_field(region): OccupancyField
+        + to_dict(): Dict[str, Any]
+        + {static} from_dict(data): OccupancyFillStrategy
+    }
+}
+
+' Inheritance relationships
+ImplicitCurve <|-- PolynomialCurve
+ImplicitCurve <|-- ConicSection
+ImplicitCurve <|-- Superellipse
+ImplicitCurve <|-- ProceduralCurve
+ImplicitCurve <|-- RFunctionCurve
+ImplicitCurve <|-- TrimmedImplicitCurve
+
+BaseField <|-- CurveField
+BaseField <|-- BlendedField
+BaseField <|-- SignedDistanceField
+BaseField <|-- OccupancyField
+
+FieldStrategy <|-- SignedDistanceStrategy
+FieldStrategy <|-- OccupancyFillStrategy
+
+' Composition relationships
+TrimmedImplicitCurve *-- ImplicitCurve : base_curve
+CompositeCurve *-- TrimmedImplicitCurve : segments
+AreaRegion *-- CompositeCurve : outer_boundary
+AreaRegion *-- CompositeCurve : holes
+CurveField *-- ImplicitCurve : curve
+BlendedField *-- BaseField : fields
+SignedDistanceField *-- AreaRegion : region
+OccupancyField *-- AreaRegion : region
+RFunctionCurve *-- ImplicitCurve : left_curve
+RFunctionCurve *-- ImplicitCurve : right_curve
+
+' Strategy pattern relationships
+AreaRegion ..> FieldStrategy : uses
+SignedDistanceStrategy ..> SignedDistanceField : creates
+OccupancyFillStrategy ..> OccupancyField : creates
+
+@enduml

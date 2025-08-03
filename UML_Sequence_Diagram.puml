@@ -1,0 +1,120 @@
+@startuml 2Top_Sequence_Diagram
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 150
+
+title 2D Implicit Geometry Library - Typical Usage Flow
+
+actor User
+participant "create_square_from_edges" as factory
+participant "CompositeCurve" as composite
+participant "TrimmedImplicitCurve" as trimmed
+participant "PolynomialCurve" as poly
+participant "AreaRegion" as region
+participant "SignedDistanceStrategy" as strategy
+participant "SignedDistanceField" as field
+
+== Shape Creation ==
+User -> factory : create_square_from_edges((0,0), (4,4))
+activate factory
+
+factory -> poly : new PolynomialCurve(y=0)
+activate poly
+poly --> factory : bottom_edge
+deactivate poly
+
+factory -> trimmed : new TrimmedImplicitCurve(bottom_edge, mask)
+activate trimmed
+trimmed --> factory : trimmed_bottom
+deactivate trimmed
+
+note right of factory
+    Creates 4 trimmed curves:
+    - bottom: y=0, 0≤x≤4
+    - right: x=4, 0≤y≤4  
+    - top: y=4, 0≤x≤4
+    - left: x=0, 0≤y≤4
+end note
+
+factory -> composite : new CompositeCurve([bottom, right, top, left])
+activate composite
+composite -> composite : validate_continuity()
+composite -> composite : check_closure()
+composite --> factory : square_curve
+deactivate composite
+
+factory --> User : square_curve
+deactivate factory
+
+== Region Creation ==
+User -> region : new AreaRegion(square_curve)
+activate region
+region -> composite : is_closed()
+composite --> region : True
+region --> User : area_region
+deactivate region
+
+== Field Generation ==
+User -> strategy : new SignedDistanceStrategy(resolution=0.1)
+activate strategy
+strategy --> User : sdf_strategy
+deactivate strategy
+
+User -> region : get_field(sdf_strategy)
+activate region
+region -> strategy : generate_field(region)
+activate strategy
+strategy -> field : new SignedDistanceField(region, 0.1)
+activate field
+field --> strategy : sdf_field
+deactivate field
+strategy --> region : sdf_field
+deactivate strategy
+region --> User : sdf_field
+deactivate region
+
+== Field Evaluation ==
+User -> field : evaluate(1.0, 1.0)
+activate field
+field -> region : contains(1.0, 1.0)
+activate region
+region -> composite : contains(1.0, 1.0, region_containment=True)
+activate composite
+composite -> composite : _point_in_polygon_scalar(1.0, 1.0)
+composite --> region : True (inside)
+deactivate composite
+region --> field : True
+deactivate region
+
+field -> field : _compute_distance_to_boundary(1.0, 1.0)
+field -> region : _curve_to_polygon(outer_boundary)
+activate region
+region --> field : boundary_points
+deactivate region
+field -> field : min_distance_to_points()
+field --> User : -1.0 (negative = inside)
+deactivate field
+
+== Vectorized Evaluation ==
+User -> field : evaluate([1.0, 2.0, 5.0], [1.0, 2.0, 5.0])
+activate field
+
+loop for each point
+    field -> region : contains(x[i], y[i])
+    activate region
+    region --> field : containment_result
+    deactivate region
+    field -> field : _compute_distance_to_boundary(x[i], y[i])
+end
+
+field --> User : [-1.0, -1.414, 1.414]
+deactivate field
+
+note over User
+    Results: 
+    - (1,1): -1.0 (inside, distance 1 to boundary)
+    - (2,2): -1.414 (inside, distance √2 to boundary)  
+    - (5,5): 1.414 (outside, distance √2 to boundary)
+end note
+
+@enduml
