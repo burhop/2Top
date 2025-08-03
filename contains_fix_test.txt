@@ -1,5 +1,0 @@
-Point (1,1) inside: True
-Point (2,2) inside: True
-Point (5,5) inside: False
-Point (0,2) on boundary: True
-Point (1,1) on boundary: False
