@@ -9,7 +9,7 @@ General form: Ax² + Bxy + Cy² + Dx + Ey + F = 0
 
 import sympy as sp
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from .implicit_curve import ImplicitCurve
 
 
@@ -128,6 +128,22 @@ class ConicSection(ImplicitCurve):
             This method always returns 2 as conic sections are by definition degree-2 curves.
         """
         return 2
+    
+    def on_curve(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray], 
+                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+        """
+        Check if point(s) are on the conic section curve.
+        
+        Args:
+            x_val: x coordinate(s) - can be scalar or numpy array
+            y_val: y coordinate(s) - can be scalar or numpy array
+            tolerance: Tolerance for curve membership test
+            
+        Returns:
+            Boolean or array of booleans indicating if points are on the curve
+        """
+        curve_values = self.evaluate(x_val, y_val)
+        return np.abs(curve_values) <= tolerance
     
     def canonical_form(self) -> 'ConicSection':
         """

@@ -100,15 +100,19 @@ class AreaRegion:
             
         Returns:
             bool: True if the point is inside the region, False otherwise
+            
+        Note:
+            AreaRegion.contains always checks if points are inside the region.
+            To check if points are on the boundary, use outer_boundary.on_curve() or holes[i].on_curve().
         """
         # Check if point is inside outer boundary (region containment)
         # This will use CompositeCurve's _point_in_polygon_scalar
-        if not self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=True):
+        if not self.outer_boundary.contains(x, y, tolerance=tolerance):
             return False
         
         # Check if point is inside any hole (if so, it's not in the region)
         for hole in self.holes:
-            if hole.contains(x, y, tolerance=tolerance, region_containment=True):
+            if hole.contains(x, y, tolerance=tolerance):
                 return False
         
         return True
@@ -126,12 +130,12 @@ class AreaRegion:
             bool: True if the point is on any boundary, False otherwise
         """
         # Check if point is on the outer boundary
-        if self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=False):
+        if self.outer_boundary.on_curve(x, y, tolerance=tolerance):
             return True
         
         # Check if point is on any hole boundary
         for hole in self.holes:
-            if hole.contains(x, y, tolerance=tolerance, region_containment=False):
+            if hole.contains(x, y, tolerance=tolerance):
                 return True
         
         return False

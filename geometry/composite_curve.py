@@ -181,13 +181,80 @@ class CompositeCurve(ImplicitCurve):
         
         Args:
             tolerance: Distance tolerance for connectivity check
-        
+
         Returns:
             True if all segment endpoints are properly connected
         """
         if len(self.segments) < 3:
             return False
         
+        # First, try to use explicit endpoints if available
+        if self._has_explicit_endpoints():
+            return self._check_explicit_endpoint_connectivity(tolerance)
+        
+        # Fall back to the old sampling method if no explicit endpoints
+        return self._check_sampled_endpoint_connectivity(tolerance)
+
+    def _has_explicit_endpoints(self) -> bool:
+        """
+        Check if all segments have explicit endpoints defined.
+        
+        Returns:
+            True if all segments have endpoints, False otherwise
+        """
+        for segment in self.segments:
+            if hasattr(segment, 'get_endpoints'):
+                endpoints = segment.get_endpoints()
+                if not endpoints or len(endpoints) != 2:
+                    return False
+            else:
+                return False
+        return True
+
+    def _check_explicit_endpoint_connectivity(self, tolerance: float) -> bool:
+        """
+        Check connectivity using explicit endpoints from TrimmedImplicitCurve segments.
+        
+        Args:
+            tolerance: Distance tolerance for connectivity check
+        
+        Returns:
+            True if all segments are properly connected
+        """
+        # For each consecutive pair of segments, check if they share an endpoint
+        for i in range(len(self.segments)):
+            current_segment = self.segments[i]
+            next_segment = self.segments[(i + 1) % len(self.segments)]  # Wrap around for last segment
+            
+            current_endpoints = current_segment.get_endpoints()
+            next_endpoints = next_segment.get_endpoints()
+            
+            # Check if any endpoint of current segment is close to any endpoint of next segment
+            connected = False
+            for curr_end in current_endpoints:
+                for next_end in next_endpoints:
+                    distance = np.sqrt((curr_end[0] - next_end[0])**2 + (curr_end[1] - next_end[1])**2)
+                    if distance <= tolerance:
+                        connected = True
+                        break
+                if connected:
+                    break
+            
+            if not connected:
+                return False
+        
+        return True
+
+    def _check_sampled_endpoint_connectivity(self, tolerance: float) -> bool:
+        """
+        Check connectivity using the old sampling method (fallback).
+        
+        Args:
+            tolerance: Distance tolerance for connectivity check
+        
+        Returns:
+            True if all segments are properly connected
+        """
         # For each consecutive pair of segments, check if they share an endpoint
         for i in range(len(self.segments)):
             current_segment = self.segments[i]
@@ -352,6 +419,36 @@ class CompositeCurve(ImplicitCurve):
                     segment_contains = segment.contains(x_array, y_array, tolerance)
                     result = result | segment_contains
                 return result
+    
+    def on_curve(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
+                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+        """
+        Check if point(s) are on any segment of the composite curve.
+        
+        Args:
+            x: x-coordinate(s)
+            y: y-coordinate(s)
+            tolerance: Tolerance for curve membership test
+            
+        Returns:
+            Boolean or array of booleans indicating if points are on any curve segment
+        """
+        if np.isscalar(x) and np.isscalar(y):
+            # Scalar case - check if point is on any segment
+            for segment in self.segments:
+                if segment.on_curve(x, y, tolerance):
+                    return True
+            return False
+        else:
+            # Vectorized case
+            x_array = np.asarray(x)
+            y_array = np.asarray(y)
+            result = np.zeros_like(x_array, dtype=bool)
+            
+            for segment in self.segments:
+                segment_on_curve = segment.on_curve(x_array, y_array, tolerance)
+                result = result | segment_on_curve
+            return result
     
     def evaluate(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """

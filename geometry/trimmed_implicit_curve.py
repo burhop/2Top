@@ -39,7 +39,8 @@ class TrimmedImplicitCurve(ImplicitCurve):
     
     def __init__(self, base_curve: ImplicitCurve, mask: Callable[[float, float], bool], 
                  variables: Tuple[sp.Symbol, sp.Symbol] = None,
-                 xmin: float = None, xmax: float = None, ymin: float = None, ymax: float = None):
+                 xmin: float = None, xmax: float = None, ymin: float = None, ymax: float = None,
+                 endpoints: List[Tuple[float, float]] = None):
         """
         Initialize TrimmedImplicitCurve with base curve and mask function.
         
@@ -47,6 +48,8 @@ class TrimmedImplicitCurve(ImplicitCurve):
             base_curve: ImplicitCurve to be trimmed
             mask: Callable that takes (x, y) and returns True if point should be included
             variables: Tuple of (x, y) symbols, defaults to base_curve.variables
+            xmin, xmax, ymin, ymax: Optional explicit bounding box
+            endpoints: Optional list of (x, y) tuples representing the curve segment endpoints
             
         Raises:
             TypeError: If base_curve is not ImplicitCurve or mask is not callable
@@ -64,6 +67,9 @@ class TrimmedImplicitCurve(ImplicitCurve):
         self._xmax = xmax
         self._ymin = ymin
         self._ymax = ymax
+        
+        # Store explicit endpoints if provided
+        self.endpoints = endpoints if endpoints is not None else []
         
         
         # Use variables from base curve if not specified
@@ -129,6 +135,28 @@ class TrimmedImplicitCurve(ImplicitCurve):
             mask_results = mask_results.reshape(x_array.shape)
             
             return on_curve & mask_results
+    
+    def on_curve(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
+                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+        """
+        Check if point(s) are on the trimmed curve segment.
+        
+        A point is on the curve if:
+        1. It lies on the base curve boundary (abs(base_curve.evaluate(x, y)) <= tolerance)
+        2. It satisfies the mask condition (mask(x, y) == True)
+        
+        This is the same as the contains method for trimmed curves since they represent
+        curve segments, not filled regions.
+        
+        Args:
+            x: x-coordinate(s)
+            y: y-coordinate(s)
+            tolerance: Tolerance for curve membership test
+            
+        Returns:
+            Boolean or array of booleans indicating if points are on the curve segment
+        """
+        return self.contains(x, y, tolerance)
     
     def evaluate(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """
@@ -576,6 +604,16 @@ class TrimmedImplicitCurve(ImplicitCurve):
         # It's a vertical line if y_coeff is zero and x_coeff is non-zero
         return np.isclose(y_coeff, 0.0, atol=tolerance) and not np.isclose(x_coeff, 0.0, atol=tolerance)
 
+    def get_endpoints(self) -> List[Tuple[float, float]]:
+        """
+        Get the endpoints of the trimmed curve segment.
+        
+        Returns:
+            List of (x, y) tuples representing the endpoints of the curve segment.
+            Returns empty list if no explicit endpoints were provided.
+        """
+        return self.endpoints.copy() if self.endpoints else []
+    
     def get_points_on_curve(self, num_points: int = 100) -> List[Tuple[float, float]]:
         """
         Generates a list of (x, y) points that lie on the trimmed implicit curve.

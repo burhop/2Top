@@ -9,7 +9,7 @@ General form: P(x,y) = 0 where P is a polynomial in x and y
 
 import sympy as sp
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from .implicit_curve import ImplicitCurve
 
 
@@ -109,6 +109,22 @@ class PolynomialCurve(ImplicitCurve):
             except Exception:
                 # Last resort: if we can't compute degree, raise error
                 raise ValueError(f"Cannot compute degree of expression: {self.expression}")
+    
+    def on_curve(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray], 
+                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+        """
+        Check if point(s) are on the polynomial curve.
+        
+        Args:
+            x_val: x coordinate(s) - can be scalar or numpy array
+            y_val: y coordinate(s) - can be scalar or numpy array
+            tolerance: Tolerance for curve membership test
+            
+        Returns:
+            Boolean or array of booleans indicating if points are on the curve
+        """
+        curve_values = self.evaluate(x_val, y_val)
+        return np.abs(curve_values) <= tolerance
     
     def to_dict(self) -> dict:
         """

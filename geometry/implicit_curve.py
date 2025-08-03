@@ -240,6 +240,29 @@ class ImplicitCurve:
         plt.axis('equal')
         plt.show()
     
+    def on_curve(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray], 
+                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+        """
+        Check if point(s) are on the curve.
+        
+        Base implementation returns False. Subclasses should override this method
+        to provide proper curve membership testing.
+        
+        Args:
+            x_val: x coordinate(s) - can be scalar or numpy array
+            y_val: y coordinate(s) - can be scalar or numpy array
+            tolerance: Tolerance for curve membership test
+            
+        Returns:
+            Boolean or array of booleans indicating if points are on the curve
+        """
+        if np.isscalar(x_val) and np.isscalar(y_val):
+            return False
+        else:
+            # Return array of False values with same shape as input
+            x_array = np.asarray(x_val)
+            return np.zeros_like(x_array, dtype=bool)
+    
     def bounding_box(self) -> Tuple[float, float, float, float]:
         """
         Returns a bounding box (xmin, xmax, ymin, ymax) for the implicit curve.
