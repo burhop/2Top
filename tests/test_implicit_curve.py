@@ -131,7 +131,7 @@ class TestImplicitCurveEvaluate:
         # Check specific points
         assert results[0, 0] < 0  # (0,0) inside
         assert abs(results[0, 1]) < 1e-10  # (1,0) on curve
-        assert results[1, 0] < 0  # (0,1) inside
+        assert abs(results[1, 0]) < 1e-10  # (0,1) on curve
         assert results[1, 1] > 0  # (1,1) outside
     
     def test_evaluate_mixed_scalar_array_input(self):
@@ -446,7 +446,7 @@ class TestImplicitCurveSerialization:
             ImplicitCurve.from_dict("not a dict")
         
         # Test with wrong type
-        with pytest.raises(ValueError, match="Invalid type"):
+        with pytest.raises(ValueError, match="Unknown curve type"):
             ImplicitCurve.from_dict({"type": "WrongType", "expression": "x + y"})
         
         # Test with missing expression

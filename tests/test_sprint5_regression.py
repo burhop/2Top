@@ -17,6 +17,9 @@ Test Coverage:
 import pytest
 import sympy as sp
 import numpy as np
+import matplotlib
+# Use non-interactive backend to avoid display issues
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from geometry.implicit_curve import ImplicitCurve
 from geometry.conic_section import ConicSection
@@ -507,7 +510,8 @@ class TestEdgeCases:
         
         for x, y in test_points:
             trimmed_contains = trimmed.contains(x, y)
-            base_contains = self.circle.evaluate(x, y) <= 0
+            # For boundary containment, check if point is on the curve (within tolerance)
+            base_contains = abs(self.circle.evaluate(x, y)) <= 1e-3
             assert trimmed_contains == base_contains
 
 

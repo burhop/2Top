@@ -107,12 +107,12 @@ class AreaRegion:
         """
         # Check if point is inside outer boundary (region containment)
         # This will use CompositeCurve's _point_in_polygon_scalar
-        if not self.outer_boundary.contains(x, y, tolerance=tolerance):
+        if not self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=True):
             return False
         
         # Check if point is inside any hole (if so, it's not in the region)
         for hole in self.holes:
-            if hole.contains(x, y, tolerance=tolerance):
+            if hole.contains(x, y, tolerance=tolerance, region_containment=True):
                 return False
         
         return True

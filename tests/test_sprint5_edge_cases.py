@@ -321,8 +321,8 @@ class TestSpecialCases:
         
         # Always True mask
         always_true = TrimmedImplicitCurve(self.circle, lambda x, y: True)
-        # Should behave like base curve
-        base_contains = self.circle.evaluate(0.0, 0.0) <= 0
+        # Should behave like base curve for boundary containment
+        base_contains = abs(self.circle.evaluate(0.0, 0.0)) <= 1e-3
         assert always_true.contains(0.0, 0.0) == base_contains
     
     def test_boundary_conditions(self):

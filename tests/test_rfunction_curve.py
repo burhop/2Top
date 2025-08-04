@@ -385,9 +385,10 @@ class TestRFunctionCurveInheritedMethods:
                 assert abs(magnitude - 1.0) < 1e-10
                 
             except (ValueError, ZeroDivisionError):
-                # If gradient is zero, normal should raise error
-                with pytest.raises((ValueError, ZeroDivisionError)):
-                    self.union_curve.gradient(x, y)
+                # If normal fails due to zero gradient, gradient should return zero
+                gx, gy = self.union_curve.gradient(x, y)
+                magnitude = np.sqrt(gx**2 + gy**2)
+                assert magnitude < 1e-10  # Gradient should be approximately zero
     
     def test_variables_property_inherited(self):
         """Test that variables property works correctly"""

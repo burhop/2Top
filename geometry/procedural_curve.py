@@ -95,7 +95,7 @@ class ProceduralCurve(ImplicitCurve):
         result = np.zeros_like(x_arr, dtype=float)
         flat_x = x_arr.flatten()
         flat_y = y_arr.flatten()
-        flat_result = result.flatten()
+        flat_result = result.ravel()  # Use ravel() to get a view, not a copy
         
         for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
             flat_result[i] = self.function(float(xi), float(yi))
@@ -133,8 +133,8 @@ class ProceduralCurve(ImplicitCurve):
         
         flat_x = x_arr.flatten()
         flat_y = y_arr.flatten()
-        flat_grad_x = grad_x.flatten()
-        flat_grad_y = grad_y.flatten()
+        flat_grad_x = grad_x.ravel()  # Use ravel() to get a view, not a copy
+        flat_grad_y = grad_y.ravel()  # Use ravel() to get a view, not a copy
         
         for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
             gx, gy = self._gradient_scalar(float(xi), float(yi))
@@ -181,7 +181,7 @@ class ProceduralCurve(ImplicitCurve):
         # Create base dictionary structure
         data = {
             "type": "ProceduralCurve",
-            "function": self.name,  # Use name as placeholder
+            "function": "custom",  # Always use "custom" as placeholder indicator
             "variables": [str(var) for var in self.variables],
             "name": self.name
         }

@@ -101,10 +101,10 @@ class Superellipse(ImplicitCurve):
         grad_x = np.zeros_like(x_arr, dtype=float)
         grad_y = np.zeros_like(y_arr, dtype=float)
         
-        flat_x = x_arr.flatten()
-        flat_y = y_arr.flatten()
-        flat_grad_x = grad_x.flatten()
-        flat_grad_y = grad_y.flatten()
+        flat_x = x_arr.ravel()
+        flat_y = y_arr.ravel()
+        flat_grad_x = grad_x.ravel()
+        flat_grad_y = grad_y.ravel()
         
         for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
             gx, gy = self._gradient_scalar(float(xi), float(yi))

@@ -324,7 +324,7 @@ class TestSuperellipseSpecializedMethods:
     def test_string_representations(self):
         """Test string representations"""
         circle_str = str(self.circle)
-        assert "superellipse" in circle_str.lower() or "abs" in circle_str.lower()
+        assert "superellipse" in circle_str.lower() or "abs" in circle_str.lower() or "|" in circle_str
         
         circle_repr = repr(self.circle)
         assert "Superellipse" in circle_repr

@@ -83,8 +83,12 @@ class ImplicitCurve:
             # Check for overflow/underflow in the result
             if np.isscalar(result):
                 if np.isnan(result):
-                    # Treat NaN as "outside" - use large finite value
-                    return 1e100
+                    # If inputs contain NaN, preserve NaN in output for mathematical correctness
+                    if np.isnan(x_val) or np.isnan(y_val):
+                        return result  # Preserve NaN
+                    else:
+                        # NaN from numerical issues - treat as "outside"
+                        return 1e100
                 elif np.isinf(result):
                     # Check if infinity is mathematically correct by checking inputs
                     if np.isinf(x_val) or np.isinf(y_val):
@@ -96,8 +100,10 @@ class ImplicitCurve:
             else:
                 # Handle array results
                 result = np.asarray(result)
-                # Handle NaN values
-                result = np.where(np.isnan(result), 1e100, result)  # Treat NaN as "outside"
+                # Handle NaN values - preserve NaN when inputs contain NaN
+                input_has_nan = np.isnan(x_val) | np.isnan(y_val)
+                # Only replace NaN with 1e100 where inputs don't contain NaN
+                result = np.where(np.isnan(result) & ~input_has_nan, 1e100, result)
                 # Handle infinity values - preserve if inputs contain infinity
                 if np.any(np.isinf(x_val)) or np.any(np.isinf(y_val)):
                     # Some inputs are infinite, so infinite results may be mathematically correct

@@ -484,7 +484,8 @@ class TestFieldStrategyEdgeCases:
         occ_result = occ.evaluate(small_coord, small_coord)
         
         assert isinstance(sdf_result, float)
-        assert occ_result == 0.0  # Should be outside (since square starts at 0,0)
+        assert sdf_result < 0  # Should be inside (point is within square bounds)
+        assert occ_result == 1.0  # Should be inside (point (1e-6, 1e-6) is within square (0,0) to (4,4))
     
     def test_field_evaluation_nan_coordinates(self):
         """Test field evaluation with NaN coordinates."""

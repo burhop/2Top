@@ -145,9 +145,9 @@ class TestAreaRegionContains:
         region = AreaRegion(square)
         
         # Test points inside
-        assert region.contains(0, 0, region_containment=True) == True  # Center
-        assert region.contains(0.5, 0.5, region_containment=True) == True  # Inside
-        assert region.contains(-0.5, -0.5, region_containment=True) == True  # Inside
+        assert region.contains(0, 0) == True  # Center
+        assert region.contains(0.5, 0.5) == True  # Inside
+        assert region.contains(-0.5, -0.5) == True  # Inside
         
         # Test points outside
         assert region.contains(2, 0) == False  # Right of square
@@ -181,15 +181,15 @@ class TestAreaRegionContains:
         region = AreaRegion(outer, [circle_composite])
         
         # Test points inside square but outside hole
-        assert region.contains(1.5, 0, region_containment=True) == True  # Right side of square, outside hole
-        assert region.contains(0, 1.5, region_containment=True) == True  # Top side of square, outside hole
-        assert region.contains(-1.5, 0, region_containment=True) == True  # Left side of square, outside hole
-        assert region.contains(0, -1.5, region_containment=True) == True  # Bottom side of square, outside hole
+        assert region.contains(1.5, 0) == True  # Right side of square, outside hole
+        assert region.contains(0, 1.5) == True  # Top side of square, outside hole
+        assert region.contains(-1.5, 0) == True  # Left side of square, outside hole
+        assert region.contains(0, -1.5) == True  # Bottom side of square, outside hole
         
         # Test points inside hole (should be False)
-        assert region.contains(0, 0, region_containment=True) == False  # Center of hole
-        assert region.contains(0.5, 0, region_containment=True) == False  # Inside hole
-        assert region.contains(0, 0.5, region_containment=True) == False  # Inside hole
+        assert region.contains(0, 0) == False  # Center of hole
+        assert region.contains(0.5, 0) == False  # Inside hole
+        assert region.contains(0, 0.5) == False  # Inside hole
         
         # Test points outside square (should be False)
         assert region.contains(3, 0) == False  # Outside square
@@ -207,13 +207,13 @@ class TestAreaRegionContains:
         region = AreaRegion(outer, [hole1, hole2])
         
         # Test points inside outer boundary but outside holes
-        assert region.contains(0, 0, region_containment=True) == True  # Center, between holes
-        assert region.contains(2.5, 0, region_containment=True) == True  # Right side, outside holes
-        assert region.contains(-2.5, 0, region_containment=True) == True  # Left side, outside holes
+        assert region.contains(0, 0) == True  # Center, between holes
+        assert region.contains(2.5, 0) == True  # Right side, outside holes
+        assert region.contains(-2.5, 0) == True  # Left side, outside holes
         
         # Test points inside holes (should be False)
-        assert region.contains(-1.5, -1.5, region_containment=True) == False  # Inside hole1
-        assert region.contains(1.5, 1.5, region_containment=True) == False    # Inside hole2
+        assert region.contains(-1.5, -1.5) == False  # Inside hole1
+        assert region.contains(1.5, 1.5) == False    # Inside hole2
         
         # Test points outside outer boundary
         assert region.contains(4, 0) == False  # Outside outer boundary
@@ -338,7 +338,7 @@ class TestAreaRegionSerialization:
         # Test some containment points
         test_points = [(0, 0), (0.5, 0.5), (2, 0), (0, 2)]
         for x, y in test_points:
-            assert original.contains(x, y, region_containment=True) == reconstructed.contains(x, y, region_containment=True)
+            assert original.contains(x, y) == reconstructed.contains(x, y)
     
     def test_from_dict_region_with_holes(self):
         """Test deserialization of a region with holes."""

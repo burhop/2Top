@@ -455,16 +455,20 @@ class CompositeCurve(ImplicitCurve):
         Evaluate the composite curve using pseudo-distance metric.
         
         For composite curves, we use the minimum distance to any segment
-        as the evaluation metric. This provides a reasonable implicit function
-        for the piecewise curve.
+        as the evaluation metric. For squares created by create_square_from_edges,
+        we use a special max-based evaluation.
         
         Args:
             x: x-coordinate(s)
             y: y-coordinate(s)
             
         Returns:
-            Minimum distance to any segment
+            Distance metric for the composite curve
         """
+        # Special handling for squares
+        if hasattr(self, '_is_square') and self._is_square:
+            return self._evaluate_square(x, y)
+        
         if np.isscalar(x) and np.isscalar(y):
             # Scalar case - find minimum over all segments
             values = [segment.evaluate(x, y) for segment in self.segments]
@@ -479,6 +483,30 @@ class CompositeCurve(ImplicitCurve):
             
             # Take minimum across segments
             return np.minimum.reduce(segment_values)
+    
+    def _evaluate_square(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+        """
+        Special evaluation for squares using max-distance metric.
+        
+        For a square, the implicit function is:
+        max(|x - center_x| - half_width, |y - center_y| - half_height) = 0
+        """
+        xmin, xmax, ymin, ymax = self._square_bounds
+        center_x = (xmin + xmax) / 2
+        center_y = (ymin + ymax) / 2
+        half_width = (xmax - xmin) / 2
+        half_height = (ymax - ymin) / 2
+        
+        if np.isscalar(x) and np.isscalar(y):
+            dx = abs(x - center_x) - half_width
+            dy = abs(y - center_y) - half_height
+            return max(dx, dy)
+        else:
+            x_arr = np.asarray(x)
+            y_arr = np.asarray(y)
+            dx = np.abs(x_arr - center_x) - half_width
+            dy = np.abs(y_arr - center_y) - half_height
+            return np.maximum(dx, dy)
     
     def gradient(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """
@@ -1072,6 +1100,7 @@ def create_circle_from_quarters(center: Tuple[float, float] = (0, 0),
     
     return CompositeCurve(segments, variables)
 
+
 def create_square_from_edges(corner1: Tuple[float, float] = (0, 0),
                            corner2: Tuple[float, float] = (1, 1),
                            variables: Tuple[sp.Symbol, sp.Symbol] = None) -> CompositeCurve:
@@ -1115,4 +1144,9 @@ def create_square_from_edges(corner1: Tuple[float, float] = (0, 0),
         TrimmedImplicitCurve(left_line, lambda x, y: ymin <= y <= ymax and abs(x - xmin) < 1e-6, xmin=xmin, xmax=xmin, ymin=ymin, ymax=ymax),    # Left edge: x = xmin, y in [ymin, ymax]
     ]
     
-    return CompositeCurve(segments, variables)
+    # Create a special CompositeCurve that uses max evaluation for squares
+    square_curve = CompositeCurve(segments, variables)
+    square_curve._is_square = True  # Mark as square for special evaluation
+    square_curve._square_bounds = (xmin, xmax, ymin, ymax)
+    
+    return square_curve

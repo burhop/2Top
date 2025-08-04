@@ -289,7 +289,8 @@ class SignedDistanceField(BaseField):
             for i in range(len(flat_x)):
                 flat_result[i] = self._compute_signed_distance(flat_x[i], flat_y[i])
             
-            return result
+            # Reshape flat_result back to original shape
+            return flat_result.reshape(x_array.shape)
     
     def _compute_signed_distance(self, x: float, y: float) -> float:
         """
@@ -472,7 +473,8 @@ class OccupancyField(BaseField):
                 if self.region.contains(flat_x[i], flat_y[i]):
                     flat_result[i] = self.inside_value
             
-            return result
+            # Reshape flat_result back to original shape
+            return flat_result.reshape(x_array.shape)
     
     def gradient(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[tuple, tuple]:
         """

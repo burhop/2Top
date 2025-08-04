@@ -518,15 +518,18 @@ class TrimmedImplicitCurve(ImplicitCurve):
                 "mask that always returns True, effectively removing trimming."
             )
         else:
-            trimmed_curve._deserialization_info = (
-                f"Mask function reconstructed from {mask_info.get('pattern_type')} pattern."
-            )
-            # For backward compatibility with tests expecting warnings, also set warning
-            # when deserializing from old format that had no enhanced pattern detection
+            # Check if this is from old format that expected placeholder behavior
             if "mask" in data and data["mask"] == "<<FUNCTION_NOT_SERIALIZABLE>>":
+                # For backward compatibility, use placeholder mask and set warning
+                trimmed_curve.mask = lambda x, y: True
                 trimmed_curve._deserialization_warning = (
                     "Mask function was not serializable in original format. "
-                    "Enhanced reconstruction was applied but placeholder behavior expected."
+                    "Using placeholder mask that always returns True."
+                )
+            else:
+                # Use reconstructed mask and set info
+                trimmed_curve._deserialization_info = (
+                    f"Mask function reconstructed from {mask_info.get('pattern_type')} pattern."
                 )
         
         return trimmed_curve

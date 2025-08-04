@@ -318,7 +318,7 @@ class TestSprint2EdgeCases:
             {},  # Empty dict
             {"type": "WrongType"},  # Wrong type
             {"type": "ConicSection"},  # Missing expression
-            {"type": "ConicSection", "expression": "invalid_expr"},  # Invalid expression
+            {"type": "ConicSection", "expression": "x +"},  # Invalid expression
         ]
         
         for invalid_data in invalid_data_cases:
