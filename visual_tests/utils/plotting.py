@@ -6,16 +6,19 @@ including curve plotting, region visualization, and grid management.
 """
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import os
 from typing import Tuple, List, Optional, Any
 import traceback
 
-# Configure matplotlib for better display
-plt.ion()  # Turn on interactive mode
+# Configure matplotlib for better display and headless safety
+plt.ion()  # interactive mode if a GUI backend is available
 try:
-    plt.switch_backend('TkAgg')  # Use TkAgg backend for better Windows compatibility
-except:
-    pass  # Fall back to default backend
+    plt.switch_backend('TkAgg')  # Prefer TkAgg on Windows if available
+except Exception:
+    # Keep current backend (often 'Agg' in headless CI); we'll auto-save in that case
+    pass
 
 
 class PlotManager:
@@ -107,22 +110,37 @@ class PlotManager:
             linewidth: Line width for the curve
         """
         try:
-            # Evaluate curve over the grid
-            Z = np.zeros_like(X)
-            for i in range(X.shape[0]):
-                for j in range(X.shape[1]):
-                    try:
-                        Z[i, j] = curve.evaluate(X[i, j], Y[i, j])
-                    except:
-                        Z[i, j] = np.nan
+            # Evaluate curve over the grid (vectorized with safe fallback)
+            try:
+                Z = np.asarray(curve.evaluate(X, Y))
+                if Z.shape != X.shape:
+                    # Some implementations might return flat array; reshape or fallback
+                    Z = Z.reshape(X.shape)
+            except Exception:
+                Z = np.zeros_like(X)
+                for i in range(X.shape[0]):
+                    for j in range(X.shape[1]):
+                        try:
+                            Z[i, j] = curve.evaluate(X[i, j], Y[i, j])
+                        except Exception:
+                            Z[i, j] = np.nan
             
             # Plot zero level (the actual curve)
-            ax.contour(X, Y, Z, levels=[0], colors=[color], linewidths=linewidth)
+            try:
+                cs0 = ax.contour(X, Y, Z, levels=[0], colors=[color], linewidths=linewidth)
+            except Exception as e:
+                # If contouring fails (e.g., all-NaN), show a warning in-plot
+                ax.text(0.5, 0.5, "No contour at level 0", transform=ax.transAxes,
+                        ha='center', va='center', fontsize=10, color='orange')
             
             # Plot additional level curves if requested
             if show_levels:
-                ax.contour(X, Y, Z, levels=[-2, -1, -0.5, 0.5, 1, 2], 
-                          colors='gray', alpha=0.3, linewidths=0.5)
+                try:
+                    ax.contour(X, Y, Z, levels=[-2, -1, -0.5, 0.5, 1, 2],
+                              colors='gray', alpha=0.3, linewidths=0.5)
+                except Exception:
+                    # Ignore auxiliary levels if they fail
+                    pass
             
             self._apply_standard_styling(ax, title)
             
@@ -132,49 +150,81 @@ class PlotManager:
                    ha='center', va='center', fontsize=10, color='red')
             self._apply_standard_styling(ax, f"{title} (ERROR)")
     
-    def plot_region_filled(self, ax: plt.Axes, region: Any, X: np.ndarray, Y: np.ndarray,
-                          title: str = "", fill_color: str = 'lightblue',
-                          boundary_color: str = 'red', point_size: float = 1) -> None:
+    def plot_region_filled(self, ax: Any, region: Any, X: np.ndarray, Y: np.ndarray,
+                           title: str = '', fill_color: str = 'lightblue', 
+                           boundary_color: str = 'red', point_size: float = 1.0) -> None:
         """
-        Plot a filled region with boundary points.
-        
-        Args:
-            ax: Matplotlib axes to plot on
-            region: Region object with contains method
-            X: X coordinate meshgrid
-            Y: Y coordinate meshgrid
+        Plot a filled region by testing containment over a grid.
+
+        Parameters:
+            ax: Matplotlib axes
+            region: AreaRegion-like object with contains methods
+            X, Y: Grid arrays
             title: Plot title
-            fill_color: Color for interior points
+            fill_color: Fill color for interior points
             boundary_color: Color for boundary points
             point_size: Size of plotted points
         """
         try:
-            inside_mask = np.zeros_like(X, dtype=bool)
-            boundary_mask = np.zeros_like(X, dtype=bool)
-            
-            # Test containment over the grid
-            for i in range(X.shape[0]):
-                for j in range(X.shape[1]):
-                    try:
-                        inside_mask[i, j] = region.contains(X[i, j], Y[i, j], region_containment=True)
-                        boundary_mask[i, j] = region.contains(X[i, j], Y[i, j], region_containment=False)
-                    except:
-                        inside_mask[i, j] = False
-                        boundary_mask[i, j] = False
+            # Prefer robust evaluator for containment to avoid vectorization pitfalls
+            try:
+                # Local import to avoid circular dependency
+                from visual_tests.utils.grid_evaluation import GridEvaluator
+                evaluator = GridEvaluator()
+                inside_mask, boundary_mask = evaluator.evaluate_region_containment(
+                    region, X, Y, test_boundary=True
+                )
+            except Exception:
+                # Fallback to conservative per-point evaluation
+                inside_mask = np.zeros_like(X, dtype=bool)
+                boundary_mask = np.zeros_like(X, dtype=bool)
+                for i in range(X.shape[0]):
+                    for j in range(X.shape[1]):
+                        try:
+                            inside_mask[i, j] = region.contains(X[i, j], Y[i, j])
+                        except Exception:
+                            inside_mask[i, j] = False
+                        try:
+                            if hasattr(region, 'contains_boundary'):
+                                boundary_mask[i, j] = region.contains_boundary(X[i, j], Y[i, j])
+                            else:
+                                boundary_mask[i, j] = region.contains(X[i, j], Y[i, j], region_containment=False)
+                        except Exception:
+                            boundary_mask[i, j] = False
             
             # Plot filled area
             inside_points = np.where(inside_mask)
-            if len(inside_points[0]) > 0:
-                ax.scatter(X[inside_points], Y[inside_points], 
-                          c=fill_color, s=point_size, alpha=0.6, 
-                          label=f'Inside ({len(inside_points[0])} points)')
-            
-            # Plot boundary
             boundary_points = np.where(boundary_mask)
-            if len(boundary_points[0]) > 0:
-                ax.scatter(X[boundary_points], Y[boundary_points], 
-                          c=boundary_color, s=point_size*2, alpha=0.8,
-                          label=f'Boundary ({len(boundary_points[0])} points)')
+
+            if len(inside_points[0]) == 0 and len(boundary_points[0]) == 0:
+                ax.text(0.5, 0.5, "No region points detected", transform=ax.transAxes,
+                       ha='center', va='center', fontsize=10, color='orange')
+            else:
+                ax.scatter(X[inside_points], Y[inside_points], s=point_size, c=fill_color, label=f"Inside ({len(inside_points[0])} points)", edgecolors='none', alpha=0.6)
+                if len(boundary_points[0]) > 0:
+                    ax.scatter(X[boundary_points], Y[boundary_points], s=point_size*1.5, c=boundary_color, label=f"Boundary ({len(boundary_points[0])} points)", alpha=0.8)
+
+            # Overlay explicit boundary contour from region's boundary curve, if available
+            try:
+                boundary_curve = getattr(region, 'outer_boundary', None) or getattr(region, 'boundary', None)
+                if boundary_curve is not None and hasattr(boundary_curve, 'evaluate'):
+                    try:
+                        Zb = np.asarray(boundary_curve.evaluate(X, Y))
+                        if Zb.shape != X.shape:
+                            Zb = Zb.reshape(X.shape)
+                        ax.contour(X, Y, Zb, levels=[0], colors=[boundary_color], linewidths=1.0)
+                    except Exception:
+                        # If composite, try to iterate components
+                        for seg in getattr(boundary_curve, 'curves', []):
+                            try:
+                                Zs = np.asarray(seg.evaluate(X, Y))
+                                if Zs.shape != X.shape:
+                                    Zs = Zs.reshape(X.shape)
+                                ax.contour(X, Y, Zs, levels=[0], colors=[boundary_color], linewidths=1.0)
+                            except Exception:
+                                continue
+            except Exception:
+                pass
             
             self._apply_standard_styling(ax, title)
             ax.legend(fontsize=8)
@@ -252,15 +302,32 @@ class PlotManager:
         """
         try:
             plt.tight_layout()
-            
+
+            # Detect headless/non-interactive backends
+            backend = mpl.get_backend().lower()
+            headless = 'agg' in backend or 'pdf' in backend or 'svg' in backend
+
+            # Ensure output directory exists when saving
+            out_dir = os.path.join(os.path.dirname(__file__), '..', 'output')
+            out_dir = os.path.abspath(out_dir)
+            try:
+                os.makedirs(out_dir, exist_ok=True)
+            except Exception:
+                pass
+
+            if filename is None and headless:
+                # Auto-generate filename in output directory
+                import time as _time
+                filename = os.path.join(out_dir, f"visual_{int(_time.time())}.png")
+
             if filename:
                 plt.savefig(filename, dpi=dpi, bbox_inches='tight')
                 print(f"Plot saved to {filename}")
             else:
-                # Use non-blocking show for better responsiveness
+                # Non-blocking show for interactive backends
                 plt.show(block=False)
                 plt.draw()
-                plt.pause(0.1)  # Brief pause to ensure plot is displayed
+                plt.pause(0.2)
                 
         except Exception as e:
             print(f"Error saving/showing plot: {e}")

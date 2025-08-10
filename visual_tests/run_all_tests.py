@@ -8,8 +8,13 @@ The GUI includes checkboxes for test selection and displays results.
 import sys
 import os
 import argparse
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+# Make tkinter optional so CLI can run in headless environments
+try:
+    import tkinter as tk
+    from tkinter import ttk, scrolledtext, messagebox
+    TK_AVAILABLE = True
+except Exception:
+    TK_AVAILABLE = False
 import threading
 import io
 from contextlib import redirect_stdout, redirect_stderr
@@ -116,6 +121,8 @@ class VisualTestGUI:
     """GUI for running visual tests with checkboxes and results display."""
     
     def __init__(self, root):
+        if not TK_AVAILABLE:
+            raise RuntimeError("Tkinter is not available; cannot launch GUI.")
         self.root = root
         self.root.title("Visual Tests - 2D Implicit Geometry Library")
         self.root.geometry("800x700")
@@ -345,6 +352,9 @@ class VisualTestGUI:
 
 def run_gui():
     """Run the GUI version of the test runner."""
+    if not TK_AVAILABLE:
+        print("Tkinter is not available; falling back to command-line runner.")
+        return run_command_line()
     root = tk.Tk()
     app = VisualTestGUI(root)
     root.mainloop()
@@ -361,8 +371,7 @@ def run_command_line():
     args = parser.parse_args()
     
     if args.gui:
-        run_gui()
-        return 0
+        return run_gui() or 0
     
     if args.list:
         print("Available test categories:")
@@ -435,9 +444,11 @@ def run_all_tests():
 
 
 if __name__ == "__main__":
-    # If no arguments provided, launch GUI
+    # If no arguments provided, try GUI; if unavailable, fallback to CLI
     if len(sys.argv) == 1:
-        run_gui()
+        result = run_gui()
+        if isinstance(result, int):
+            sys.exit(result)
     else:
         exit_code = run_command_line()
         sys.exit(exit_code)

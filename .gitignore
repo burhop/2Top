@@ -128,3 +128,66 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# 2Top Project Specific - Debug and Temporary Files
+# Debug files from development sessions
+debug_*.py
+debug_*.txt
+*debug*.txt
+test_*.txt
+test_*.log
+test_*.png
+temp_*.py
+temp_*.txt
+*_temp.*
+*.tmp
+*.bak
+
+# Test output and analysis files
+*test_results*.txt
+*_test_results.txt
+current_test_status.txt
+broader_test_results.txt
+field_*.txt
+area_region_test_results*.txt
+tolerance_handling_failure.txt
+serialization_failure.txt
+serialization_structure_failure.txt
+trimmed_curve_failure.txt
+overlapping_segments_failure.txt
+remaining_failures_detail.txt
+
+# Visual test output files
+visual_tests/output/
+visual_tests/temp/
+visual_tests/debug/
+visual_tests/**/*.png
+visual_tests/**/*.jpg
+visual_tests/**/*.jpeg
+visual_tests/**/*.gif
+visual_tests/**/*.svg
+visual_tests/**/*.pdf
+*.png.tmp
+
+# Animation cache files (when implemented)
+animation_cache/
+*.frame_cache
+frames_*.png
+
+# Development analysis documents (temporary)
+*_Analysis.md
+overall_progress.txt
+retrospective.md
+
+# PlantUML and diagram generation
+plantuml.jar
+*.puml.tmp
+
+# Pytest artifacts
+.pytest_results.xml
+.pytest_cache/
+pytest_results.xml
+
+# Scene management cache (when implemented)
+scene_cache/
+*.scene_cache
+

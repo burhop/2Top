@@ -121,33 +121,80 @@ class GridEvaluator:
         for chunk_idx in range(num_chunks):
             start_idx = chunk_idx * chunk_size
             end_idx = min(start_idx + chunk_size, total_points)
-            
+
             # Progress reporting
             if num_chunks > 1:
                 progress = (chunk_idx + 1) / num_chunks * 100
                 print(f"    Progress: {progress:.1f}% ({end_idx}/{total_points} points)")
-            
-            # Process chunk
+
+            # Process chunk for inside mask
             for i in range(start_idx, end_idx):
                 try:
-                    inside_flat[i] = region.contains(X_flat[i], Y_flat[i], region_containment=True)
-                    
-                    if test_boundary:
-                        boundary_flat[i] = region.contains(X_flat[i], Y_flat[i], region_containment=False)
-                        
-                except Exception as e:
+                    # AreaRegion.contains signature is (x, y, tolerance=...)
+                    # Do not pass non-existent flags like region_containment
+                    inside_flat[i] = region.contains(X_flat[i], Y_flat[i])
+                except Exception:
                     if handle_errors:
                         inside_flat[i] = False
-                        if test_boundary:
-                            boundary_flat[i] = False
                         error_count += 1
                     else:
-                        raise e
+                        raise
         
-        # Reshape back to original grid shape
+        # Reshape inside mask
         inside_mask = inside_flat.reshape(X.shape)
+
+        # Compute boundary mask using implicit boundary evaluation with tolerance
         if test_boundary:
-            boundary_mask = boundary_flat.reshape(X.shape)
+            # Determine tolerance based on grid spacing
+            try:
+                dx = (np.max(X) - np.min(X)) / max(X.shape[1] - 1, 1)
+                dy = (np.max(Y) - np.min(Y)) / max(Y.shape[0] - 1, 1)
+                eps = 0.5 * max(dx, dy)
+            except Exception:
+                eps = 1e-2
+
+            boundary_mask = np.zeros_like(X, dtype=bool)
+
+            # Try to get a boundary curve to evaluate
+            boundary_curve = getattr(region, 'outer_boundary', None) or getattr(region, 'boundary', None)
+
+            if boundary_curve is not None and hasattr(boundary_curve, 'evaluate'):
+                try:
+                    Zb = np.asarray(boundary_curve.evaluate(X, Y))
+                    if Zb.shape != X.shape:
+                        Zb = Zb.reshape(X.shape)
+                    boundary_mask = np.isfinite(Zb) & (np.abs(Zb) <= eps)
+                except Exception:
+                    # Fall back to per-point evaluation on segments if composite
+                    curves = getattr(boundary_curve, 'curves', [])
+                    if curves:
+                        Z_accum = np.full_like(X, np.inf, dtype=float)
+                        for seg in curves:
+                            try:
+                                Zs = np.asarray(seg.evaluate(X, Y))
+                                if Zs.shape != X.shape:
+                                    Zs = Zs.reshape(X.shape)
+                                # accumulate min absolute value as proxy for distance to boundary
+                                Z_accum = np.minimum(Z_accum, np.abs(Zs))
+                            except Exception:
+                                continue
+                        boundary_mask = np.isfinite(Z_accum) & (Z_accum <= eps)
+                    else:
+                        # Last resort: use exact boundary containment (likely sparse)
+                        for i in range(total_points):
+                            try:
+                                boundary_flat[i] = region.contains(X_flat[i], Y_flat[i], region_containment=False)
+                            except Exception:
+                                boundary_flat[i] = False
+                        boundary_mask = boundary_flat.reshape(X.shape)
+            else:
+                # No explicit boundary available: resort to exact boundary containment
+                for i in range(total_points):
+                    try:
+                        boundary_flat[i] = region.contains(X_flat[i], Y_flat[i], region_containment=False)
+                    except Exception:
+                        boundary_flat[i] = False
+                boundary_mask = boundary_flat.reshape(X.shape)
         
         if error_count > 0 and handle_errors:
             print(f"Warning: {error_count}/{total_points} points failed containment test "

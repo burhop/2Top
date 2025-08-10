@@ -156,3 +156,8 @@ The old visual test files in the project root have been refactored into this org
 - `test_plot_demo.py` → Incorporated into `curve_tests/test_basic_curves.py`
 
 The new structure provides better organization, reusability, and maintainability while preserving all original functionality.
+
+## Notes on Triangle Creation
+
+- Use `RegionFactory.create_triangle_region(vertices)` to create triangle regions. This constructs three trimmed line segments with explicit endpoints to ensure proper closure and accurate plotting.
+- The previous circular fallback used in some refactored flows has been removed to prevent duplicate plots and incorrect visualizations.

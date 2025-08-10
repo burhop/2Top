@@ -384,13 +384,14 @@ dictionaries with object IDs.
 | As a system, I need to manage the visual style of each object.               | SCM-S8-T6 | **Test Creation:** Write pytest unit tests for set_style and get_style.                                                                                                                                                                      | SCM-S8-T3    | The test will add an object, set its style, and use get_style to verify the style was stored correctly. It will then update the style and verify the changes. ^1^                                            | 2                    |
 |                                                                              | SCM-S8-T7 | **Implementation:** Implement set_style(obj_id, style) and get_style(obj_id). These methods will operate on the internal style dictionary. set_style should handle both creating a new style entry and merging/updating an existing one. ^1^ | SCM-S8-T1    | Passes tests from SCM-S8-T6. Object styles can be reliably set, updated, and retrieved. ^1^                                                                                                                  | 3                    |
 
-**Sprint 9: Scene Persistence, Grouping, and Queries**
+**Sprint 9: Scene Persistence, Grouping, Queries, and Parameter Animation**
 
 **Sprint Goal:** To extend the SceneManager with persistence
-(save/load), object grouping, and spatial querying capabilities. This
-sprint makes the scene state durable, enables more powerful organization
-of objects, and provides essential functionality for interactive
-selection tools.
+(save/load), object grouping, spatial querying capabilities, and a comprehensive
+parameter animation system with frame caching. This sprint makes the scene state 
+durable, enables more powerful organization of objects, provides essential 
+functionality for interactive selection tools, and delivers high-performance 
+animation capabilities for exploring geometric behavior through parameter cycling.
 
 Key Features & Implementation Tasks:
 
@@ -403,9 +404,17 @@ reverse operation, dynamically reconstructing objects from the file
 using their \"type\" identifier and the from_dict classmethod.1
 
 Grouping functionality (set_group, update_group_style) will be added to
-allow multiple objects to be controlled as a single unit. Finally, the
-objects_in_bbox method will be implemented to enable spatial queries, a
-necessary component for area-based selection in a UI.^1^
+allow multiple objects to be controlled as a single unit. The objects_in_bbox 
+method will be implemented to enable spatial queries, a necessary component 
+for area-based selection in a UI.
+
+Most importantly, this sprint introduces a comprehensive parameter animation 
+system that allows users to create animations by cycling through parameter 
+values (e.g., radius, offset) with automatic downstream object updates. The 
+system includes intelligent frame caching to handle slow calculations, 
+dependency tracking for complex object relationships, and support for both 
+single-parameter and multi-parameter animations. This addresses the critical 
+requirement for exploring geometric behavior through parameter variation.^1^
 
 **Sprint 9 Backlog**
 
@@ -418,6 +427,11 @@ necessary component for area-based selection in a UI.^1^
 |                                                                              | SCM-S9-T5 | **Implementation:** Implement set_group(group_id, object_ids) to manage a group registry (dict mapping group ID to a list of object IDs). Implement update_group_style(group_id, style) to iterate through a group\'s members and call set_style on each. ^1^                                                  | SCM-S8-T7                  | Passes tests from SCM-S9-T4. Grouping and group-based style propagation work correctly. ^1^                                                                                                                                                                                                        | 3                    |
 | As a system, I need to find all objects within a specific area of the scene. | SCM-S9-T6 | **Test Creation:** Write a pytest unit test for objects_in_bbox.                                                                                                                                                                                                                                               | SCM-S8-T3                  | Populate a scene with objects at known locations. Perform a query with a bounding box that encloses only a subset of them. Assert that the returned list of object IDs is correct and complete. Test an empty intersection case. ^1^                                                               | 2                    |
 |                                                                              | SCM-S9-T7 | **Implementation:** Implement objects_in_bbox(bbox). This will require iterating through all objects in the scene, obtaining a bounding box for each geometric object (this may require adding a bounding_box method to the ImplicitCurve base class), and checking for intersection with the query bbox. ^1^  | SCM-S8-T3                  | Passes tests from SCM-S9-T6. The method correctly identifies all objects intersecting the given bounding box. ^1^                                                                                                                                                                                  | 5                    |
+| As a user, I want to animate object parameters to explore geometric behavior. | SCM-S9-T8 | **Test Creation:** Write pytest unit tests for parameter animation system including update_parameter, get_parameter, list_parameters, and create_parameter_animation.                                                                                                                                        | SCM-S8-T3, All GEO Sprints | Create a circle with animatable radius. Test parameter updates propagate correctly. Test animation creation generates correct number of frames. Test frame caching works and replay is faster than regeneration. ^1^                                                                                | 5                    |
+|                                                                              | SCM-S9-T9 | **Implementation:** Add parameter management methods to ImplicitCurve base class: get_parameters(), set_parameter(), get_parameter(), list_parameters(), clone(). These form the foundation for all animatable objects. ^1^                                                                                | All GEO Sprints            | All geometry classes support parameter introspection and modification. Parameter changes trigger appropriate internal updates. Objects can be cloned for caching. ^1^                                                                                                                                | 8                    |
+|                                                                              | SCM-S9-T10| **Implementation:** Implement SceneManager parameter animation methods: update_parameter(), create_parameter_animation(), create_multi_parameter_animation() with frame caching and dependency tracking. ^1^                                                                                               | SCM-S9-T9                  | Single and multi-parameter animations work correctly. Frame caching significantly improves replay performance. Dependency updates propagate automatically when parameters change. ^1^                                                                                                                | 10                   |
+|                                                                              | SCM-S9-T11| **Implementation:** Implement animation caching system: replay_cached_animation(), clear_animation_cache(), get_animation_cache_info() with intelligent cache management and performance monitoring. ^1^                                                                                                  | SCM-S9-T10                 | Animation cache system works reliably. Cache info provides useful metrics. Cache cleanup prevents memory issues. Cached animations replay significantly faster than regeneration. ^1^                                                                                                               | 6                    |
+| As a user, I want dependency tracking for complex animated scenes.           | SCM-S9-T12| **Implementation:** Implement dependency system: register_dependency(), get_dependencies() to handle cases where changing one object's parameters should update dependent objects automatically. ^1^                                                                                                        | SCM-S9-T10                 | Dependency relationships work correctly. Changing a source object automatically updates dependents. Circular dependencies are detected and handled gracefully. ^1^                                                                                                                                   | 7                    |
 
 **Part III: Application Interface Sprints**
 

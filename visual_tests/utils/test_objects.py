@@ -222,16 +222,23 @@ class RegionFactory:
         # Create circle curve
         circle_curve = CurveFactory.create_circle(center, radius)
         
-        # For a circle, we can create the area region directly from the circle curve
-        # since circles are inherently closed
+        # First try direct creation from the implicit circle (preferred)
         try:
             return AreaRegion(circle_curve)
-        except Exception as e:
-            # Fallback: create a composite curve if direct creation fails
-            print(f"Warning: Direct circle region creation failed, using composite: {e}")
-            simple_mask = lambda px, py: True
-            full_circle_segment = TrimmedImplicitCurve(circle_curve, simple_mask)
-            circle_composite = CompositeCurve([full_circle_segment], (x, y))
+        except Exception:
+            # Fallback: build a closed composite from four quarter-circle segments
+            cx, cy = center
+            q1_mask = lambda px, py: (px >= cx) and (py >= cy)   # NE
+            q2_mask = lambda px, py: (px <= cx) and (py >= cy)   # NW
+            q3_mask = lambda px, py: (px <= cx) and (py <= cy)   # SW
+            q4_mask = lambda px, py: (px >= cx) and (py <= cy)   # SE
+
+            q1 = TrimmedImplicitCurve(circle_curve, q1_mask)
+            q2 = TrimmedImplicitCurve(circle_curve, q2_mask)
+            q3 = TrimmedImplicitCurve(circle_curve, q3_mask)
+            q4 = TrimmedImplicitCurve(circle_curve, q4_mask)
+
+            circle_composite = CompositeCurve([q1, q2, q3, q4], (x, y))
             return AreaRegion(circle_composite)
     
     @staticmethod
@@ -323,6 +330,23 @@ class RegionFactory:
         
         # Create composite curve with the 3 line segments
         triangle_composite = CompositeCurve(segments, (x, y))
+
+        # Annotate as convex polygon for fast, correct region containment.
+        # For CCW-ordered vertices, a point is inside if it's on the left side of each directed edge.
+        # For edge from (x1,y1) to (x2,y2), the half-space is: (x2-x1)*(y-y1) - (y2-y1)*(x-x1) >= 0
+        # Rearranging: -(y2-y1)*x + (x2-x1)*y + (y2-y1)*x1 - (x2-x1)*y1 >= 0
+        # CompositeCurve expects Ax+By+C <= tol, so we negate: (y2-y1)*x - (x2-x1)*y - (y2-y1)*x1 + (x2-x1)*y1 <= 0
+        edges_abc = []
+        ordered = [v1, v2, v3]
+        for i in range(3):
+            (x1, y1) = ordered[i]
+            (x2, y2) = ordered[(i + 1) % 3]
+            A = (y2 - y1)
+            B = -(x2 - x1)
+            C = -(y2 - y1) * x1 + (x2 - x1) * y1
+            edges_abc.append((A, B, C))
+        triangle_composite._is_convex_polygon = True
+        triangle_composite._convex_edges_abc = edges_abc
         
         # Create the area region
         return AreaRegion(triangle_composite)
@@ -389,6 +413,23 @@ class RegionFactory:
         
         # Create composite curve from the four edges
         rectangle_boundary = CompositeCurve(segments, (x, y))
+
+        # Tag as axis-aligned square/rectangle for fast path in CompositeCurve.contains/evaluate
+        rectangle_boundary._is_square = True
+        rectangle_boundary._square_bounds = (min_x, max_x, min_y, max_y)
+
+        # Also provide convex polygon half-space representation
+        verts = vertices  # CCW order: BL -> BR -> TR -> TL
+        edges_abc = []
+        for i in range(4):
+            (x1e, y1e) = verts[i]
+            (x2e, y2e) = verts[(i + 1) % 4]
+            A = (y2e - y1e)
+            B = -(x2e - x1e)
+            C = (x2e - x1e) * y1e - (y2e - y1e) * x1e
+            edges_abc.append((-A, -B, -C))
+        rectangle_boundary._is_convex_polygon = True
+        rectangle_boundary._convex_edges_abc = edges_abc
         
         # Create the area region
         return AreaRegion(rectangle_boundary)
@@ -435,31 +476,3 @@ class RegionFactory:
         regions.append(("Rectangle", rectangle))
         
         return regions
-    
-    @staticmethod
-    def _create_simple_triangle_region(vertices: List[Tuple[float, float]]) -> AreaRegion:
-        """
-        Create a simple triangle region using a basic approach.
-        
-        Args:
-            vertices: List of three (x, y) vertex coordinates
-            
-        Returns:
-            AreaRegion representing the filled triangle
-        """
-        try:
-            # Create a simple circular region as fallback
-            # Calculate triangle center
-            center_x = sum(v[0] for v in vertices) / 3
-            center_y = sum(v[1] for v in vertices) / 3
-            
-            # Estimate radius as distance to farthest vertex
-            radius = max(((v[0] - center_x)**2 + (v[1] - center_y)**2)**0.5 for v in vertices)
-            
-            print(f"Warning: Using circular approximation for triangle at ({center_x:.1f}, {center_y:.1f}) with radius {radius:.1f}")
-            return RegionFactory.create_circle_region((center_x, center_y), radius * 0.8)
-            
-        except Exception as e:
-            print(f"Error in triangle fallback: {e}")
-            # Ultimate fallback: unit circle at origin
-            return RegionFactory.create_circle_region((0, 0), 1)

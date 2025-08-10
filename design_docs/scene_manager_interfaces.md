@@ -58,17 +58,47 @@ Updates the visual style of all objects in a group.
 #### `render_image(filename: str, resolution: Tuple[int, int], bbox: Optional[Tuple[Tuple[float, float], Tuple[float, float]]] = None) -> None`
 Renders the current scene to an image file (e.g., `.png`).
 
-#### `render_animation(filename: str, frames: int, animate_fn: Callable[[int], None], resolution: Tuple[int, int]) -> None`
-Generates a GIF animation by rendering the scene over multiple frames.
+#### `render_animation(filename: str, frames: int, animate_fn: Callable[[int], None], resolution: Tuple[int, int], cache_frames: bool = True) -> None`
+Generates a GIF animation by rendering the scene over multiple frames. If cache_frames is True, saves individual frames for faster replay.
+
+#### `create_parameter_animation(obj_id: str, parameter: str, values: List[Any], filename: str, resolution: Tuple[int, int], fps: int = 10, cache_frames: bool = True) -> None`
+Creates an animation by cycling through parameter values for a specific object. Automatically handles downstream object updates and frame caching.
+
+#### `create_multi_parameter_animation(animations: List[Dict], filename: str, resolution: Tuple[int, int], fps: int = 10, cache_frames: bool = True) -> None`
+Creates complex animations with multiple objects and parameters changing simultaneously. Each animation dict contains: {'obj_id': str, 'parameter': str, 'values': List[Any]}.
+
+#### `replay_cached_animation(cache_id: str, filename: str, fps: int = 10) -> None`
+Replays a previously cached animation at specified frame rate without recalculating.
+
+#### `clear_animation_cache(cache_id: Optional[str] = None) -> None`
+Clears cached animation frames. If cache_id is None, clears all caches.
+
+#### `get_animation_cache_info() -> Dict[str, Dict]`
+Returns information about cached animations including frame counts, file sizes, and creation times.
 
 #### `handle_mcp_command(command: Dict) -> Dict`
 Dispatches a Model Context Protocol (MCP) command and returns the result.
+
+#### `update_parameter(obj_id: str, parameter: str, value: Any, update_dependents: bool = True) -> None`
+Updates a parameter on an object and optionally propagates changes to dependent objects.
+
+#### `get_parameter(obj_id: str, parameter: str) -> Any`
+Retrieves the current value of a parameter from an object.
+
+#### `list_parameters(obj_id: str) -> List[str]`
+Returns a list of all animatable parameters for an object.
+
+#### `register_dependency(dependent_id: str, source_id: str, update_fn: Callable) -> None`
+Registers a dependency relationship where changes to source_id trigger updates to dependent_id.
+
+#### `get_dependencies(obj_id: str) -> Dict[str, List[str]]`
+Returns dependency relationships for an object (both as source and dependent).
 
 ---
 
 ## 2. Required Methods on Geometry and Field Classes
 
-To support bounding box queries and serialization, the following methods must be implemented by all renderable objects.
+To support bounding box queries, serialization, and parameter animation, the following methods must be implemented by all renderable objects.
 
 ### `get_bounds() -> Tuple[Tuple[float, float], Tuple[float, float]]`
 Returns the axis-aligned bounding box for the object.
@@ -78,6 +108,21 @@ Returns a serializable representation of the object.
 
 ### `from_dict(data: Dict) -> Object`
 Reconstructs an object from its dictionary form.
+
+### `get_parameters() -> Dict[str, Any]`
+Returns a dictionary of all animatable parameters and their current values.
+
+### `set_parameter(name: str, value: Any) -> None`
+Sets a specific parameter value and triggers any necessary internal updates.
+
+### `get_parameter(name: str) -> Any`
+Returns the current value of a specific parameter.
+
+### `list_parameters() -> List[str]`
+Returns a list of all parameter names that can be animated.
+
+### `clone() -> Object`
+Creates a deep copy of the object for frame caching purposes.
 
 ---
 
@@ -120,10 +165,47 @@ These commands map to `SceneManager` methods.
 | `group_objects`  | `set_group()`               |
 | `set_field_strategy` | set field on AreaRegion |
 | `set_view`       | not handled by SceneManager |
+| `animate_parameter` | `create_parameter_animation()` |
+| `animate_multi_parameter` | `create_multi_parameter_animation()` |
+| `update_parameter` | `update_parameter()` |
+| `get_parameter` | `get_parameter()` |
+| `cache_animation` | handled automatically |
+| `replay_animation` | `replay_cached_animation()` |
 
 ---
 
-## 5. WebSocket Update Format (Optional)
+## 5. Animation System Architecture
+
+### Parameter Animation Workflow
+1. **Parameter Discovery**: Use `list_parameters()` to identify animatable properties
+2. **Value Generation**: Create parameter value sequences (linear, exponential, custom)
+3. **Frame Generation**: For each value, update parameter and render frame
+4. **Dependency Updates**: Automatically propagate changes to dependent objects
+5. **Frame Caching**: Store rendered frames for fast replay
+6. **Animation Export**: Compile frames into GIF/MP4 with specified FPS
+
+### Caching Strategy
+- **Frame Cache**: Store individual rendered frames as PNG files
+- **Parameter Cache**: Store object states for each parameter value
+- **Dependency Cache**: Cache computed dependent object updates
+- **Smart Invalidation**: Only recompute frames when parameters actually change
+
+### Performance Optimizations
+- **Lazy Evaluation**: Only compute frames when needed
+- **Parallel Rendering**: Render multiple frames simultaneously when possible
+- **Memory Management**: Automatic cache cleanup based on size/age limits
+- **Progressive Loading**: Stream animation playback while computing remaining frames
+
+### Animation Types Supported
+- **Single Parameter**: Animate one parameter of one object
+- **Multi-Parameter**: Animate multiple parameters of one object
+- **Multi-Object**: Animate parameters across multiple objects
+- **Synchronized**: Keep multiple animations in sync
+- **Composite**: Combine multiple animation sequences
+
+---
+
+## 6. WebSocket Update Format (Optional)
 
 ```json
 {
@@ -139,7 +221,7 @@ These commands map to `SceneManager` methods.
 
 ---
 
-## 6. Compatibility and Integration
+## 7. Compatibility and Integration
 
 - Fully compatible with the `GraphicsBackendInterface` (`get_curve_paths`, `get_field_data`, etc.).
 - Compatible with `ImplicitCurve`, `Field`, `CompositeCurve`, `AreaRegion` class hierarchies.
@@ -147,13 +229,18 @@ These commands map to `SceneManager` methods.
 
 ---
 
-## 7. Next Steps for Implementation
+## 8. Next Steps for Implementation
 
 - Implement `SceneManager` and supporting methods.
 - Add `get_bounds()`, `to_dict()`, `from_dict()` to geometry and field classes.
 - Build serialization logic.
 - Add WebSocket hooks for real-time collaboration.
 - Tie into MCP command dispatch and ThreeJS renderer integration.
+- Implement parameter animation system with frame caching.
+- Add dependency tracking for automatic object updates.
+- Create animation export utilities (GIF, MP4, frame sequences).
+- Build animation timeline UI components.
+- Add performance monitoring and cache management tools.
 
 ---
 

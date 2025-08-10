@@ -154,6 +154,11 @@ class AreaRegion:
         Returns:
             List[Tuple[float, float]]: List of (x, y) points forming the polygon
         """
+        # If this composite curve was created by polygon factory, use the exact
+        # stored vertices for precise area/containment computations.
+        if hasattr(curve, "_polygon_vertices") and curve._polygon_vertices:
+            return list(curve._polygon_vertices)
+
         polygon_points = []
         
         # For each segment in the composite curve
@@ -175,6 +180,24 @@ class AreaRegion:
         Returns:
             List of (x, y) points on the segment boundary
         """
+        # If segment exposes explicit endpoints (e.g., polygon edges), use them
+        if hasattr(segment, "get_endpoints"):
+            try:
+                endpoints = segment.get_endpoints()
+                if isinstance(endpoints, list) and len(endpoints) == 2:
+                    (x0, y0), (x1, y1) = endpoints
+                    if num_points <= 1:
+                        return [(x0, y0)]
+                    pts: List[Tuple[float, float]] = []
+                    for i in range(num_points):
+                        t = i / (num_points - 1)
+                        xi = x0 + t * (x1 - x0)
+                        yi = y0 + t * (y1 - y0)
+                        pts.append((xi, yi))
+                    return pts
+            except Exception:
+                # Fall back to generic sampling below on any error
+                pass
         # Get a reasonable bounding box for the segment
         bbox = self._get_segment_bbox(segment)
         x_min, x_max, y_min, y_max = bbox
@@ -279,8 +302,8 @@ class AreaRegion:
         Returns:
             float: The area of the region (outer boundary area minus hole areas)
         """
-        # For squares, use direct calculation if possible
-        if len(self.outer_boundary.segments) == 4:
+        # For explicitly marked squares, use direct calculation
+        if getattr(self.outer_boundary, "_is_square", False):
             outer_area = self._calculate_square_area(self.outer_boundary)
         else:
             # Calculate area of outer boundary using polygon approximation
@@ -290,7 +313,7 @@ class AreaRegion:
         # Subtract areas of holes
         total_hole_area = 0.0
         for hole in self.holes:
-            if len(hole.segments) == 4:
+            if getattr(hole, "_is_square", False):
                 hole_area = self._calculate_square_area(hole)
             else:
                 hole_polygon = self._curve_to_polygon(hole)
@@ -309,7 +332,13 @@ class AreaRegion:
         Returns:
             float: The area of the square
         """
-        x_min, x_max, y_min, y_max = curve.bounding_box()
+        # Prefer explicit square bounds stored by factory to avoid
+        # falling back to extremely large default bounding boxes
+        # from generic implicit curves.
+        if hasattr(curve, "_square_bounds") and curve._square_bounds is not None:
+            x_min, x_max, y_min, y_max = curve._square_bounds
+        else:
+            x_min, x_max, y_min, y_max = curve.bounding_box()
         width = x_max - x_min
         height = y_max - y_min
         return width * height

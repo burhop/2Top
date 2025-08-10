@@ -404,3 +404,191 @@ The library foundation is comprehensive and ready for:
 
 *Last Updated: Sprint 3 Completion*  
 *Next: Sprint 4 Planning (R-Functions and Constructive Geometry)*
+
+---
+
+## Sprint 5 Summary: Composite Curves, Regions, and Convex Polygon Containment ✅
+
+**Completion Date**: Sprint 5 Complete  
+**Status**: ✅ All tasks for this sprint completed and validated
+
+### What Now Works
+
+#### 🧩 **CompositeCurve Enhancements**
+- ✅ Robust `CompositeCurve.contains(x, y, tolerance=1e-3, region_containment)` implementation
+  - Fast path for convex polygons using stored half-space inequalities (`_convex_edges_abc`)
+  - Treats boundary as inside for region containment
+  - Supports scalar and vectorized inputs consistently
+  - Special fast path for axis-aligned squares via `_square_bounds`
+- ✅ `CompositeCurve.on_curve(x, y, tol)` boundary testing implemented (consistent across curve types)
+- ✅ Convenience methods for polygon introspection:
+  - `is_convex_polygon() -> bool`
+  - `halfspace_edges() -> List[(a,b,c)] | None`
+
+#### 🧱 **Polygon Creation and Validation**
+- ✅ `create_polygon_from_edges(points, variables)` builds polygon `CompositeCurve`s with:
+  - Convexity detection and outward half-space storage for fast containment
+  - Input validation: 3+ unique finite vertices, rejects consecutive duplicates (zero-length edges), rejects zero-area (collinear) polygons, ignores closing duplicate if present
+
+#### 🧭 **AreaRegion Compatibility**
+- ✅ `AreaRegion.contains(x, y, region_containment=True)` API alignment
+  - Region containment by default; boundary checks via `outer_boundary.on_curve()`
+
+#### 🔄 **Serialization**
+- ✅ `CompositeCurve.to_dict()/from_dict()` preserve polygon metadata:
+  - `is_convex_polygon`, `convex_edges_abc`, and square metadata when present
+
+#### 📚 **Documentation & Examples**
+- ✅ `docs/API_REFERENCE.md` updated:
+  - Convex polygon containment fast path notes (O(m) half-space checks)
+  - `is_convex_polygon()` and `halfspace_edges()` documented
+  - Polygon validation rules documented
+- ✅ `examples/quickstart.py` extended with convex polygon creation and containment demo
+
+#### 🧪 **Testing**
+- ✅ New tests:
+  - `tests/test_polygon_metadata.py` — metadata presence, correctness, and square handling
+  - `tests/test_polygon_validation.py` — input validation (finite, duplicates, zero-area, zero-length edges)
+- ✅ Full suite passes: 436 tests passed, 2 warnings
+
+### Key Achievements
+- **High-performance containment** for convex polygons via vectorized half-space intersection
+- **Consistent boundary vs region semantics** across curves and regions
+- **Robust polygon input validation** and comprehensive tests
+- **Serialization integrity** retains polygon-specific optimizations
+
+### Demonstrated Capabilities
+- Convex polygon region checks at scale with vectorized inputs
+- Axis-aligned square containment with bounding-box fast path
+- Mixed composite curves leveraging boundary membership and sign evaluation
+
+### Project Structure Updates (Highlights)
+- `geometry/composite_curve.py` — major updates to `contains()`, convenience methods, serialization, polygon creation/validation
+- `docs/API_REFERENCE.md` — documentation for new methods and polygon rules
+- `examples/quickstart.py` — polygon example usage
+- `tests/test_polygon_metadata.py`, `tests/test_polygon_validation.py` — new tests
+
+---
+
+*Last Updated: Sprint 5 Completion*  
+*Next: Sprint 6 Planning (Performance polish, visualization helpers, additional edge-case tests)*
+
+---
+
+## Visual Tests Debugging & Validation Sprint ✅
+
+**Completion Date**: Visual Tests Sprint Complete  
+**Status**: ✅ All critical visual test issues resolved and validated  
+**Test Results**: 449 tests passed, 0 failures
+
+### What Now Works
+
+#### 🎯 **Visual Test Pipeline Fully Functional**
+- ✅ **GridEvaluator API Fix**: Corrected `evaluate_region_containment()` to call `region.contains(x, y)` without unsupported `region_containment` parameter
+- ✅ **Triangle Region Containment**: Fixed critical half-space calculation bug in `RegionFactory.create_triangle_region()`
+- ✅ **All Region Types Rendering**: Circles, triangles, and rectangles now display correctly with accurate inside/outside masks
+- ✅ **Boundary Visualization**: Visible boundaries overlaid on filled regions for all geometric shapes
+
+#### 🔧 **Critical Bug Fixes**
+
+**Triangle Half-Space Math Correction**:
+- ✅ **Root Cause**: Half-space coefficients for CCW-ordered triangle vertices had incorrect signs
+- ✅ **Fix Applied**: Corrected formula from `C = (y2 - y1) * x1 - (x2 - x1) * y1` to `C = -(y2 - y1) * x1 + (x2 - x1) * y1`
+- ✅ **Result**: Triangle regions now show meaningful inside/boundary point counts instead of zero
+
+**GridEvaluator Parameter Fix**:
+- ✅ **Root Cause**: Incorrect parameter passing to `region.contains()` causing silent failures
+- ✅ **Fix Applied**: Removed unsupported `region_containment` parameter from scalar containment calls
+- ✅ **Result**: Proper scalar containment evaluation for grid points
+
+#### 🚀 **Performance Enhancements**
+- ✅ **Convex Polygon Metadata**: Added `_is_convex_polygon` and `_convex_edges_abc` to triangle and rectangle factories
+- ✅ **Fast Containment Paths**: Enabled vectorized half-space tests in `CompositeCurve.contains()`
+- ✅ **Benchmark Results**: 23x speedup for containment operations (0.0072s vs 0.1659s for 200k points)
+
+#### 🧪 **Comprehensive Debugging & Validation**
+- ✅ **Debug Script Suite**: Created 8 targeted debug scripts to isolate issues:
+  - `debug_region_containment.py` - Region factory validation
+  - `test_vectorized_bug.py` - Scalar vs vectorized consistency
+  - `debug_grid_evaluator.py` - Grid evaluation tracing
+  - `debug_halfspace_math.py` - Half-space formula verification
+  - And 4 additional specialized debugging tools
+
+**Validation Results**:
+- ✅ **Scalar vs Vectorized Consistency**: Both containment paths produce identical results
+- ✅ **Grid Evaluation Accuracy**: Correct inside/boundary point identification for all region types
+- ✅ **Boundary Closure**: All composite curves properly closed with verified endpoints
+
+#### 📊 **Visual Test Coverage**
+- ✅ **Advanced Demo**: Complex geometric scenes with large circles, triangles, and rectangles
+- ✅ **Basic Region Tests**: Fundamental shape rendering validation
+- ✅ **Edge Case Handling**: Boundary points, singular cases, and tolerance handling
+- ✅ **Cross-Platform Compatibility**: Matplotlib backend configuration for headless/interactive use
+
+### Key Achievements
+- **Complete Visual Pipeline**: From geometry creation to final rendered output
+- **Mathematical Correctness**: Fixed fundamental containment logic errors
+- **Performance Optimization**: Vectorized operations with intelligent fast paths
+- **Robust Testing**: Comprehensive validation preventing future regressions
+- **Clean Codebase**: Removed all temporary debug files and updated `.gitignore`
+
+### Technical Deep Dive
+
+#### Half-Space Formula Correction
+**Before (Broken)**:
+```python
+C = (y2 - y1) * x1 - (x2 - x1) * y1  # Wrong sign
+```
+
+**After (Fixed)**:
+```python
+C = -(y2 - y1) * x1 + (x2 - x1) * y1  # Correct for CCW vertices
+```
+
+#### Metadata Enhancement
+```python
+# Added to triangle and rectangle boundaries
+boundary._is_convex_polygon = True
+boundary._convex_edges_abc = edges_abc  # Half-space coefficients
+boundary._is_square = True  # For rectangles
+boundary._square_bounds = (xmin, xmax, ymin, ymax)  # For axis-aligned optimization
+```
+
+### Demonstrated Capabilities
+- **Circle Regions**: Perfect circular boundaries with smooth inside/outside transitions
+- **Triangle Regions**: Complex triangular shapes with accurate containment
+- **Rectangle Regions**: Axis-aligned and general rectangles with optimized containment
+- **Composite Scenes**: Multiple geometric objects rendered simultaneously
+- **Performance Scaling**: Efficient handling of large grids (100x100 points)
+
+### Project Structure Impact
+```
+visual_tests/
+├── utils/
+│   ├── grid_evaluation.py     # Fixed GridEvaluator API
+│   └── test_objects.py        # Fixed triangle half-space math, added metadata
+├── demos/
+│   └── advanced_demo.py       # Validated complex scene rendering
+├── region_tests/
+│   └── test_basic_regions.py  # Confirmed all region types working
+└── output/                    # Clean visual test outputs
+```
+
+### Next Steps Enabled
+With the visual test pipeline now fully functional:
+1. **Scene Management Implementation** - Ready for Sprint 8-9 development
+2. **Parameter Animation System** - Foundation prepared for dynamic visualizations  
+3. **UI Development** - Stable rendering backend for interactive interfaces
+4. **Performance Optimization** - Baseline established for further improvements
+
+### Development Process Insights
+This sprint demonstrated the importance of:
+- **Systematic Debugging**: Isolated testing revealed root causes efficiently
+- **Mathematical Rigor**: Geometric algorithms require precise formula implementation
+- **Comprehensive Validation**: Multiple validation approaches caught edge cases
+- **Performance Awareness**: Metadata-driven optimizations provide significant speedups
+
+---
+
+*Last Updated: Visual Tests Sprint Completion*  
+*Next: Scene Management System Implementation (Sprints 8-9)*

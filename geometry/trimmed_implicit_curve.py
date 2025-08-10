@@ -122,18 +122,24 @@ class TrimmedImplicitCurve(ImplicitCurve):
             # Vectorized case
             x_array = np.asarray(x)
             y_array = np.asarray(y)
-            
-            # Apply mask to each point
+
+            # Fast-path: rectangular bounds explicitly provided
+            if (self._xmin is not None and self._xmax is not None and
+                self._ymin is not None and self._ymax is not None):
+                eps = 1e-9
+                in_rect = (
+                    (x_array >= (self._xmin - eps)) & (x_array <= (self._xmax + eps)) &
+                    (y_array >= (self._ymin - eps)) & (y_array <= (self._ymax + eps))
+                )
+                return on_curve & in_rect
+
+            # General fallback: evaluate mask per-point
             mask_results = np.zeros_like(x_array, dtype=bool)
             flat_x = x_array.flatten()
             flat_y = y_array.flatten()
-            
             for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
                 mask_results.flat[i] = self.mask(xi, yi)
-            
-            # Reshape to match input shape
             mask_results = mask_results.reshape(x_array.shape)
-            
             return on_curve & mask_results
     
     def on_curve(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
