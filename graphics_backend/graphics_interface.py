@@ -10,6 +10,9 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from pathlib import Path
 import json
 import tempfile
+import matplotlib
+# Use non-interactive backend to avoid Tkinter main-loop issues in tests/servers
+matplotlib.use('Agg', force=True)
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import LineCollection
@@ -17,7 +20,6 @@ import matplotlib.patches as mpatches
 
 from scene_management import SceneManager
 from visual_tests.utils.grid_evaluation import GridEvaluator
-from visual_tests.utils.plotting import PlotManager
 
 
 class GraphicsBackendInterface:
@@ -38,7 +40,6 @@ class GraphicsBackendInterface:
         """
         self.scene_manager = scene_manager
         self.grid_evaluator = GridEvaluator()
-        self.plot_manager = PlotManager()
         
         # Default rendering settings
         self.default_resolution = (800, 600)

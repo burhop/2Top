@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Top Geometry Library - Interactive UI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">2Top Geometry Library</h1>
+                <div class="header-controls">
+                    <button id="new-scene-btn" class="btn btn-primary">New Scene</button>
+                    <button id="load-scene-btn" class="btn btn-secondary">Load Scene</button>
+                    <button id="save-scene-btn" class="btn btn-secondary">Save Scene</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Left Panel - Object Browser & Controls -->
+            <aside class="left-panel">
+                <div class="panel-section">
+                    <h3>Object Browser</h3>
+                    <div id="objectList" class="object-list">
+                        <div class="empty-state">No objects in scene</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Create Objects</h3>
+                    <div class="create-controls">
+                        <button class="btn btn-tool" data-tool="circle">Circle</button>
+                        <button class="btn btn-tool" data-tool="rectangle">Rectangle</button>
+                        <button class="btn btn-tool" data-tool="triangle">Triangle</button>
+                        <button class="btn btn-tool" data-tool="ellipse">Ellipse</button>
+                        <button class="btn btn-tool" data-tool="line">Line</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Properties</h3>
+                    <div id="property-panel" class="property-panel">
+                        <div class="empty-state">Select an object to edit properties</div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center - Visualization Canvas -->
+            <div class="canvas-container">
+                <canvas id="renderCanvas" width="800" height="600"></canvas>
+                <div class="canvas-overlay">
+                    <div class="canvas-info">
+                        <span id="mouse-coords">Mouse: (0, 0)</span>
+                        <span id="zoom-level">Zoom: 100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Animation & Advanced -->
+            <aside class="right-panel">
+                <div class="panel-section">
+                    <h3>Animation</h3>
+                    <div id="animationControls" class="animation-controls">
+                        <div class="timeline-container">
+                            <div id="timeline" class="timeline"></div>
+                        </div>
+                        <div class="playback-controls">
+                            <button id="play-btn" class="btn btn-icon">▶</button>
+                            <button id="pause-btn" class="btn btn-icon">⏸</button>
+                            <button id="stop-btn" class="btn btn-icon">⏹</button>
+                            <input type="range" id="frame-slider" class="frame-slider" min="0" max="100" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Export</h3>
+                    <div class="export-controls">
+                        <button id="export-png-btn" class="btn btn-secondary">Export PNG</button>
+                        <button id="export-svg-btn" class="btn btn-secondary">Export SVG</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>View Options</h3>
+                    <div class="view-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-grid" checked>
+                            Show Grid
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-bounds">
+                            Show Bounds
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-gradients">
+                            Show Gradients
+                        </label>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Status Bar -->
+        <footer class="status-bar">
+            <div class="status-content">
+                <span id="connection-status" class="status-item">Connecting...</span>
+                <span id="object-count" class="status-item">Objects: 0</span>
+                <span id="render-time" class="status-item">Render: 0ms</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Modal Title</h3>
+                <button id="modal-close" class="btn btn-icon">✕</button>
+            </div>
+            <div id="modal-content" class="modal-content">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn btn-primary">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/core/EventEmitter.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/MCPClient.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/CanvasRenderer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/ObjectBrowser.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/PropertyPanel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/components/AnimationControls.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
