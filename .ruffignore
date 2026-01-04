@@ -1,0 +1,3 @@
+# Ruff ignore file for 2Top test system
+# Ignore the test system from being checked by ruff
+tests/
