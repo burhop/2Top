@@ -86,24 +86,26 @@ As a maintainer, I want to be able to fix bugs that are discovered through the t
 - How does the system handle a test case that is missing or malformed?
 - What happens with very large or very small numbers in calculations?
 - How are edge cases in curve evaluation handled (e.g., near singularities)?
+- How are degenerate cases in intersections handled (e.g., overlapping curves, touching at a point)?
+- How are multiple-segment curves in intersections handled?
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: System MUST create test cases for all geometry object types (ConicSection, PolynomialCurve, Superellipse, ProceduralCurve, etc.)
+- **FR-001**: System MUST create test cases for all geometry object types (ConicSection, PolynomialCurve, Superellipse, ProceduralCurve, etc.) with 100+ test cases per object type
 - **FR-002**: System MUST not start testing the next object type until the current type has 100% test case pass rate
 - **FR-003**: System MUST provide complete test coverage for all geometry object types
 - **FR-004**: System MUST include edge case tests in the test coverage
 - **FR-005**: System MUST include negative test cases in the test coverage
-- **FR-006**: System MUST provide clear, informative test results
+- **FR-006**: System MUST provide clear, informative test results with expected vs actual values
 - **FR-007**: System MUST allow for test case management and organization
 - **FR-008**: System MUST run test cases in a structured, progressive way
 - **FR-009**: System MUST support test case execution for individual object types
 - **FR-010**: System MUST support test case execution for all object types
 - **FR-011**: System MUST support unit tests, edge case tests, and negative tests
 - **FR-012**: System MUST validate all mathematical and geometric results against known good values
-- **FR-013**: System MUST test all possible intersections of object types
+- **FR-013**: System MUST test all possible intersections of object types, including degenerate cases, overlaps, and touching points
 - **FR-014**: System MUST test objects composed of fundamental types
 - **FR-015**: System MUST support a two-part process: analysis (part 1) and bug fixing (part 2)
 - **FR-016**: System MUST allow for easy bug identification and tracking
@@ -126,15 +128,15 @@ As a maintainer, I want to be able to fix bugs that are discovered through the t
 - **SC-002**: All edge case tests for each object type pass
 - **SC-003**: All negative test cases for each object type pass
 - **SC-004**: All mathematical and geometric results are validated against known good values
-- **SC-005**: All object type intersections are tested and pass
+- **SC-005**: All object type intersections are tested and pass, including degenerate cases, overlaps, and touching points
 - **SC-006**: All composed objects are tested and pass
-- **SC-007**: All test results are clear, informative, and provide actionable feedback
+- **SC-007**: All test results are clear, informative, and provide actionable feedback with expected vs actual values
 - **SC-008**: The test process is fully automated and can be run with a single command
 - **SC-009**: The test process can be run in a progressive way, one object type at a time
 - **SC-010**: The test process can be run for all object types at once
 - **SC-011**: The test process can be run for a specific object type
 - **SC-012**: The test process provides clear pass/fail status for each test
-- **SC-013**: The test process provides clear error information for failed tests
+- **SC-013**: The test process provides clear error information for failed tests with context and expected vs actual values
 - **SC-014**: All discovered bugs are fixed and verified
 - **SC-015**: The system has a two-part process: analysis (part 1) and bug fixing (part 2) that is well-defined
 
