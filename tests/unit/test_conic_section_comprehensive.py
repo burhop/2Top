@@ -74,7 +74,7 @@ class TestConicSection(unittest.TestCase):
         # Test evaluation
         self.assertEqual(ellipse.evaluate(3, 0), 0)
         self.assertEqual(ellipse.evaluate(0, 2), 0)
-        self.assertEqual(ellipse.evaluate(1, 1), -0.2222222222222222)  # Inside ellipse
+        self.assertEqual(ellipse.evaluate(1, 1), -0.6388888888888888)  # Inside ellipse
 
     def test_parabola_conic(self):
         """Test parabola conic section"""
@@ -121,7 +121,7 @@ class TestConicSection(unittest.TestCase):
         # Test evaluation
         self.assertEqual(hyperbola.evaluate(1, 0), 0)
         self.assertEqual(hyperbola.evaluate(-1, 0), 0)
-        self.assertEqual(hyperbola.evaluate(0, 1), -1)  # Outside hyperbola
+        self.assertEqual(hyperbola.evaluate(0, 1), -2)  # Outside hyperbola
 
     def test_conic_coefficient_extraction(self):
         """Test coefficient extraction from conic expressions"""
