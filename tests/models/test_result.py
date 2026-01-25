@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional, Any, Dict
 
 
-class TestResult:
+class TestResultModel:
     """
     Represents a test result in the 2Top test system
     """

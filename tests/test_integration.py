@@ -3,9 +3,9 @@ Integration tests to verify the test case management system works correctly
 """
 
 import unittest
-from tests.models.test_case import TestCase
+from tests.models.test_case import TestCaseModel as TestCase
 from tests.models.module import Module
-from tests.models.test_result import TestResult
+from tests.models.test_result import TestResultModel as TestResult
 from tests.utils.test_case_failure_detector import TestCaseFailureDetector
 from tests.utils.module_identifier import ModuleIdentifier
 from tests.utils.result_storage_manager import ResultStorageManager

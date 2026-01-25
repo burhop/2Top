@@ -6,6 +6,7 @@ import sys
 import os
 import unittest
 import numpy as np
+import sympy as sp
 
 # Add the current directory to the path to import from the project
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,146 +19,137 @@ class TestPolynomialCurve(unittest.TestCase):
     """Test the polynomial curve functionality comprehensively"""
 
     def test_quadratic_curve(self):
-        """Test quadratic curve: y = x^2"""
-        # Coefficients for x^2 (constant term, x term, x^2 term)
-        coeffs = [0, 0, 1]  # 0 + 0*x + 1*x^2 = x^2
-        curve = PolynomialCurve(coeffs, "Quadratic")
+        """Test quadratic curve: x^2 + y^2 - 1 = 0"""
+        x, y = sp.symbols('x y')
+        expr = x**2 + y**2 - 1  # Unit circle
+        curve = PolynomialCurve(expr, variables=(x, y))
         
         # Test curve properties
         self.assertEqual(curve.degree(), 2)
-        self.assertEqual(curve.name, "Quadratic")
+        self.assertEqual(curve.variables, (x, y))
         
         # Test evaluation
-        self.assertEqual(curve.evaluate(0), 0)
-        self.assertEqual(curve.evaluate(1), 1)
-        self.assertEqual(curve.evaluate(2), 4)
-        self.assertEqual(curve.evaluate(-1), 1)
+        self.assertEqual(curve.evaluate(0, 0), -1)  # Inside circle
+        self.assertEqual(curve.evaluate(1, 0), 0)   # On circle
+        self.assertEqual(curve.evaluate(2, 0), 3)   # Outside circle
         
-        # Test derivative
-        derivative = curve.derivative()
-        self.assertEqual(derivative.degree(), 1)
-        self.assertEqual(derivative.coefficients, [0, 2])  # 2x
-        
-        # Test integral
-        integral = curve.integral()
-        self.assertEqual(integral.degree(), 3)
-        self.assertEqual(integral.coefficients, [0, 0, 0, 1/3])  # (1/3)x^3
+        # Test gradient
+        gx, gy = curve.gradient(1, 0)
+        self.assertEqual(gx, 2)  # 2x at (1,0)
+        self.assertEqual(gy, 0)  # 2y at (1,0)
 
     def test_linear_curve(self):
-        """Test linear curve: y = 2x + 3"""
-        # Coefficients for 3 + 2*x + 0*x^2
-        coeffs = [3, 2, 0]  # 3 + 2*x
-        curve = PolynomialCurve(coeffs, "Linear")
+        """Test linear curve: 2x + 3y - 1 = 0"""
+        x, y = sp.symbols('x y')
+        expr = 2*x + 3*y - 1  # Line
+        curve = PolynomialCurve(expr, variables=(x, y))
         
         # Test curve properties
         self.assertEqual(curve.degree(), 1)
-        self.assertEqual(curve.name, "Linear")
+        self.assertEqual(curve.variables, (x, y))
+        
+        # Test curve properties
+        self.assertEqual(curve.degree(), 1)
+        self.assertEqual(curve.variables, (x, y))
         
         # Test evaluation
-        self.assertEqual(curve.evaluate(0), 3)
-        self.assertEqual(curve.evaluate(1), 5)
-        self.assertEqual(curve.evaluate(2), 7)
-        self.assertEqual(curve.evaluate(-1), 1)
+        self.assertEqual(curve.evaluate(0, 0), -1)  # 2*0 + 3*0 - 1 = -1
+        self.assertEqual(curve.evaluate(1, 0), 1)   # 2*1 + 3*0 - 1 = 1
+        self.assertEqual(curve.evaluate(0, 1), 2)   # 2*0 + 3*1 - 1 = 2
         
-        # Test derivative
-        derivative = curve.derivative()
-        self.assertEqual(derivative.degree(), 0)
-        self.assertEqual(derivative.coefficients, [2])  # Constant 2
-        
-        # Test integral
-        integral = curve.integral()
-        self.assertEqual(integral.degree(), 2)
-        self.assertEqual(integral.coefficients, [0, 3, 1])  # 3x + (1/2)x^2
+        # Test gradient
+        gx, gy = curve.gradient(0, 0)
+        self.assertEqual(gx, 2)  # Coefficient of x
+        self.assertEqual(gy, 3)  # Coefficient of y
 
     def test_cubic_curve(self):
-        """Test cubic curve: y = x^3 - 2x^2 + x - 1"""
-        # Coefficients for -1 + 1*x - 2*x^2 + 1*x^3
-        coeffs = [-1, 1, -2, 1]  # -1 + x - 2x^2 + x^3
-        curve = PolynomialCurve(coeffs, "Cubic")
+        """Test cubic curve: x^3 + y^3 - 1 = 0"""
+        x, y = sp.symbols('x y')
+        expr = x**3 + y**3 - 1
+        curve = PolynomialCurve(expr, variables=(x, y))
         
         # Test curve properties
         self.assertEqual(curve.degree(), 3)
-        self.assertEqual(curve.name, "Cubic")
+        self.assertEqual(curve.variables, (x, y))
         
         # Test evaluation
-        self.assertEqual(curve.evaluate(0), -1)
-        self.assertEqual(curve.evaluate(1), -1)  # -1 + 1 - 2 + 1 = -1
-        self.assertEqual(curve.evaluate(2), 3)   # -1 + 2 - 8 + 8 = 1
+        self.assertEqual(curve.evaluate(0, 0), -1)  # 0^3 + 0^3 - 1 = -1
+        self.assertEqual(curve.evaluate(1, 0), 0)   # 1^3 + 0^3 - 1 = 0
+        self.assertEqual(curve.evaluate(0, 1), 0)   # 0^3 + 1^3 - 1 = 0
         
-        # Test derivative
-        derivative = curve.derivative()
-        self.assertEqual(derivative.degree(), 2)
-        self.assertEqual(derivative.coefficients, [1, -4, 3])  # 1 - 4x + 3x^2
-        
-        # Test integral
-        integral = curve.integral()
-        self.assertEqual(integral.degree(), 4)
-        self.assertEqual(integral.coefficients, [0, -1, 0.5, -2/3, 0.25])  # -x + (1/2)x^2 - (2/3)x^3 + (1/4)x^4
+        # Test gradient
+        gx, gy = curve.gradient(1, 0)
+        self.assertEqual(gx, 3)  # 3x^2 at (1,0)
+        self.assertEqual(gy, 0)  # 3y^2 at (1,0)
 
     def test_constant_curve(self):
-        """Test constant curve: y = 5"""
-        # Coefficients for 5 + 0*x + 0*x^2
-        coeffs = [5, 0, 0]  # 5
-        curve = PolynomialCurve(coeffs, "Constant")
+        """Test constant curve: 5 = 0"""
+        x, y = sp.symbols('x y')
+        expr = sp.sympify(5)  # Constant
+        curve = PolynomialCurve(expr, variables=(x, y))
         
         # Test curve properties
         self.assertEqual(curve.degree(), 0)
-        self.assertEqual(curve.name, "Constant")
+        self.assertEqual(curve.variables, (x, y))
         
-        # Test evaluation
-        self.assertEqual(curve.evaluate(0), 5)
-        self.assertEqual(curve.evaluate(1), 5)
-        self.assertEqual(curve.evaluate(100), 5)
+        # Test evaluation (constant everywhere)
+        self.assertEqual(curve.evaluate(0, 0), 5)
+        self.assertEqual(curve.evaluate(1, 1), 5)
+        self.assertEqual(curve.evaluate(100, -50), 5)
         
-        # Test derivative
-        derivative = curve.derivative()
-        self.assertEqual(derivative.degree(), -1)  # Should be degree -1 for zero polynomial
-        self.assertEqual(derivative.coefficients, [0])  # Zero constant
+        # Test gradient (should be zero everywhere)
+        gx, gy = curve.gradient(0, 0)
+        self.assertEqual(gx, 0)
+        self.assertEqual(gy, 0)
 
     def test_polynomial_coefficients(self):
         """Test polynomial coefficient handling"""
-        # Test with different coefficient orders
-        coeffs1 = [1, 2, 3]  # 1 + 2x + 3x^2
-        curve1 = PolynomialCurve(coeffs1, "Test1")
-        self.assertEqual(curve1.coefficients, [1, 2, 3])
+        x, y = sp.symbols('x y')
         
-        # Test with leading zeros
-        coeffs2 = [0, 0, 1, 0, 2]  # 0 + 0*x + 1*x^2 + 0*x^3 + 2*x^4 = x^2 + 2x^4
-        curve2 = PolynomialCurve(coeffs2, "Test2")
-        # Note: The implementation should probably normalize these, but we'll test what we get
-        self.assertEqual(curve2.coefficients, [0, 0, 1, 0, 2])
+        # Test mixed degree polynomial
+        expr1 = 1 + 2*x + 3*y + x*y + x**2  # Mixed terms
+        curve1 = PolynomialCurve(expr1, variables=(x, y))
+        self.assertEqual(curve1.degree(), 2)
+        
+        # Test higher degree
+        expr2 = x**4 + y**4 + x**2*y**2  # Degree 4
+        curve2 = PolynomialCurve(expr2, variables=(x, y))
+        self.assertEqual(curve2.degree(), 4)
 
     def test_polynomial_operations(self):
-        """Test polynomial operations like addition and multiplication"""
-        # Create two simple polynomials: f(x) = x + 1, g(x) = x - 1
-        f_coeffs = [1, 1]  # 1 + x
-        g_coeffs = [-1, 1]  # -1 + x
+        """Test polynomial operations and evaluation"""
+        x, y = sp.symbols('x y')
         
-        f = PolynomialCurve(f_coeffs, "f")
-        g = PolynomialCurve(g_coeffs, "g")
+        # Create two simple polynomials
+        f_expr = x + 1  # Line
+        g_expr = y - 1  # Line
         
-        # Test that we can create them and evaluate them
-        self.assertEqual(f.evaluate(0), 1)
-        self.assertEqual(f.evaluate(1), 2)
-        self.assertEqual(g.evaluate(0), -1)
-        self.assertEqual(g.evaluate(1), 0)
+        f = PolynomialCurve(f_expr, variables=(x, y))
+        g = PolynomialCurve(g_expr, variables=(x, y))
+        
+        # Test evaluation
+        self.assertEqual(f.evaluate(0, 0), 1)   # 0 + 1 = 1
+        self.assertEqual(f.evaluate(1, 0), 2)   # 1 + 1 = 2
+        self.assertEqual(g.evaluate(0, 0), -1)  # 0 - 1 = -1
+        self.assertEqual(g.evaluate(0, 1), 0)   # 1 - 1 = 0
 
     def test_polynomial_properties(self):
         """Test polynomial properties and methods"""
-        coeffs = [2, -3, 1]  # 2 - 3x + x^2
-        curve = PolynomialCurve(coeffs, "TestPoly")
+        x, y = sp.symbols('x y')
+        expr = 2 - 3*x + x**2 + y**2  # Mixed quadratic
+        curve = PolynomialCurve(expr, variables=(x, y))
         
         # Test degree
         self.assertEqual(curve.degree(), 2)
         
-        # Test name
-        self.assertEqual(curve.name, "TestPoly")
+        # Test variables
+        self.assertEqual(curve.variables, (x, y))
         
-        # Test that it's a proper polynomial curve
+        # Test that it has required methods
         self.assertTrue(hasattr(curve, 'evaluate'))
-        self.assertTrue(hasattr(curve, 'derivative'))
-        self.assertTrue(hasattr(curve, 'integral'))
-        self.assertTrue(hasattr(curve, 'coefficients'))
+        self.assertTrue(hasattr(curve, 'gradient'))
+        self.assertTrue(hasattr(curve, 'degree'))
+        self.assertTrue(hasattr(curve, 'variables'))
 
 
 if __name__ == "__main__":

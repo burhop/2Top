@@ -5,6 +5,7 @@ Unit tests for polynomial curve functionality
 import sys
 import os
 import unittest
+import sympy as sp
 
 # Add the current directory to the path to import from the project
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,48 +19,48 @@ class TestPolynomialCurve(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        # Create a quadratic curve: y = x^2
-        self.curve = PolynomialCurve([0, 0, 1], "Quadratic")  # Coefficients for x^2
+        # Create a quadratic curve: x^2 + y^2 - 1 = 0 (circle)
+        x, y = sp.symbols('x y')
+        self.curve = PolynomialCurve(x**2 + y**2 - 1, variables=(x, y))
 
     def test_polynomial_initialization(self):
         """Test that the polynomial curve initializes correctly"""
-        self.assertEqual(self.curve.coefficients, [0, 0, 1])
-        self.assertEqual(self.curve.name, "Quadratic")
-        self.assertEqual(self.curve.degree, 2)
+        x, y = sp.symbols('x y')
+        self.assertEqual(self.curve.variables, (x, y))
+        self.assertEqual(self.curve.degree(), 2)
 
     def test_polynomial_evaluation(self):
         """Test polynomial evaluation at various points"""
-        # Evaluate at x = 0
-        self.assertEqual(self.curve.evaluate(0), 0)
+        # Evaluate at origin (should be -1 for unit circle)
+        result = self.curve.evaluate(0, 0)
+        self.assertEqual(result, -1)
         
-        # Evaluate at x = 1
-        self.assertEqual(self.curve.evaluate(1), 1)
+        # Evaluate at point on circle (should be 0)
+        result = self.curve.evaluate(1, 0)
+        self.assertEqual(result, 0)
         
-        # Evaluate at x = 2
-        self.assertEqual(self.curve.evaluate(2), 4)
-        
-        # Evaluate at x = -1
-        self.assertEqual(self.curve.evaluate(-1), 1)
+        # Evaluate at point outside circle (should be positive)
+        result = self.curve.evaluate(2, 0)
+        self.assertEqual(result, 3)
 
     def test_polynomial_derivative(self):
-        """Test derivative calculation"""
-        # Derivative of x^2 is 2x
-        derivative = self.curve.derivative()
-        self.assertEqual(derivative.coefficients, [0, 2])  # Coefficients for 2x
-        self.assertEqual(derivative.degree, 1)
-
-    def test_polynomial_integral(self):
-        """Test integral calculation"""
-        # Integral of x^2 is (1/3)x^3
-        integral = self.curve.integral()
-        self.assertEqual(integral.coefficients, [0, 0, 0, 1/3])  # Coefficients for (1/3)x^3
-        self.assertEqual(integral.degree, 3)
+        """Test gradient calculation"""
+        # Gradient of x^2 + y^2 - 1 is (2x, 2y)
+        gx, gy = self.curve.gradient(1, 0)
+        self.assertEqual(gx, 2)
+        self.assertEqual(gy, 0)
 
     def test_polynomial_properties(self):
         """Test polynomial properties"""
-        self.assertEqual(self.curve.name, "Quadratic")
-        self.assertEqual(self.curve.degree, 2)
-        self.assertEqual(self.curve.dimension, 1)  # 1D curve
+        x, y = sp.symbols('x y')
+        self.assertEqual(self.curve.variables, (x, y))
+        self.assertEqual(self.curve.degree(), 2)
+        
+        # Test that it has required methods
+        self.assertTrue(hasattr(self.curve, 'evaluate'))
+        self.assertTrue(hasattr(self.curve, 'gradient'))
+        self.assertTrue(hasattr(self.curve, 'degree'))
+        self.assertTrue(hasattr(self.curve, 'on_curve'))
 
 
 if __name__ == "__main__":
