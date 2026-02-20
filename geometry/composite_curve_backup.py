@@ -40,9 +40,7 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
     """
     
     def __init__(self, segments: List[TrimmedImplicitCurve], 
-                 variables: Tuple[sp.Symbol, sp.Symbol] = None,
-                 validate_continuity: bool = False,  # Changed to False by default
-                 continuity_tolerance: float = 1e-6):
+                 variables: Tuple[sp.Symbol, sp.Symbol] = None):
         """
         Initialize CompositeCurve with ordered list of segments.
         
@@ -60,10 +58,6 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         
         if not all(isinstance(seg, TrimmedImplicitCurve) for seg in segments):
             raise TypeError("All segments must be TrimmedImplicitCurve instances")
-        
-        # Validate continuity if requested
-        if validate_continuity and len(segments) > 1:
-            self._validate_continuity(segments, continuity_tolerance)
         
         # Store segments
         self.segments = list(segments)  # Make a copy to avoid external modification
@@ -90,39 +84,6 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         
         # Initialize parent class
         super().__init__(composite_expr, variables)
-    
-    def _validate_continuity(self, segments: List[TrimmedImplicitCurve], tolerance: float):
-        """
-        Validate that segments form a continuous path.
-        
-        Args:
-            segments: List of segments to validate
-            tolerance: Maximum allowed gap between consecutive segments
-            
-        Raises:
-            ValueError: If segments are not continuous
-        """
-        for i in range(len(segments) - 1):
-            current_seg = segments[i]
-            next_seg = segments[i + 1]
-            
-            # Get endpoints
-            current_endpoints = current_seg.get_endpoints()
-            next_endpoints = next_seg.get_endpoints()
-            
-            if not current_endpoints or not next_endpoints:
-                raise ValueError(f"Segment {i} or {i+1} missing endpoint information for continuity validation")
-            
-            # Find minimum gap between end of current segment and start of next segment
-            min_gap = float('inf')
-            for curr_end in current_endpoints:
-                for next_start in next_endpoints:
-                    gap = np.sqrt((curr_end[0] - next_start[0])**2 + (curr_end[1] - next_start[1])**2)
-                    min_gap = min(min_gap, gap)
-            
-            if min_gap > tolerance:
-                raise ValueError(f"Gap of {min_gap:.6f} between segments {i} and {i+1} exceeds tolerance {tolerance}. "
-                               f"CompositeCurve requires continuous segments.")
     
     def is_closed(self, tolerance: float = 1e-6) -> bool:
         """

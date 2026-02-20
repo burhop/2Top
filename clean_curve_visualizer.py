@@ -89,8 +89,16 @@ class CleanCurveVisualizerApp:
         add_frame3.pack(fill=tk.X, padx=5, pady=2)
         
         ttk.Button(add_frame3, text="Trimmed", command=self.add_trimmed).pack(side=tk.LEFT, padx=1)
-        ttk.Button(add_frame3, text="Composite", command=self.add_composite).pack(side=tk.LEFT, padx=1)
         ttk.Button(add_frame3, text="Square", command=self.add_square).pack(side=tk.LEFT, padx=1)
+        ttk.Button(add_frame3, text="Mixed Composites", command=self.add_mixed_composite).pack(side=tk.LEFT, padx=1)
+        
+        # Add a fourth frame for testing buttons
+        add_frame4 = ttk.Frame(curves_frame)
+        add_frame4.pack(fill=tk.X, padx=5, pady=2)
+        
+        ttk.Button(add_frame4, text="Test Squares", command=self.test_squares).pack(side=tk.LEFT, padx=1)
+        ttk.Button(add_frame4, text="Test Figure-8", command=self.test_figure_eight).pack(side=tk.LEFT, padx=1)
+        ttk.Button(add_frame4, text="Working Composites", command=self.test_working_composites).pack(side=tk.LEFT, padx=1)
         
         # Custom expression
         custom_frame = ttk.Frame(curves_frame)
@@ -379,13 +387,18 @@ class CleanCurveVisualizerApp:
              lambda x_val, y_val: y_val >= 0, 
              "Upper Ellipse Arc"),
             
-            # Trimmed line segment
-            (PolynomialCurve(x + y, (x, y)), 
-             lambda x_val, y_val: (x_val >= -1) & (x_val <= 1), 
-             "Line Segment"),
+            # Trimmed hyperbola branch
+            (PolynomialCurve(x*y - 1, (x, y)), 
+             lambda x_val, y_val: (x_val >= 0.5) & (x_val <= 3) & (y_val >= 0.3) & (y_val <= 3), 
+             "Hyperbola Branch"),
+            
+            # Crescent (circle minus smaller circle)
+            (ConicSection(x**2 + y**2 - 4, (x, y)), 
+             lambda x_val, y_val: (x_val + 0.8)**2 + y_val**2 >= 1, 
+             "Crescent Shape"),
         ]
         
-        trimmed_count = len([c for c in self.curves if 'Half' in c[0] or 'Quarter' in c[0] or 'Trimmed' in c[0] or 'Arc' in c[0] or 'Segment' in c[0]])
+        trimmed_count = len([c for c in self.curves if any(keyword in c[0] for keyword in ['Half', 'Quarter', 'Trimmed', 'Arc', 'Branch', 'Crescent'])])
         
         if trimmed_count < len(trimmed_configs):
             base_curve, mask_func, name = trimmed_configs[trimmed_count]
@@ -407,30 +420,90 @@ class CleanCurveVisualizerApp:
         self.update_curve_list()
         self.update_plot()
         
-    def add_composite(self):
-        """Add a composite curve"""
+    def add_mixed_composite(self):
+        """Add a mixed implicit curve composite"""
         x, y = sp.symbols('x y')
         
-        # Variety of composite curves
-        composite_configs = [
-            # Circle from quarters
-            (lambda: create_circle_from_quarters(center=(0, 0), radius=1.0), 
-             "Circle from Quarters"),
+        # Variety of mixed composite curves
+        mixed_configs = [
+            (lambda: self._create_circle_line_hybrid(), 
+             "D-Shape (Circle + Line)"),
             
-            # Different sized circle
-            (lambda: create_circle_from_quarters(center=(0.5, 0), radius=1.2), 
-             "Offset Circle Quarters"),
+            (lambda: self._create_ellipse_parabola_hybrid(), 
+             "Egg Shape (Ellipse + Parabola)"),
             
-            # Custom composite: two semicircles
-            (lambda: self._create_two_semicircles(), 
-             "Two Semicircles"),
+            (lambda: self._create_superellipse_circle_hybrid(), 
+             "Rounded Square (Superellipse + Circle)"),
             
-            # Custom composite: connected arcs
-            (lambda: self._create_connected_arcs(), 
-             "Connected Arcs"),
+            (lambda: self._create_heart_shape(), 
+             "Heart Shape (Circles + Parabola)"),
+            
+            (lambda: self._create_lens_shape(), 
+             "Lens Shape (Two Circles)"),
         ]
         
-        composite_count = len([c for c in self.curves if 'Quarters' in c[0] or 'Semicircles' in c[0] or 'Arcs' in c[0]])
+        mixed_count = len([c for c in self.curves if any(keyword in c[0] for keyword in 
+                          ['D-Shape', 'Egg Shape', 'Rounded Square', 'Heart Shape', 'Lens Shape'])])
+        
+        if mixed_count < len(mixed_configs):
+            creator_func, name = mixed_configs[mixed_count]
+            try:
+                curve = creator_func()
+            except Exception as e:
+                print(f"Error creating {name}: {e}")
+                # Fallback to simple circle
+                curve = ConicSection(x**2 + y**2 - 1, (x, y))
+                name = "Circle (fallback)"
+        else:
+            # Default to circle
+            curve = ConicSection(x**2 + y**2 - 1, (x, y))
+            name = f"Random Circle"
+        
+        self.curves.append((name, curve))
+        self.update_curve_list()
+        self.update_plot()
+
+    def add_composite(self):
+        """Add a basic composite curve (line-based shapes)"""
+        x, y = sp.symbols('x y')
+        
+        # Variety of SIMPLE line-based composite curves
+        composite_configs = [
+            # L-shape (two line segments)
+            (lambda: self._create_L_shape(), 
+             "L-Shape"),
+            
+            # T-shape (three line segments)
+            (lambda: self._create_T_shape(), 
+             "T-Shape"),
+            
+            # Triangle (three line segments)
+            (lambda: self._create_triangle(), 
+             "Triangle"),
+            
+            # House shape (square + triangle roof)
+            (lambda: self._create_house_shape(), 
+             "House Shape"),
+            
+            # Zigzag pattern
+            (lambda: self._create_zigzag_pattern(), 
+             "Zigzag Pattern"),
+            
+            # Staircase pattern
+            (lambda: self._create_staircase(), 
+             "Staircase"),
+            
+            # Figure-eight
+            (lambda: self._create_figure_eight(), 
+             "Figure Eight"),
+            
+            # Simple square (for comparison)
+            (lambda: create_square_from_edges((-0.8, -0.8), (0.8, 0.8)), 
+             "Square"),
+        ]
+        
+        composite_count = len([c for c in self.curves if any(keyword in c[0] for keyword in 
+                              ['L-Shape', 'T-Shape', 'Triangle', 'House', 'Zigzag', 'Staircase', 'Figure Eight', 'Square'])])
         
         if composite_count < len(composite_configs):
             creator_func, name = composite_configs[composite_count]
@@ -438,9 +511,9 @@ class CleanCurveVisualizerApp:
                 curve = creator_func()
             except Exception as e:
                 print(f"Error creating {name}: {e}")
-                # Fallback to simple circle quarters
-                curve = create_circle_from_quarters(center=(0, 0), radius=1.0)
-                name = "Circle from Quarters (fallback)"
+                # Fallback to simple square
+                curve = create_square_from_edges((-0.5, -0.5), (0.5, 0.5))
+                name = "Square (fallback)"
         else:
             # Default to circle quarters with random parameters
             cx = np.random.uniform(-0.5, 0.5)
@@ -639,30 +712,15 @@ class CleanCurveVisualizerApp:
                     
                     # Special handling for trimmed curves
                     if hasattr(curve, 'base_curve') and hasattr(curve, 'mask'):
-                        # This is a TrimmedImplicitCurve - apply mask properly
-                        Z = curve.base_curve.evaluate(X, Y)
-                        
-                        # Apply mask to hide regions outside the trimmed segment
-                        mask_grid = np.zeros_like(X, dtype=bool)
-                        
-                        # Vectorized mask application for better performance
-                        if hasattr(curve, '_xmin') and curve._xmin is not None:
-                            # Use explicit bounds if available (much faster)
-                            eps = 1e-9
-                            mask_grid = (
-                                (X >= (curve._xmin - eps)) & (X <= (curve._xmax + eps)) &
-                                (Y >= (curve._ymin - eps)) & (Y <= (curve._ymax + eps))
-                            )
-                        else:
-                            # Fall back to point-by-point mask evaluation
-                            for row in range(X.shape[0]):
-                                for col in range(X.shape[1]):
-                                    mask_grid[row, col] = curve.mask(X[row, col], Y[row, col])
-                        
-                        # Set masked regions to NaN so they don't appear in contour
-                        Z_masked = np.where(mask_grid, Z, np.nan)
-                        
-                        self.ax.contour(X, Y, Z_masked, levels=[0], colors=[color], linewidths=3)
+                        # This is a TrimmedImplicitCurve - use its own plot method
+                        curve.plot(x_range=(-plot_range, plot_range), y_range=(-plot_range, plot_range), 
+                                 resolution=resolution, ax=self.ax, colors=[color], linewidths=3)
+                    
+                    elif hasattr(curve, 'segments'):
+                        # This is a CompositeCurve - use its own plot method
+                        curve.plot(x_range=(-plot_range, plot_range), y_range=(-plot_range, plot_range), 
+                                 resolution=resolution, ax=self.ax)
+                    
                     else:
                         # Regular curve - plot normally
                         Z = curve.evaluate(X, Y)
@@ -799,6 +857,332 @@ class CleanCurveVisualizerApp:
         # Create composite
         composite = CompositeCurve([arc1, arc2])
         return composite
+    
+    def _create_L_shape(self):
+        """Create an L-shape from two line segments"""
+        x, y = sp.symbols('x y')
+        
+        # Vertical line: x = -0.5, y from -1 to 0
+        vertical = PolynomialCurve(x + 0.5, (x, y))
+        vertical_mask = lambda x_val, y_val: (-0.6 <= x_val <= -0.4) and (-1 <= y_val <= 0)
+        vertical_segment = TrimmedImplicitCurve(vertical, vertical_mask, endpoints=[(-0.5, -1), (-0.5, 0)])
+        
+        # Horizontal line: y = -1, x from -0.5 to 0.5
+        horizontal = PolynomialCurve(y + 1, (x, y))
+        horizontal_mask = lambda x_val, y_val: (-0.5 <= x_val <= 0.5) and (-1.1 <= y_val <= -0.9)
+        horizontal_segment = TrimmedImplicitCurve(horizontal, horizontal_mask, endpoints=[(-0.5, -1), (0.5, -1)])
+        
+        return CompositeCurve([vertical_segment, horizontal_segment], validate_continuity=True)
+    
+    def _create_T_shape(self):
+        """Create a T-shape from connected line segments"""
+        from geometry.factories import create_T_shape
+        return create_T_shape()
+    
+    def _create_triangle(self):
+        """Create a triangle from three line segments"""
+        x, y = sp.symbols('x y')
+        
+        segments = []
+        
+        # Bottom edge: y = -0.5, x from -1 to 1
+        bottom = PolynomialCurve(y + 0.5, (x, y))
+        bottom_mask = lambda x_val, y_val: (-1 <= x_val <= 1) and (-0.6 <= y_val <= -0.4)
+        segments.append(TrimmedImplicitCurve(bottom, bottom_mask, endpoints=[(-1, -0.5), (1, -0.5)]))
+        
+        # Right edge: from (1, -0.5) to (0, 1)
+        # slope = (1 - (-0.5)) / (0 - 1) = -1.5
+        # y - (-0.5) = -1.5(x - 1) => y = -1.5x + 1
+        right = PolynomialCurve(y + 1.5*x - 1, (x, y))
+        right_mask = lambda x_val, y_val: (0 <= x_val <= 1) and (-0.5 <= y_val <= 1)
+        segments.append(TrimmedImplicitCurve(right, right_mask, endpoints=[(1, -0.5), (0, 1)]))
+        
+        # Left edge: from (0, 1) to (-1, -0.5)
+        # slope = (-0.5 - 1) / (-1 - 0) = 1.5
+        # y - 1 = 1.5(x - 0) => y = 1.5x + 1
+        left = PolynomialCurve(y - 1.5*x - 1, (x, y))
+        left_mask = lambda x_val, y_val: (-1 <= x_val <= 0) and (-0.5 <= y_val <= 1)
+        segments.append(TrimmedImplicitCurve(left, left_mask, endpoints=[(0, 1), (-1, -0.5)]))
+        
+        return CompositeCurve(segments, validate_continuity=True)
+    
+    def _create_house_shape(self):
+        """Create a house shape (square base + triangle roof)"""
+        x, y = sp.symbols('x y')
+        
+        segments = []
+        
+        # Square base: four edges
+        # Bottom: y = -1, x from -0.5 to 0.5
+        bottom = PolynomialCurve(y + 1, (x, y))
+        bottom_mask = lambda x_val, y_val: (-0.5 <= x_val <= 0.5) and (-1.1 <= y_val <= -0.9)
+        segments.append(TrimmedImplicitCurve(bottom, bottom_mask, endpoints=[(-0.5, -1), (0.5, -1)]))
+        
+        # Right: x = 0.5, y from -1 to 0
+        right = PolynomialCurve(x - 0.5, (x, y))
+        right_mask = lambda x_val, y_val: (0.4 <= x_val <= 0.6) and (-1 <= y_val <= 0)
+        segments.append(TrimmedImplicitCurve(right, right_mask, endpoints=[(0.5, -1), (0.5, 0)]))
+        
+        # Roof right: from (0.5, 0) to (0, 0.5)
+        roof_right = PolynomialCurve(y + x - 0.5, (x, y))
+        roof_right_mask = lambda x_val, y_val: (0 <= x_val <= 0.5) and (0 <= y_val <= 0.5)
+        segments.append(TrimmedImplicitCurve(roof_right, roof_right_mask, endpoints=[(0.5, 0), (0, 0.5)]))
+        
+        # Roof left: from (0, 0.5) to (-0.5, 0)
+        roof_left = PolynomialCurve(y - x - 0.5, (x, y))
+        roof_left_mask = lambda x_val, y_val: (-0.5 <= x_val <= 0) and (0 <= y_val <= 0.5)
+        segments.append(TrimmedImplicitCurve(roof_left, roof_left_mask, endpoints=[(0, 0.5), (-0.5, 0)]))
+        
+        # Left: x = -0.5, y from 0 to -1
+        left = PolynomialCurve(x + 0.5, (x, y))
+        left_mask = lambda x_val, y_val: (-0.6 <= x_val <= -0.4) and (-1 <= y_val <= 0)
+        segments.append(TrimmedImplicitCurve(left, left_mask, endpoints=[(-0.5, 0), (-0.5, -1)]))
+        
+        return CompositeCurve(segments, validate_continuity=True)
+    
+    def _create_zigzag_pattern(self):
+        """Create a zigzag pattern from connected line segments"""
+        from geometry.factories import create_zigzag_pattern
+        return create_zigzag_pattern()
+    
+    def _create_staircase(self):
+        """Create a staircase pattern"""
+        x, y = sp.symbols('x y')
+        
+        segments = []
+        
+        # Step 1: horizontal from (-1, -0.5) to (-0.3, -0.5)
+        step1_h = PolynomialCurve(y + 0.5, (x, y))
+        step1_h_mask = lambda x_val, y_val: (-1 <= x_val <= -0.3) and (-0.6 <= y_val <= -0.4)
+        segments.append(TrimmedImplicitCurve(step1_h, step1_h_mask, endpoints=[(-1, -0.5), (-0.3, -0.5)]))
+        
+        # Vertical connector from (-0.3, -0.5) to (-0.3, 0)
+        step1_v = PolynomialCurve(x + 0.3, (x, y))
+        step1_v_mask = lambda x_val, y_val: (-0.4 <= x_val <= -0.2) and (-0.5 <= y_val <= 0)
+        segments.append(TrimmedImplicitCurve(step1_v, step1_v_mask, endpoints=[(-0.3, -0.5), (-0.3, 0)]))
+        
+        # Step 2: horizontal from (-0.3, 0) to (0.3, 0)
+        step2_h = PolynomialCurve(y, (x, y))
+        step2_h_mask = lambda x_val, y_val: (-0.3 <= x_val <= 0.3) and (-0.1 <= y_val <= 0.1)
+        segments.append(TrimmedImplicitCurve(step2_h, step2_h_mask, endpoints=[(-0.3, 0), (0.3, 0)]))
+        
+        # Vertical connector 2 from (0.3, 0) to (0.3, 0.5)
+        step2_v = PolynomialCurve(x - 0.3, (x, y))
+        step2_v_mask = lambda x_val, y_val: (0.2 <= x_val <= 0.4) and (0 <= y_val <= 0.5)
+        segments.append(TrimmedImplicitCurve(step2_v, step2_v_mask, endpoints=[(0.3, 0), (0.3, 0.5)]))
+        
+        # Step 3: horizontal from (0.3, 0.5) to (1, 0.5)
+        step3_h = PolynomialCurve(y - 0.5, (x, y))
+        step3_h_mask = lambda x_val, y_val: (0.3 <= x_val <= 1) and (0.4 <= y_val <= 0.6)
+        segments.append(TrimmedImplicitCurve(step3_h, step3_h_mask, endpoints=[(0.3, 0.5), (1, 0.5)]))
+        
+        return CompositeCurve(segments, validate_continuity=True)
+    
+    def _create_circle_line_hybrid(self):
+        """Create a D-shape (circle + line hybrid)"""
+        from geometry.factories import create_circle_line_hybrid
+        return create_circle_line_hybrid()
+    
+    def _create_ellipse_parabola_hybrid(self):
+        """Create an egg shape (ellipse + parabola hybrid)"""
+        from geometry.factories import create_ellipse_parabola_hybrid
+        return create_ellipse_parabola_hybrid()
+    
+    def _create_superellipse_circle_hybrid(self):
+        """Create a rounded square (superellipse + circle hybrid)"""
+        from geometry.factories import create_superellipse_circle_hybrid
+        return create_superellipse_circle_hybrid()
+    
+    def _create_heart_shape(self):
+        """Create a heart shape (circles + parabola)"""
+        from geometry.factories import create_heart_shape
+        return create_heart_shape()
+    
+    def _create_lens_shape(self):
+        """Create a lens shape (two intersecting circles)"""
+        from geometry.factories import create_lens_shape
+        return create_lens_shape()
+    
+    def _create_zigzag_pattern(self):
+        """Create a zigzag pattern"""
+        from geometry.factories import create_zigzag_pattern
+        return create_zigzag_pattern()
+    
+    def _create_staircase(self):
+        """Create a staircase pattern"""
+        from geometry.factories import create_staircase
+        return create_staircase()
+    
+    def _create_figure_eight(self):
+        """Create a figure-eight pattern"""
+        from geometry.factories import create_figure_eight
+        return create_figure_eight()
+    
+    def test_squares(self):
+        """Add multiple test squares with different configurations"""
+        print("🔍 Adding Test Squares")
+        
+        # Clear existing curves first
+        self.curves.clear()
+        
+        # Add various square configurations using both implementations
+        test_squares = [
+            ((-1, -1), (1, 1), "Unit Square (Standard)", 'blue', False),
+            ((-0.5, -0.5), (0.5, 0.5), "Small Square (Robust)", 'red', True),
+            ((0.5, 0.5), (1.5, 1.5), "Offset Square (Standard)", 'green', False),
+            ((-1.5, -0.5), (0.5, 1.5), "Rectangle (Robust)", 'orange', True),
+            ((-2, -2), (-1, -1), "Tiny Square (Standard)", 'purple', False),
+        ]
+        
+        for (x1, y1), (x2, y2), name, color, use_robust in test_squares:
+            try:
+                if use_robust:
+                    from geometry.factories import create_robust_square
+                    square = create_robust_square((x1, y1), (x2, y2))
+                else:
+                    square = create_square_from_edges((x1, y1), (x2, y2))
+                
+                self.curves.append((f"{name} ({color})", square))
+                print(f"  ✅ Added {name}")
+            except Exception as e:
+                print(f"  ❌ Failed to add {name}: {e}")
+        
+        self.update_curve_list()
+        self.update_plot()
+        print(f"✅ Test squares completed - {len(self.curves)} squares added")
+    
+    def test_figure_eight(self):
+        """Add a test figure-eight to debug gaps"""
+        print("🔍 Adding Test Figure-Eight")
+        
+        try:
+            from geometry.factories import create_figure_eight
+            figure_eight = create_figure_eight()
+            self.curves.append(("Test Figure-Eight", figure_eight))
+            print(f"  ✅ Added Figure-Eight with {len(figure_eight.segments)} segments")
+            
+            # Test continuity
+            is_closed = figure_eight.is_closed()
+            print(f"  Figure-Eight is closed: {is_closed}")
+            
+        except Exception as e:
+            print(f"  ❌ Failed to add Figure-Eight: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        self.update_curve_list()
+        self.update_plot()
+    
+    def test_working_composites(self):
+        """Add all the working composite curves for comprehensive testing"""
+        print("🧪 Adding Working Composite Curves")
+        
+        # Clear existing curves first
+        self.curves.clear()
+        
+        # Add all working composite curves
+        working_composites = [
+            # Line-based composites (these work well)
+            (lambda: self._create_L_shape(), "L-Shape", 'blue'),
+            (lambda: self._create_T_shape(), "T-Shape", 'red'),
+            (lambda: self._create_triangle(), "Triangle", 'green'),
+            (lambda: self._create_house_shape(), "House Shape", 'orange'),
+            (lambda: self._create_zigzag_pattern(), "Zigzag Pattern", 'purple'),
+            (lambda: self._create_staircase(), "Staircase", 'brown'),
+            
+            # Mixed implicit composites (with tolerance fixes)
+            (lambda: self._create_circle_line_hybrid(), "D-Shape", 'cyan'),
+            (lambda: self._create_ellipse_parabola_hybrid(), "Egg Shape", 'magenta'),
+            (lambda: self._create_superellipse_circle_hybrid(), "Rounded Square", 'yellow'),
+            (lambda: self._create_lens_shape(), "Lens Shape", 'pink'),
+            
+            # Squares (working with tolerance fixes)
+            (lambda: create_square_from_edges((-1, -1), (1, 1)), "Unit Square", 'black'),
+            (lambda: create_square_from_edges((-0.5, -0.5), (0.5, 0.5)), "Small Square", 'gray'),
+        ]
+        
+        success_count = 0
+        
+        for creator_func, name, color in working_composites:
+            try:
+                curve = creator_func()
+                self.curves.append((f"{name} ({color})", curve))
+                print(f"  ✅ Added {name}")
+                success_count += 1
+            except Exception as e:
+                print(f"  ❌ Failed to add {name}: {e}")
+        
+        # Add figure-eight separately (may have gaps but mostly works)
+        try:
+            figure_eight = self._create_figure_eight()
+            self.curves.append(("Figure-Eight (experimental)", figure_eight))
+            print(f"  ⚠️ Added Figure-Eight (may have gaps)")
+            success_count += 1
+        except Exception as e:
+            print(f"  ❌ Failed to add Figure-Eight: {e}")
+        
+        # Add heart shape separately (recently fixed)
+        try:
+            heart = self._create_heart_shape()
+            self.curves.append(("Heart Shape (fixed)", heart))
+            print(f"  🔧 Added Heart Shape (recently fixed)")
+            success_count += 1
+        except Exception as e:
+            print(f"  ❌ Failed to add Heart Shape: {e}")
+        
+        self.update_curve_list()
+        self.update_plot()
+        print(f"✅ Working composites test completed - {success_count} curves added")
+
+    def debug_single_square(self):
+        """Add a single square with debug information"""
+        print("🔍 Debug Single Square")
+        
+        # Clear existing curves
+        self.curves.clear()
+        
+        try:
+            # Create a simple unit square using robust implementation
+            from geometry.factories import create_robust_square
+            square = create_robust_square((-1, -1), (1, 1))
+            
+            print(f"  Square created with {len(square.segments)} segments")
+            print(f"  Square is closed: {square.is_closed()}")
+            print(f"  Square has _is_square: {hasattr(square, '_is_square')}")
+            print(f"  Square is robust: {hasattr(square, '_is_robust_square')}")
+            
+            if hasattr(square, '_square_bounds'):
+                print(f"  Square bounds: {square._square_bounds}")
+            
+            # Test each segment
+            for i, segment in enumerate(square.segments):
+                print(f"  Segment {i}: {segment.expression}")
+                
+                # Test a point on this segment
+                if i == 0:  # Bottom
+                    test_point = (0, -1)
+                elif i == 1:  # Right
+                    test_point = (1, 0)
+                elif i == 2:  # Top
+                    test_point = (0, 1)
+                else:  # Left
+                    test_point = (-1, 0)
+                
+                contains = segment.contains(*test_point, tolerance=0.1)
+                mask_result = segment.mask(*test_point)
+                eval_result = segment.evaluate(*test_point)
+                
+                print(f"    Test point {test_point}: contains={contains}, mask={mask_result}, eval={eval_result:.3f}")
+            
+            self.curves.append(("Debug Robust Square", square))
+            
+        except Exception as e:
+            print(f"  ❌ Debug square failed: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        self.update_curve_list()
+        self.update_plot()
 
 def main():
     """Main function"""
