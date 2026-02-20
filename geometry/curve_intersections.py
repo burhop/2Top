@@ -4,18 +4,24 @@ Curve intersection utilities - finding discrete intersection points
 
 import numpy as np
 import sympy as sp
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 from scipy.optimize import fsolve
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import fcluster, linkage
 
+from .precision import PrecisionPolicy, get_precision_policy
 
-def find_curve_intersections(curve1, curve2, 
-                           search_range: float = 5.0,
-                           grid_resolution: int = 500,
-                           tolerance: float = 1e-6,
-                           max_points: int = 50,
-                           detect_overlap: bool = False) -> List[Tuple[float, float]]:
+
+def find_curve_intersections(
+    curve1,
+    curve2,
+    search_range: float = 5.0,
+    grid_resolution: int = 500,
+    tolerance: Optional[float] = None,
+    max_points: int = 50,
+    detect_overlap: bool = False,
+    precision_policy: Optional[PrecisionPolicy] = None,
+) -> List[Tuple[float, float]]:
     """
     Find intersection points between two implicit curves.
     
@@ -27,13 +33,20 @@ def find_curve_intersections(curve1, curve2,
         tolerance: Tolerance for considering a point an intersection
         max_points: Maximum number of intersection points to return
         detect_overlap: If True, detect overlapping segments (slower)
+        precision_policy: Optional precision policy to use for calculations
         
     Returns:
         List of (x, y) intersection points
     """
     
+    policy = precision_policy or getattr(curve1, "precision_policy", lambda: None)() or getattr(curve2, "precision_policy", lambda: None)() or get_precision_policy()
+    tol = tolerance if tolerance is not None else policy.distance_threshold(
+        max(getattr(curve1, "scale_hint", lambda: 1.0)(), getattr(curve2, "scale_hint", lambda: 1.0)())
+    )
+    coarse_tolerance = max(0.05, 5 * policy.blended_tolerance(search_range))
+
     # Quick check for identical curves (only if detect_overlap is enabled)
-    if detect_overlap and _are_curves_identical_fast(curve1, curve2, tolerance):
+    if detect_overlap and _are_curves_identical_fast(curve1, curve2, tol):
         return []  # Return empty for identical curves
     
     # Step 1: Coarse grid search to find approximate intersections
@@ -50,7 +63,6 @@ def find_curve_intersections(curve1, curve2,
         return []
     
     # Find points where both curves are close to zero
-    coarse_tolerance = 0.05
     mask1 = np.abs(Z1) < coarse_tolerance
     mask2 = np.abs(Z2) < coarse_tolerance
     intersection_mask = mask1 & mask2
@@ -109,17 +121,17 @@ def find_curve_intersections(curve1, curve2,
     for start_point in starting_points[:max_points]:
         try:
             # Use numerical solver to refine the intersection
-            solution = fsolve(intersection_system, start_point, xtol=tolerance)
+            solution = fsolve(intersection_system, start_point, xtol=tol)
             
             # Verify the solution
             residual = intersection_system(solution)
-            if np.linalg.norm(residual) < tolerance:
+            if np.linalg.norm(residual) < tol:
                 # Check if this point is valid for both curves (respects trimming)
-                if is_valid_intersection(solution[0], solution[1], tolerance * 100):
+                if is_valid_intersection(solution[0], solution[1], tol * 10):
                     # Check if this point is already in our list
                     is_duplicate = False
                     for existing_point in refined_intersections:
-                        if np.linalg.norm(np.array(solution) - np.array(existing_point)) < tolerance * 100:
+                        if np.linalg.norm(np.array(solution) - np.array(existing_point)) < tol * 10:
                             is_duplicate = True
                             break
                     

@@ -17,6 +17,7 @@ Key Features:
 import numpy as np
 from typing import List, Optional, Dict, Any, Tuple
 from .composite_curve import CompositeCurve
+from .precision import PrecisionPolicy, get_precision_policy
 
 
 class AreaRegion:
@@ -36,7 +37,12 @@ class AreaRegion:
         holes (List[CompositeCurve]): List of closed curves defining holes within the region
     """
     
-    def __init__(self, outer_boundary: CompositeCurve, holes: Optional[List[CompositeCurve]] = None):
+    def __init__(
+        self,
+        outer_boundary: CompositeCurve,
+        holes: Optional[List[CompositeCurve]] = None,
+        precision_policy: Optional[PrecisionPolicy] = None,
+    ):
         """
         Initialize an AreaRegion with an outer boundary and optional holes.
         
@@ -84,8 +90,21 @@ class AreaRegion:
                     raise ValueError(f"holes[{i}] must have at least 3 segments to form a closed region (or be a single inherently closed segment)")
             
             self.holes = holes.copy()  # Create a copy to avoid external modification
+
+        self._precision_policy = precision_policy or outer_boundary.precision_policy()
     
-    def contains(self, x: float, y: float, tolerance: float = 1e-3) -> bool:
+    def precision_policy(self) -> PrecisionPolicy:
+        """Return the precision policy controlling tolerance decisions."""
+
+        return self._precision_policy or get_precision_policy()
+
+    def _resolve_tolerance(self, tolerance: Optional[float] = None) -> float:
+        policy = self.precision_policy()
+        if tolerance is not None:
+            return tolerance
+        return policy.distance_threshold(self.outer_boundary.scale_hint())
+
+    def contains(self, x: float, y: float, tolerance: Optional[float] = None) -> bool:
         """
         Test if a point is inside the region (accounting for holes).
         Uses a robust point-in-polygon algorithm (ray-casting) to determine if a point
@@ -107,17 +126,19 @@ class AreaRegion:
         """
         # Check if point is inside outer boundary (region containment)
         # This will use CompositeCurve's _point_in_polygon_scalar
-        if not self.outer_boundary.contains(x, y, tolerance=tolerance, region_containment=True):
+        tol = self._resolve_tolerance(tolerance)
+
+        if not self.outer_boundary.contains(x, y, tolerance=tol, region_containment=True):
             return False
         
         # Check if point is inside any hole (if so, it's not in the region)
         for hole in self.holes:
-            if hole.contains(x, y, tolerance=tolerance, region_containment=True):
+            if hole.contains(x, y, tolerance=tol, region_containment=True):
                 return False
         
         return True
     
-    def contains_boundary(self, x: float, y: float, tolerance: float = 1e-3) -> bool:
+    def contains_boundary(self, x: float, y: float, tolerance: Optional[float] = None) -> bool:
         """
         Test if a point is on the boundary of the region (outer boundary or hole boundaries).
         
@@ -130,12 +151,14 @@ class AreaRegion:
             bool: True if the point is on any boundary, False otherwise
         """
         # Check if point is on the outer boundary
-        if self.outer_boundary.on_curve(x, y, tolerance=tolerance):
+        tol = self._resolve_tolerance(tolerance)
+
+        if self.outer_boundary.on_curve(x, y, tolerance=tol):
             return True
         
         # Check if point is on any hole boundary
         for hole in self.holes:
-            if hole.contains(x, y, tolerance=tolerance):
+            if hole.contains(x, y, tolerance=tol):
                 return True
         
         return False

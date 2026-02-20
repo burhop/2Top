@@ -10,6 +10,12 @@ from .rfunction_curve import RFunctionCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
 from .composite_curve import CompositeCurve
 from .area_region import AreaRegion
+from .precision import (
+    PrecisionPolicy,
+    get_precision_policy,
+    set_precision_policy,
+    precision_context,
+)
 
 # Import high-level wrapper functions for constructive geometry
 from .rfunction_curve import union, intersect, difference, blend
@@ -41,6 +47,10 @@ __all__ = [
     'TrimmedImplicitCurve',
     'CompositeCurve',
     'AreaRegion',
+    'PrecisionPolicy',
+    'get_precision_policy',
+    'set_precision_policy',
+    'precision_context',
     
     # Constructive geometry functions
     'union',

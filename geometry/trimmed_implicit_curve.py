@@ -19,8 +19,10 @@ Key Features:
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Tuple, Union, Dict, Any, Callable, List
+from typing import Tuple, Union, Dict, Any, Callable, List, Optional
+
 from .implicit_curve import ImplicitCurve
+from .precision import PrecisionPolicy, get_precision_policy
 
 
 class TrimmedImplicitCurve(ImplicitCurve):
@@ -37,10 +39,18 @@ class TrimmedImplicitCurve(ImplicitCurve):
         mask (Callable): Function that takes (x, y) and returns bool for inclusion
     """
     
-    def __init__(self, base_curve: ImplicitCurve, mask: Callable[[float, float], bool], 
-                 variables: Tuple[sp.Symbol, sp.Symbol] = None,
-                 xmin: float = None, xmax: float = None, ymin: float = None, ymax: float = None,
-                 endpoints: List[Tuple[float, float]] = None):
+    def __init__(
+        self,
+        base_curve: ImplicitCurve,
+        mask: Callable[[float, float], bool],
+        variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None,
+        xmin: Optional[float] = None,
+        xmax: Optional[float] = None,
+        ymin: Optional[float] = None,
+        ymax: Optional[float] = None,
+        endpoints: Optional[List[Tuple[float, float]]] = None,
+        precision_policy: Optional[PrecisionPolicy] = None,
+    ):
         """
         Initialize TrimmedImplicitCurve with base curve and mask function.
         
@@ -70,6 +80,10 @@ class TrimmedImplicitCurve(ImplicitCurve):
         
         # Store explicit endpoints if provided
         self.endpoints = endpoints if endpoints is not None else []
+
+        # Precision
+        policy = precision_policy or base_curve.precision_policy() if hasattr(base_curve, "precision_policy") else None
+        self._segment_policy = policy or get_precision_policy()
         
         
         # Use variables from base curve if not specified
@@ -80,17 +94,21 @@ class TrimmedImplicitCurve(ImplicitCurve):
         # Note: The expression is inherited but trimming affects contains(), not evaluate()
         # Handle cases where base_curve.expression is None (e.g., ProceduralCurve)
         if base_curve.expression is not None:
-            super().__init__(base_curve.expression, variables)
+            super().__init__(base_curve.expression, variables, precision_policy=self._segment_policy)
         else:
             # Create a placeholder expression for curves without symbolic expressions
             x, y = variables
             placeholder_expr = x + y  # Simple placeholder
-            super().__init__(placeholder_expr, variables)
+            super().__init__(placeholder_expr, variables, precision_policy=self._segment_policy)
             # Override the expression to match the base curve
             self.expression = base_curve.expression
     
-    def contains(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
-                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+    def contains(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        tolerance: Optional[float] = None,
+    ) -> Union[bool, np.ndarray]:
         """
         Check if point(s) are contained in the trimmed curve segment.
         
@@ -110,8 +128,9 @@ class TrimmedImplicitCurve(ImplicitCurve):
             Boolean or array of booleans indicating containment
         """
         # Check if points are on the base curve boundary (f(x,y) ≈ 0)
+        tol = self._resolve_tolerance(tolerance)
         curve_values = self.base_curve.evaluate(x, y)
-        on_curve = np.abs(curve_values) <= tolerance
+        on_curve = np.abs(curve_values) <= tol
         
         # Check mask condition
         if np.isscalar(x) and np.isscalar(y):
@@ -126,7 +145,7 @@ class TrimmedImplicitCurve(ImplicitCurve):
             # Fast-path: rectangular bounds explicitly provided
             if (self._xmin is not None and self._xmax is not None and
                 self._ymin is not None and self._ymax is not None):
-                eps = 1e-9
+                eps = max(tol * 0.1, 1e-12)
                 in_rect = (
                     (x_array >= (self._xmin - eps)) & (x_array <= (self._xmax + eps)) &
                     (y_array >= (self._ymin - eps)) & (y_array <= (self._ymax + eps))

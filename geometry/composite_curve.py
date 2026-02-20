@@ -25,6 +25,7 @@ from .implicit_curve import ImplicitCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
 from scipy.optimize import brentq
 from .polygon_mixin import CompositePolygonMixin
+from .precision import PrecisionPolicy, get_precision_policy
 
 
 class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
@@ -39,10 +40,14 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         segments (List[TrimmedImplicitCurve]): Ordered list of curve segments
     """
     
-    def __init__(self, segments: List[TrimmedImplicitCurve], 
-                 variables: Tuple[sp.Symbol, sp.Symbol] = None,
-                 validate_continuity: bool = False,  # Changed to False by default
-                 continuity_tolerance: float = 1e-6):
+    def __init__(
+        self,
+        segments: List[TrimmedImplicitCurve],
+        variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None,
+        validate_continuity: bool = False,
+        continuity_tolerance: Optional[float] = None,
+        precision_policy: Optional[PrecisionPolicy] = None,
+    ):
         """
         Initialize CompositeCurve with ordered list of segments.
         
@@ -61,9 +66,18 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         if not all(isinstance(seg, TrimmedImplicitCurve) for seg in segments):
             raise TypeError("All segments must be TrimmedImplicitCurve instances")
         
+        # Wire precision policy (inherit from first segment when possible)
+        if precision_policy is not None:
+            policy = precision_policy
+        elif segments and hasattr(segments[0], "precision_policy"):
+            policy = segments[0].precision_policy()
+        else:
+            policy = get_precision_policy()
+
         # Validate continuity if requested
         if validate_continuity and len(segments) > 1:
-            self._validate_continuity(segments, continuity_tolerance)
+            tol = self._resolve_distance_tolerance(continuity_tolerance, policy)
+            self._validate_continuity(segments, tol)
         
         # Store segments
         self.segments = list(segments)  # Make a copy to avoid external modification
@@ -89,8 +103,24 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
             composite_expr = x + y  # Simple placeholder expression
         
         # Initialize parent class
-        super().__init__(composite_expr, variables)
+        super().__init__(composite_expr, variables, precision_policy=policy)
+        self._composite_policy = policy
     
+    def precision_policy(self) -> PrecisionPolicy:
+        """Return the precision policy assigned to this composite."""
+
+        return getattr(self, "_composite_policy", get_precision_policy())
+
+    def _resolve_distance_tolerance(
+        self, tolerance: Optional[float], policy: Optional[PrecisionPolicy] = None
+    ) -> float:
+        """Resolve a distance tolerance using provided or stored policy."""
+
+        if tolerance is not None:
+            return tolerance
+        active_policy = policy or self.precision_policy()
+        return active_policy.distance_threshold(self.scale_hint())
+
     def _validate_continuity(self, segments: List[TrimmedImplicitCurve], tolerance: float):
         """
         Validate that segments form a continuous path.
@@ -124,7 +154,7 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                 raise ValueError(f"Gap of {min_gap:.6f} between segments {i} and {i+1} exceeds tolerance {tolerance}. "
                                f"CompositeCurve requires continuous segments.")
     
-    def is_closed(self, tolerance: float = 1e-6) -> bool:
+    def is_closed(self, tolerance: Optional[float] = None) -> bool:
         """
         Check if the composite curve forms a closed loop.
         
@@ -149,8 +179,10 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         if len(self.segments) == 4:
             return self._is_closed_rectangle()
         
+        resolved_tol = self._resolve_distance_tolerance(tolerance)
+
         # For other shapes, use the original heuristic but with adaptive sampling
-        return self._is_closed_general(tolerance)
+        return self._is_closed_general(resolved_tol)
     
     def _is_closed_rectangle(self) -> bool:
         """
@@ -385,8 +417,13 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
             # If anything fails, return empty list
             return []
     
-    def contains(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
-                 tolerance: float = 1e-3, region_containment: bool = False) -> Union[bool, np.ndarray]:
+    def contains(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        tolerance: Optional[float] = None,
+        region_containment: bool = False,
+    ) -> Union[bool, np.ndarray]:
         """
         Check if point(s) are contained by this composite curve.
         
@@ -406,6 +443,8 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         Returns:
             Boolean or boolean array indicating containment.
         """
+        tol = self._resolve_distance_tolerance(tolerance)
+
         # Scalar case
         if np.isscalar(x) and np.isscalar(y):
             if self.is_closed():
@@ -413,7 +452,7 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                     # Fast path: axis-aligned square via bounds
                     if getattr(self, "_is_square", False):
                         xmin, xmax, ymin, ymax = getattr(self, "_square_bounds", (0.0, 0.0, 0.0, 0.0))
-                        return (x >= xmin - tolerance) and (x <= xmax + tolerance) and (y >= ymin - tolerance) and (y <= ymax + tolerance)
+                        return (x >= xmin - tol) and (x <= xmax + tol) and (y >= ymin - tol) and (y <= ymax + tol)
                     # Fast path for convex polygons using stored half-spaces (vectorized)
                     if getattr(self, "_is_convex_polygon", False):
                         # Cache numpy arrays for performance
@@ -424,28 +463,28 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                             self._edges_ab = edges[:, :2]
                             self._edges_c = edges[:, 2]
                         vals = self._edges_ab @ np.array([x, y], dtype=float) + self._edges_c
-                        return bool(np.all(vals <= tolerance))
+                        return bool(np.all(vals <= tol))
                     # Fallback: treat boundary as inside and otherwise use sign of evaluate()
                     for segment in self.segments:
-                        if segment.contains(x, y, tolerance):
+                        if segment.contains(x, y, tol):
                             return True
                     try:
                         val = self.evaluate(x, y)
                         if np.isscalar(val):
-                            return val <= tolerance
-                        return bool(np.asarray(val) <= tolerance)
+                            return val <= tol
+                        return bool(np.asarray(val) <= tol)
                     except Exception:
                         return False
                 else:
                     # Boundary only
                     for segment in self.segments:
-                        if segment.contains(x, y, tolerance):
+                        if segment.contains(x, y, tol):
                             return True
                     return False
             else:
                 # Open curve: boundary only across segments
                 for segment in self.segments:
-                    if segment.contains(x, y, tolerance):
+                    if segment.contains(x, y, tol):
                         return True
                 return False
 
@@ -458,7 +497,7 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                 # Fast path: axis-aligned square via bounds
                 if getattr(self, "_is_square", False):
                     xmin, xmax, ymin, ymax = getattr(self, "_square_bounds", (0.0, 0.0, 0.0, 0.0))
-                    return (x_array >= xmin - tolerance) & (x_array <= xmax + tolerance) & (y_array >= ymin - tolerance) & (y_array <= ymax + tolerance)
+                    return (x_array >= xmin - tol) & (x_array <= xmax + tol) & (y_array >= ymin - tol) & (y_array <= ymax + tol)
                 # Convex polygon fast path (single vectorized matmul/einsum)
                 if getattr(self, "_is_convex_polygon", False):
                     # Cache numpy arrays for performance
@@ -474,15 +513,15 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                     vals = np.tensordot(self._edges_ab, XY, axes=([1], [0]))
                     # add c with broadcasting
                     vals = vals + self._edges_c[(slice(None),) + (None,) * (vals.ndim - 1)]
-                    return np.all(vals <= tolerance, axis=0)
+                    return np.all(vals <= tol, axis=0)
                 # Fallback: union of boundary OR sign of evaluate()
                 on_boundary = np.zeros_like(x_array, dtype=bool)
                 for segment in self.segments:
-                    segment_contains = segment.contains(x_array, y_array, tolerance)
+                    segment_contains = segment.contains(x_array, y_array, tol)
                     on_boundary |= segment_contains
                 try:
                     vals = np.asarray(self.evaluate(x_array, y_array))
-                    inside_by_sign = (vals <= tolerance)
+                    inside_by_sign = (vals <= tol)
                 except Exception:
                     inside_by_sign = np.zeros_like(x_array, dtype=bool)
                 return on_boundary | inside_by_sign
@@ -490,19 +529,23 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                 # Boundary only
                 result = np.zeros_like(x_array, dtype=bool)
                 for segment in self.segments:
-                    segment_contains = segment.contains(x_array, y_array, tolerance)
+                    segment_contains = segment.contains(x_array, y_array, tol)
                     result |= segment_contains
                 return result
         else:
             # Open curve: boundary only across segments (vectorized)
             result = np.zeros_like(x_array, dtype=bool)
             for segment in self.segments:
-                segment_contains = segment.contains(x_array, y_array, tolerance)
+                segment_contains = segment.contains(x_array, y_array, tol)
                 result |= segment_contains
             return result
     
-    def on_curve(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
-                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+    def on_curve(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        tolerance: Optional[float] = None,
+    ) -> Union[bool, np.ndarray]:
         """
         Check if point(s) are on any segment of the composite curve.
         
@@ -514,10 +557,12 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         Returns:
             Boolean or array of booleans indicating if points are on any curve segment
         """
+        tol = self._resolve_distance_tolerance(tolerance)
+
         if np.isscalar(x) and np.isscalar(y):
             # Scalar case - check if point is on any segment
             for segment in self.segments:
-                if segment.on_curve(x, y, tolerance):
+                if segment.on_curve(x, y, tol):
                     return True
             return False
         else:
@@ -527,7 +572,7 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
             result = np.zeros_like(x_array, dtype=bool)
             
             for segment in self.segments:
-                segment_on_curve = segment.on_curve(x_array, y_array, tolerance)
+                segment_on_curve = segment.on_curve(x_array, y_array, tol)
                 result = result | segment_on_curve
             return result
     
