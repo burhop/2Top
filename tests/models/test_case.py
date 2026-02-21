@@ -58,7 +58,7 @@ class TestCase:
         created_at = datetime.fromisoformat(data["created_at"]) if isinstance(data["created_at"], str) else data["created_at"]
         last_modified = datetime.fromisoformat(data["last_modified"]) if isinstance(data["last_modified"], str) else data["last_modified"]
         
-        return cls(
+        tc = cls(
             id=data["id"],
             name=data["name"],
             description=data["description"],
@@ -69,3 +69,7 @@ class TestCase:
             valid=data.get("valid", True),
             validation_reason=data.get("validation_reason")
         )
+        tc.status = data.get("status", "pending")
+        tc.created_at = created_at
+        tc.last_modified = last_modified
+        return tc

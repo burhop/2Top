@@ -41,10 +41,12 @@ class ErrorMessage:
         # Convert datetime strings back to datetime objects
         created_at = datetime.fromisoformat(data["created_at"]) if isinstance(data["created_at"], str) else data["created_at"]
         
-        return cls(
+        em = cls(
             id=data["id"],
             test_result_id=data["test_result_id"],
             message=data["message"],
             severity=data["severity"],
             suggested_fix=data.get("suggested_fix")
         )
+        em.created_at = created_at
+        return em

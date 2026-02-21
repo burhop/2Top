@@ -3,6 +3,7 @@ Test case execution engine for the 2Top test system
 """
 
 import time
+import uuid
 from typing import Optional, Any, Dict
 from tests.models.test_case import TestCase
 from tests.models.test_result import TestResult
@@ -63,7 +64,7 @@ class TestCaseExecutor:
             
             # Create a test result
             test_result = TestResult(
-                id=f"tr_{test_case_id.split('_')[1]}_{int(time.time())}",
+                id=f"tr_{uuid.uuid4().hex[:12]}",
                 test_case_id=test_case_id,
                 module_id=test_case.module_id,
                 status="passed" if result == test_case.expected_result else "failed",
@@ -85,7 +86,7 @@ class TestCaseExecutor:
             
             # Create a test result for the error
             test_result = TestResult(
-                id=f"tr_{test_case_id.split('_')[1]}_{int(time.time())}",
+                id=f"tr_{uuid.uuid4().hex[:12]}",
                 test_case_id=test_case_id,
                 module_id=test_case.module_id,
                 status="failed",

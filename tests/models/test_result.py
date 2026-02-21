@@ -2,7 +2,7 @@
 Data model for test results in the 2Top test system
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Any, Dict
 
 
@@ -25,7 +25,10 @@ class TestResult:
         self.test_case_id = test_case_id
         self.module_id = module_id
         self.status = status  # Can be "passed", "failed"
-        self.timestamp = timestamp
+        if isinstance(timestamp, (int, float)):
+            self.timestamp = datetime.fromtimestamp(timestamp)
+        else:
+            self.timestamp = timestamp
         self.execution_time = execution_time
         self.error_details = error_details
         self.output = output
@@ -49,7 +52,11 @@ class TestResult:
     def from_dict(cls, data: Dict[str, Any]) -> 'TestResult':
         """Create a test result from a dictionary"""
         # Convert datetime strings back to datetime objects
-        timestamp = datetime.fromisoformat(data["timestamp"]) if isinstance(data["timestamp"], str) else data["timestamp"]
+        raw_ts = data["timestamp"]
+        if isinstance(raw_ts, str):
+            timestamp = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+        else:
+            timestamp = raw_ts
         
         return cls(
             id=data["id"],

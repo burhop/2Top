@@ -3,7 +3,6 @@ Error message generation system for the 2Top test system
 """
 
 import uuid
-from datetime import datetime
 from typing import Optional, Dict, Any
 from tests.models.error_message import ErrorMessage
 from tests.models.test_result import TestResult
@@ -82,15 +81,16 @@ class ErrorMessageGenerator:
         Returns:
             The created error message
         """
-        # Create a combined error message
         message = f"[{error_type}] {error_details}"
-        
-        return self.generate_error_message(
+        error_message = ErrorMessage(
+            id=f"em_{uuid.uuid4().hex[:12]}",
             test_result_id=test_result.id,
             message=message,
             severity="error",
-            suggested_fix=suggested_fix
+            suggested_fix=suggested_fix,
         )
+        self.storage_manager.store_error_message(error_message)
+        return error_message
 
     def get_error_messages_by_test_result(self, test_result_id: str) -> list:
         """
