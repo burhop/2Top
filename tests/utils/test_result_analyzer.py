@@ -57,6 +57,26 @@ class TestResultAnalyzer:
             "by_status": dict(status_counts)
         }
 
+    def analyze_test_result(self, test_result: TestResult) -> dict:
+        """
+        Analyze a single test result and return a summary dictionary.
+
+        Args:
+            test_result: The TestResult to analyze
+
+        Returns:
+            Dictionary with result_id, status, and other details
+        """
+        return {
+            "result_id": test_result.id,
+            "test_case_id": test_result.test_case_id,
+            "module_id": test_result.module_id,
+            "status": test_result.status,
+            "execution_time": test_result.execution_time,
+            "error_details": test_result.error_details,
+            "diagnosis": test_result.diagnosis,
+        }
+
     def get_test_results_by_module(self, module_id: str) -> List[TestResult]:
         """
         Get all test results for a specific module

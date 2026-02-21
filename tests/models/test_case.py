@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 
-class TestCaseModel:
+class TestCase:
     """
     Represents a test case in the 2Top test system
     """

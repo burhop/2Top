@@ -18,39 +18,52 @@ class ErrorMessageGenerator:
     def __init__(self, storage_manager: ResultStorageManager = None):
         self.storage_manager = storage_manager or ResultStorageManager()
 
-    def generate_error_message(self,
-                              test_result_id: str,
-                              message: str,
-                              severity: str = "error",
-                              suggested_fix: Optional[str] = None) -> ErrorMessage:
+    def generate_error_message(self, test_result: TestResult) -> str:
         """
-        Generate and store an error message
+        Generate a human-readable error message string for a test result.
 
         Args:
-            test_result_id: The ID of the test result this error is associated with
-            message: The error message
-            severity: Severity level (info, warning, error)
-            suggested_fix: Suggested fix for the error
+            test_result: The TestResult to generate a message for
 
         Returns:
-            The created error message
+            A formatted error message string
         """
-        # Generate a unique ID for the error message
-        error_id = f"em_{uuid.uuid4().hex[:12]}"
+        if test_result.status != "failed":
+            return "Test passed - no error to report"
 
-        # Create the error message
-        error_message = ErrorMessage(
-            id=error_id,
-            test_result_id=test_result_id,
-            message=message,
-            severity=severity,
-            suggested_fix=suggested_fix
-        )
+        module_name = f"Module {test_result.module_id}"
+        msg = f"Test '{test_result.test_case_id}' in module '{module_name}' failed\n"
+        msg += f"Error details: {test_result.error_details or 'Unknown error'}\n"
+        msg += "Suggested actions:\n"
+        msg += "  - Review the error details above\n"
+        msg += "  - Check the test case implementation\n"
+        if test_result.diagnosis:
+            msg += f"  - Diagnosis: {test_result.diagnosis}\n"
+        return msg
 
-        # Store the error message
-        self.storage_manager.store_error_message(error_message)
+    def generate_detailed_error_message(self, test_result: TestResult) -> str:
+        """
+        Generate a detailed error report string for a test result.
 
-        return error_message
+        Args:
+            test_result: The TestResult to generate a report for
+
+        Returns:
+            A detailed formatted error report string
+        """
+        lines = ["Test Failure Report", "=" * 40]
+        lines.append(f"Test Case ID: {test_result.test_case_id}")
+        lines.append(f"Module: Module {test_result.module_id}")
+        lines.append(f"Status: {test_result.status}")
+        lines.append(f"Execution time: {test_result.execution_time:.3f}s")
+        if test_result.error_details:
+            lines.append(f"Error type: {test_result.error_details}")
+        if test_result.diagnosis:
+            lines.append(f"Root cause analysis: {test_result.diagnosis}")
+        lines.append("Recommended actions:")
+        lines.append("  - Review the error details above")
+        lines.append("  - Check the test case implementation")
+        return "\n".join(lines)
 
     def generate_error_for_test_result(self,
                                       test_result: TestResult,

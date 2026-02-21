@@ -186,17 +186,24 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
     
     def _is_closed_rectangle(self) -> bool:
         """
-        Check if a 4-segment composite curve forms a closed rectangle.
-        
-        For now, assume that 4-segment curves created by create_square_from_edges
-        are properly closed. This is a pragmatic approach until we can implement
-        more sophisticated geometric analysis.
-        
-        Returns:
-            True if the segments form a closed rectangle
+        Check if a 4-segment composite curve forms a closed loop by verifying
+        that segment endpoints connect head-to-tail and the last connects back to the first.
         """
-        # For 4-segment curves, assume they are closed if they were created properly
-        # This is a pragmatic approach that works for squares created by utility functions
+        tol = self._resolve_distance_tolerance(None)
+        segs = self.segments
+        for i in range(len(segs)):
+            seg_a = segs[i]
+            seg_b = segs[(i + 1) % len(segs)]
+            eps_a = getattr(seg_a, 'endpoints', [])
+            eps_b = getattr(seg_b, 'endpoints', [])
+            if not eps_a or not eps_b:
+                # No endpoint info — fall back to assuming closed (legacy behaviour)
+                return True
+            end_a = eps_a[-1]
+            start_b = eps_b[0]
+            dist = ((end_a[0] - start_b[0]) ** 2 + (end_a[1] - start_b[1]) ** 2) ** 0.5
+            if dist > tol * 1000:  # generous tolerance for connectivity
+                return False
         return True
     
     def _is_single_segment_closed(self) -> bool:
@@ -464,17 +471,11 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                             self._edges_c = edges[:, 2]
                         vals = self._edges_ab @ np.array([x, y], dtype=float) + self._edges_c
                         return bool(np.all(vals <= tol))
-                    # Fallback: treat boundary as inside and otherwise use sign of evaluate()
+                    # Fallback: use ray-casting for closed curves
                     for segment in self.segments:
                         if segment.contains(x, y, tol):
                             return True
-                    try:
-                        val = self.evaluate(x, y)
-                        if np.isscalar(val):
-                            return val <= tol
-                        return bool(np.asarray(val) <= tol)
-                    except Exception:
-                        return False
+                    return self._ray_casting_algorithm(x, y)
                 else:
                     # Boundary only
                     for segment in self.segments:
@@ -482,11 +483,20 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                             return True
                     return False
             else:
-                # Open curve: boundary only across segments
-                for segment in self.segments:
-                    if segment.contains(x, y, tol):
-                        return True
-                return False
+                # Open curve
+                if region_containment:
+                    for segment in self.segments:
+                        if segment.contains(x, y, tol):
+                            return True
+                    # For open curves, region containment means within the bounding box
+                    bb = self.bounding_box()
+                    return (bb[0] - tol <= x <= bb[1] + tol and
+                            bb[2] - tol <= y <= bb[3] + tol)
+                else:
+                    for segment in self.segments:
+                        if segment.contains(x, y, tol):
+                            return True
+                    return False
 
         # Vectorized case
         x_array = np.asarray(x)
@@ -514,17 +524,13 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                     # add c with broadcasting
                     vals = vals + self._edges_c[(slice(None),) + (None,) * (vals.ndim - 1)]
                     return np.all(vals <= tol, axis=0)
-                # Fallback: union of boundary OR sign of evaluate()
+                # Fallback: use ray-casting for closed curves
                 on_boundary = np.zeros_like(x_array, dtype=bool)
                 for segment in self.segments:
                     segment_contains = segment.contains(x_array, y_array, tol)
                     on_boundary |= segment_contains
-                try:
-                    vals = np.asarray(self.evaluate(x_array, y_array))
-                    inside_by_sign = (vals <= tol)
-                except Exception:
-                    inside_by_sign = np.zeros_like(x_array, dtype=bool)
-                return on_boundary | inside_by_sign
+                inside = self._point_in_polygon_vectorized(x_array, y_array)
+                return on_boundary | inside
             else:
                 # Boundary only
                 result = np.zeros_like(x_array, dtype=bool)
@@ -533,12 +539,21 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
                     result |= segment_contains
                 return result
         else:
-            # Open curve: boundary only across segments (vectorized)
-            result = np.zeros_like(x_array, dtype=bool)
-            for segment in self.segments:
-                segment_contains = segment.contains(x_array, y_array, tol)
-                result |= segment_contains
-            return result
+            # Open curve (vectorized)
+            if region_containment:
+                on_boundary = np.zeros_like(x_array, dtype=bool)
+                for segment in self.segments:
+                    on_boundary |= segment.contains(x_array, y_array, tol)
+                # For open curves, region containment means within the bounding box
+                bb = self.bounding_box()
+                in_bbox = ((x_array >= bb[0] - tol) & (x_array <= bb[1] + tol) &
+                           (y_array >= bb[2] - tol) & (y_array <= bb[3] + tol))
+                return on_boundary | in_bbox
+            else:
+                result = np.zeros_like(x_array, dtype=bool)
+                for segment in self.segments:
+                    result |= segment.contains(x_array, y_array, tol)
+                return result
     
     def on_curve(
         self,
@@ -996,11 +1011,10 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         Returns:
             True if point is inside, False otherwise
         """
-        intersections = 0
+        all_roots: list = []
         for segment in self.segments:
-            intersections += self._numerical_ray_intersection(x, y, segment)
-
-        return (intersections % 2) == 1
+            self._numerical_ray_intersection_collect(x, y, segment, all_roots)
+        return (len(all_roots) % 2) == 1
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'CompositeCurve':
@@ -1161,11 +1175,10 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         Returns:
             True if point is inside the region, False otherwise
         """
-        intersections = 0
+        all_roots: list = []
         for segment in self.segments:
-            intersections += self._numerical_ray_intersection(x, y, segment)
-
-        return (intersections % 2) == 1
+            self._numerical_ray_intersection_collect(x, y, segment, all_roots)
+        return (len(all_roots) % 2) == 1
 
     def _point_in_polygon_vectorized(self, x_array: np.ndarray, y_array: np.ndarray) -> np.ndarray:
         """
@@ -1187,6 +1200,59 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         
         return result.reshape(x_array.shape)
 
+    def _numerical_ray_intersection_collect(self, ray_x: float, ray_y: float, segment, all_roots: list) -> None:
+        """
+        Like _numerical_ray_intersection but appends unique root x-values to all_roots
+        (shared across segments) to prevent double-counting at segment boundaries.
+        """
+        bbox = segment.bounding_box()
+        xmin, xmax, ymin, ymax = bbox
+
+        _eps = 1e-9
+        if ray_y < ymin - _eps or ray_y >= ymax - _eps:
+            return
+
+        if np.isclose(ymin, ymax, atol=1e-6) and np.isclose(ray_y, ymin, atol=1e-6):
+            return
+
+        if np.isclose(xmin, xmax, atol=1e-6):
+            segment_x_val = xmin
+            if segment_x_val > ray_x and ymin <= ray_y < ymax:
+                if not any(abs(segment_x_val - r) < 1e-6 for r in all_roots):
+                    all_roots.append(segment_x_val)
+            return
+
+        def f(x_val): return segment.evaluate(x_val, ray_y)
+
+        x_search_min = max(ray_x + 1e-6, xmin)
+        # Extend slightly beyond xmax so roots exactly at the boundary are caught
+        _boundary_pad = max(1e-6, abs(xmax) * 1e-9)
+        x_search_max = xmax + _boundary_pad
+        if x_search_max <= x_search_min:
+            return
+
+        num_samples = 100
+        x_samples = np.linspace(x_search_min, x_search_max, num_samples)
+        f_values = np.array([f(x_val) for x_val in x_samples])
+
+        for i in range(len(x_samples) - 1):
+            x0, x1 = x_samples[i], x_samples[i + 1]
+            f0, f1 = f_values[i], f_values[i + 1]
+            if f0 * f1 < 0:
+                try:
+                    root = brentq(f, x0, x1)
+                    if root > ray_x and segment.mask(root, ray_y):
+                        if not any(abs(root - r) < 1e-6 for r in all_roots):
+                            all_roots.append(root)
+                except ValueError:
+                    pass
+            elif abs(f0) < 1e-10 and segment.mask(x0, ray_y) and x0 > ray_x:
+                if not any(abs(x0 - r) < 1e-6 for r in all_roots):
+                    all_roots.append(x0)
+            elif abs(f1) < 1e-10 and segment.mask(x1, ray_y) and x1 > ray_x:
+                if not any(abs(x1 - r) < 1e-6 for r in all_roots):
+                    all_roots.append(x1)
+
     def _numerical_ray_intersection(self, ray_x: float, ray_y: float, segment) -> int:
         """
         Robust and accurate ray-intersection test for implicit curves.
@@ -1205,8 +1271,9 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         bbox = segment.bounding_box()
         xmin, xmax, ymin, ymax = bbox
 
-        # If the ray is outside the y-range of the bounding box, no intersection
-        if ray_y < ymin - 1e-6 or ray_y > ymax + 1e-6:
+        # Use half-open interval [ymin, ymax) to prevent double-counting at shared boundaries
+        _eps = 1e-9
+        if ray_y < ymin - _eps or ray_y >= ymax - _eps:
             return 0
 
         # Special handling for horizontal line segments:
@@ -1217,10 +1284,10 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
 
         # Special handling for vertical line segments:
         # Count an intersection if the vertical segment's x-value is to the right of the ray origin
-        # AND the ray's y-coordinate is within the segment's y-bounds.
+        # AND the ray's y-coordinate is within the segment's y-bounds (half-open).
         if np.isclose(xmin, xmax, atol=1e-6):
             segment_x_val = xmin  # For a vertical segment, xmin and xmax are the same
-            if segment_x_val > ray_x and ymin <= ray_y <= ymax:
+            if segment_x_val > ray_x and ymin <= ray_y < ymax:
                 return 1
             return 0
 

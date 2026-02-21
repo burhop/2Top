@@ -1,0 +1,7 @@
+{
+  "unit_square": {
+    "perimeter": 4.0,
+    "area": 1.0,
+    "bounding_box": [0.0, 1.0, 0.0, 1.0]
+  }
+}

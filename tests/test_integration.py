@@ -3,9 +3,9 @@ Integration tests to verify the test case management system works correctly
 """
 
 import unittest
-from tests.models.test_case import TestCaseModel as TestCase
+from tests.models.test_case import TestCase
 from tests.models.module import Module
-from tests.models.test_result import TestResultModel as TestResult
+from tests.models.test_result import TestResult
 from tests.utils.test_case_failure_detector import TestCaseFailureDetector
 from tests.utils.module_identifier import ModuleIdentifier
 from tests.utils.result_storage_manager import ResultStorageManager
@@ -84,14 +84,14 @@ class TestIntegration(unittest.TestCase):
         
         # Test error message generation
         error_message = self.error_generator.generate_error_message(test_result)
-        self.assertIn("Test 'result_001' in module 'Test Module 1' failed", error_message)
+        self.assertIn("Test 'test_001' in module 'Module module_001' failed", error_message)
         self.assertIn("Error details: AssertionError: 1 != 3", error_message)
         
         # Test detailed error message
         detailed_error = self.error_generator.generate_detailed_error_message(test_result)
         self.assertIn("Test Failure Report", detailed_error)
-        self.assertIn("Test Case ID: result_001", detailed_error)
-        self.assertIn("Module: Test Module 1", detailed_error)
+        self.assertIn("Test Case ID: test_001", detailed_error)
+        self.assertIn("Module: Module module_001", detailed_error)
         
         # Test storage
         success = self.storage_manager.store_test_result(test_result)

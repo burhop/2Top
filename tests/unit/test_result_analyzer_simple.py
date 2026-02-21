@@ -3,7 +3,7 @@ Unit tests for the test result analyzer - Simplified version
 """
 
 import unittest
-from tests.utils.test_result_analyzer import TestResultAnalyzer
+from tests.utils.test_result_analyzer import TestResultAnalyzer as _TestResultAnalyzer
 from tests.utils.result_storage_manager import ResultStorageManager
 
 
@@ -16,7 +16,7 @@ class TestResultAnalyzer(unittest.TestCase):
         """Set up test fixtures before each test method."""
         self.storage_manager = ResultStorageManager()
         # Create analyzer with minimal dependencies
-        self.analyzer = TestResultAnalyzer()
+        self.analyzer = _TestResultAnalyzer()
 
     def test_analyzer_initialization(self):
         """Test that the analyzer can be initialized"""

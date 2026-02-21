@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional, Any, Dict
 
 
-class TestResultModel:
+class TestResult:
     """
     Represents a test result in the 2Top test system
     """
@@ -38,7 +38,7 @@ class TestResultModel:
             "test_case_id": self.test_case_id,
             "module_id": self.module_id,
             "status": self.status,
-            "timestamp": self.timestamp.isoformat(),
+            "timestamp": self.timestamp.isoformat() if hasattr(self.timestamp, 'isoformat') else str(self.timestamp),
             "execution_time": self.execution_time,
             "error_details": self.error_details,
             "output": self.output,

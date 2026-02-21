@@ -22,6 +22,7 @@ from geometry import (
     PrecisionPolicy,
     TrimmedImplicitCurve,
 )
+from geometry.polynomial_curve import PolynomialCurve
 
 
 @dataclass
@@ -87,6 +88,96 @@ def generate_quarter_circle_composites(
         )
 
 
+def _make_line_segment(point_a: Tuple[float, float], point_b: Tuple[float, float]) -> TrimmedImplicitCurve:
+    x, y = sp.symbols("x y")
+    ax, ay = point_a
+    bx, by = point_b
+
+    if abs(ax - bx) < 1e-9:
+        line = PolynomialCurve(x - ax, variables=(x, y))
+        return TrimmedImplicitCurve(
+            line,
+            lambda px, py, _ay=ay, _by=by: min(_ay, _by) <= py <= max(_ay, _by),
+            xmin=min(ax, bx), xmax=max(ax, bx),
+            ymin=min(ay, by), ymax=max(ay, by),
+            endpoints=[point_a, point_b],
+        )
+    else:
+        slope = (by - ay) / (bx - ax)
+        intercept = ay - slope * ax
+        line = PolynomialCurve(y - (slope * x + intercept), variables=(x, y))
+        return TrimmedImplicitCurve(
+            line,
+            lambda px, py, _ax=ax, _bx=bx: min(_ax, _bx) <= px <= max(_ax, _bx),
+            xmin=min(ax, bx), xmax=max(ax, bx),
+            ymin=min(ay, by), ymax=max(ay, by),
+            endpoints=[point_a, point_b],
+        )
+
+
+def generate_axis_aligned_rectangles(
+    seed: int,
+    count: int,
+    precision_policy: Optional[PrecisionPolicy] = None,
+) -> Iterable[CurveScenario]:
+    rng = random.Random(seed)
+    policy = precision_policy or _default_precision_policy()
+
+    for idx in range(count):
+        min_x = rng.uniform(-5, 4)
+        min_y = rng.uniform(-5, 4)
+        width = rng.uniform(0.5, 3)
+        height = rng.uniform(0.5, 3)
+        max_x = min_x + width
+        max_y = min_y + height
+        points = [
+            (min_x, min_y),
+            (max_x, min_y),
+            (max_x, max_y),
+            (min_x, max_y),
+        ]
+        segments = [
+            _make_line_segment(points[i], points[(i + 1) % 4])
+            for i in range(4)
+        ]
+        composite = CompositeCurve(segments, precision_policy=policy)
+        yield CurveScenario(
+            name=f"rectangle-{idx}",
+            curves=segments,
+            composite=composite,
+            metadata={"width": width, "height": height},
+        )
+
+
+def generate_random_open_polylines(
+    seed: int,
+    count: int,
+    precision_policy: Optional[PrecisionPolicy] = None,
+) -> Iterable[CurveScenario]:
+    rng = random.Random(seed)
+    policy = precision_policy or _default_precision_policy()
+
+    for idx in range(count):
+        num_segments = rng.randint(2, 5)
+        points = [(rng.uniform(-3, 3), rng.uniform(-3, 3))]
+        for _ in range(num_segments):
+            dx = rng.uniform(-1.5, 1.5)
+            dy = rng.uniform(-1.5, 1.5)
+            last_x, last_y = points[-1]
+            points.append((last_x + dx, last_y + dy))
+        segments = [
+            _make_line_segment(points[i], points[i + 1])
+            for i in range(len(points) - 1)
+        ]
+        composite = CompositeCurve(segments, precision_policy=policy)
+        yield CurveScenario(
+            name=f"polyline-{idx}",
+            curves=segments,
+            composite=composite,
+            metadata={"num_segments": len(segments), "closed": float(composite.is_closed())},
+        )
+
+
 def sample_scenarios(
     seed: int,
     max_scenarios: int = 100,
@@ -94,7 +185,16 @@ def sample_scenarios(
 ) -> List[CurveScenario]:
     """Return a mixed list of scenarios for smoke/property tests."""
 
+    batches = max(1, max_scenarios // 3)
     scenarios: List[CurveScenario] = []
-    for scenario in generate_quarter_circle_composites(seed, max_scenarios, precision_policy):
-        scenarios.append(scenario)
+    generators = [
+        generate_quarter_circle_composites,
+        generate_axis_aligned_rectangles,
+        generate_random_open_polylines,
+    ]
+    for offset, generator in enumerate(generators):
+        for scenario in generator(seed + offset * 101, batches, precision_policy):
+            scenarios.append(scenario)
+            if len(scenarios) >= max_scenarios:
+                return scenarios
     return scenarios

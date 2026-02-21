@@ -9,6 +9,7 @@ Tests cover:
 - Edge cases and error handling
 """
 
+import math
 import pytest
 import sympy as sp
 import numpy as np
@@ -128,11 +129,11 @@ class TestTrimmedImplicitCurveContains:
             (1.0, 0.0, True, "Right point on circle"),
             (0.0, 1.0, True, "Top point on circle (x=0 boundary)"),
             (0.0, -1.0, True, "Bottom point on circle (x=0 boundary)"),
-            (0.707, 0.707, True, "Point on right arc (approx)"),
-            (0.707, -0.707, True, "Point on right arc (approx)"),
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point on right arc (approx)"),
+            (1/math.sqrt(2), -1/math.sqrt(2), True, "Point on right arc (approx)"),
             (-1.0, 0.0, False, "Left point on circle (outside mask)"),
-            (-0.707, 0.707, False, "Point on left arc (outside mask)"),
-            (-0.707, -0.707, False, "Point on left arc (outside mask)"),
+            (-1/math.sqrt(2), 1/math.sqrt(2), False, "Point on left arc (outside mask)"),
+            (-1/math.sqrt(2), -1/math.sqrt(2), False, "Point on left arc (outside mask)"),
             (0.5, 0.0, False, "Point inside circle but not on boundary"),
             (2.0, 0.0, False, "Point outside circle"),
             (0.5, 0.5, False, "Point inside circle but not on boundary")
@@ -148,11 +149,11 @@ class TestTrimmedImplicitCurveContains:
             (0.0, 1.0, True, "Top point on circle"),
             (1.0, 0.0, True, "Right point on circle (y=0 boundary)"),
             (-1.0, 0.0, True, "Left point on circle (y=0 boundary)"),
-            (0.707, 0.707, True, "Point on upper arc"),
-            (-0.707, 0.707, True, "Point on upper arc"),
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point on upper arc"),
+            (-1/math.sqrt(2), 1/math.sqrt(2), True, "Point on upper arc"),
             (0.0, -1.0, False, "Bottom point on circle (outside mask)"),
-            (0.707, -0.707, False, "Point on lower arc (outside mask)"),
-            (-0.707, -0.707, False, "Point on lower arc (outside mask)")
+            (1/math.sqrt(2), -1/math.sqrt(2), False, "Point on lower arc (outside mask)"),
+            (-1/math.sqrt(2), -1/math.sqrt(2), False, "Point on lower arc (outside mask)")
         ]
         
         for x, y, expected, description in test_cases:
@@ -164,12 +165,12 @@ class TestTrimmedImplicitCurveContains:
         test_cases = [
             (1.0, 0.0, True, "Right point on circle"),
             (0.0, 1.0, True, "Top point on circle"),
-            (0.707, 0.707, True, "Point on first quadrant arc"),
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point on first quadrant arc"),
             (-1.0, 0.0, False, "Left point on circle (outside mask)"),
             (0.0, -1.0, False, "Bottom point on circle (outside mask)"),
-            (-0.707, 0.707, False, "Point on second quadrant arc"),
-            (0.707, -0.707, False, "Point on fourth quadrant arc"),
-            (-0.707, -0.707, False, "Point on third quadrant arc")
+            (-1/math.sqrt(2), 1/math.sqrt(2), False, "Point on second quadrant arc"),
+            (1/math.sqrt(2), -1/math.sqrt(2), False, "Point on fourth quadrant arc"),
+            (-1/math.sqrt(2), -1/math.sqrt(2), False, "Point on third quadrant arc")
         ]
         
         for x, y, expected, description in test_cases:
@@ -211,8 +212,8 @@ class TestTrimmedImplicitCurveContains:
     def test_contains_vectorized_input(self):
         """Test contains method with vectorized input"""
         # Test with numpy arrays
-        x_vals = np.array([1.0, 0.0, -1.0, 0.707])
-        y_vals = np.array([0.0, 1.0, 0.0, 0.707])
+        x_vals = np.array([1.0, 0.0, -1.0, 1/math.sqrt(2)])
+        y_vals = np.array([0.0, 1.0, 0.0, 1/math.sqrt(2)])
         
         results = self.right_half.contains(x_vals, y_vals)
         expected = np.array([True, True, False, True])
@@ -273,7 +274,7 @@ class TestTrimmedImplicitCurveInheritedMethods:
     
     def test_normal_method_inherited(self):
         """Test that normal method works correctly"""
-        test_points = [(1.0, 0.0), (0.0, 1.0), (0.707, 0.707)]
+        test_points = [(1.0, 0.0), (0.0, 1.0), (1/math.sqrt(2), 1/math.sqrt(2))]
         
         for x, y in test_points:
             try:
@@ -365,10 +366,10 @@ class TestTrimmedImplicitCurveComplexMasks:
         test_cases = [
             (1.0, 0.0, True, "Point at 0 degrees"),
             (0.0, 1.0, True, "Point at 90 degrees"),
-            (0.707, 0.707, True, "Point at 45 degrees"),
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point at 45 degrees"),
             (-1.0, 0.0, False, "Point at 180 degrees"),
             (0.0, -1.0, False, "Point at 270 degrees"),
-            (-0.707, 0.707, False, "Point at 135 degrees")
+            (-1/math.sqrt(2), 1/math.sqrt(2), False, "Point at 135 degrees")
         ]
         
         for x, y, expected, description in test_cases:

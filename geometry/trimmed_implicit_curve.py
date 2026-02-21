@@ -82,7 +82,15 @@ class TrimmedImplicitCurve(ImplicitCurve):
         self.endpoints = endpoints if endpoints is not None else []
 
         # Precision
-        policy = precision_policy or base_curve.precision_policy() if hasattr(base_curve, "precision_policy") else None
+        if precision_policy is not None:
+            policy = precision_policy
+        elif hasattr(base_curve, "precision_policy"):
+            try:
+                policy = base_curve.precision_policy()
+            except AttributeError:
+                policy = None
+        else:
+            policy = None
         self._segment_policy = policy or get_precision_policy()
         
         
@@ -225,6 +233,101 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         return self.base_curve.gradient(x, y)
     
+    def bounding_box(self) -> Tuple[float, float, float, float]:
+        """Return bounding box using explicit bounds if available, else derive from endpoints or base."""
+        if (self._xmin is not None and self._xmax is not None and
+                self._ymin is not None and self._ymax is not None):
+            return (self._xmin, self._xmax, self._ymin, self._ymax)
+        if self.endpoints and len(self.endpoints) >= 2:
+            xs = [p[0] for p in self.endpoints]
+            ys = [p[1] for p in self.endpoints]
+            return (min(xs), max(xs), min(ys), max(ys))
+        return self.base_curve.bounding_box()
+
+    def to_dict(self) -> dict:
+        """
+        Serialize TrimmedImplicitCurve to a dictionary.
+
+        Note: The mask function cannot be serialized. The reconstructed curve
+        will use a pass-through mask (accepts all points on the base curve).
+        """
+        d = {
+            "type": "TrimmedImplicitCurve",
+            "base_curve": self.base_curve.to_dict(),
+            "variables": [str(var) for var in self.variables],
+            "mask": "<<FUNCTION_NOT_SERIALIZABLE>>",
+            "mask_description": (
+                "Mask function cannot be serialized. "
+                "Manual reconstruction required to restore original mask behavior."
+            ),
+        }
+        if self._xmin is not None:
+            d["xmin"] = self._xmin
+        if self._xmax is not None:
+            d["xmax"] = self._xmax
+        if self._ymin is not None:
+            d["ymin"] = self._ymin
+        if self._ymax is not None:
+            d["ymax"] = self._ymax
+        if self.endpoints:
+            d["endpoints"] = [list(ep) for ep in self.endpoints]
+        return d
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'TrimmedImplicitCurve':
+        """
+        Reconstruct TrimmedImplicitCurve from a dictionary.
+
+        The mask is not serializable; the reconstructed curve uses a
+        pass-through mask (all points on the base curve are accepted).
+        Bounding-box bounds are used to approximate the original mask
+        when they were stored.
+        """
+        from .implicit_curve import ImplicitCurve
+        if data.get("type") != "TrimmedImplicitCurve":
+            raise ValueError(
+                f"Invalid type: expected 'TrimmedImplicitCurve', got {data.get('type')}"
+            )
+        base_curve = ImplicitCurve.from_dict(data["base_curve"])
+        xmin = data.get("xmin")
+        xmax = data.get("xmax")
+        ymin = data.get("ymin")
+        ymax = data.get("ymax")
+
+        if xmin is not None and xmax is not None and ymin is not None and ymax is not None:
+            mask = lambda px, py, _xmin=xmin, _xmax=xmax, _ymin=ymin, _ymax=ymax: (
+                _xmin <= px <= _xmax and _ymin <= py <= _ymax
+            )
+        else:
+            mask = lambda px, py: True
+
+        endpoints_raw = data.get("endpoints")
+        endpoints = [tuple(ep) for ep in endpoints_raw] if endpoints_raw else None
+
+        var_names = data.get("variables")
+        variables = tuple(sp.Symbol(v) for v in var_names) if var_names else None
+
+        obj = cls(
+            base_curve=base_curve,
+            mask=mask,
+            variables=variables,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
+            endpoints=endpoints,
+        )
+        obj._deserialization_warning = (
+            "Mask function was not serialized. A placeholder pass-through mask is used."
+        )
+        return obj
+
+    def __str__(self) -> str:
+        return f"TrimmedImplicitCurve({self.base_curve})"
+
+    def __repr__(self) -> str:
+        return f"TrimmedImplicitCurve(base_curve={self.base_curve!r})"
+
     def plot(self, x_range: Tuple[float, float] = (-2, 2), 
              y_range: Tuple[float, float] = (-2, 2), 
              resolution: int = 1000, ax=None, **kwargs):
