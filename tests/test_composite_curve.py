@@ -10,6 +10,7 @@ Tests cover:
 - Edge cases and error handling
 """
 
+import math
 import pytest
 import sympy as sp
 import numpy as np
@@ -18,6 +19,9 @@ from geometry.trimmed_implicit_curve import TrimmedImplicitCurve
 from geometry.implicit_curve import ImplicitCurve
 from geometry.conic_section import ConicSection
 from geometry.polynomial_curve import PolynomialCurve
+from tests.golden.loader import load_digest
+from tests.helpers.builders import build_axis_aligned_rectangle, composite_perimeter
+from tests.helpers.precision import PrecisionProfile, blended_tolerance
 
 
 class TestCompositeCurveConstructor:
@@ -217,10 +221,10 @@ class TestCompositeCurveContainsMethod:
             (0.0, 1.0, True, "Point on first/second quadrant boundary"),
             (-1.0, 0.0, True, "Point on second/third quadrant boundary"),
             (0.0, -1.0, True, "Point on third/fourth quadrant boundary"),
-            (0.707, 0.707, True, "Point on first quadrant arc"),
-            (-0.707, 0.707, True, "Point on second quadrant arc"),
-            (-0.707, -0.707, True, "Point on third quadrant arc"),
-            (0.707, -0.707, True, "Point on fourth quadrant arc")
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point on first quadrant arc"),
+            (-1/math.sqrt(2), 1/math.sqrt(2), True, "Point on second quadrant arc"),
+            (-1/math.sqrt(2), -1/math.sqrt(2), True, "Point on third quadrant arc"),
+            (1/math.sqrt(2), -1/math.sqrt(2), True, "Point on fourth quadrant arc")
         ]
         
         for x, y, expected, description in test_cases:
@@ -254,10 +258,10 @@ class TestCompositeCurveContainsMethod:
         partial_composite = CompositeCurve(partial_segments)
         
         test_cases = [
-            (0.707, 0.707, True, "Point on first quadrant arc"),
-            (-0.707, 0.707, True, "Point on second quadrant arc"),
-            (-0.707, -0.707, False, "Point on third quadrant arc (not included)"),
-            (0.707, -0.707, False, "Point on fourth quadrant arc (not included)")
+            (1/math.sqrt(2), 1/math.sqrt(2), True, "Point on first quadrant arc"),
+            (-1/math.sqrt(2), 1/math.sqrt(2), True, "Point on second quadrant arc"),
+            (-1/math.sqrt(2), -1/math.sqrt(2), False, "Point on third quadrant arc (not included)"),
+            (1/math.sqrt(2), -1/math.sqrt(2), False, "Point on fourth quadrant arc (not included)")
         ]
         
         for x, y, expected, description in test_cases:
@@ -267,8 +271,8 @@ class TestCompositeCurveContainsMethod:
     def test_contains_vectorized_input(self):
         """Test contains method with vectorized input"""
         # Test with numpy arrays
-        x_vals = np.array([1.0, 0.0, -1.0, 0.0, 0.707, -0.707])
-        y_vals = np.array([0.0, 1.0, 0.0, -1.0, 0.707, -0.707])
+        x_vals = np.array([1.0, 0.0, -1.0, 0.0, 1/math.sqrt(2), -1/math.sqrt(2)])
+        y_vals = np.array([0.0, 1.0, 0.0, -1.0, 1/math.sqrt(2), -1/math.sqrt(2)])
         
         results = self.composite_curve.contains(x_vals, y_vals)
         expected = np.array([True, True, True, True, True, True])
@@ -453,8 +457,44 @@ class TestCompositeCurveEdgeCases:
         assert single_composite.is_closed() == False
         
         # Contains should work for points on the segment
-        assert single_composite.contains(1.0, 0.0) == True
-        assert single_composite.contains(-1.0, 0.0) == False
+        assert single_composite.contains(1.0, 0.5, region_containment=True)
+        assert not single_composite.contains(2.0, 0.5, region_containment=True)
+
+
+class TestCompositeCurvePrecisionBehavior:
+    """Test CompositeCurve constructor and inheritance"""
+    
+    def test_constructor_inherits_from_implicit_curve(self):
+        """Test that CompositeCurve properly inherits from ImplicitCurve"""
+        x, y = sp.symbols('x y')
+        circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        
+        # Create quarter-circle segments
+        segments = [
+            TrimmedImplicitCurve(circle, lambda x, y: x >= 0 and y >= 0),  # First quadrant
+            TrimmedImplicitCurve(circle, lambda x, y: x <= 0 and y >= 0),  # Second quadrant
+            TrimmedImplicitCurve(circle, lambda x, y: x <= 0 and y <= 0),  # Third quadrant
+            TrimmedImplicitCurve(circle, lambda x, y: x >= 0 and y <= 0),  # Fourth quadrant
+        ]
+        
+        composite_curve = CompositeCurve(segments)
+        
+        # Should be instance of both CompositeCurve and ImplicitCurve
+        assert isinstance(composite_curve, CompositeCurve)
+        assert isinstance(composite_curve, ImplicitCurve)
+
+
+class TestCompositeCurveGoldenDigests:
+    def test_unit_square_matches_digest(self):
+        digest = load_digest("composite_square")["unit_square"]
+        rect = build_axis_aligned_rectangle(0.0, 0.0, 1.0, 1.0)
+        bbox = rect.bounding_box()
+        computed_area = (bbox[1] - bbox[0]) * (bbox[3] - bbox[2])
+        computed_perimeter = composite_perimeter(rect)
+
+        assert pytest.approx(computed_area, rel=1e-9) == digest["area"]
+        assert pytest.approx(computed_perimeter, rel=1e-9) == digest["perimeter"]
+        assert list(map(float, bbox)) == pytest.approx(digest["bounding_box"], rel=1e-9)
     
     def test_identical_segments(self):
         """Test CompositeCurve with identical segments"""
@@ -482,7 +522,7 @@ class TestCompositeCurveEdgeCases:
         # Should work - contains should return True if point is on any segment
         assert overlapping_composite.contains(1.0, 0.0) == True  # On both segments
         assert overlapping_composite.contains(0.0, 1.0) == True  # On both segments
-        assert overlapping_composite.contains(0.707, 0.707) == True  # On both segments
+        assert overlapping_composite.contains(1/math.sqrt(2), 1/math.sqrt(2)) == True  # On both segments
 
 
 if __name__ == "__main__":

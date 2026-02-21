@@ -19,8 +19,10 @@ Key Features:
 import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Tuple, Union, Dict, Any, Callable, List
+from typing import Tuple, Union, Dict, Any, Callable, List, Optional
+
 from .implicit_curve import ImplicitCurve
+from .precision import PrecisionPolicy, get_precision_policy
 
 
 class TrimmedImplicitCurve(ImplicitCurve):
@@ -37,10 +39,18 @@ class TrimmedImplicitCurve(ImplicitCurve):
         mask (Callable): Function that takes (x, y) and returns bool for inclusion
     """
     
-    def __init__(self, base_curve: ImplicitCurve, mask: Callable[[float, float], bool], 
-                 variables: Tuple[sp.Symbol, sp.Symbol] = None,
-                 xmin: float = None, xmax: float = None, ymin: float = None, ymax: float = None,
-                 endpoints: List[Tuple[float, float]] = None):
+    def __init__(
+        self,
+        base_curve: ImplicitCurve,
+        mask: Callable[[float, float], bool],
+        variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None,
+        xmin: Optional[float] = None,
+        xmax: Optional[float] = None,
+        ymin: Optional[float] = None,
+        ymax: Optional[float] = None,
+        endpoints: Optional[List[Tuple[float, float]]] = None,
+        precision_policy: Optional[PrecisionPolicy] = None,
+    ):
         """
         Initialize TrimmedImplicitCurve with base curve and mask function.
         
@@ -70,6 +80,18 @@ class TrimmedImplicitCurve(ImplicitCurve):
         
         # Store explicit endpoints if provided
         self.endpoints = endpoints if endpoints is not None else []
+
+        # Precision
+        if precision_policy is not None:
+            policy = precision_policy
+        elif hasattr(base_curve, "precision_policy"):
+            try:
+                policy = base_curve.precision_policy()
+            except AttributeError:
+                policy = None
+        else:
+            policy = None
+        self._segment_policy = policy or get_precision_policy()
         
         
         # Use variables from base curve if not specified
@@ -80,17 +102,21 @@ class TrimmedImplicitCurve(ImplicitCurve):
         # Note: The expression is inherited but trimming affects contains(), not evaluate()
         # Handle cases where base_curve.expression is None (e.g., ProceduralCurve)
         if base_curve.expression is not None:
-            super().__init__(base_curve.expression, variables)
+            super().__init__(base_curve.expression, variables, precision_policy=self._segment_policy)
         else:
             # Create a placeholder expression for curves without symbolic expressions
             x, y = variables
             placeholder_expr = x + y  # Simple placeholder
-            super().__init__(placeholder_expr, variables)
+            super().__init__(placeholder_expr, variables, precision_policy=self._segment_policy)
             # Override the expression to match the base curve
             self.expression = base_curve.expression
     
-    def contains(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], 
-                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+    def contains(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        tolerance: Optional[float] = None,
+    ) -> Union[bool, np.ndarray]:
         """
         Check if point(s) are contained in the trimmed curve segment.
         
@@ -110,8 +136,9 @@ class TrimmedImplicitCurve(ImplicitCurve):
             Boolean or array of booleans indicating containment
         """
         # Check if points are on the base curve boundary (f(x,y) ≈ 0)
+        tol = self._resolve_tolerance(tolerance)
         curve_values = self.base_curve.evaluate(x, y)
-        on_curve = np.abs(curve_values) <= tolerance
+        on_curve = np.abs(curve_values) <= tol
         
         # Check mask condition
         if np.isscalar(x) and np.isscalar(y):
@@ -126,7 +153,7 @@ class TrimmedImplicitCurve(ImplicitCurve):
             # Fast-path: rectangular bounds explicitly provided
             if (self._xmin is not None and self._xmax is not None and
                 self._ymin is not None and self._ymax is not None):
-                eps = 1e-9
+                eps = max(tol * 0.1, 1e-12)
                 in_rect = (
                     (x_array >= (self._xmin - eps)) & (x_array <= (self._xmax + eps)) &
                     (y_array >= (self._ymin - eps)) & (y_array <= (self._ymax + eps))
@@ -206,6 +233,101 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         return self.base_curve.gradient(x, y)
     
+    def bounding_box(self) -> Tuple[float, float, float, float]:
+        """Return bounding box using explicit bounds if available, else derive from endpoints or base."""
+        if (self._xmin is not None and self._xmax is not None and
+                self._ymin is not None and self._ymax is not None):
+            return (self._xmin, self._xmax, self._ymin, self._ymax)
+        if self.endpoints and len(self.endpoints) >= 2:
+            xs = [p[0] for p in self.endpoints]
+            ys = [p[1] for p in self.endpoints]
+            return (min(xs), max(xs), min(ys), max(ys))
+        return self.base_curve.bounding_box()
+
+    def to_dict(self) -> dict:
+        """
+        Serialize TrimmedImplicitCurve to a dictionary.
+
+        Note: The mask function cannot be serialized. The reconstructed curve
+        will use a pass-through mask (accepts all points on the base curve).
+        """
+        d = {
+            "type": "TrimmedImplicitCurve",
+            "base_curve": self.base_curve.to_dict(),
+            "variables": [str(var) for var in self.variables],
+            "mask": "<<FUNCTION_NOT_SERIALIZABLE>>",
+            "mask_description": (
+                "Mask function cannot be serialized. "
+                "Manual reconstruction required to restore original mask behavior."
+            ),
+        }
+        if self._xmin is not None:
+            d["xmin"] = self._xmin
+        if self._xmax is not None:
+            d["xmax"] = self._xmax
+        if self._ymin is not None:
+            d["ymin"] = self._ymin
+        if self._ymax is not None:
+            d["ymax"] = self._ymax
+        if self.endpoints:
+            d["endpoints"] = [list(ep) for ep in self.endpoints]
+        return d
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'TrimmedImplicitCurve':
+        """
+        Reconstruct TrimmedImplicitCurve from a dictionary.
+
+        The mask is not serializable; the reconstructed curve uses a
+        pass-through mask (all points on the base curve are accepted).
+        Bounding-box bounds are used to approximate the original mask
+        when they were stored.
+        """
+        from .implicit_curve import ImplicitCurve
+        if data.get("type") != "TrimmedImplicitCurve":
+            raise ValueError(
+                f"Invalid type: expected 'TrimmedImplicitCurve', got {data.get('type')}"
+            )
+        base_curve = ImplicitCurve.from_dict(data["base_curve"])
+        xmin = data.get("xmin")
+        xmax = data.get("xmax")
+        ymin = data.get("ymin")
+        ymax = data.get("ymax")
+
+        if xmin is not None and xmax is not None and ymin is not None and ymax is not None:
+            mask = lambda px, py, _xmin=xmin, _xmax=xmax, _ymin=ymin, _ymax=ymax: (
+                _xmin <= px <= _xmax and _ymin <= py <= _ymax
+            )
+        else:
+            mask = lambda px, py: True
+
+        endpoints_raw = data.get("endpoints")
+        endpoints = [tuple(ep) for ep in endpoints_raw] if endpoints_raw else None
+
+        var_names = data.get("variables")
+        variables = tuple(sp.Symbol(v) for v in var_names) if var_names else None
+
+        obj = cls(
+            base_curve=base_curve,
+            mask=mask,
+            variables=variables,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
+            endpoints=endpoints,
+        )
+        obj._deserialization_warning = (
+            "Mask function was not serialized. A placeholder pass-through mask is used."
+        )
+        return obj
+
+    def __str__(self) -> str:
+        return f"TrimmedImplicitCurve({self.base_curve})"
+
+    def __repr__(self) -> str:
+        return f"TrimmedImplicitCurve(base_curve={self.base_curve!r})"
+
     def plot(self, x_range: Tuple[float, float] = (-2, 2), 
              y_range: Tuple[float, float] = (-2, 2), 
              resolution: int = 1000, ax=None, **kwargs):
@@ -237,23 +359,14 @@ class TrimmedImplicitCurve(ImplicitCurve):
         Z = self.base_curve.evaluate(X, Y)
         
         # Apply mask to hide regions outside the trimmed segment
-        # First, test a few sample points to see if mask always returns True
-        sample_points = [(X[0, 0], Y[0, 0]), (X[-1, -1], Y[-1, -1]), (X[X.shape[0]//2, X.shape[1]//2], Y[X.shape[0]//2, X.shape[1]//2])]
-        all_true = all(self.mask(px, py) for px, py in sample_points)
+        # ALWAYS apply the mask - don't try to optimize by skipping it
+        mask_grid = np.zeros_like(X, dtype=bool)
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                mask_grid[i, j] = self.mask(X[i, j], Y[i, j])
         
-        if all_true:
-            # If mask seems to always return True, skip the expensive masking
-            print(f"    Mask appears to include all points, skipping masking for efficiency")
-            Z_masked = Z
-        else:
-            # Apply mask normally
-            mask_grid = np.zeros_like(X, dtype=bool)
-            for i in range(X.shape[0]):
-                for j in range(X.shape[1]):
-                    mask_grid[i, j] = self.mask(X[i, j], Y[i, j])
-            
-            # Set masked regions to NaN so they don't appear in contour
-            Z_masked = np.where(mask_grid, Z, np.nan)
+        # Set masked regions to NaN so they don't appear in contour
+        Z_masked = np.where(mask_grid, Z, np.nan)
         
         # Plot the trimmed curve
         default_kwargs = {'levels': [0], 'colors': 'blue', 'linewidths': 2}
@@ -279,466 +392,9 @@ class TrimmedImplicitCurve(ImplicitCurve):
                         if len(seg) > 0:
                             print(f"      First point: ({seg[0][0]:.3f}, {seg[0][1]:.3f})")
                             print(f"      Last point:  ({seg[-1][0]:.3f}, {seg[-1][1]:.3f})")
-                return cs
             else:
-                print(f"    Cannot access contour paths - unknown matplotlib version")
-                return cs
-                
-            print(f"    Number of contour collections: {len(collections)}")
-            
-            total_segments = 0
-            for i, collection in enumerate(collections):
-                paths = collection.get_paths()
-                print(f"    Collection {i}: {len(paths)} path(s)")
-                
-                for j, path in enumerate(paths):
-                    vertices = path.vertices
-                    print(f"      Path {j}: {len(vertices)} vertices")
-                    total_segments += len(vertices) - 1  # n vertices = n-1 line segments
-                    
-                    # Show first and last few points
-                    if len(vertices) > 0:
-                        print(f"        First vertex: ({vertices[0][0]:.3f}, {vertices[0][1]:.3f})")
-                        if len(vertices) > 1:
-                            print(f"        Last vertex:  ({vertices[-1][0]:.3f}, {vertices[-1][1]:.3f})")
-                        
-                        # Check if path is closed (first == last)
-                        if len(vertices) > 2:
-                            is_closed = np.allclose(vertices[0], vertices[-1], atol=1e-6)
-                            print(f"        Path closed: {is_closed}")
-            
-            print(f"    Total line segments generated: {total_segments}")
-            
+                print(f"    Unknown contour set format")
         except Exception as e:
-            print(f"    Error accessing contour data: {e}")
-        
-        ax.set_xlim(x_range)
-        ax.set_ylim(y_range)
-        ax.set_aspect('equal')
-        ax.grid(True, alpha=0.3)
-        ax.set_title(f'Trimmed Curve: {self}')
+            print(f"    Error extracting contour info: {e}")
         
         return cs
-    
-    def bounding_box(self) -> Tuple[float, float, float, float]:
-        """
-        Returns a bounding box (xmin, xmax, ymin, ymax) for the trimmed curve.
-        If explicit bounds were provided during initialization, they are used.
-        Otherwise, it attempts to infer rectangular bounds from the mask or
-        falls back to the base curve's bounding box.
-        """
-        if self._xmin is not None and self._xmax is not None and \
-           self._ymin is not None and self._ymax is not None:
-            return (self._xmin, self._xmax, self._ymin, self._ymax)
-
-        mask_info = self._detect_mask_pattern()
-        if mask_info.get("pattern_type") == "rectangular_bounds":
-            return (
-                mask_info["xmin"],
-                mask_info["xmax"],
-                mask_info["ymin"],
-                mask_info["ymax"],
-            )
-        else:
-            # Fallback to base curve's bounding box
-            return self.base_curve.bounding_box()
-
-    def _detect_mask_pattern(self) -> Dict[str, Any]:
-        """
-        Detect common mask patterns by testing the mask function.
-        
-        This method tests the mask function at various points to determine
-        if it follows a common pattern like rectangular bounds.
-        
-        Returns:
-            Dictionary containing mask pattern information
-        """
-        # Generate a denser grid of test points
-        bbox = self.base_curve.bounding_box()
-        x_test_vals = np.linspace(bbox[0], bbox[1], 50) # Increased resolution
-        y_test_vals = np.linspace(bbox[2], bbox[3], 50) # Increased resolution
-        test_points = [(x, y) for x in x_test_vals for y in y_test_vals]
-        
-        # Test mask function at all points
-        mask_results = []
-        for x, y in test_points:
-            try:
-                result = self.mask(x, y)
-                mask_results.append((x, y, bool(result)))
-            except Exception:
-                # If mask function fails, fall back to placeholder
-                return {
-                    "pattern_type": "unknown",
-                    "description": "Mask function could not be analyzed"
-                }
-        
-        # Try to detect rectangular bounds pattern
-        rect_bounds = self._detect_rectangular_bounds(mask_results)
-        if rect_bounds:
-            return {
-                "pattern_type": "rectangular_bounds",
-                "xmin": rect_bounds[0],
-                "xmax": rect_bounds[1], 
-                "ymin": rect_bounds[2],
-                "ymax": rect_bounds[3]
-            }
-        
-        # Fall back to placeholder if no pattern detected
-        return {
-            "pattern_type": "unknown",
-            "description": "No recognizable pattern detected"
-        }
-    
-    def _detect_rectangular_bounds(self, mask_results) -> tuple:
-        """
-        Analyze mask results to detect rectangular bounds pattern.
-        
-        Args:
-            mask_results: List of (x, y, mask_value) tuples
-            
-        Returns:
-            Tuple of (xmin, xmax, ymin, ymax) if rectangular pattern detected,
-            None otherwise
-        """
-        # Find the bounds of points where mask returns True
-        true_points = [(x, y) for x, y, mask_val in mask_results if mask_val]
-        
-        if not true_points:
-            return None
-            
-        # Get bounds of true points
-        x_coords = [x for x, y in true_points]
-        y_coords = [y for x, y in true_points]
-        
-        xmin, xmax = min(x_coords), max(x_coords)
-        ymin, ymax = min(y_coords), max(y_coords)
-        
-        # Verify this is actually a rectangular pattern
-        # Check if all points within bounds return True and points outside return False
-        expected_pattern = True
-        constrains_x = False
-        constrains_y = False
-        
-        for x, y, mask_val in mask_results:
-            expected = (xmin <= x <= xmax and ymin <= y <= ymax)
-            if expected != mask_val:
-                expected_pattern = False
-                break
-        
-        # Additional check: ensure the mask actually constrains both dimensions
-        # Test points outside bounds in both x and y directions
-        if expected_pattern:
-            # Test if mask constrains x dimension
-            test_x_outside = xmax + 1
-            test_y_inside = (ymin + ymax) / 2
-            if not self.mask(test_x_outside, test_y_inside):
-                constrains_x = True
-                
-            # Test if mask constrains y dimension  
-            test_x_inside = (xmin + xmax) / 2
-            test_y_outside = ymax + 1
-            if not self.mask(test_x_inside, test_y_outside):
-                constrains_y = True
-        
-        # Only return rectangular bounds if both dimensions are constrained
-        if expected_pattern and constrains_x and constrains_y:
-            return (xmin, xmax, ymin, ymax)
-        
-        return None
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Serialize TrimmedImplicitCurve to dictionary.
-        
-        This method attempts to detect and serialize common mask patterns,
-        particularly rectangular bounds used in squares and other geometric shapes.
-        
-        Returns:
-            Dictionary containing curve type, base curve, and mask information
-        """
-        # Try to detect common mask patterns by testing the mask function
-        mask_info = self._detect_mask_pattern()
-        
-        # Add explicit bounds to mask_info if they exist
-        if self._xmin is not None: mask_info["xmin"] = self._xmin
-        if self._xmax is not None: mask_info["xmax"] = self._xmax
-        if self._ymin is not None: mask_info["ymin"] = self._ymin
-        if self._ymax is not None: mask_info["ymax"] = self._ymax
-
-        return {
-            "type": "TrimmedImplicitCurve",
-            "base_curve": self.base_curve.to_dict(),
-            "mask": "<<FUNCTION_NOT_SERIALIZABLE>>",  # Backward compatibility
-            "mask_description": "Mask function cannot be serialized. Manual reconstruction required. Enhanced pattern detection available in mask_info.",  # Backward compatibility
-            "mask_info": mask_info,  # Enhanced mask pattern information
-            "variables": [str(var) for var in self.variables]
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TrimmedImplicitCurve':
-        """
-        Deserialize TrimmedImplicitCurve from dictionary.
-        
-        This method attempts to reconstruct mask functions based on serialized
-        pattern information, particularly for common patterns like rectangular bounds.
-        
-        Args:
-            data: Dictionary containing serialized curve data
-            
-        Returns:
-            TrimmedImplicitCurve instance with reconstructed mask
-            
-        Raises:
-            ValueError: If data is invalid or missing required fields
-        """
-        if data.get("type") != "TrimmedImplicitCurve":
-            raise ValueError(f"Invalid type: expected 'TrimmedImplicitCurve', got {data.get('type')}")
-        
-        # Reconstruct variables
-        var_names = data["variables"]
-        variables = tuple(sp.Symbol(name) for name in var_names)
-        
-        # Reconstruct base curve
-        base_curve = ImplicitCurve.from_dict(data["base_curve"])
-        
-        # Reconstruct mask function based on pattern information
-        mask_info = data.get("mask_info", {})
-        mask_function = cls._reconstruct_mask_function(mask_info)
-        
-        # Create TrimmedImplicitCurve with reconstructed mask and explicit bounds
-        trimmed_curve = cls(base_curve, mask_function, variables,
-                            xmin=mask_info.get("xmin"), xmax=mask_info.get("xmax"),
-                            ymin=mask_info.get("ymin"), ymax=mask_info.get("ymax"))
-        
-        # If explicit bounds were deserialized, set them directly
-        if "xmin" in data and "xmax" in data and "ymin" in data and "ymax" in data:
-            trimmed_curve._xmin = data["xmin"]
-            trimmed_curve._xmax = data["xmax"]
-            trimmed_curve._ymin = data["ymin"]
-            trimmed_curve._ymax = data["ymax"]
-        
-        # Add metadata about reconstruction
-        if mask_info.get("pattern_type") == "unknown" or not mask_info:
-            trimmed_curve._deserialization_warning = (
-                "Mask function pattern was not recognized. Using placeholder "
-                "mask that always returns True, effectively removing trimming."
-            )
-        else:
-            # Check if this is from old format that expected placeholder behavior
-            if "mask" in data and data["mask"] == "<<FUNCTION_NOT_SERIALIZABLE>>":
-                # For backward compatibility, use placeholder mask and set warning
-                trimmed_curve.mask = lambda x, y: True
-                trimmed_curve._deserialization_warning = (
-                    "Mask function was not serializable in original format. "
-                    "Using placeholder mask that always returns True."
-                )
-            else:
-                # Use reconstructed mask and set info
-                trimmed_curve._deserialization_info = (
-                    f"Mask function reconstructed from {mask_info.get('pattern_type')} pattern."
-                )
-        
-        return trimmed_curve
-    
-    @classmethod
-    def _reconstruct_mask_function(cls, mask_info: Dict[str, Any]):
-        """
-        Reconstruct a mask function based on pattern information.
-        
-        Args:
-            mask_info: Dictionary containing mask pattern information
-            
-        Returns:
-            Callable mask function
-        """
-        pattern_type = mask_info.get("pattern_type", "unknown")
-        
-        if pattern_type == "rectangular_bounds":
-            # Reconstruct rectangular bounds mask
-            xmin = mask_info["xmin"]
-            xmax = mask_info["xmax"]
-            ymin = mask_info["ymin"]
-            ymax = mask_info["ymax"]
-            
-            def rectangular_mask(x, y):
-                """Reconstructed rectangular bounds mask function"""
-                return xmin <= x <= xmax and ymin <= y <= ymax
-            
-            return rectangular_mask
-        
-        else:
-            # Fall back to placeholder mask for unknown patterns
-            def placeholder_mask(x, y):
-                """Placeholder mask function - always returns True"""
-                return True
-            
-            return placeholder_mask
-    
-    def __str__(self) -> str:
-        """String representation of TrimmedImplicitCurve"""
-        return f"TrimmedImplicitCurve(base={self.base_curve})"
-    
-    def __repr__(self) -> str:
-        """Detailed string representation"""
-        return (f"TrimmedImplicitCurve(base_curve={repr(self.base_curve)}, "
-                f"mask={self.mask})")
-
-    def _is_horizontal_line_segment(self, tolerance: float = 1e-6) -> bool:
-        """
-        Checks if the trimmed implicit curve represents a horizontal line segment.
-        A horizontal line segment is a PolynomialCurve of the form y - C = 0,
-        trimmed by xmin, xmax, ymin, ymax.
-        """
-        from .polynomial_curve import PolynomialCurve
-        if not isinstance(self.base_curve, PolynomialCurve):
-            return False
-
-        x_sym, y_sym = self.variables
-        poly = sp.Poly(self.base_curve.expression, x_sym, y_sym)
-        coeffs = poly.as_dict()
-        
-        x_coeff = coeffs.get((1, 0), 0) # Coefficient of x
-        y_coeff = coeffs.get((0, 1), 0) # Coefficient of y
-
-        # It's a horizontal line if x_coeff is zero and y_coeff is non-zero
-        return np.isclose(x_coeff, 0.0, atol=tolerance) and not np.isclose(y_coeff, 0.0, atol=tolerance)
-
-    def _is_vertical_line_segment(self, tolerance: float = 1e-6) -> bool:
-        """
-        Checks if the trimmed implicit curve represents a vertical line segment.
-        A vertical line segment is a PolynomialCurve of the form x - C = 0,
-        trimmed by xmin, xmax, ymin, ymax.
-        """
-        from .polynomial_curve import PolynomialCurve
-        if not isinstance(self.base_curve, PolynomialCurve):
-            return False
-
-        x_sym, y_sym = self.variables
-        poly = sp.Poly(self.base_curve.expression, x_sym, y_sym)
-        coeffs = poly.as_dict()
-        
-        x_coeff = coeffs.get((1, 0), 0) # Coefficient of x
-        y_coeff = coeffs.get((0, 1), 0) # Coefficient of y
-
-        # It's a vertical line if y_coeff is zero and x_coeff is non-zero
-        return np.isclose(y_coeff, 0.0, atol=tolerance) and not np.isclose(x_coeff, 0.0, atol=tolerance)
-
-    def get_endpoints(self) -> List[Tuple[float, float]]:
-        """
-        Get the endpoints of the trimmed curve segment.
-        
-        Returns:
-            List of (x, y) tuples representing the endpoints of the curve segment.
-            Returns empty list if no explicit endpoints were provided.
-        """
-        return self.endpoints.copy() if self.endpoints else []
-    
-    def get_points_on_curve(self, num_points: int = 100) -> List[Tuple[float, float]]:
-        """
-        Generates a list of (x, y) points that lie on the trimmed implicit curve.
-        
-        This method attempts to find points on the curve that also satisfy the
-        trimming mask. It is a heuristic approach and may not capture all nuances
-        of complex masks or curves.
-        
-        Args:
-            num_points: The desired number of points to generate.
-            
-        Returns:
-            A list of (x, y) tuples representing points on the curve segment.
-        """
-        points = []
-        # Use the bounding box to define a search area
-        xmin, xmax, ymin, ymax = self.bounding_box()
-
-        # Create a grid of test points within the bounding box
-        x_test = np.linspace(xmin, xmax, int(np.sqrt(num_points * 2)))
-        y_test = np.linspace(ymin, ymax, int(np.sqrt(num_points * 2)))
-
-        for x_val in x_test:
-            for y_val in y_test:
-                # Check if the point is on the base curve and satisfies the mask
-                if self.contains(x_val, y_val, tolerance=1e-3):
-                    points.append((x_val, y_val))
-        
-        # Sort points to maintain some order, e.g., by x then y
-        points.sort(key=lambda p: (p[0], p[1]))
-
-        # If too many points, sample them; if too few, it's the best we can do
-        if len(points) > num_points:
-            # Simple down-sampling
-            step = len(points) // num_points
-            points = points[::step]
-        
-        return points
-
-
-# Utility functions for common mask patterns
-
-def right_half_mask(x: float, y: float) -> bool:
-    """Mask for right half (x >= 0)"""
-    return x >= 0
-
-def left_half_mask(x: float, y: float) -> bool:
-    """Mask for left half (x <= 0)"""
-    return x <= 0
-
-def upper_half_mask(x: float, y: float) -> bool:
-    """Mask for upper half (y >= 0)"""
-    return y >= 0
-
-def lower_half_mask(x: float, y: float) -> bool:
-    """Mask for lower half (y <= 0)"""
-    return y <= 0
-
-def first_quadrant_mask(x: float, y: float) -> bool:
-    """Mask for first quadrant (x >= 0 and y >= 0)"""
-    return x >= 0 and y >= 0
-
-def second_quadrant_mask(x: float, y: float) -> bool:
-    """Mask for second quadrant (x <= 0 and y >= 0)"""
-    return x <= 0 and y >= 0
-
-def third_quadrant_mask(x: float, y: float) -> bool:
-    """Mask for third quadrant (x <= 0 and y <= 0)"""
-    return x <= 0 and y <= 0
-
-def fourth_quadrant_mask(x: float, y: float) -> bool:
-    """Mask for fourth quadrant (x >= 0 and y <= 0)"""
-    return x >= 0 and y <= 0
-
-def angular_mask(start_angle: float, end_angle: float):
-    """
-    Create mask for angular segment.
-    
-    Args:
-        start_angle: Start angle in radians
-        end_angle: End angle in radians
-        
-    Returns:
-        Mask function for the angular segment
-    """
-    def mask(x: float, y: float) -> bool:
-        angle = np.arctan2(y, x)
-        # Handle angle wrapping
-        if start_angle <= end_angle:
-            return start_angle <= angle <= end_angle
-        else:
-            return angle >= start_angle or angle <= end_angle
-    return mask
-
-def radial_mask(min_radius: float, max_radius: float):
-    """
-    Create mask for radial segment.
-    
-    Args:
-        min_radius: Minimum radius (inclusive)
-        max_radius: Maximum radius (inclusive)
-        
-    Returns:
-        Mask function for the radial segment
-    """
-    def mask(x: float, y: float) -> bool:
-        radius = np.sqrt(x**2 + y**2)
-        return min_radius <= radius <= max_radius
-    return mask

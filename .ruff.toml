@@ -1,0 +1,22 @@
+# Ruff configuration for 2Top project
+# See https://docs.astral.sh/ruff/settings/
+
+[lint]
+# Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
+# Note: We could be more selective and only enable the specific rules we want,
+# but for now, we'll use the default set and add a few customizations.
+select = ["E", "F"]
+extend-ignore = [
+    # Allow unused variables in test files
+    "F841",
+]
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect line length.
+line-length = 88
+# Like Black, use 4 space indents.
+tab-size = 4

@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from typing import Tuple, Union, Optional
 from abc import abstractmethod
 
+from .precision import PrecisionPolicy, get_precision_policy
+
 
 class ImplicitCurve:
     """
@@ -23,7 +25,12 @@ class ImplicitCurve:
     and visualize the curve.
     """
     
-    def __init__(self, expression: sp.Expr, variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None):
+    def __init__(
+        self,
+        expression: sp.Expr,
+        variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None,
+        precision_policy: Optional[PrecisionPolicy] = None,
+    ):
         """
         Initialize an ImplicitCurve with a symbolic expression.
         
@@ -52,6 +59,7 @@ class ImplicitCurve:
         
         self.expression = expression
         self.variables = tuple(variables)
+        self._precision_policy = precision_policy or get_precision_policy()
         
         # Cache for lambdified function (performance optimization)
         self._eval_func = None
@@ -246,8 +254,30 @@ class ImplicitCurve:
         plt.axis('equal')
         plt.show()
     
-    def on_curve(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray], 
-                 tolerance: float = 1e-3) -> Union[bool, np.ndarray]:
+    def precision_policy(self) -> PrecisionPolicy:
+        """Return the precision policy for this curve."""
+
+        return self._precision_policy
+
+    def scale_hint(self) -> float:
+        """Return a scale hint (subclasses can override with better estimates)."""
+
+        # Default to unit scale; curve subclasses should provide tighter bounds.
+        return 1.0
+
+    def _resolve_tolerance(self, tolerance: Optional[float] = None) -> float:
+        """Resolve a caller-provided tolerance against the policy defaults."""
+
+        if tolerance is not None:
+            return tolerance
+        return self.precision_policy().blended_tolerance(self.scale_hint())
+
+    def on_curve(
+        self,
+        x_val: Union[float, np.ndarray],
+        y_val: Union[float, np.ndarray],
+        tolerance: Optional[float] = None,
+    ) -> Union[bool, np.ndarray]:
         """
         Check if point(s) are on the curve.
         
@@ -262,12 +292,12 @@ class ImplicitCurve:
         Returns:
             Boolean or array of booleans indicating if points are on the curve
         """
-        if np.isscalar(x_val) and np.isscalar(y_val):
-            return False
-        else:
-            # Return array of False values with same shape as input
-            x_array = np.asarray(x_val)
-            return np.zeros_like(x_array, dtype=bool)
+        tol = self._resolve_tolerance(tolerance)
+        values = self.evaluate(x_val, y_val)
+        if np.isscalar(values):
+            return abs(float(values)) <= tol
+        values_array = np.asarray(values)
+        return np.abs(values_array) <= tol
     
     def bounding_box(self) -> Tuple[float, float, float, float]:
         """

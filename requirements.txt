@@ -3,3 +3,5 @@ numpy>=1.24.0
 pytest>=7.0.0
 matplotlib>=3.6.0
 PySide6>=6.5.0
+ruff>=0.0.280
+black>=23.0.0
