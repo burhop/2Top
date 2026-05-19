@@ -187,3 +187,19 @@ The background continuous test runner daemon (`tools/continuous_runner.py`) prov
     ```
 *   **Periodic Executor**: If `periodic_interval` is specified, the runner executes the command continuously on a loop at that interval (in seconds).
 *   **WebSocket Stream**: Test failures or output states are compiled and streamed instantly over the WebSocket server to the Web UI dashboard to notify developers.
+
+---
+
+## ⚡ 7. Visualizer Speed & Radical Curve Endpoint Visual Fallback
+
+To maximize UI responsiveness and improve representation accuracy, two targeted enhancements were introduced in Sprint 7/8:
+
+### A. Instant On-Demand Verification (Bypass Load Lag)
+*   **Problem**: In early versions, loading a single curve or a group automatically ran the mathematical coordinate verification pipeline (`verifyScene(true)`). This caused blocking server-side mathematical evaluations during scene updates and incremental fetches.
+*   **Solution**: Automatic load-time verification has been fully disabled. When database curves or spatial groups load, they render immediately and visually fade out the loading overlay. The complete coordinate and constraint check can now be run **on-demand** by clicking the **"Verify Scene"** button. This provides zero-lag database imports.
+
+### B. Radical Curve Endpoint Visual Fallback
+*   **Problem**: Bounded/trimmed open curves containing only one analytical endpoint in the database (such as the radical curve $y = y_0 + c\sqrt{x - x_0}$ or single-boundary semicircles) only returned a single keypoint dot at their analytical vertex, leaving the outer polyline boundary extremity dot-less.
+*   **Solution**: In `graphics_backend/graphics_interface.py`, `_extract_endpoint_points()` detects when an open curve (`not is_closed`) returns exactly **one** analytical endpoint. It calculates the distance from the analytical endpoint to both polyline boundaries (`polyline[0]` and `polyline[-1]`). The extremity that is further away (distance $> 1e-4$) is appended as a secondary endpoint dot.
+*   This visual fallback ensures that open curves are cleanly marked with visual dots at both ends, making the visualizer extremely accurate for all boundary conditions.
+
