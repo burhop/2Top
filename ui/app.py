@@ -271,8 +271,21 @@ def db_curves_load():
                 scene_manager.remove_object(obj_id)
                 
             # Add to scene manager with custom style tagging
+            group_id_val = row[1]
+            NEON_PALETTE = ['#77f6ff', '#ff6b9c', '#a0fe38', '#ffb536', '#c684ff']
+            if group_id_val is not None:
+                cursor.execute("SELECT id FROM curves WHERE group_id = ? ORDER BY id ASC;", (int(group_id_val),))
+                group_curve_ids = [r[0] for r in cursor.fetchall()]
+                try:
+                    index = group_curve_ids.index(int(curve_id))
+                    color = NEON_PALETTE[index % len(NEON_PALETTE)]
+                except ValueError:
+                    color = '#ff6b9c' if row[3] == 'periodic_radical' else '#77f6ff'
+            else:
+                color = '#ff6b9c' if row[3] == 'periodic_radical' else '#77f6ff'
+
             style = {
-                'color': '#ff6b9c' if row[3] == 'periodic_radical' else '#77f6ff',
+                'color': color,
                 'linewidth': 2.5,
                 'alpha': 1.0,
                 'is_db_curve': True,
