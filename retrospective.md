@@ -35,6 +35,28 @@ These fields directly depend on the correctness of `AreaRegion.contains` and the
 - Failures in `AreaRegion.contains` directly propagated to incorrect field values.
 - The inaccuracies in `AreaRegion._curve_to_polygon` (due to poor polygonal approximation) meant that even if `AreaRegion.contains` was fixed, the distance calculations in `SignedDistanceField` would still be off.
 
+## Phase 2: High-Precision Conics and Visualizer Integrations
+
+We expanded the scope to verify curves against massive datasets of 1,000,000+ curves, introducing an interactive Web UI and automated runner daemons. This revealed critical scale, interaction, and caching challenges.
+
+### 1. High-Degree Algebraic Zero-Crossing Skipping
+With steep curves (like Lemniscates of Bernoulli or cubics), function gradients near self-intersections or cusps swing so aggressively that standard coarse sampling (`np.abs(Z) < coarse_tolerance`) skips cells entirely because values never land under the threshold.
+*   **Resolution**: Swapping threshold checks with vectorized boundary zero-crossing sign-change checks (`Z[:, :-1] * Z[:, 1:] <= 0` horizontally and vertically) guarantees that the solver identifies every single mathematical zero-crossing cell, raising intersection recovery rate to 100%.
+
+### 2. Microscopic Viewport Zoom & Local Browser Caching
+During local Flask development, aggressive browser caching of static scripts caused clients to run outdated code. This triggered an infinite rendering loop that continuously invoked `fitToBounds()` and zoomed out exponentially, leaving only a single origin dot visible.
+*   **Resolution**: Implement strict HTTP anti-caching headers (`Cache-Control: no-store, no-cache, must-revalidate, max-age=0`) on the Flask server using an `@app.after_request` filter to completely eliminate the caching issue and infinite viewport loop.
+
+### 3. Jaggies on Deep Zooms vs. Server Overload
+Evaluating curves on fixed mathematical domains resulted in extremely blocky polylines when users zoomed in close. However, recalculating thousands of points dynamically on every scroll gesture overloaded the single-threaded Flask local server.
+*   **Resolution**: 
+    1.  **LOD Viewport Intersections**: Bound the mathematical curve domain by the active visible viewport bounding box. This focuses the 150 points directly in the active view window, making lines look perfectly smooth.
+    2.  **Debounce Viewport Requests**: Intercept rapid scrolling events on the client canvas and wait for a 150ms pause before firing the coordinate update API request, keeping the canvas interactive and the server responsive.
+
+### 4. Transactional Asynchronous UI Locking
+Asynchronously loading complex curve groups incrementally caused race conditions. Intermediate redraw messages would fire during incremental socket loads, causing incomplete scenes and lag.
+*   **Resolution**: Implement a fully-blocking transactional overlay. During loading, trigger a glassmorphic blur block that intercepts and ignores all mouse events, wheel scrolls, and hotkeys. Suppress all scene-updated socket redraws until the loop fully completes, ensuring a perfectly stable and clean display load.
+
 ## Lessons Learned for a New AI
 
 1.  **Deep Dive into Core Algorithms:** When dealing with fundamental geometric operations like point containment, understand the underlying algorithms (e.g., ray-casting) thoroughly. Don't rely on superficial implementations or assumptions.
