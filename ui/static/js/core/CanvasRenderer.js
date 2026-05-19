@@ -320,14 +320,16 @@ class CanvasRenderer extends EventEmitter {
 
     renderIntersections() {
         this.ctx.save();
-        this.ctx.fillStyle = '#f94144';
+        this.ctx.fillStyle = '#ff4d6d'; // Premium bright neon rose/red
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1.5;
-        this.ctx.shadowColor = 'rgba(249, 65, 68, 0.8)';
-        this.ctx.shadowBlur = 12;
+        this.ctx.shadowColor = 'rgba(255, 77, 109, 0.5)';
+        this.ctx.shadowBlur = 6; // Refined, clean glow
+        
         this.intersections.forEach((point) => {
             const screen = this.worldToScreen(point.x, point.y);
-            const radius = 7;
+            const radius = 5.5; // Slightly smaller, refined dot
+            
             this.ctx.beginPath();
             this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
             this.ctx.fill();
@@ -335,15 +337,15 @@ class CanvasRenderer extends EventEmitter {
 
             this.ctx.save();
             this.ctx.shadowBlur = 0;
-            this.ctx.fillStyle = '#f8fbff';
-            this.ctx.strokeStyle = 'rgba(5, 6, 10, 0.85)';
+            this.ctx.fillStyle = '#f8fbff'; // Clean off-white
+            this.ctx.strokeStyle = 'rgba(5, 6, 10, 0.85)'; // High-contrast dark outline
             this.ctx.lineWidth = 3;
-            this.ctx.font = '12px "Space Grotesk", sans-serif';
+            this.ctx.font = 'bold 11px "Space Grotesk", sans-serif'; // Refined size
             this.ctx.textAlign = 'center';
-            this.ctx.beginPath();
-            this.ctx.arc(screen.x, screen.y - 12, radius - 3, 0, Math.PI * 2);
-            this.ctx.stroke();
-            this.ctx.fillText(point.label || '', screen.x, screen.y - 9);
+            
+            // Draw beautiful, clean text above the dot (at -14px) with high-contrast outline
+            this.ctx.strokeText(point.label || '', screen.x, screen.y - 14);
+            this.ctx.fillText(point.label || '', screen.x, screen.y - 14);
             this.ctx.restore();
         });
         this.ctx.restore();
@@ -583,7 +585,8 @@ class CanvasRenderer extends EventEmitter {
         const style = obj.style || {};
         this.ctx.strokeStyle = style.color || '#667eea';
         this.ctx.fillStyle = style.fillColor || 'rgba(102, 126, 234, 0.3)';
-        this.ctx.lineWidth = (style.lineWidth || 2) / this.viewport.scale;
+        const rawWidth = style.lineWidth || style.linewidth || 2.5;
+        this.ctx.lineWidth = Math.max(rawWidth / this.viewport.scale, 1.5 / this.viewport.scale);
 
         if (obj.type === 'curve' && obj.data.paths) {
             this.renderCurvePaths(obj.data.paths);
@@ -620,9 +623,12 @@ class CanvasRenderer extends EventEmitter {
             const screenPos = this.worldToScreen(point.x, point.y);
             this.ctx.save();
             this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-            this.ctx.fillStyle = '#0d1b2a';
+            this.ctx.fillStyle = '#f8fbff';
+            this.ctx.strokeStyle = 'rgba(5, 6, 10, 0.85)';
+            this.ctx.lineWidth = 3;
             this.ctx.font = '12px "Space Grotesk", sans-serif';
             this.ctx.textAlign = 'center';
+            this.ctx.strokeText(point.label || point.type || '', screenPos.x, screenPos.y - 14);
             this.ctx.fillText(point.label || point.type || '', screenPos.x, screenPos.y - 14);
             this.ctx.restore();
         });

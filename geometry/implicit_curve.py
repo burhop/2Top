@@ -85,57 +85,20 @@ class ImplicitCurve:
         if self._eval_func is None:
             self._eval_func = sp.lambdify(self.variables, self.expression, "numpy")
         
-        # Evaluate using the cached lambdified function with overflow protection
         try:
             result = self._eval_func(x_val, y_val)
-            # Check for overflow/underflow in the result
             if np.isscalar(result):
                 if np.isnan(result):
-                    # If inputs contain NaN, preserve NaN in output for mathematical correctness
-                    if np.isnan(x_val) or np.isnan(y_val):
-                        return result  # Preserve NaN
-                    else:
-                        # NaN from numerical issues - treat as "outside"
-                        return 1e100
-                elif np.isinf(result):
-                    # Check if infinity is mathematically correct by checking inputs
-                    if np.isinf(x_val) or np.isinf(y_val):
-                        # Infinity in inputs should produce infinity in result for polynomial expressions
-                        return result  # Preserve the infinity
-                    else:
-                        # Infinity from numerical overflow - replace with large finite value
-                        return 1e100 if result > 0 else -1e100
+                    return np.nan
+                return float(result)
             else:
-                # Handle array results
-                result = np.asarray(result)
-                # Handle NaN values - preserve NaN when inputs contain NaN
-                input_has_nan = np.isnan(x_val) | np.isnan(y_val)
-                # Only replace NaN with 1e100 where inputs don't contain NaN
-                result = np.where(np.isnan(result) & ~input_has_nan, 1e100, result)
-                # Handle infinity values - preserve if inputs contain infinity
-                if np.any(np.isinf(x_val)) or np.any(np.isinf(y_val)):
-                    # Some inputs are infinite, so infinite results may be mathematically correct
-                    # Only replace infinity where inputs are finite (indicating numerical overflow)
-                    x_finite = np.isfinite(x_val) if hasattr(x_val, '__len__') else np.isfinite(x_val)
-                    y_finite = np.isfinite(y_val) if hasattr(y_val, '__len__') else np.isfinite(y_val)
-                    inputs_finite = x_finite & y_finite if hasattr(x_finite, '__len__') else (x_finite and y_finite)
-                    # Replace infinity only where inputs are finite (numerical overflow)
-                    result = np.where(inputs_finite & np.isposinf(result), 1e100, result)
-                    result = np.where(inputs_finite & np.isneginf(result), -1e100, result)
-                else:
-                    # No infinite inputs, so any infinite results are from numerical overflow
-                    result = np.where(np.isposinf(result), 1e100, result)
-                    result = np.where(np.isneginf(result), -1e100, result)
-                return result
-            return result
+                return np.asarray(result, dtype=float)
         except OverflowError:
-            # Handle overflow during computation
             if np.isscalar(x_val) and np.isscalar(y_val):
-                return 1e100  # Large positive value indicates "very far outside"
+                return float('inf')
             else:
-                # For array inputs, return array of large values
                 x_arr = np.asarray(x_val)
-                return np.full_like(x_arr, 1e100, dtype=float)
+                return np.full_like(x_arr, float('inf'), dtype=float)
     
     def gradient(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray]) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """

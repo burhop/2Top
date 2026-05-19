@@ -72,15 +72,15 @@ def reconstruct_geometry_curve(c_row):
         if sqrt_terms:
             sqrt_arg = sqrt_terms[0].base
             arg_func = sp.lambdify((x, y), sqrt_arg, 'numpy')
-            mask = lambda px, py, arg_func=arg_func: arg_func(px, py) >= -1e-6
+            mask = lambda px, py, arg_func=arg_func: arg_func(px, py) >= -0.05
         elif asin_terms:
             asin_arg = list(asin_terms)[0].args[0]
             arg_func = sp.lambdify((x, y), asin_arg, 'numpy')
-            mask = lambda px, py, arg_func=arg_func: abs(arg_func(px, py)) <= 1.0 + 1e-6
+            mask = lambda px, py, arg_func=arg_func: abs(arg_func(px, py)) <= 1.0 + 0.05
         elif c_type == "periodic_radical":
             f_x = y**2 - expr
             f_func = sp.lambdify((x, y), f_x, 'numpy')
-            mask = lambda px, py, f_func=f_func: f_func(px, py) >= -1e-6
+            mask = lambda px, py, f_func=f_func: f_func(px, py) >= -0.05
             
         curve = TrimmedImplicitCurve(
             base_curve=base_curve,

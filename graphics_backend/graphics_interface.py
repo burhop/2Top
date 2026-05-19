@@ -108,7 +108,9 @@ class GraphicsBackendInterface:
                         try:
                             endpoints = obj.get_endpoints()
                             if endpoints and len(endpoints) > 0:
-                                snap_threshold = 0.5  # maximum snapping distance
+                                o_xmin, o_xmax, o_ymin, o_ymax = obj_bounds
+                                grid_spacing = max((o_xmax - o_xmin) / resolution, (o_ymax - o_ymin) / resolution)
+                                snap_threshold = max(1.0, 3.0 * grid_spacing)
                                 sq_threshold = snap_threshold ** 2
                                 if len(endpoints) == 2:
                                     # Pair each endpoint to start/end of the polyline
@@ -647,6 +649,37 @@ class GraphicsBackendInterface:
                 o_xmin, o_xmax, o_ymin, o_ymax = float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)
                 s_xmin, s_xmax, s_ymin, s_ymax = scene_bounds
                 
+                # Check if it is an infinite/very large line (span >= 50)
+                is_infinite = (abs(o_xmax - o_xmin) >= 50.0) or (abs(o_ymax - o_ymin) >= 50.0)
+                
+                if is_infinite:
+                    # Crop dynamically to the bounds of other non-infinite curves in the active scene
+                    non_inf_bounds = []
+                    for other_id in self.scene_manager.list_objects():
+                        other_obj = self.scene_manager.get_object(other_id)
+                        if hasattr(other_obj, 'xmin') and hasattr(other_obj, 'xmax') and hasattr(other_obj, 'ymin') and hasattr(other_obj, 'ymax'):
+                            if all(getattr(other_obj, name) is not None and np.isfinite(float(getattr(other_obj, name))) for name in ['xmin', 'xmax', 'ymin', 'ymax']):
+                                ox_min, ox_max, oy_min, oy_max = float(other_obj.xmin), float(other_obj.xmax), float(other_obj.ymin), float(other_obj.ymax)
+                                if abs(ox_max - ox_min) < 50.0 and abs(oy_max - oy_min) < 50.0:
+                                    non_inf_bounds.append((ox_min, ox_max, oy_min, oy_max))
+                    
+                    if non_inf_bounds:
+                        non_inf_bounds = np.array(non_inf_bounds)
+                        c_xmin = np.min(non_inf_bounds[:, 0])
+                        c_xmax = np.max(non_inf_bounds[:, 1])
+                        c_ymin = np.min(non_inf_bounds[:, 2])
+                        c_ymax = np.max(non_inf_bounds[:, 3])
+                        
+                        # Add a 50% padding relative to active cluster size
+                        pad_x = max((c_xmax - c_xmin) * 0.5, 2.0)
+                        pad_y = max((c_ymax - c_ymin) * 0.5, 2.0)
+                        
+                        # Apply crop limits
+                        o_xmin = max(o_xmin, c_xmin - pad_x)
+                        o_xmax = min(o_xmax, c_xmax + pad_x)
+                        o_ymin = max(o_ymin, c_ymin - pad_y)
+                        o_ymax = min(o_ymax, c_ymax + pad_y)
+
                 # Intersect manual bounds with viewport/scene bounds to increase LOD when zooming
                 int_xmin = max(o_xmin, s_xmin)
                 int_xmax = min(o_xmax, s_xmax)
@@ -748,60 +781,112 @@ class GraphicsBackendInterface:
             elif Z.shape != X.shape:
                 # If shapes don't match, skip contour extraction
                 return [], False
-                
-            # Apply TrimmedImplicitCurve mask to the grid evaluation to eliminate artificial boundary contours
-            if hasattr(obj, 'mask') and callable(obj.mask):
-                try:
-                    mask_val = obj.mask(X, Y)
-                    if isinstance(mask_val, np.ndarray):
-                        mask_bool = mask_val.astype(bool)
-                    else:
-                        mask_bool = np.full_like(X, bool(mask_val), dtype=bool)
-                except Exception:
-                    # Fallback to element-wise mask evaluation if not vectorized
-                    mask_bool = np.zeros_like(X, dtype=bool)
-                    flat_x = X.flatten()
-                    flat_y = Y.flatten()
-                    for idx in range(len(flat_x)):
-                        try:
-                            mask_bool.flat[idx] = bool(obj.mask(flat_x[idx], flat_y[idx]))
-                        except Exception:
-                            mask_bool.flat[idx] = False
-                Z = np.where(mask_bool, Z, np.nan)
 
-            # Apply explicit bounds cropping if defined
-            eps = 1e-9
-            if getattr(obj, '_xmin', None) is not None:
-                Z = np.where(X >= obj._xmin - eps, Z, np.nan)
-            if getattr(obj, '_xmax', None) is not None:
-                Z = np.where(X <= obj._xmax + eps, Z, np.nan)
-            if getattr(obj, '_ymin', None) is not None:
-                Z = np.where(Y >= obj._ymin - eps, Z, np.nan)
-            if getattr(obj, '_ymax', None) is not None:
-                Z = np.where(Y <= obj._ymax + eps, Z, np.nan)
+            # Keep raw evaluated array to detect NaN limits
+            Z_raw = Z.copy()
             
-            # Extract zero-level contour
+            # Replace infinity and NaN values with extreme finite limits to protect Matplotlib contour
+            Z = np.where(np.isnan(Z), 1e100, Z)
+            Z = np.where(np.isposinf(Z), 1e100, Z)
+            Z = np.where(np.isneginf(Z), -1e100, Z)
+                
+            # Extract zero-level contour (unmasked to avoid suppression and boundary gaps)
             import matplotlib.pyplot as plt
-            # Create figure without interfering with main rendering
             with plt.ioff():  # Turn off interactive mode
                 fig, ax = plt.subplots()
                 contours = ax.contour(X, Y, Z, levels=[0])
-                # Clear figure without calling plt.close to avoid mock interference
                 fig.clear()
                 del fig, ax
             
-            candidate_paths = []
+            raw_paths = []
 
-            if hasattr(contours, 'collections') and contours.collections:
+            # Modern matplotlib contour path extraction
+            if hasattr(contours, 'get_paths') and callable(contours.get_paths):
+                for path in contours.get_paths():
+                    raw_paths.append((path.vertices.tolist(), path.codes))
+
+            if not raw_paths and hasattr(contours, 'collections') and contours.collections:
                 for collection in contours.collections:
                     for path in collection.get_paths():
-                        candidate_paths.append((path.vertices.tolist(), path.codes))
+                        raw_paths.append((path.vertices.tolist(), path.codes))
 
-            if not candidate_paths and hasattr(contours, 'allsegs'):
+            if not raw_paths and hasattr(contours, 'allsegs'):
                 for level_segments in contours.allsegs:
                     for seg in level_segments:
                         if len(seg) >= 2:
-                            candidate_paths.append((seg.tolist(), None))
+                            raw_paths.append((seg.tolist(), None))
+
+            # Post-filter paths with the TrimmedImplicitCurve mask and explicit bounds
+            # to achieve smooth, gap-free termination at boundaries
+            candidate_paths = []
+            
+            obj_xmin = getattr(obj, '_xmin', None)
+            obj_xmax = getattr(obj, '_xmax', None)
+            obj_ymin = getattr(obj, '_ymin', None)
+            obj_ymax = getattr(obj, '_ymax', None)
+            eps = 1e-9
+            
+            def in_bounds(px, py):
+                if obj_xmin is not None and px < obj_xmin - eps:
+                    return False
+                if obj_xmax is not None and px > obj_xmax + eps:
+                    return False
+                if obj_ymin is not None and py < obj_ymin - eps:
+                    return False
+                if obj_ymax is not None and py > obj_ymax + eps:
+                    return False
+                return True
+
+            has_mask = hasattr(obj, 'mask') and callable(obj.mask)
+
+            for points_list, codes in raw_paths:
+                mask_bools = []
+                if has_mask:
+                    try:
+                        # Try vectorized mask check first
+                        xs = [p[0] for p in points_list]
+                        ys = [p[1] for p in points_list]
+                        mask_bools = obj.mask(np.array(xs), np.array(ys))
+                        if not isinstance(mask_bools, np.ndarray):
+                            mask_bools = [bool(mask_bools)] * len(points_list)
+                        else:
+                            mask_bools = mask_bools.tolist()
+                    except Exception:
+                        mask_bools = []
+                        for px, py in points_list:
+                            try:
+                                mask_bools.append(bool(obj.mask(px, py)))
+                            except Exception:
+                                mask_bools.append(True)
+                else:
+                    mask_bools = [True] * len(points_list)
+                
+                # Vectorized validation of points against original NaN/boundary artifacts
+                try:
+                    xs_eval = np.array([p[0] for p in points_list], dtype=float)
+                    ys_eval = np.array([p[1] for p in points_list], dtype=float)
+                    vals = obj.evaluate(xs_eval, ys_eval)
+                    valid_mask = ~np.isnan(vals) & ~np.isinf(vals)
+                    if np.any(np.isnan(Z_raw)):
+                        valid_mask &= (np.abs(vals) <= 0.15)
+                    valid_list = valid_mask.tolist()
+                except Exception:
+                    valid_list = [True] * len(points_list)
+                
+                # Split paths if mask splits them or a new subpath starts (MOVETO code)
+                current_subpath = []
+                for idx, (pt, mask_ok) in enumerate(zip(points_list, mask_bools)):
+                    is_moveto = (codes is not None and idx < len(codes) and codes[idx] == 1)
+                    if mask_ok and in_bounds(pt[0], pt[1]) and valid_list[idx] and not is_moveto:
+                        current_subpath.append(pt)
+                    else:
+                        if len(current_subpath) >= 2:
+                            candidate_paths.append((current_subpath, None))
+                        current_subpath = []
+                        if mask_ok and in_bounds(pt[0], pt[1]) and valid_list[idx]:
+                            current_subpath.append(pt)
+                if len(current_subpath) >= 2:
+                    candidate_paths.append((current_subpath, None))
 
             all_paths = [item[0] for item in candidate_paths if len(item[0]) >= 2]
 

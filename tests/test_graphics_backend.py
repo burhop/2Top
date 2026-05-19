@@ -456,6 +456,32 @@ class TestGraphicsBackendIntegration:
             for pt in path:
                 assert len(pt) == 2
 
+    def test_get_curve_paths_arcsin_domain_limit(self):
+        """Test that get_curve_paths for an arcsin curve doesn't produce boundary vertical lines."""
+        import sympy as sp
+        from geometry.implicit_curve import ImplicitCurve
+        sm = SceneManager()
+        x, y = sp.symbols('x y')
+        
+        # S-curve: y - asin(x) = 0, domain x in [-1, 1], y in [-pi/2, pi/2]
+        expr = y - sp.asin(x)
+        curve = ImplicitCurve(expr, (x, y))
+        curve.scale_hint = 1.0
+        
+        sm.add_object('arcsin', curve)
+        backend = GraphicsBackendInterface(sm)
+        
+        # Evaluate on a wide bounds (-2 to 2 in x, -10 to 10 in y)
+        curve_data = backend.get_curve_paths(bounds=(-2, 2, -10, 10), resolution=50)
+        assert 'arcsin' in curve_data
+        data = curve_data['arcsin']
+        
+        # The points should be restricted to the valid domain: y within [-4.0, 4.0] (no vertical line artifacts going down to -10)
+        points = np.array(data['points'])
+        if len(points) > 0:
+            assert np.min(points[:, 1]) >= -2.0
+            assert np.max(points[:, 1]) <= 2.0
+
     def test_get_scene_bounds_ignoring_infinite_lines(self):
         """Test that get_scene_bounds ignores infinite/very large bounds to focus auto-fit."""
         import sympy as sp
