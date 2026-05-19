@@ -3,145 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2Top Geometry Library - Interactive UI</title>
+    <title>2Top Geometry</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050913'/%3E%3Cpath d='M14 46L32 18l18 28' stroke='%2377f6ff' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%23ff6b9c'/%3E%3C/svg%3E">
 </head>
 <body>
-    <div id="app">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <h1 class="app-title">2Top Geometry Library</h1>
-                <div class="header-controls">
-                    <button id="new-scene-btn" class="btn btn-primary">New Scene</button>
-                    <button id="load-scene-btn" class="btn btn-secondary">Load Scene</button>
-                    <button id="save-scene-btn" class="btn btn-secondary">Save Scene</button>
-                </div>
+<div id="app">
+
+    <!-- ── Left sidebar: test runner ── -->
+    <nav class="sidebar left-sidebar" id="left-sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-logo" title="2Top Geometry">2T</span>
+        </div>
+
+        <div class="sidebar-section-label">Tests</div>
+
+        <!-- Transport controls -->
+        <div class="runner-transport">
+            <button class="run-btn" id="runner-prev"  title="Previous test">&#9664;</button>
+            <button class="run-btn run-play" id="runner-play"  title="Play / auto-advance">&#9654;</button>
+            <button class="run-btn run-pause" id="runner-pause" title="Pause" style="display:none">&#9646;&#9646;</button>
+            <button class="run-btn" id="runner-next"  title="Next test">&#9654;&#9654;</button>
+        </div>
+        <!-- Speed selector -->
+        <div class="runner-speed">
+            <select id="runner-speed" title="Auto-advance delay">
+                <option value="500">0.5s</option>
+                <option value="1000" selected>1s</option>
+                <option value="2000">2s</option>
+                <option value="4000">4s</option>
+                <option value="8000">8s</option>
+            </select>
+        </div>
+        <!-- Test index indicator -->
+        <div class="runner-index" id="runner-index">– / –</div>
+
+        <!-- Scrollable test list -->
+        <div id="geometry-test-list" class="test-list-scroll"></div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Add</div>
+        <button class="tool-btn" data-tool="circle"    title="Circle">○</button>
+        <button class="tool-btn" data-tool="ellipse"   title="Ellipse">⬭</button>
+        <button class="tool-btn" data-tool="line"      title="Line">╱</button>
+        <button class="tool-btn" data-tool="rectangle" title="Rectangle">▭</button>
+        <button class="tool-btn" data-tool="triangle"  title="Triangle">△</button>
+        <button class="tool-btn" data-tool="parabola"  title="Parabola">⌒</button>
+        <button class="tool-btn" data-tool="hyperbola" title="Hyperbola">⌓</button>
+        <button class="tool-btn" data-tool="cubic"     title="Cubic curve">∿</button>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Database Curves</div>
+        <div class="db-controls">
+            <div class="db-input-group">
+                <input type="number" id="db-curve-id" class="db-input" placeholder="Curve ID" min="0">
+                <button class="db-btn" id="load-db-curve-btn" title="Load Curve by ID">Load ID</button>
             </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="app-main">
-            <!-- Left Panel - Object Browser & Controls -->
-            <aside class="left-panel">
-                <div class="panel-section">
-                    <h3>Object Browser</h3>
-                    <div id="objectList" class="object-list">
-                        <div class="empty-state">No objects in scene</div>
-                    </div>
-                </div>
-
-                <div class="panel-section">
-                    <h3>Create Objects</h3>
-                    <div class="create-controls">
-                        <button class="btn btn-tool" data-tool="circle">Circle</button>
-                        <button class="btn btn-tool" data-tool="rectangle">Rectangle</button>
-                        <button class="btn btn-tool" data-tool="triangle">Triangle</button>
-                        <button class="btn btn-tool" data-tool="ellipse">Ellipse</button>
-                        <button class="btn btn-tool" data-tool="line">Line</button>
-                    </div>
-                </div>
-
-                <div class="panel-section">
-                    <h3>Properties</h3>
-                    <div id="property-panel" class="property-panel">
-                        <div class="empty-state">Select an object to edit properties</div>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Center - Visualization Canvas -->
-            <div class="canvas-container">
-                <canvas id="renderCanvas" width="800" height="600"></canvas>
-                <div class="canvas-overlay">
-                    <div class="canvas-info">
-                        <span id="mouse-coords">Mouse: (0, 0)</span>
-                        <span id="zoom-level">Zoom: 100%</span>
-                    </div>
-                </div>
+            <div class="db-input-group">
+                <input type="number" id="db-group-id" class="db-input" placeholder="Group ID" min="0">
+                <button class="db-btn" id="load-db-group-btn" title="Load Spatial Group">Load Group</button>
             </div>
+            <button class="db-btn verify-btn" id="verify-scene-btn" title="Verify mathematically calculated endpoints & intersections against ground-truth records">
+                <span class="pulse-ring"></span>Verify Scene
+            </button>
+        </div>
 
-            <!-- Right Panel - Animation & Advanced -->
-            <aside class="right-panel">
-                <div class="panel-section">
-                    <h3>Animation</h3>
-                    <div id="animationControls" class="animation-controls">
-                        <div class="timeline-container">
-                            <div id="timeline" class="timeline"></div>
-                        </div>
-                        <div class="playback-controls">
-                            <button id="play-btn" class="btn btn-icon">▶</button>
-                            <button id="pause-btn" class="btn btn-icon">⏸</button>
-                            <button id="stop-btn" class="btn btn-icon">⏹</button>
-                            <input type="range" id="frame-slider" class="frame-slider" min="0" max="100" value="0">
-                        </div>
-                    </div>
-                </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Scene</div>
+        <button class="tool-btn" id="fit-btn"        title="Fit to objects">⤢</button>
+        <button class="tool-btn" id="new-scene-btn"  title="New scene">✦</button>
+        <button class="tool-btn" id="save-scene-btn" title="Save scene">↓</button>
+        <button class="tool-btn" id="load-scene-btn" title="Load scene">↑</button>
+    </nav>
 
-                <div class="panel-section">
-                    <h3>Export</h3>
-                    <div class="export-controls">
-                        <button id="export-png-btn" class="btn btn-secondary">Export PNG</button>
-                        <button id="export-svg-btn" class="btn btn-secondary">Export SVG</button>
-                    </div>
-                </div>
+    <!-- ── Canvas (fills remaining space) ── -->
+    <div class="canvas-wrap">
+        <canvas id="renderCanvas"></canvas>
 
-                <div class="panel-section">
-                    <h3>View Options</h3>
-                    <div class="view-options">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-grid" checked>
-                            Show Grid
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-bounds">
-                            Show Bounds
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-gradients">
-                            Show Gradients
-                        </label>
-                    </div>
-                </div>
-            </aside>
-        </main>
-
-        <!-- Status Bar -->
-        <footer class="status-bar">
-            <div class="status-content">
-                <span id="connection-status" class="status-item">Connecting...</span>
-                <span id="object-count" class="status-item">Objects: 0</span>
-                <span id="render-time" class="status-item">Render: 0ms</span>
+        <!-- Floating Database Verification Panel -->
+        <div id="db-verification-panel" class="db-verification-panel hidden">
+            <div class="verification-header">
+                <h3>Verification Report</h3>
+                <button class="close-panel-btn" id="close-verification-panel" title="Close Panel">&times;</button>
             </div>
-        </footer>
-    </div>
+            <div id="verification-summary" class="verification-summary">
+                <!-- Summary state (Verified / Mismatch / Error) -->
+            </div>
+            <div class="verification-details" id="verification-details">
+                <!-- Detailed lists of verified/failed endpoints & intersections -->
+            </div>
+        </div>
 
-    <!-- Modals -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="modal-title">Modal Title</h3>
-                <button id="modal-close" class="btn btn-icon">✕</button>
-            </div>
-            <div id="modal-content" class="modal-content">
-                <!-- Dynamic content -->
-            </div>
-            <div class="modal-footer">
-                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
-                <button id="modal-confirm" class="btn btn-primary">Confirm</button>
-            </div>
+        <!-- HUD: top-left stats -->
+        <div class="hud hud-tl">
+            <span id="mouse-coords">(0, 0)</span>
+            <span class="hud-sep">·</span>
+            <span id="zoom-level">100%</span>
+            <span class="hud-sep">·</span>
+            <span id="bounds-info">–</span>
+            <span class="hud-sep">·</span>
+            <span id="intersection-count">0</span> ×
+        </div>
+
+        <!-- HUD: bottom status -->
+        <div class="hud hud-bl">
+            <span id="connection-status">connecting…</span>
+            <span class="hud-sep">·</span>
+            <span id="object-count">0 obj</span>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script src="{{ url_for('static', filename='js/core/EventEmitter.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/core/MCPClient.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/core/CanvasRenderer.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/components/ObjectBrowser.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/components/PropertyPanel.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/components/AnimationControls.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- ── Right toolbar: toggles + export ── -->
+    <nav class="sidebar right-sidebar">
+        <div class="sidebar-section-label">View</div>
+        <label class="toggle-btn" title="Grid">
+            <input type="checkbox" id="toggle-grid" checked>
+            <span>⊞</span>
+        </label>
+        <label class="toggle-btn" title="Axes">
+            <input type="checkbox" id="toggle-axes" checked>
+            <span>⊕</span>
+        </label>
+        <label class="toggle-btn" title="Key points">
+            <input type="checkbox" id="toggle-keypoints" checked>
+            <span>◉</span>
+        </label>
+        <label class="toggle-btn" title="Intersections">
+            <input type="checkbox" id="toggle-intersections" checked>
+            <span>✕</span>
+        </label>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Export</div>
+        <button class="tool-btn" id="export-png-btn" title="Export PNG">PNG</button>
+        <button class="tool-btn" id="export-svg-btn" title="Export SVG">SVG</button>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Anim</div>
+        <div id="animationControls">
+            <button class="tool-btn" id="play-btn"  title="Play">▶</button>
+            <button class="tool-btn" id="pause-btn" title="Pause">⏸</button>
+            <button class="tool-btn" id="stop-btn"  title="Stop">⏹</button>
+            <input type="range" id="frame-slider" class="frame-slider" min="0" max="100" value="0" title="Frame">
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Objects</div>
+        <div id="objectList" class="obj-list"></div>
+
+        <!-- hidden property panel kept for JS compatibility -->
+        <div id="property-panel" style="display:none"></div>
+    </nav>
+
+</div>
+
+
+<!-- Loading Overlay (blocks inputs while curves / groups are loading) -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-card">
+        <div class="loading-spinner-wrap">
+            <svg class="loading-spinner" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+            </svg>
+        </div>
+        <h2 id="loading-title">Loading Geometry</h2>
+        <p id="loading-status">Initializing...</p>
+        <div class="progress-bar-container">
+            <div id="loading-progress-fill" style="width: 0%;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip (shared, positioned by JS) -->
+<div id="tooltip" class="tooltip" role="tooltip"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script src="{{ url_for('static', filename='js/core/EventEmitter.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core/MCPClient.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core/CanvasRenderer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core/GeometryStudio.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/ObjectBrowser.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/PropertyPanel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/AnimationControls.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
