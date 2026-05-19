@@ -86,18 +86,21 @@ class GraphicsBackendInterface:
                 # huge global grid (which produces degenerate/line contours).
                 obj_bounds = self._estimate_object_bounds(obj, bounds)
 
+                paths = []
                 # Generate polyline approximation
                 if hasattr(obj, 'get_polyline_approximation'):
                     # Use object's built-in approximation if available
                     points = obj.get_polyline_approximation(obj_bounds, resolution)
                     closed = getattr(obj, 'is_closed', lambda: False)()
+                    paths = [points] if points else []
                 else:
                     # Try contour extraction, with fallback to boundary sampling
-                    points, closed = self._extract_curve_contour(obj, obj_bounds, resolution)
+                    points, closed, paths = self._extract_curve_contour(obj, obj_bounds, resolution)
                     
                     # If contour extraction failed, try boundary sampling for AreaRegion
                     if not points and hasattr(obj, 'outer_boundary'):
                         points, closed = self._sample_boundary_points(obj.outer_boundary, obj_bounds, resolution)
+                        paths = [points] if points else []
                 
                 if points and len(points) > 1:
                     # Snapping open curves to mathematically exact endpoints to avoid early-termination visual gaps
@@ -152,6 +155,7 @@ class GraphicsBackendInterface:
                     curve_data[obj_id] = {
                         'type': 'curve',
                         'points': points,
+                        'paths': paths if paths else ([points] if points else []),
                         'closed': closed,
                         'style': style,
                         'bounds': curve_bounds,
@@ -503,7 +507,11 @@ class GraphicsBackendInterface:
                 # First check if the object has manually assigned attributes xmin, xmax, ymin, ymax (e.g. loaded from DB)
                 if hasattr(obj, 'xmin') and hasattr(obj, 'xmax') and hasattr(obj, 'ymin') and hasattr(obj, 'ymax'):
                     if all(getattr(obj, name) is not None and np.isfinite(float(getattr(obj, name))) for name in ['xmin', 'xmax', 'ymin', 'ymax']):
-                        all_bounds.append((float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)))
+                        o_xmin, o_xmax, o_ymin, o_ymax = float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)
+                        # Skip extremely large bounds (span >= 50) like infinite vertical/horizontal lines
+                        # to allow scene auto-fitting to focus tightly on the active shapes
+                        if abs(o_xmax - o_xmin) < 50.0 and abs(o_ymax - o_ymin) < 50.0:
+                            all_bounds.append((o_xmin, o_xmax, o_ymin, o_ymax))
                         continue
 
                 # First try the get_bounds method if available
@@ -529,7 +537,7 @@ class GraphicsBackendInterface:
                         continue
                 
                 # Try contour extraction as another fallback
-                points, _ = self._extract_curve_contour(obj, self.default_bounds, 50)
+                points, _, _ = self._extract_curve_contour(obj, self.default_bounds, 50)
                 if points:
                     points_array = np.array(points)
                     obj_bounds = [
@@ -595,6 +603,15 @@ class GraphicsBackendInterface:
             ]
             polyline_lookup[obj_id] = cleaned_points
 
+            raw_paths = data.get('paths') or []
+            cleaned_paths = []
+            for path in raw_paths:
+                cleaned_path = [
+                    [float(pt[0]), float(pt[1])] for pt in path if len(pt) == 2 and np.isfinite(pt[0]) and np.isfinite(pt[1])
+                ]
+                if len(cleaned_path) >= 2:
+                    cleaned_paths.append(cleaned_path)
+
             key_points = self._extract_endpoint_points(obj, cleaned_points)
 
             objects.append({
@@ -602,6 +619,7 @@ class GraphicsBackendInterface:
                 'type': data.get('type', 'curve'),
                 'closed': bool(data.get('closed', False)),
                 'points': cleaned_points,
+                'paths': cleaned_paths if cleaned_paths else ([cleaned_points] if cleaned_points else []),
                 'bounds': sanitized_object_bounds,
                 'style': data.get('style', {}),
                 'key_points': key_points,
@@ -688,7 +706,7 @@ class GraphicsBackendInterface:
             return scene_bounds
 
     def _extract_curve_contour(self, obj, bounds: Tuple[float, float, float, float], 
-                              resolution: int) -> Tuple[List[List[float]], bool]:
+                               resolution: int) -> Tuple[List[List[float]], bool, List[List[List[float]]]]:
         """
         Extract curve contour using matplotlib contour detection.
         
@@ -785,6 +803,8 @@ class GraphicsBackendInterface:
                         if len(seg) >= 2:
                             candidate_paths.append((seg.tolist(), None))
 
+            all_paths = [item[0] for item in candidate_paths if len(item[0]) >= 2]
+
             if candidate_paths:
                 points, codes = max(candidate_paths, key=lambda item: len(item[0]))
                 closed = False
@@ -794,12 +814,12 @@ class GraphicsBackendInterface:
                     first = points[0]
                     last = points[-1]
                     closed = np.allclose(first, last, atol=1e-6)
-                return points, closed
+                return points, closed, all_paths
 
         except Exception as e:
             print(f"Contour extraction failed: {e}")
         
-        return [], False
+        return [], False, []
 
     def _sanitize_bounds(self, bounds: Optional[Union[List[float], Tuple[float, float, float, float]]]) -> Tuple[float, float, float, float]:
         """Ensure bounds are finite; otherwise return fallback defaults."""
