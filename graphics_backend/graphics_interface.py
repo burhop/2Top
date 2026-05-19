@@ -774,6 +774,21 @@ class GraphicsBackendInterface:
         """
         xmin, xmax, ymin, ymax = bounds
         
+        # Check if periodic radical (endpoints all on y = 0)
+        endpoints = getattr(obj, 'endpoints', None)
+        is_periodic_radical = False
+        if endpoints and len(endpoints) > 0:
+            if all(abs(ep[1]) < 1e-5 for ep in endpoints):
+                is_periodic_radical = True
+                
+        if is_periodic_radical:
+            ymax_abs = max(abs(ymin), abs(ymax))
+            ymin = -ymax_abs
+            ymax = ymax_abs
+            
+        # Force odd resolution to ensure y=0 is a grid line, maximizing horizontal symmetry
+        resolution = resolution | 1
+        
         # Create evaluation grid
         x = np.linspace(xmin, xmax, resolution)
         y = np.linspace(ymin, ymax, resolution)
@@ -911,15 +926,80 @@ class GraphicsBackendInterface:
 
             all_paths = [item[0] for item in candidate_paths if len(item[0]) >= 2]
 
-            if candidate_paths:
-                points, codes = max(candidate_paths, key=lambda item: len(item[0]))
+            # For curves like periodic_radical where endpoints are zero-crossings at y = 0,
+            # split closed loops at y = 0 into open branches so they snap perfectly and symmetrically.
+            endpoints = getattr(obj, 'endpoints', None)
+            is_periodic_radical = False
+            if endpoints and len(endpoints) > 0:
+                if all(abs(ep[1]) < 1e-5 for ep in endpoints):
+                    is_periodic_radical = True
+
+            if is_periodic_radical:
+                split_paths = []
+                for path in all_paths:
+                    if len(path) < 2:
+                        continue
+                    
+                    is_path_closed = np.allclose(path[0], path[-1], atol=1e-6)
+                    rotated_path = path
+                    if is_path_closed:
+                        # Find a sign change/zero crossing in Y to rotate path start/end to a crossing point
+                        rotate_idx = -1
+                        for i in range(len(path) - 1):
+                            if path[i][1] * path[i+1][1] < 0 or abs(path[i][1]) < 1e-9:
+                                rotate_idx = i
+                                break
+                        if rotate_idx != -1:
+                            rotated_path = path[rotate_idx+1:-1] + path[0:rotate_idx+2]
+                            
+                    # Robust sign-state tracking splitter to partition cleanly at y = 0
+                    def get_sign(val):
+                        if val > 1e-9: return 1
+                        if val < -1e-9: return -1
+                        return 0
+                        
+                    current_sub = [rotated_path[0]]
+                    current_sign = get_sign(rotated_path[0][1])
+                    
+                    for i in range(1, len(rotated_path)):
+                        curr_pt = rotated_path[i]
+                        curr_sign = get_sign(curr_pt[1])
+                        
+                        if curr_sign != 0 and current_sign != 0 and curr_sign != current_sign:
+                            # Strict sign change
+                            current_sub.append(curr_pt)
+                            if len(current_sub) >= 2:
+                                split_paths.append(current_sub)
+                            current_sub = [curr_pt]
+                            current_sign = curr_sign
+                        elif curr_sign == 0:
+                            # Hitting exactly 0!
+                            current_sub.append(curr_pt)
+                            if len(current_sub) >= 2:
+                                split_paths.append(current_sub)
+                            current_sub = [curr_pt]
+                            current_sign = 0
+                        else:
+                            current_sub.append(curr_pt)
+                            if current_sign == 0:
+                                current_sign = curr_sign
+                                
+                    if len(current_sub) >= 2:
+                        split_paths.append(current_sub)
+                all_paths = split_paths
+
+            if all_paths:
+                points = max(all_paths, key=len)
                 closed = False
-                if codes is not None and len(codes) > 0:
-                    closed = codes[-1] == 79  # CLOSEPOLY
-                elif len(points) >= 2:
-                    first = points[0]
-                    last = points[-1]
-                    closed = np.allclose(first, last, atol=1e-6)
+                if not is_periodic_radical and candidate_paths:
+                    # Retrieve the original codes/closed flag for non-periodic curves
+                    orig_points, codes = max(candidate_paths, key=lambda item: len(item[0]))
+                    if codes is not None and len(codes) > 0:
+                        closed = codes[-1] == 79  # CLOSEPOLY
+                    elif len(points) >= 2:
+                        first = points[0]
+                        last = points[-1]
+                        closed = np.allclose(first, last, atol=1e-6)
                 return points, closed, all_paths
 
         except Exception as e:
