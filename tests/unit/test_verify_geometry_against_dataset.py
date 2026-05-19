@@ -65,6 +65,29 @@ def reconstruct_geometry_curve(c_row):
     
     endpoints = json.loads(endpoints_json)
     
+    if c_type == "periodic_radical":
+        try:
+            import math
+            sin_terms = expr.atoms(sp.sin)
+            if sin_terms:
+                sin_term = list(sin_terms)[0]
+                arg = sin_term.args[0]
+                B = float(arg.coeff(x))
+                C = float(arg.subs(x, 0))
+                # Find all k zero-crossings in [xmin, xmax]
+                # x = (k * pi - C) / B
+                # xmin - 0.1 <= x <= xmax + 0.1
+                endpoints = []
+                k_min = int(math.floor(((xmin - 0.5) * B + C) / math.pi))
+                k_max = int(math.ceil(((xmax + 0.5) * B + C) / math.pi))
+                for k in range(k_min - 2, k_max + 3):
+                    x_val = (k * math.pi - C) / B
+                    if xmin - 0.1 <= x_val <= xmax + 0.1:
+                        endpoints.append([x_val, 0.0])
+        except Exception as e:
+            print(f"Warning: Failed dynamic endpoint generation for periodic radical: {e}")
+
+    
     # 1. Base implicit curve or ConicSection depending on degree
     if c_type in ["circle", "ellipse", "parabola", "line"]:
         base_curve = ConicSection(expr, (x, y))

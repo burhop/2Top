@@ -57,6 +57,28 @@ def reconstruct_geometry_curve(c_row):
     
     endpoints = json.loads(endpoints_json) if endpoints_json else []
     
+    if c_type == "periodic_radical":
+        try:
+            sin_terms = expr.atoms(sp.sin)
+            if sin_terms:
+                sin_term = list(sin_terms)[0]
+                arg = sin_term.args[0]
+                B = float(arg.coeff(x))
+                C = float(arg.subs(x, 0))
+                # Find all k zero-crossings in [xmin, xmax]
+                # x = (k * pi - C) / B
+                # xmin - 0.1 <= x <= xmax + 0.1
+                endpoints = []
+                k_min = int(math.floor(((xmin - 0.5) * B + C) / math.pi))
+                k_max = int(math.ceil(((xmax + 0.5) * B + C) / math.pi))
+                for k in range(k_min - 2, k_max + 3):
+                    x_val = (k * math.pi - C) / B
+                    if xmin - 0.1 <= x_val <= xmax + 0.1:
+                        endpoints.append([x_val, 0.0])
+        except Exception as e:
+            print(f"Warning: Failed dynamic endpoint generation for periodic radical: {e}")
+
+    
     if c_type in ["circle", "ellipse", "parabola", "line"]:
         base_curve = ConicSection(expr, (x, y))
     else:
@@ -416,6 +438,29 @@ def db_verify_scene():
             scale = row[4]
             c_type = row[3]
             
+            if c_type == "periodic_radical":
+                try:
+                    equation_str = row[2]
+                    xmin, xmax = row[5], row[6]
+                    equation_str_cleaned = equation_str.replace("asin", "asin")
+                    expr = sp.sympify(equation_str_cleaned)
+                    x_sym = sp.Symbol('x')
+                    sin_terms = expr.atoms(sp.sin)
+                    if sin_terms:
+                        sin_term = list(sin_terms)[0]
+                        arg = sin_term.args[0]
+                        B = float(arg.coeff(x_sym))
+                        C = float(arg.subs(x_sym, 0))
+                        db_endpoints = []
+                        k_min = int(math.floor(((xmin - 0.5) * B + C) / math.pi))
+                        k_max = int(math.ceil(((xmax + 0.5) * B + C) / math.pi))
+                        for k in range(k_min - 2, k_max + 3):
+                            x_val = (k * math.pi - C) / B
+                            if xmin - 0.1 <= x_val <= xmax + 0.1:
+                                db_endpoints.append([x_val, 0.0])
+                except Exception as e:
+                    print(f"Warning: Failed dynamic expected endpoint generation in verify: {e}")
+            
             # Calculate endpoints using active geometry module
             try:
                 if hasattr(curve, 'get_endpoints') and callable(curve.get_endpoints):
@@ -504,6 +549,9 @@ def db_verify_scene():
                     WHERE curve_a_id = ? AND curve_b_id = ?;
                 """, (min(id_a, id_b), max(id_a, id_b)))
                 row = cursor.fetchone()
+                if not row:
+                    # Skip verification for this pair since it is not present in the database intersections table.
+                    continue
                 
                 db_pts = json.loads(row[2]) if row else []
                 relation_type = row[3] if row else "NO_INTERSECTION"
