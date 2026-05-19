@@ -185,7 +185,9 @@ class CanvasRenderer extends EventEmitter {
 
             merged.type = obj.type || existing.type || 'curve';
 
-            if (obj.points && obj.points.length > 1) {
+            if (obj.paths && obj.paths.length > 0) {
+                merged.data = { paths: obj.paths, closed: obj.closed };
+            } else if (obj.points && obj.points.length > 1) {
                 merged.data = { paths: [obj.points], closed: obj.closed };
             }
 
