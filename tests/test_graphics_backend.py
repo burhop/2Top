@@ -429,3 +429,55 @@ class TestGraphicsBackendIntegration:
             if obj_id in region_data and region_data[obj_id].get('inside_mask'):
                 mask_array = np.array(region_data[obj_id]['inside_mask'])
                 assert mask_array.shape == (80, 80)
+
+    def test_get_curve_paths_with_multi_path(self):
+        """Test that get_curve_paths extracts multi-path contours correctly."""
+        import sympy as sp
+        from geometry.implicit_curve import ImplicitCurve
+        sm = SceneManager()
+        x, y = sp.symbols('x y')
+        expr = (x**2 - 1) * (x**2 - 4)
+        curve = ImplicitCurve(expr, (x, y))
+        curve.scale_hint = 1.0
+        
+        sm.add_object('multi_line', curve)
+        backend = GraphicsBackendInterface(sm)
+        
+        # Extract paths
+        curve_data = backend.get_curve_paths(bounds=(-3, 3, -3, 3), resolution=50)
+        assert 'multi_line' in curve_data
+        data = curve_data['multi_line']
+        
+        # 'paths' should contain multiple distinct paths
+        assert 'paths' in data
+        assert len(data['paths']) > 1
+        for path in data['paths']:
+            assert len(path) >= 2
+            for pt in path:
+                assert len(pt) == 2
+
+    def test_get_scene_bounds_ignoring_infinite_lines(self):
+        """Test that get_scene_bounds ignores infinite/very large bounds to focus auto-fit."""
+        import sympy as sp
+        from geometry import ConicSection
+        sm = SceneManager()
+        
+        x, y = sp.symbols('x y')
+        circle = ConicSection(x**2 + y**2 - 4, (x, y))
+        circle.xmin, circle.xmax, circle.ymin, circle.ymax = -2.0, 2.0, -2.0, 2.0
+        sm.add_object('circle', circle)
+        
+        line = ConicSection(x - 5, (x, y))
+        line.xmin, line.xmax, line.ymin, line.ymax = -100.0, 100.0, -100.0, 100.0
+        sm.add_object('infinite_line', line)
+        
+        backend = GraphicsBackendInterface(sm)
+        
+        # Scene bounds should only be derived from the circle since the infinite line bounds are skipped
+        bounds = backend.get_scene_bounds()
+        
+        # Bounds should be close to circle bounds [-2, 2, -2, 2] plus some padding, definitely not spanning [-100, 100]
+        assert bounds[0] > -10.0
+        assert bounds[1] < 10.0
+        assert bounds[2] > -10.0
+        assert bounds[3] < 10.0
