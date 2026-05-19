@@ -332,6 +332,36 @@ class TestGraphicsBackendInterface:
         bounds = backend.get_scene_bounds()
         assert bounds == backend.default_bounds
 
+    def test_extract_endpoint_points_radical_fallback(self):
+        """Test that open curves with exactly 1 analytical endpoint append the furthest polyline extremity as fallback."""
+        from unittest.mock import MagicMock
+        empty_sm = SceneManager()
+        backend = GraphicsBackendInterface(empty_sm)
+
+        # Mock a curve that has exactly one analytical endpoint
+        mock_curve = MagicMock()
+        mock_curve.get_endpoints.return_value = [[-4.0, -3.0]]
+        mock_curve.is_closed.return_value = False
+
+        # Polyline starts at the analytical endpoint and goes to a far boundary
+        polyline = [[-4.0, -3.0], [-3.5, -2.5], [-3.2, -1.8]]
+
+        key_points = backend._extract_endpoint_points(mock_curve, polyline)
+
+        # We expect exactly 2 key points:
+        # 1. The analytical endpoint (A) at (-4.0, -3.0)
+        # 2. The furthest polyline extremity (B) at (-3.2, -1.8)
+        assert len(key_points) == 2
+        assert key_points[0]['type'] == 'endpoint'
+        assert key_points[0]['label'] == 'A'
+        assert key_points[0]['x'] == -4.0
+        assert key_points[0]['y'] == -3.0
+
+        assert key_points[1]['type'] == 'endpoint'
+        assert key_points[1]['label'] == 'B'
+        assert key_points[1]['x'] == -3.2
+        assert key_points[1]['y'] == -1.8
+
 
 class TestGraphicsBackendIntegration:
     """Integration tests for GraphicsBackendInterface with real geometry objects."""

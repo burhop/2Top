@@ -39,11 +39,8 @@ uiClient.on('scene_updated', (data) => {
     // Single fetch replaces N per-object socket calls
     geometryStudio?.refreshSceneData();
     
-    // Auto-verify if database curves exist in the active scene
-    if (data.objects && data.objects.some(id => id.startsWith('db_curve_'))) {
-        verifyScene(true);
-    } else {
-        // Hide verification panel if there are no database curves loaded
+    // Hide verification panel if there are no database curves loaded
+    if (data.objects && !data.objects.some(id => id.startsWith('db_curve_'))) {
         document.getElementById('db-verification-panel')?.classList.add('hidden');
     }
 });
@@ -419,8 +416,7 @@ async function loadDBCurve() {
         }
         canvasRenderer.fitAllObjects();
         
-        // Auto-run verification
-        await verifyScene(true);
+        
         
     } catch (err) {
         console.error('Failed to load curve', err);
@@ -498,9 +494,8 @@ async function loadDBGroup() {
         }
         canvasRenderer.fitAllObjects();
         
-        // Step 4: Perform verification on the loaded group
-        updateLoadingProgress('Verifying geometry...', 100);
-        await verifyScene(true);
+        // Step 4: Finished loading all curves successfully
+        updateLoadingProgress('Finished loading all curves.', 100);
         
     } catch (err) {
         console.error('Failed to load spatial group', err);

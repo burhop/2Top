@@ -836,7 +836,37 @@ class GraphicsBackendInterface:
                     'y': float(pt[1]),
                 })
 
-        # Fallback: use polyline start/end if we still have no key points
+        # Fallback 1: If we have exactly 1 analytical endpoint and the curve is open (not closed),
+        # append the polyline boundary extremity that is far from that analytical endpoint.
+        closed_attr = getattr(obj, 'is_closed', False)
+        closed = closed_attr() if callable(closed_attr) else bool(closed_attr)
+        if not closed and len(key_points) == 1 and len(polyline) >= 2:
+            existing_pt = (key_points[0]['x'], key_points[0]['y'])
+            first = polyline[0]
+            last = polyline[-1]
+            # Calculate squared distance from analytical endpoint to first and last polyline points
+            d_first = (first[0] - existing_pt[0])**2 + (first[1] - existing_pt[1])**2
+            d_last = (last[0] - existing_pt[0])**2 + (last[1] - existing_pt[1])**2
+            
+            # Select the boundary point that is further away
+            if d_first > d_last:
+                if d_first > 1e-4:
+                    key_points.append({
+                        'type': 'endpoint',
+                        'label': chr(label_seed + len(key_points)),
+                        'x': float(first[0]),
+                        'y': float(first[1])
+                    })
+            else:
+                if d_last > 1e-4:
+                    key_points.append({
+                        'type': 'endpoint',
+                        'label': chr(label_seed + len(key_points)),
+                        'x': float(last[0]),
+                        'y': float(last[1])
+                    })
+
+        # Fallback 2: use polyline start/end if we still have no key points
         if not key_points and len(polyline) >= 2:
             first = polyline[0]
             last = polyline[-1]
