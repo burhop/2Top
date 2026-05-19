@@ -112,37 +112,58 @@ class GraphicsBackendInterface:
                                 grid_spacing = max((o_xmax - o_xmin) / resolution, (o_ymax - o_ymin) / resolution)
                                 snap_threshold = max(1.0, 3.0 * grid_spacing)
                                 sq_threshold = snap_threshold ** 2
-                                if len(endpoints) == 2:
-                                    # Pair each endpoint to start/end of the polyline
-                                    e1, e2 = endpoints[0], endpoints[1]
-                                    p_start, p_end = points[0], points[-1]
-                                    d11 = (e1[0]-p_start[0])**2 + (e1[1]-p_start[1])**2
-                                    d22 = (e2[0]-p_end[0])**2 + (e2[1]-p_end[1])**2
-                                    d12 = (e1[0]-p_end[0])**2 + (e1[1]-p_end[1])**2
-                                    d21 = (e2[0]-p_start[0])**2 + (e2[1]-p_start[1])**2
-                                    
-                                    if (d11 + d22) < (d12 + d21):
-                                        e_start, e_end = e1, e2
-                                        dist_start, dist_end = d11, d22
-                                    else:
-                                        e_start, e_end = e2, e1
-                                        dist_start, dist_end = d21, d12
-                                        
-                                    if dist_start < sq_threshold:
-                                        points[0] = [float(e_start[0]), float(e_start[1])]
-                                    if dist_end < sq_threshold:
-                                        points[-1] = [float(e_end[0]), float(e_end[1])]
-                                elif len(endpoints) == 1:
-                                    e1 = endpoints[0]
-                                    p_start, p_end = points[0], points[-1]
-                                    d_start = (e1[0]-p_start[0])**2 + (e1[1]-p_start[1])**2
-                                    d_end = (e1[0]-p_end[0])**2 + (e1[1]-p_end[1])**2
-                                    if d_start < d_end:
-                                        if d_start < sq_threshold:
-                                            points[0] = [float(e1[0]), float(e1[1])]
-                                    else:
-                                        if d_end < sq_threshold:
-                                            points[-1] = [float(e1[0]), float(e1[1])]
+                                # Snap start and end of all paths in paths to their closest exact endpoints
+                                for path in paths:
+                                    if len(path) >= 2:
+                                        # Snap start of the path
+                                        p_start = path[0]
+                                        best_ep_start = None
+                                        min_d_start = float('inf')
+                                        for ep in endpoints:
+                                            d = (ep[0] - p_start[0])**2 + (ep[1] - p_start[1])**2
+                                            if d < min_d_start:
+                                                min_d_start = d
+                                                best_ep_start = ep
+                                        if min_d_start < sq_threshold and best_ep_start is not None:
+                                            path[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
+
+                                        # Snap end of the path
+                                        p_end = path[-1]
+                                        best_ep_end = None
+                                        min_d_end = float('inf')
+                                        for ep in endpoints:
+                                            d = (ep[0] - p_end[0])**2 + (ep[1] - p_end[1])**2
+                                            if d < min_d_end:
+                                                min_d_end = d
+                                                best_ep_end = ep
+                                        if min_d_end < sq_threshold and best_ep_end is not None:
+                                            path[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
+
+                                # Also snap the primary points list
+                                if points and len(points) >= 2:
+                                    # Snap start of points
+                                    p_start = points[0]
+                                    best_ep_start = None
+                                    min_d_start = float('inf')
+                                    for ep in endpoints:
+                                        d = (ep[0] - p_start[0])**2 + (ep[1] - p_start[1])**2
+                                        if d < min_d_start:
+                                            min_d_start = d
+                                            best_ep_start = ep
+                                    if min_d_start < sq_threshold and best_ep_start is not None:
+                                        points[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
+
+                                    # Snap end of points
+                                    p_end = points[-1]
+                                    best_ep_end = None
+                                    min_d_end = float('inf')
+                                    for ep in endpoints:
+                                        d = (ep[0] - p_end[0])**2 + (ep[1] - p_end[1])**2
+                                        if d < min_d_end:
+                                            min_d_end = d
+                                            best_ep_end = ep
+                                    if min_d_end < sq_threshold and best_ep_end is not None:
+                                        points[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
                         except Exception as snap_err:
                             print(f"Warning: Failed endpoint snapping for '{obj_id}': {snap_err}")
                     # Calculate actual bounds of the curve
