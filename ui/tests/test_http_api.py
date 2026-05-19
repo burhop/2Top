@@ -74,3 +74,39 @@ def test_render_image_endpoint_smoke():
     payload = resp.get_json()
     assert payload['success'] is True
     assert isinstance(payload.get('image_url'), str)
+
+
+def test_geometry_tests_listing():
+    client = app.test_client()
+    resp = client.get('/api/geometry-tests')
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload['success'] is True
+    tests = payload['tests']
+    assert isinstance(tests, list) and tests
+    assert {'id', 'name', 'description'} <= set(tests[0].keys())
+
+
+def test_geometry_tests_run_and_scene_data_roundtrip():
+    client = app.test_client()
+
+    # Run a known scenario
+    resp = client.post(
+        '/api/geometry-tests/run',
+        data=json.dumps({'test_id': 'circle_line'}),
+        content_type='application/json',
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload['success'] is True
+    assert payload['objects'], 'Expected created objects from test run'
+
+    # Scene data should include the new objects and annotations
+    scene_resp = client.get('/api/geometry-scene')
+    assert scene_resp.status_code == 200
+    scene_payload = scene_resp.get_json()
+    assert scene_payload['success'] is True
+    scene = scene_payload['data']
+    assert isinstance(scene['objects'], list) and len(scene['objects']) >= 2
+    assert isinstance(scene['intersections'], list)
+    assert len(scene['scene_bounds']) == 4
