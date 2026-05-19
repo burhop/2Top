@@ -782,7 +782,27 @@ class GraphicsBackendInterface:
                 is_periodic_radical = True
                 
         if is_periodic_radical:
-            ymax_abs = max(abs(ymin), abs(ymax))
+            # For periodic radical curves (y² = g(x)), compute the actual Y-extent
+            # by evaluating f(x,0) along the x-axis. Since f(x,y) = y² - g(x),
+            # we have g(x) = -f(x,0) and max|y| = √(max(g(x))).
+            # This concentrates ALL grid points in the curve's actual y-range
+            # instead of wasting them on the (often huge) database bounds.
+            try:
+                x_probe = np.linspace(xmin, xmax, 200)
+                y_zero = np.zeros_like(x_probe)
+                f_at_zero = obj.evaluate(x_probe, y_zero)
+                if isinstance(f_at_zero, np.ndarray):
+                    g_x = -f_at_zero
+                    g_max = float(np.nanmax(g_x))
+                    if g_max > 0:
+                        actual_ymax = np.sqrt(g_max)
+                        ymax_abs = actual_ymax * 1.15  # 15% padding
+                    else:
+                        ymax_abs = max(abs(ymin), abs(ymax))
+                else:
+                    ymax_abs = max(abs(ymin), abs(ymax))
+            except Exception:
+                ymax_abs = max(abs(ymin), abs(ymax))
             ymin = -ymax_abs
             ymax = ymax_abs
             
