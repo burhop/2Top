@@ -314,44 +314,6 @@ class UIClient extends EventEmitter {
     }
 
     /**
-     * Save scene
-     */
-    async saveScene(filename) {
-        return this.sendCommand({
-            command: 'save_scene',
-            filename: filename
-        });
-    }
-
-    /**
-     * Load scene
-     */
-    async loadScene(filename) {
-        return this.sendCommand({
-            command: 'load_scene',
-            filename: filename
-        });
-    }
-
-    /**
-     * Clear scene
-     */
-    async clearScene() {
-        return this.sendCommand({
-            command: 'clear_scene'
-        });
-    }
-
-    /**
-     * Get scene bounds
-     */
-    async getSceneBounds() {
-        return this.sendCommand({
-            command: 'get_scene_bounds'
-        });
-    }
-
-    /**
      * List all objects in scene
      */
     async listObjects() {

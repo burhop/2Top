@@ -6,6 +6,12 @@
 class PropertyPanel extends EventEmitter {
     constructor(container) {
         super();
+        if (typeof container === 'string') {
+            container = document.getElementById(container);
+        }
+        if (!container) {
+            throw new Error('PropertyPanel requires a valid container element');
+        }
         this.container = container;
         this.currentObject = null;
         this.currentObjectData = null;

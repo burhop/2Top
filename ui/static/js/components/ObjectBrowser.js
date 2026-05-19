@@ -6,6 +6,12 @@
 class ObjectBrowser extends EventEmitter {
     constructor(container) {
         super();
+        if (typeof container === 'string') {
+            container = document.getElementById(container);
+        }
+        if (!container) {
+            throw new Error('ObjectBrowser requires a valid container element');
+        }
         this.container = container;
         this.objects = new Map();
         this.selectedObject = null;
@@ -46,56 +52,30 @@ class ObjectBrowser extends EventEmitter {
     }
 
     render() {
+        if (!this.container) return;
         if (this.objects.size === 0) {
-            this.container.innerHTML = '<div class="empty-state">No objects in scene</div>';
+            this.container.innerHTML = '';
             return;
         }
-
-        const objectsHtml = Array.from(this.objects.values()).map(obj => `
-            <div class="object-item ${obj.id === this.selectedObject ? 'selected' : ''}" 
-                 data-object-id="${obj.id}">
-                <div class="object-item-icon ${obj.type}"></div>
-                <div class="object-details">
-                    <div class="object-name">${obj.name}</div>
-                    <div class="object-type">${obj.type}</div>
-                </div>
-                <button class="object-visibility-toggle ${obj.visible ? '' : 'hidden'}" 
-                        data-object-id="${obj.id}">
-                    ${obj.visible ? '👁' : '👁‍🗨'}
-                </button>
-            </div>
-        `).join('');
-
+        const objectsHtml = Array.from(this.objects.values()).map(obj => {
+            const label = (obj.name || obj.id).slice(0, 3).toUpperCase();
+            const sel = obj.id === this.selectedObject ? ' selected' : '';
+            return `<button class="obj-pill${sel}" data-object-id="${obj.id}" title="${obj.name || obj.id} (${obj.type})">${label}</button>`;
+        }).join('');
         this.container.innerHTML = objectsHtml;
         this.setupEventHandlers();
     }
 
     setupEventHandlers() {
-        // Object selection
-        this.container.querySelectorAll('.object-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                if (e.target.classList.contains('object-visibility-toggle')) {
-                    return; // Handle visibility toggle separately
-                }
-                
+        this.container.querySelectorAll('.obj-pill').forEach(item => {
+            item.addEventListener('click', () => {
                 const objId = item.dataset.objectId;
                 this.selectObject(objId);
             });
-
-            // Context menu for delete
             item.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 const objId = item.dataset.objectId;
                 this.showContextMenu(e, objId);
-            });
-        });
-
-        // Visibility toggles
-        this.container.querySelectorAll('.object-visibility-toggle').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const objId = btn.dataset.objectId;
-                this.toggleVisibility(objId);
             });
         });
     }
