@@ -40,10 +40,17 @@ def find_curve_intersections(
     """
     
     policy = precision_policy or getattr(curve1, "precision_policy", lambda: None)() or getattr(curve2, "precision_policy", lambda: None)() or get_precision_policy()
-    tol = tolerance if tolerance is not None else policy.distance_threshold(
-        max(getattr(curve1, "scale_hint", lambda: 1.0)(), getattr(curve2, "scale_hint", lambda: 1.0)())
-    )
-    coarse_tolerance = max(0.05, 5 * policy.blended_tolerance(search_range))
+    
+    # Safe scale hint extraction (handles both float attributes and methods)
+    sh1 = getattr(curve1, "scale_hint", 1.0)
+    sh1_val = sh1() if callable(sh1) else sh1
+    sh2 = getattr(curve2, "scale_hint", 1.0)
+    sh2_val = sh2() if callable(sh2) else sh2
+    max_scale = max(float(sh1_val), float(sh2_val))
+    
+    tol = tolerance if tolerance is not None else policy.distance_threshold(max_scale)
+    grid_spacing = 2.0 * search_range / grid_resolution
+    coarse_tolerance = max(0.06 * max_scale, 2.5 * max_scale * grid_spacing, 8 * policy.blended_tolerance(search_range))
 
     # Quick check for identical curves (only if detect_overlap is enabled)
     if detect_overlap and _are_curves_identical_fast(curve1, curve2, tol):
@@ -62,9 +69,27 @@ def find_curve_intersections(
         print(f"Error evaluating curves: {e}")
         return []
     
-    # Find points where both curves are close to zero
-    mask1 = np.abs(Z1) < coarse_tolerance
-    mask2 = np.abs(Z2) < coarse_tolerance
+    # Find points where both curves are close to zero or cross zero (sign changes)
+    sign_change_x1 = np.zeros_like(Z1, dtype=bool)
+    sign_change_x1[:, :-1] |= (Z1[:, :-1] * Z1[:, 1:] <= 0)
+    sign_change_x1[:, 1:] |= (Z1[:, :-1] * Z1[:, 1:] <= 0)
+
+    sign_change_y1 = np.zeros_like(Z1, dtype=bool)
+    sign_change_y1[:-1, :] |= (Z1[:-1, :] * Z1[1:, :] <= 0)
+    sign_change_y1[1:, :] |= (Z1[:-1, :] * Z1[1:, :] <= 0)
+
+    mask1 = (np.abs(Z1) < coarse_tolerance) | sign_change_x1 | sign_change_y1
+
+    sign_change_x2 = np.zeros_like(Z2, dtype=bool)
+    sign_change_x2[:, :-1] |= (Z2[:, :-1] * Z2[:, 1:] <= 0)
+    sign_change_x2[:, 1:] |= (Z2[:, :-1] * Z2[:, 1:] <= 0)
+
+    sign_change_y2 = np.zeros_like(Z2, dtype=bool)
+    sign_change_y2[:-1, :] |= (Z2[:-1, :] * Z2[1:, :] <= 0)
+    sign_change_y2[1:, :] |= (Z2[:-1, :] * Z2[1:, :] <= 0)
+
+    mask2 = (np.abs(Z2) < coarse_tolerance) | sign_change_x2 | sign_change_y2
+
     intersection_mask = mask1 & mask2
     
     # For trimmed curves, apply trimming masks efficiently
@@ -88,7 +113,7 @@ def find_curve_intersections(
     
     # Step 2: Cluster nearby points to avoid duplicates
     candidate_points = np.column_stack([x_candidates, y_candidates])
-    starting_points = _cluster_candidates_fast(candidate_points)
+    starting_points = _cluster_candidates_fast(candidate_points, grid_spacing=grid_spacing)
     
     # Step 3: Refine intersections using numerical solver
     refined_intersections = []
@@ -199,7 +224,7 @@ def _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2):
     return intersection_mask
 
 
-def _cluster_candidates_fast(candidate_points):
+def _cluster_candidates_fast(candidate_points, grid_spacing: float = 0.02):
     """
     Fast clustering of candidate points.
     """
@@ -210,12 +235,20 @@ def _cluster_candidates_fast(candidate_points):
         # For small numbers, just return all points
         return candidate_points
     
+    # Sub-sample candidate points if there are too many, to prevent O(N^2) pdist performance bottlenecks
+    if len(candidate_points) > 400:
+        indices = np.linspace(0, len(candidate_points) - 1, 400, dtype=int)
+        candidate_points = candidate_points[indices]
+    
     # For larger numbers, use simple distance-based clustering
     try:
         distances = pdist(candidate_points)
         if len(distances) > 0 and np.max(distances) > 0:
-            linkage_matrix = linkage(distances)
-            clusters = fcluster(linkage_matrix, 0.1, criterion='distance')
+            # Use average linkage and a robust adaptive threshold to prevent chaining of close intersections
+            # while avoiding over-segmentation under high grid resolutions
+            linkage_matrix = linkage(distances, method='average')
+            threshold = max(2.0 * grid_spacing, 0.015)
+            clusters = fcluster(linkage_matrix, max(1e-5, threshold), criterion='distance')
             
             # Get cluster centers as starting points
             unique_clusters = np.unique(clusters)

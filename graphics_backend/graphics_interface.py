@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from pathlib import Path
 import json
 import tempfile
+from itertools import combinations
 import matplotlib
 # Use non-interactive backend to avoid Tkinter main-loop issues in tests/servers
 matplotlib.use('Agg', force=True)
@@ -45,6 +46,7 @@ class GraphicsBackendInterface:
         self.default_resolution = (800, 600)
         self.default_bounds = (-5, 5, -5, 5)  # xmin, xmax, ymin, ymax
         self.default_grid_resolution = 100
+        self._fallback_bounds = (-5.0, 5.0, -5.0, 5.0)
     
     # ================== Curve Data Extraction ==================
     
@@ -80,20 +82,64 @@ class GraphicsBackendInterface:
             style = self.scene_manager.get_style(obj_id)
             
             try:
+                # Use per-object local bounds so small objects aren't evaluated on a
+                # huge global grid (which produces degenerate/line contours).
+                obj_bounds = self._estimate_object_bounds(obj, bounds)
+
                 # Generate polyline approximation
                 if hasattr(obj, 'get_polyline_approximation'):
                     # Use object's built-in approximation if available
-                    points = obj.get_polyline_approximation(bounds, resolution)
+                    points = obj.get_polyline_approximation(obj_bounds, resolution)
                     closed = getattr(obj, 'is_closed', lambda: False)()
                 else:
                     # Try contour extraction, with fallback to boundary sampling
-                    points, closed = self._extract_curve_contour(obj, bounds, resolution)
+                    points, closed = self._extract_curve_contour(obj, obj_bounds, resolution)
                     
                     # If contour extraction failed, try boundary sampling for AreaRegion
                     if not points and hasattr(obj, 'outer_boundary'):
-                        points, closed = self._sample_boundary_points(obj.outer_boundary, bounds, resolution)
+                        points, closed = self._sample_boundary_points(obj.outer_boundary, obj_bounds, resolution)
                 
                 if points and len(points) > 1:
+                    # Snapping open curves to mathematically exact endpoints to avoid early-termination visual gaps
+                    if hasattr(obj, 'get_endpoints') and not closed:
+                        try:
+                            endpoints = obj.get_endpoints()
+                            if endpoints and len(endpoints) > 0:
+                                snap_threshold = 0.5  # maximum snapping distance
+                                sq_threshold = snap_threshold ** 2
+                                if len(endpoints) == 2:
+                                    # Pair each endpoint to start/end of the polyline
+                                    e1, e2 = endpoints[0], endpoints[1]
+                                    p_start, p_end = points[0], points[-1]
+                                    d11 = (e1[0]-p_start[0])**2 + (e1[1]-p_start[1])**2
+                                    d22 = (e2[0]-p_end[0])**2 + (e2[1]-p_end[1])**2
+                                    d12 = (e1[0]-p_end[0])**2 + (e1[1]-p_end[1])**2
+                                    d21 = (e2[0]-p_start[0])**2 + (e2[1]-p_start[1])**2
+                                    
+                                    if (d11 + d22) < (d12 + d21):
+                                        e_start, e_end = e1, e2
+                                        dist_start, dist_end = d11, d22
+                                    else:
+                                        e_start, e_end = e2, e1
+                                        dist_start, dist_end = d21, d12
+                                        
+                                    if dist_start < sq_threshold:
+                                        points[0] = [float(e_start[0]), float(e_start[1])]
+                                    if dist_end < sq_threshold:
+                                        points[-1] = [float(e_end[0]), float(e_end[1])]
+                                elif len(endpoints) == 1:
+                                    e1 = endpoints[0]
+                                    p_start, p_end = points[0], points[-1]
+                                    d_start = (e1[0]-p_start[0])**2 + (e1[1]-p_start[1])**2
+                                    d_end = (e1[0]-p_end[0])**2 + (e1[1]-p_end[1])**2
+                                    if d_start < d_end:
+                                        if d_start < sq_threshold:
+                                            points[0] = [float(e1[0]), float(e1[1])]
+                                    else:
+                                        if d_end < sq_threshold:
+                                            points[-1] = [float(e1[0]), float(e1[1])]
+                        except Exception as snap_err:
+                            print(f"Warning: Failed endpoint snapping for '{obj_id}': {snap_err}")
                     # Calculate actual bounds of the curve
                     points_array = np.array(points)
                     curve_bounds = [
@@ -454,6 +500,12 @@ class GraphicsBackendInterface:
             obj = self.scene_manager.get_object(obj_id)
             
             try:
+                # First check if the object has manually assigned attributes xmin, xmax, ymin, ymax (e.g. loaded from DB)
+                if hasattr(obj, 'xmin') and hasattr(obj, 'xmax') and hasattr(obj, 'ymin') and hasattr(obj, 'ymax'):
+                    if all(getattr(obj, name) is not None and np.isfinite(float(getattr(obj, name))) for name in ['xmin', 'xmax', 'ymin', 'ymax']):
+                        all_bounds.append((float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)))
+                        continue
+
                 # First try the get_bounds method if available
                 if hasattr(obj, 'get_bounds'):
                     bounds = obj.get_bounds()
@@ -494,7 +546,7 @@ class GraphicsBackendInterface:
                 continue
         
         if not all_bounds:
-            return self.default_bounds
+            return self._fallback_bounds
         
         # Calculate overall bounds
         all_bounds = np.array(all_bounds)
@@ -503,9 +555,16 @@ class GraphicsBackendInterface:
         ymin = np.min(all_bounds[:, 2])
         ymax = np.max(all_bounds[:, 3])
         
-        # Add padding
+        # Add padding and guard against zero or infinite ranges
+        if not np.isfinite(xmin) or not np.isfinite(xmax) or not np.isfinite(ymin) or not np.isfinite(ymax):
+            return self._fallback_bounds
+
         x_range = xmax - xmin
         y_range = ymax - ymin
+
+        if x_range <= 0 or y_range <= 0:
+            return self._fallback_bounds
+
         x_padding = x_range * padding
         y_padding = y_range * padding
         
@@ -515,9 +574,119 @@ class GraphicsBackendInterface:
             ymin - y_padding,
             ymax + y_padding
         )
+
+    def get_geometry_scene_data(self, resolution: int = 400, bounds: Optional[Tuple[float, float, float, float]] = None) -> Dict[str, Any]:
+        """Return polyline data, bounds, and key-point annotations for the scene."""
+
+        if bounds is None:
+            bounds = self.get_scene_bounds(padding=0.0)
+        sanitized_bounds = self._sanitize_bounds(bounds)
+        curve_data = self.get_curve_paths(bounds=sanitized_bounds, resolution=resolution)
+
+        objects: List[Dict[str, Any]] = []
+        polyline_lookup: Dict[str, List[List[float]]] = {}
+
+        for obj_id, data in curve_data.items():
+            points = data.get('points') or []
+            obj = self.scene_manager.get_object(obj_id)
+            sanitized_object_bounds = self._sanitize_bounds(data.get('bounds'))
+            cleaned_points = [
+                [float(pt[0]), float(pt[1])] for pt in points if len(pt) == 2 and np.isfinite(pt[0]) and np.isfinite(pt[1])
+            ]
+            polyline_lookup[obj_id] = cleaned_points
+
+            key_points = self._extract_endpoint_points(obj, cleaned_points)
+
+            objects.append({
+                'id': obj_id,
+                'type': data.get('type', 'curve'),
+                'closed': bool(data.get('closed', False)),
+                'points': cleaned_points,
+                'bounds': sanitized_object_bounds,
+                'style': data.get('style', {}),
+                'key_points': key_points,
+            })
+
+        intersections = self._compute_polyline_intersections(polyline_lookup)
+
+        return {
+            'objects': objects,
+            'intersections': intersections,
+            'scene_bounds': list(sanitized_bounds),
+        }
     
     # ================== Helper Methods ==================
-    
+
+    def _estimate_object_bounds(self, obj, scene_bounds: Tuple[float, float, float, float],
+                                coarse: int = 40) -> Tuple[float, float, float, float]:
+        """
+        Estimate tight bounds for a single object by probing on a coarse grid,
+        then add padding. Falls back to scene_bounds if nothing is found.
+        """
+        # First check if the object has manually assigned attributes xmin, xmax, ymin, ymax (e.g. loaded from DB)
+        if hasattr(obj, 'xmin') and hasattr(obj, 'xmax') and hasattr(obj, 'ymin') and hasattr(obj, 'ymax'):
+            if all(getattr(obj, name) is not None and np.isfinite(float(getattr(obj, name))) for name in ['xmin', 'xmax', 'ymin', 'ymax']):
+                o_xmin, o_xmax, o_ymin, o_ymax = float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)
+                s_xmin, s_xmax, s_ymin, s_ymax = scene_bounds
+                
+                # Intersect manual bounds with viewport/scene bounds to increase LOD when zooming
+                int_xmin = max(o_xmin, s_xmin)
+                int_xmax = min(o_xmax, s_xmax)
+                int_ymin = max(o_ymin, s_ymin)
+                int_ymax = min(o_ymax, s_ymax)
+                
+                if int_xmin < int_xmax and int_ymin < int_ymax:
+                    # Pad by 5% of viewport width/height to avoid edge clipping issues
+                    pad_x = (int_xmax - int_xmin) * 0.05
+                    pad_y = (int_ymax - int_ymin) * 0.05
+                    return (
+                        max(o_xmin, int_xmin - pad_x),
+                        min(o_xmax, int_xmax + pad_x),
+                        max(o_ymin, int_ymin - pad_y),
+                        min(o_ymax, int_ymax + pad_y)
+                    )
+                else:
+                    return (o_xmin, o_xmax, o_ymin, o_ymax)
+
+
+        xmin, xmax, ymin, ymax = scene_bounds
+        # Coarse probe to find where the object's implicit function changes sign
+        try:
+            x = np.linspace(xmin, xmax, coarse)
+            y = np.linspace(ymin, ymax, coarse)
+            X, Y = np.meshgrid(x, y)
+
+            if hasattr(obj, 'evaluate'):
+                Z = obj.evaluate(X, Y)
+            elif hasattr(obj, 'outer_boundary') and hasattr(obj.outer_boundary, 'evaluate'):
+                Z = obj.outer_boundary.evaluate(X, Y)
+            else:
+                return scene_bounds
+
+            if not isinstance(Z, np.ndarray):
+                Z = np.array(Z)
+            if Z.shape != X.shape:
+                return scene_bounds
+
+            # Find grid cells near the zero contour (sign change or near-zero)
+            near_zero = np.abs(Z) < (np.nanmax(np.abs(Z)) * 0.3 + 1e-9)
+            if not np.any(near_zero):
+                return scene_bounds
+
+            rows, cols = np.where(near_zero)
+            ox_min = float(X[rows, cols].min())
+            ox_max = float(X[rows, cols].max())
+            oy_min = float(Y[rows, cols].min())
+            oy_max = float(Y[rows, cols].max())
+
+            # Pad by 20% of the object's own span (minimum 0.5 units)
+            px = max((ox_max - ox_min) * 0.25, 0.5)
+            py = max((oy_max - oy_min) * 0.25, 0.5)
+            return (ox_min - px, ox_max + px, oy_min - py, oy_max + py)
+
+        except Exception:
+            return scene_bounds
+
     def _extract_curve_contour(self, obj, bounds: Tuple[float, float, float, float], 
                               resolution: int) -> Tuple[List[List[float]], bool]:
         """
@@ -549,7 +718,7 @@ class GraphicsBackendInterface:
             else:
                 # No evaluation method available
                 return [], False
-            
+
             # Ensure Z has the correct shape for contour plotting
             if not isinstance(Z, np.ndarray):
                 Z = np.array(Z)
@@ -561,6 +730,37 @@ class GraphicsBackendInterface:
             elif Z.shape != X.shape:
                 # If shapes don't match, skip contour extraction
                 return [], False
+                
+            # Apply TrimmedImplicitCurve mask to the grid evaluation to eliminate artificial boundary contours
+            if hasattr(obj, 'mask') and callable(obj.mask):
+                try:
+                    mask_val = obj.mask(X, Y)
+                    if isinstance(mask_val, np.ndarray):
+                        mask_bool = mask_val.astype(bool)
+                    else:
+                        mask_bool = np.full_like(X, bool(mask_val), dtype=bool)
+                except Exception:
+                    # Fallback to element-wise mask evaluation if not vectorized
+                    mask_bool = np.zeros_like(X, dtype=bool)
+                    flat_x = X.flatten()
+                    flat_y = Y.flatten()
+                    for idx in range(len(flat_x)):
+                        try:
+                            mask_bool.flat[idx] = bool(obj.mask(flat_x[idx], flat_y[idx]))
+                        except Exception:
+                            mask_bool.flat[idx] = False
+                Z = np.where(mask_bool, Z, np.nan)
+
+            # Apply explicit bounds cropping if defined
+            eps = 1e-9
+            if getattr(obj, '_xmin', None) is not None:
+                Z = np.where(X >= obj._xmin - eps, Z, np.nan)
+            if getattr(obj, '_xmax', None) is not None:
+                Z = np.where(X <= obj._xmax + eps, Z, np.nan)
+            if getattr(obj, '_ymin', None) is not None:
+                Z = np.where(Y >= obj._ymin - eps, Z, np.nan)
+            if getattr(obj, '_ymax', None) is not None:
+                Z = np.where(Y <= obj._ymax + eps, Z, np.nan)
             
             # Extract zero-level contour
             import matplotlib.pyplot as plt
@@ -572,19 +772,146 @@ class GraphicsBackendInterface:
                 fig.clear()
                 del fig, ax
             
-            if contours.collections:
-                # Get the longest contour path
-                paths = contours.collections[0].get_paths()
-                if paths:
-                    longest_path = max(paths, key=lambda p: len(p.vertices))
-                    points = longest_path.vertices.tolist()
-                    closed = longest_path.codes is not None and longest_path.codes[-1] == 79  # CLOSEPOLY
-                    return points, closed
-            
+            candidate_paths = []
+
+            if hasattr(contours, 'collections') and contours.collections:
+                for collection in contours.collections:
+                    for path in collection.get_paths():
+                        candidate_paths.append((path.vertices.tolist(), path.codes))
+
+            if not candidate_paths and hasattr(contours, 'allsegs'):
+                for level_segments in contours.allsegs:
+                    for seg in level_segments:
+                        if len(seg) >= 2:
+                            candidate_paths.append((seg.tolist(), None))
+
+            if candidate_paths:
+                points, codes = max(candidate_paths, key=lambda item: len(item[0]))
+                closed = False
+                if codes is not None and len(codes) > 0:
+                    closed = codes[-1] == 79  # CLOSEPOLY
+                elif len(points) >= 2:
+                    first = points[0]
+                    last = points[-1]
+                    closed = np.allclose(first, last, atol=1e-6)
+                return points, closed
+
         except Exception as e:
             print(f"Contour extraction failed: {e}")
         
         return [], False
+
+    def _sanitize_bounds(self, bounds: Optional[Union[List[float], Tuple[float, float, float, float]]]) -> Tuple[float, float, float, float]:
+        """Ensure bounds are finite; otherwise return fallback defaults."""
+
+# ... (rest of the code remains the same)
+        if bounds is None or len(bounds) != 4:
+            return self._fallback_bounds
+        xmin, xmax, ymin, ymax = bounds
+        values = np.array([xmin, xmax, ymin, ymax], dtype=float)
+        if not np.isfinite(values).all():
+            return self._fallback_bounds
+        if xmin == xmax or ymin == ymax:
+            return self._fallback_bounds
+        return float(xmin), float(xmax), float(ymin), float(ymax)
+
+    def _extract_endpoint_points(self, obj, polyline: List[List[float]]) -> List[Dict[str, Any]]:
+        """Return labeled key points (endpoints/intersections placeholders)."""
+
+        key_points: List[Dict[str, Any]] = []
+        label_seed = ord('A')
+
+        if hasattr(obj, 'get_endpoints'):
+            try:
+                endpoints = obj.get_endpoints()
+            except Exception:
+                endpoints = []
+            for idx, pt in enumerate(endpoints or []):
+                if len(pt) != 2 or not np.isfinite(pt[0]) or not np.isfinite(pt[1]):
+                    continue
+                key_points.append({
+                    'type': 'endpoint',
+                    'label': chr(label_seed + idx),
+                    'x': float(pt[0]),
+                    'y': float(pt[1]),
+                })
+
+        # Fallback: use polyline start/end if we still have no key points
+        if not key_points and len(polyline) >= 2:
+            first = polyline[0]
+            last = polyline[-1]
+            key_points.append({'type': 'endpoint', 'label': 'A', 'x': first[0], 'y': first[1]})
+            key_points.append({'type': 'endpoint', 'label': 'B', 'x': last[0], 'y': last[1]})
+
+        return key_points
+
+    def _compute_polyline_intersections(self, polyline_lookup: Dict[str, List[List[float]]]) -> List[Dict[str, Any]]:
+        """Detect approximate intersections between polylines using segment checks."""
+
+        # Subsample each polyline to at most 60 points for intersection detection
+        MAX_SEGS = 60
+        def _subsample(pts):
+            if len(pts) <= MAX_SEGS + 1:
+                return pts
+            step = len(pts) / MAX_SEGS
+            return [pts[int(i * step)] for i in range(MAX_SEGS)] + [pts[-1]]
+
+        raw: List[Tuple[float, float]] = []
+
+        for (id_a, pts_a), (id_b, pts_b) in combinations(polyline_lookup.items(), 2):
+            segs_a = self._polyline_segments(_subsample(pts_a))
+            segs_b = self._polyline_segments(_subsample(pts_b))
+            for seg_a in segs_a:
+                for seg_b in segs_b:
+                    result = self._segment_intersection(seg_a, seg_b)
+                    if result is not None:
+                        raw.append(result)
+
+        # Deduplicate: cluster points within tolerance, keep one per cluster
+        TOL = 0.05
+        kept: List[Tuple[float, float]] = []
+        for pt in raw:
+            if not any(abs(pt[0] - k[0]) < TOL and abs(pt[1] - k[1]) < TOL for k in kept):
+                kept.append(pt)
+
+        return [
+            {'label': f'I{i + 1}', 'x': float(x), 'y': float(y)}
+            for i, (x, y) in enumerate(kept)
+        ]
+
+    def _polyline_segments(self, points: List[List[float]]) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
+        segments: List[Tuple[Tuple[float, float], Tuple[float, float]]] = []
+        if len(points) < 2:
+            return segments
+        for i in range(len(points) - 1):
+            p1 = points[i]
+            p2 = points[i + 1]
+            if np.isfinite(p1[0]) and np.isfinite(p1[1]) and np.isfinite(p2[0]) and np.isfinite(p2[1]):
+                segments.append(((p1[0], p1[1]), (p2[0], p2[1])))
+        return segments
+
+    def _segment_intersection(self, seg_a, seg_b) -> Optional[Tuple[float, float]]:
+        (x1, y1), (x2, y2) = seg_a
+        (x3, y3), (x4, y4) = seg_b
+
+        denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+        if abs(denom) < 1e-9:
+            return None
+
+        px = ((x1*y2 - y1*x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3*x4)) / denom
+        py = ((x1*y2 - y1*x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3*x4)) / denom
+
+        if self._point_on_segment(px, py, seg_a) and self._point_on_segment(px, py, seg_b):
+            return float(px), float(py)
+        return None
+
+    def _point_on_segment(self, px: float, py: float, segment) -> bool:
+        (x1, y1), (x2, y2) = segment
+        if (min(x1, x2) - 1e-6) <= px <= (max(x1, x2) + 1e-6) and (min(y1, y2) - 1e-6) <= py <= (max(y1, y2) + 1e-6):
+            # Check collinearity via cross product
+            cross = (px - x1) * (y2 - y1) - (py - y1) * (x2 - x1)
+            return abs(cross) <= 1e-3
+        return False
     
     def _sample_boundary_points(self, boundary_curve, bounds: Tuple[float, float, float, float], 
                                resolution: int) -> Tuple[List[List[float]], bool]:
