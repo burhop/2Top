@@ -191,15 +191,29 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         return self.contains(x, y, tolerance)
     
-    def get_endpoints(self) -> List[Tuple[float, float]]:
+    def get_endpoints(self, xmin: Optional[float] = None, xmax: Optional[float] = None) -> List[Tuple[float, float]]:
         """
         Get the endpoints of the trimmed curve segment.
         
+        Args:
+            xmin: Optional lower limit to find crossings.
+            xmax: Optional upper limit to find crossings.
+            
         Returns:
             List of (x, y) tuples representing the endpoints of the curve segment.
             Returns empty list if no endpoints were explicitly provided.
         """
-        return self.endpoints.copy() if self.endpoints else []
+        if self.endpoints:
+            return self.endpoints.copy()
+        if hasattr(self.base_curve, 'get_endpoints'):
+            try:
+                try:
+                    return self.base_curve.get_endpoints(xmin=xmin, xmax=xmax)
+                except TypeError:
+                    return self.base_curve.get_endpoints()
+            except Exception:
+                pass
+        return []
     
     def evaluate(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """

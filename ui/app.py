@@ -121,8 +121,16 @@ def reconstruct_geometry_curve(c_row):
     curve.xmax = xmax
     curve.ymin = ymin
     curve.ymax = ymax
+    
+    # Store metadata on reconstructed curve objects for accurate backend graphics classification
+    curve.curve_type = c_type
+    curve.is_periodic_radical = (c_type == "periodic_radical")
+    if hasattr(curve, 'base_curve') and curve.base_curve is not None:
+        curve.base_curve.curve_type = c_type
+        curve.base_curve.is_periodic_radical = (c_type == "periodic_radical")
         
     return curve
+
 
 def translate_curve(curve, x0, y0):
     """Translate a 2Top Geometry curve by (x0, y0) to focus grid search."""
@@ -166,6 +174,16 @@ def translate_curve(curve, x0, y0):
     curve_trans.ymin = curve.ymin - y0
     curve_trans.ymax = curve.ymax - y0
     
+    if hasattr(curve, 'curve_type'):
+        curve_trans.curve_type = curve.curve_type
+    if hasattr(curve, 'is_periodic_radical'):
+        curve_trans.is_periodic_radical = curve.is_periodic_radical
+    if hasattr(curve, 'base_curve') and curve.base_curve is not None and hasattr(curve_trans, 'base_curve') and curve_trans.base_curve is not None:
+        if hasattr(curve.base_curve, 'curve_type'):
+            curve_trans.base_curve.curve_type = curve.base_curve.curve_type
+        if hasattr(curve.base_curve, 'is_periodic_radical'):
+            curve_trans.base_curve.is_periodic_radical = curve.base_curve.is_periodic_radical
+            
     return curve_trans
 
 app = Flask(__name__)
@@ -873,6 +891,22 @@ def handle_ui_command(data):
             scene_manager.add_object(obj_id, cubic, style)
             result = {'obj_id': obj_id, 'created': True}
             
+        elif command_name == 'create_periodic':
+            import sympy as sp
+            from geometry import ImplicitCurve
+            obj_id = command_data.get('obj_id')
+            cx = command_data.get('center_x', 0)
+            cy = command_data.get('center_y', 0)
+            scale = command_data.get('scale', 1.0)
+            style = command_data.get('style', {})
+            x, y = sp.symbols('x y')
+            # (y - cy)**2 - 2.0 * sin(x - cx) = 0
+            expr = (y - cy)**2 - 2.0 * sp.sin(x - cx)
+            periodic = ImplicitCurve(expr, (x, y))
+            periodic.scale_hint = 1.0
+            scene_manager.add_object(obj_id, periodic, style)
+            result = {'obj_id': obj_id, 'created': True}
+            
         elif command_name == 'delete_object':
             obj_id = command_data.get('obj_id')
             scene_manager.remove_object(obj_id)
@@ -998,7 +1032,7 @@ def _command_modifies_scene(command):
     """Check if a command modifies the scene state"""
     modifying_commands = {
         'create_circle', 'create_rectangle', 'create_triangle', 'create_ellipse',
-        'create_line', 'create_parabola', 'create_hyperbola', 'create_cubic',
+        'create_line', 'create_parabola', 'create_hyperbola', 'create_cubic', 'create_periodic',
         'delete_object', 'update_parameter', 'set_style',
         'group_objects', 'load_scene', 'clear_scene'
     }

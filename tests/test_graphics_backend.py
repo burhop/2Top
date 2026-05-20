@@ -507,3 +507,39 @@ class TestGraphicsBackendIntegration:
         assert bounds[1] < 10.0
         assert bounds[2] > -10.0
         assert bounds[3] < 10.0
+
+    def test_high_precision_polyline_intersection_refinement(self):
+        """Test that segment intersections are refined to mathematically exact coordinates."""
+        import sympy as sp
+        from geometry.implicit_curve import ImplicitCurve
+        sm = SceneManager()
+        
+        x, y = sp.symbols('x y')
+        # Line: y - x = 0
+        line = ImplicitCurve(y - x, (x, y))
+        line.xmin, line.xmax, line.ymin, line.ymax = -2.0, 2.0, -2.0, 2.0
+        sm.add_object('line', line)
+        
+        # Parabola: y - x**2 = 0
+        parabola = ImplicitCurve(y - x**2, (x, y))
+        parabola.xmin, parabola.xmax, parabola.ymin, parabola.ymax = -2.0, 2.0, -2.0, 2.0
+        sm.add_object('parabola', parabola)
+        
+        backend = GraphicsBackendInterface(sm)
+        scene_data = backend.get_geometry_scene_data(resolution=100, bounds=(-2.0, 2.0, -2.0, 2.0))
+        
+        intersections = scene_data.get('intersections', [])
+        assert len(intersections) >= 2
+        
+        # Intersections should be refined to exactly (0.0, 0.0) and (1.0, 1.0)
+        found_0 = False
+        found_1 = False
+        for inter in intersections:
+            ix, iy = inter['x'], inter['y']
+            if abs(ix - 0.0) < 1e-4 and abs(iy - 0.0) < 1e-4:
+                found_0 = True
+            elif abs(ix - 1.0) < 1e-4 and abs(iy - 1.0) < 1e-4:
+                found_1 = True
+                
+        assert found_0, f"Intersection (0, 0) not found in {intersections}"
+        assert found_1, f"Intersection (1, 1) not found in {intersections}"

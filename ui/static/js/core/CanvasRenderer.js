@@ -463,10 +463,10 @@ class CanvasRenderer extends EventEmitter {
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(255,255,255,0.8)';
         this.ctx.font = '12px "Space Grotesk", sans-serif';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'top';
 
         if (bounds.minY <= 0 && bounds.maxY >= 0) {
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'top';
             let labelIndex = 0;
             for (let x = Math.ceil(bounds.minX / step) * step; x <= bounds.maxX; x += step) {
                 if (Math.abs(x) < 1e-6) {
@@ -477,8 +477,8 @@ class CanvasRenderer extends EventEmitter {
                     labelIndex++;
                     continue;
                 }
-                const screen = this.worldToScreen(x, -step * 0.2);
-                this.ctx.fillText(this.formatAxisValue(x), screen.x, screen.y);
+                const screen = this.worldToScreen(x, 0);
+                this.ctx.fillText(this.formatAxisValue(x), screen.x, originScreen.y + 8);
                 labelIndex++;
             }
         }
@@ -496,8 +496,8 @@ class CanvasRenderer extends EventEmitter {
                     labelIndex++;
                     continue;
                 }
-                const screen = this.worldToScreen(step * 0.2, y);
-                this.ctx.fillText(this.formatAxisValue(y), screen.x - 4, screen.y);
+                const screen = this.worldToScreen(0, y);
+                this.ctx.fillText(this.formatAxisValue(y), originScreen.x - 8, screen.y);
                 labelIndex++;
             }
         }
@@ -506,8 +506,7 @@ class CanvasRenderer extends EventEmitter {
         if (bounds.minX <= 0 && bounds.maxX >= 0 && bounds.minY <= 0 && bounds.maxY >= 0) {
             this.ctx.textAlign = 'left';
             this.ctx.textBaseline = 'top';
-            const origin = this.worldToScreen(0, 0);
-            this.ctx.fillText('0', origin.x + 4, origin.y + 4);
+            this.ctx.fillText('0', originScreen.x + 4, originScreen.y + 4);
         }
 
         this.ctx.restore();

@@ -100,6 +100,90 @@ class ImplicitCurve:
                 x_arr = np.asarray(x_val)
                 return np.full_like(x_arr, float('inf'), dtype=float)
     
+    def get_endpoints(self, xmin: Optional[float] = None, xmax: Optional[float] = None) -> list:
+        """
+        Dynamically calculate and return endpoints (zero-crossings) for periodic curves.
+        
+        Args:
+            xmin: Optional lower limit to find crossings. If None, uses object/default bounds.
+            xmax: Optional upper limit to find crossings. If None, uses object/default bounds.
+            
+        Returns:
+            List of (x, y) tuples.
+        """
+        import sympy as sp
+        import math
+        
+        expr = self.expression
+        free = expr.free_symbols
+        x_sym = next((s for s in free if s.name == 'x'), None)
+        y_sym = next((s for s in free if s.name == 'y'), None)
+        
+        if not x_sym or not y_sym:
+            return []
+            
+        has_trig = len(expr.atoms(sp.sin)) > 0 or len(expr.atoms(sp.cos)) > 0
+        if not has_trig:
+            return []
+            
+        try:
+            df_dy = sp.diff(expr, y_sym)
+            df2_dy2 = sp.diff(expr, y_sym, 2)
+            df3_dy3 = sp.diff(expr, y_sym, 3)
+            df_dx_dy = sp.diff(expr, x_sym, y_sym)
+            
+            # Check if quadratic in y and no mixed term
+            if df3_dy3 == 0 and df_dx_dy == 0 and df2_dy2 != 0:
+                E = df_dy.subs(y_sym, 0)
+                D = df2_dy2
+                cy_val = float(-E / D)
+                
+                # Retrieve bounds if defined
+                xmin_val = xmin if xmin is not None else getattr(self, 'xmin', -10.0)
+                xmax_val = xmax if xmax is not None else getattr(self, 'xmax', 10.0)
+                
+                # Clean up None bounds
+                if xmin_val is None: xmin_val = -10.0
+                if xmax_val is None: xmax_val = 10.0
+                
+                sin_terms = expr.atoms(sp.sin)
+                cos_terms = expr.atoms(sp.cos)
+                
+                is_sin = True
+                trig_term = None
+                if sin_terms:
+                    trig_term = list(sin_terms)[0]
+                    is_sin = True
+                elif cos_terms:
+                    trig_term = list(cos_terms)[0]
+                    is_sin = False
+                    
+                if trig_term is not None:
+                    arg = trig_term.args[0]
+                    B = float(arg.coeff(x_sym))
+                    C = float(arg.subs(x_sym, 0))
+                    endpoints = []
+                    if B != 0:
+                        if is_sin:
+                            k_min = int(math.floor(((xmin_val - 1.0) * B + C) / math.pi))
+                            k_max = int(math.ceil(((xmax_val + 1.0) * B + C) / math.pi))
+                            for k in range(k_min - 2, k_max + 3):
+                                x_val = (k * math.pi - C) / B
+                                if xmin_val - 0.2 <= x_val <= xmax_val + 0.2:
+                                    endpoints.append((x_val, cy_val))
+                        else:
+                            k_min = int(math.floor(((xmin_val - 1.0) * B + C) / math.pi - 0.5))
+                            k_max = int(math.ceil(((xmax_val + 1.0) * B + C) / math.pi - 0.5))
+                            for k in range(k_min - 2, k_max + 3):
+                                x_val = ((k + 0.5) * math.pi - C) / B
+                                if xmin_val - 0.2 <= x_val <= xmax_val + 0.2:
+                                    endpoints.append((x_val, cy_val))
+                    return endpoints
+        except Exception:
+            pass
+            
+        return []
+
     def gradient(self, x_val: Union[float, np.ndarray], y_val: Union[float, np.ndarray]) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """
         Compute the gradient vector ∇f(x,y) = (∂f/∂x, ∂f/∂y) at given point(s).

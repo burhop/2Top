@@ -106,11 +106,23 @@ class GraphicsBackendInterface:
                     # Snapping open curves to mathematically exact endpoints to avoid early-termination visual gaps
                     if hasattr(obj, 'get_endpoints') and not closed:
                         try:
-                            endpoints = obj.get_endpoints()
+                            endpoints = obj.get_endpoints(xmin=obj_bounds[0], xmax=obj_bounds[1])
                             if endpoints and len(endpoints) > 0:
                                 o_xmin, o_xmax, o_ymin, o_ymax = obj_bounds
                                 grid_spacing = max((o_xmax - o_xmin) / resolution, (o_ymax - o_ymin) / resolution)
-                                snap_threshold = max(1.0, 3.0 * grid_spacing)
+                                
+                                is_periodic, cy_val, H_coeff = self._is_periodic_radical(obj)
+                                if is_periodic:
+                                    snap_threshold = 3.0 * grid_spacing
+                                else:
+                                    # Extract scale_hint safely
+                                    scale_hint = 1.0
+                                    if hasattr(obj, 'scale_hint') and obj.scale_hint is not None:
+                                        scale_hint = float(obj.scale_hint)
+                                    elif hasattr(obj, 'base_curve') and obj.base_curve is not None and hasattr(obj.base_curve, 'scale_hint') and obj.base_curve.scale_hint is not None:
+                                        scale_hint = float(obj.base_curve.scale_hint)
+                                    snap_threshold = max(0.1 * scale_hint, 3.0 * grid_spacing)
+                                    
                                 sq_threshold = snap_threshold ** 2
                                 # Snap start and end of all paths in paths to their closest exact endpoints
                                 for path in paths:
@@ -624,8 +636,6 @@ class GraphicsBackendInterface:
             cleaned_points = [
                 [float(pt[0]), float(pt[1])] for pt in points if len(pt) == 2 and np.isfinite(pt[0]) and np.isfinite(pt[1])
             ]
-            polyline_lookup[obj_id] = cleaned_points
-
             raw_paths = data.get('paths') or []
             cleaned_paths = []
             for path in raw_paths:
@@ -634,6 +644,8 @@ class GraphicsBackendInterface:
                 ]
                 if len(cleaned_path) >= 2:
                     cleaned_paths.append(cleaned_path)
+
+            polyline_lookup[obj_id] = cleaned_paths if cleaned_paths else ([cleaned_points] if cleaned_points else [])
 
             key_points = self._extract_endpoint_points(obj, cleaned_points)
 
@@ -657,6 +669,81 @@ class GraphicsBackendInterface:
         }
     
     # ================== Helper Methods ==================
+
+    def _is_periodic_radical(self, obj) -> Tuple[bool, float, float]:
+        """
+        Algebraically check if the object represents a periodic radical curve.
+        Returns (is_periodic, cy_val, H_coeff).
+        """
+        # First check base curve if trimmed
+        base = obj
+        if hasattr(obj, 'base_curve'):
+            base = obj.base_curve
+            
+        # Check if explicitly marked as periodic radical via metadata properties
+        is_marked = getattr(obj, 'is_periodic_radical', False) or getattr(base, 'is_periodic_radical', False)
+            
+        expr = getattr(base, 'expression', None)
+        if expr is None:
+            if is_marked:
+                endpoints = getattr(obj, 'endpoints', None)
+                if endpoints and len(endpoints) > 0:
+                    return True, float(endpoints[0][1]), 1.0
+                return True, 0.0, 1.0
+            return False, 0.0, 1.0
+            
+        import sympy as sp
+        
+        vars_attr = getattr(base, 'variables', None)
+        if not vars_attr:
+            free = expr.free_symbols
+            x_sym = next((s for s in free if s.name == 'x'), None)
+            y_sym = next((s for s in free if s.name == 'y'), None)
+        else:
+            x_sym, y_sym = vars_attr[0], vars_attr[1]
+            
+        if not x_sym or not y_sym:
+            if is_marked:
+                endpoints = getattr(obj, 'endpoints', None)
+                if endpoints and len(endpoints) > 0:
+                    return True, float(endpoints[0][1]), 1.0
+                return True, 0.0, 1.0
+            return False, 0.0, 1.0
+            
+        # Check for trigonometric atoms
+        has_trig = len(expr.atoms(sp.sin)) > 0 or len(expr.atoms(sp.cos)) > 0
+        if not has_trig:
+            if is_marked:
+                endpoints = getattr(obj, 'endpoints', None)
+                if endpoints and len(endpoints) > 0:
+                    return True, float(endpoints[0][1]), 1.0
+                return True, 0.0, 1.0
+            return False, 0.0, 1.0
+            
+        try:
+            df_dy = sp.diff(expr, y_sym)
+            df2_dy2 = sp.diff(expr, y_sym, 2)
+            df3_dy3 = sp.diff(expr, y_sym, 3)
+            df_dx_dy = sp.diff(expr, x_sym, y_sym)
+            
+            # Check if quadratic in y and no mixed term
+            if df3_dy3 == 0 and df_dx_dy == 0 and df2_dy2 != 0:
+                # It is quadratic in y: f(x, y) = H * (y - cy)^2 - g(x)
+                E = df_dy.subs(y_sym, 0)
+                D = df2_dy2
+                cy_val = float(-E / D)
+                H = float(D / 2.0)
+                return True, cy_val, H
+        except Exception:
+            pass
+            
+        # Fallback to endpoints check only if explicitly marked or has >= 3 endpoints sharing the same Y
+        endpoints = getattr(obj, 'endpoints', None)
+        if endpoints and len(endpoints) > 0:
+            if is_marked or (len(endpoints) >= 3 and all(abs(ep[1] - endpoints[0][1]) < 1e-5 for ep in endpoints)):
+                return True, float(endpoints[0][1]), 1.0
+                
+        return False, 0.0, 1.0
 
     def _estimate_object_bounds(self, obj, scene_bounds: Tuple[float, float, float, float],
                                 coarse: int = 40) -> Tuple[float, float, float, float]:
@@ -774,39 +861,39 @@ class GraphicsBackendInterface:
         """
         xmin, xmax, ymin, ymax = bounds
         
-        # Check if periodic radical (endpoints all on y = 0)
-        endpoints = getattr(obj, 'endpoints', None)
-        is_periodic_radical = False
-        if endpoints and len(endpoints) > 0:
-            if all(abs(ep[1]) < 1e-5 for ep in endpoints):
-                is_periodic_radical = True
+        # Check if periodic radical algebraically
+        is_periodic_radical, cy_val, H_coeff = self._is_periodic_radical(obj)
                 
         if is_periodic_radical:
-            # For periodic radical curves (y² = g(x)), compute the actual Y-extent
-            # by evaluating f(x,0) along the x-axis. Since f(x,y) = y² - g(x),
-            # we have g(x) = -f(x,0) and max|y| = √(max(g(x))).
+            # For periodic radical curves (H*(y - cy_val)**2 = g(x)), compute the actual Y-extent
+            # by evaluating f(x, cy_val) along the x-axis. Since f(x,y) = H*(y - cy_val)**2 - g(x),
+            # we have g(x) = -f(x, cy_val) and max|y - cy_val| = √(max(g(x)) / H).
             # This concentrates ALL grid points in the curve's actual y-range
             # instead of wasting them on the (often huge) database bounds.
             try:
                 x_probe = np.linspace(xmin, xmax, 200)
-                y_zero = np.zeros_like(x_probe)
-                f_at_zero = obj.evaluate(x_probe, y_zero)
-                if isinstance(f_at_zero, np.ndarray):
-                    g_x = -f_at_zero
+                y_probe = np.full_like(x_probe, cy_val)
+                f_at_cy = obj.evaluate(x_probe, y_probe)
+                if isinstance(f_at_cy, np.ndarray):
+                    g_x = -f_at_cy / H_coeff
                     g_max = float(np.nanmax(g_x))
                     if g_max > 0:
                         actual_ymax = np.sqrt(g_max)
                         ymax_abs = actual_ymax * 1.15  # 15% padding
                     else:
-                        ymax_abs = max(abs(ymin), abs(ymax))
+                        ymax_abs = max(abs(ymin - cy_val), abs(ymax - cy_val))
                 else:
-                    ymax_abs = max(abs(ymin), abs(ymax))
+                    ymax_abs = max(abs(ymin - cy_val), abs(ymax - cy_val))
             except Exception:
-                ymax_abs = max(abs(ymin), abs(ymax))
-            ymin = -ymax_abs
-            ymax = ymax_abs
+                ymax_abs = max(abs(ymin - cy_val), abs(ymax - cy_val))
+            ymin = cy_val - ymax_abs
+            ymax = cy_val + ymax_abs
             
-        # Force odd resolution to ensure y=0 is a grid line, maximizing horizontal symmetry
+        if is_periodic_radical:
+            # Boost resolution for periodic curves to avoid flat/lopsided peak chords
+            resolution = max(resolution * 2, 800)
+
+        # Force odd resolution to ensure y=cy_val is a grid line, maximizing horizontal symmetry
         resolution = resolution | 1
         
         # Create evaluation grid
@@ -946,13 +1033,9 @@ class GraphicsBackendInterface:
 
             all_paths = [item[0] for item in candidate_paths if len(item[0]) >= 2]
 
-            # For curves like periodic_radical where endpoints are zero-crossings at y = 0,
-            # split closed loops at y = 0 into open branches so they snap perfectly and symmetrically.
-            endpoints = getattr(obj, 'endpoints', None)
-            is_periodic_radical = False
-            if endpoints and len(endpoints) > 0:
-                if all(abs(ep[1]) < 1e-5 for ep in endpoints):
-                    is_periodic_radical = True
+            # For curves like periodic_radical where endpoints are zero-crossings at y = cy_val,
+            # split closed loops at y = cy_val into open branches so they snap perfectly and symmetrically.
+            is_periodic_radical, cy_val, H_coeff = self._is_periodic_radical(obj)
 
             if is_periodic_radical:
                 split_paths = []
@@ -963,19 +1046,22 @@ class GraphicsBackendInterface:
                     is_path_closed = np.allclose(path[0], path[-1], atol=1e-6)
                     rotated_path = path
                     if is_path_closed:
-                        # Find a sign change/zero crossing in Y to rotate path start/end to a crossing point
+                        # Find a sign change/zero crossing in Y relative to cy_val to rotate path start/end to a crossing point
                         rotate_idx = -1
                         for i in range(len(path) - 1):
-                            if path[i][1] * path[i+1][1] < 0 or abs(path[i][1]) < 1e-9:
+                            val_curr = path[i][1] - cy_val
+                            val_next = path[i+1][1] - cy_val
+                            if val_curr * val_next < 0 or abs(val_curr) < 1e-9:
                                 rotate_idx = i
                                 break
                         if rotate_idx != -1:
                             rotated_path = path[rotate_idx+1:-1] + path[0:rotate_idx+2]
                             
-                    # Robust sign-state tracking splitter to partition cleanly at y = 0
+                    # Robust sign-state tracking splitter to partition cleanly at y = cy_val
                     def get_sign(val):
-                        if val > 1e-9: return 1
-                        if val < -1e-9: return -1
+                        diff = val - cy_val
+                        if diff > 1e-9: return 1
+                        if diff < -1e-9: return -1
                         return 0
                         
                     current_sub = [rotated_path[0]]
@@ -993,7 +1079,7 @@ class GraphicsBackendInterface:
                             current_sub = [curr_pt]
                             current_sign = curr_sign
                         elif curr_sign == 0:
-                            # Hitting exactly 0!
+                            # Hitting exactly cy_val!
                             current_sub.append(curr_pt)
                             if len(current_sub) >= 2:
                                 split_paths.append(current_sub)
@@ -1049,7 +1135,18 @@ class GraphicsBackendInterface:
 
         if hasattr(obj, 'get_endpoints'):
             try:
-                endpoints = obj.get_endpoints()
+                xmin_val = None
+                xmax_val = None
+                if polyline:
+                    xs = [pt[0] for pt in polyline if len(pt) == 2 and np.isfinite(pt[0])]
+                    if xs:
+                        xmin_val = min(xs)
+                        xmax_val = max(xs)
+                if xmin_val is None or xmax_val is None:
+                    xmin_val = getattr(obj, 'xmin', -10.0)
+                    xmax_val = getattr(obj, 'xmax', 10.0)
+                
+                endpoints = obj.get_endpoints(xmin=xmin_val, xmax=xmax_val)
             except Exception:
                 endpoints = []
             for idx, pt in enumerate(endpoints or []):
@@ -1101,7 +1198,7 @@ class GraphicsBackendInterface:
 
         return key_points
 
-    def _compute_polyline_intersections(self, polyline_lookup: Dict[str, List[List[float]]]) -> List[Dict[str, Any]]:
+    def _compute_polyline_intersections(self, polyline_lookup: Dict[str, List[List[List[float]]]]) -> List[Dict[str, Any]]:
         """Detect approximate intersections between polylines using segment checks."""
 
         # Subsample each polyline to at most 60 points for intersection detection
@@ -1114,14 +1211,62 @@ class GraphicsBackendInterface:
 
         raw: List[Tuple[float, float]] = []
 
-        for (id_a, pts_a), (id_b, pts_b) in combinations(polyline_lookup.items(), 2):
-            segs_a = self._polyline_segments(_subsample(pts_a))
-            segs_b = self._polyline_segments(_subsample(pts_b))
-            for seg_a in segs_a:
-                for seg_b in segs_b:
-                    result = self._segment_intersection(seg_a, seg_b)
-                    if result is not None:
-                        raw.append(result)
+        for (id_a, paths_a), (id_b, paths_b) in combinations(polyline_lookup.items(), 2):
+            obj_a = self.scene_manager.get_object(id_a)
+            obj_b = self.scene_manager.get_object(id_b)
+            has_eval = hasattr(obj_a, 'evaluate') and hasattr(obj_b, 'evaluate')
+
+            for pts_a in paths_a:
+                for pts_b in paths_b:
+                    segs_a = self._polyline_segments(_subsample(pts_a))
+                    segs_b = self._polyline_segments(_subsample(pts_b))
+                    for seg_a in segs_a:
+                        for seg_b in segs_b:
+                            result = self._segment_intersection(seg_a, seg_b)
+                            if result is not None:
+                                px, py = result
+                                if has_eval:
+                                    from scipy.optimize import fsolve
+                                    def intersection_system(p):
+                                        x_val, y_val = p[0], p[1]
+                                        val_a = obj_a.evaluate(x_val, y_val)
+                                        val_b = obj_b.evaluate(x_val, y_val)
+                                        f_a = float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a)
+                                        f_b = float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b)
+                                        return [f_a, f_b]
+                                    try:
+                                        sol, infodict, ier, mesg = fsolve(
+                                            intersection_system, 
+                                            [px, py], 
+                                            xtol=1e-6, 
+                                            full_output=True
+                                        )
+                                        if ier == 1:
+                                            sol_x, sol_y = float(sol[0]), float(sol[1])
+                                            val_a = obj_a.evaluate(sol_x, sol_y)
+                                            val_b = obj_b.evaluate(sol_x, sol_y)
+                                            f_a = abs(float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a))
+                                            f_b = abs(float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b))
+                                            
+                                            ok_a = True
+                                            if hasattr(obj_a, 'contains'):
+                                                try:
+                                                    ok_a = bool(obj_a.contains(sol_x, sol_y, tolerance=1e-3))
+                                                except Exception:
+                                                    pass
+                                            ok_b = True
+                                            if hasattr(obj_b, 'contains'):
+                                                try:
+                                                    ok_b = bool(obj_b.contains(sol_x, sol_y, tolerance=1e-3))
+                                                except Exception:
+                                                    pass
+                                            
+                                            dist_sq = (sol_x - px)**2 + (sol_y - py)**2
+                                            if f_a < 1e-3 and f_b < 1e-3 and ok_a and ok_b and dist_sq < 0.25:
+                                                px, py = sol_x, sol_y
+                                    except Exception:
+                                        pass
+                                raw.append((px, py))
 
         # Deduplicate: cluster points within tolerance, keep one per cluster
         TOL = 0.05

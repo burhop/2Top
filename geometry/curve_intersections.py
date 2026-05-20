@@ -18,7 +18,7 @@ def find_curve_intersections(
     search_range: float = 5.0,
     grid_resolution: int = 500,
     tolerance: Optional[float] = None,
-    max_points: int = 50,
+    max_points: int = 200,
     detect_overlap: bool = False,
     precision_policy: Optional[PrecisionPolicy] = None,
 ) -> List[Tuple[float, float]]:
@@ -52,8 +52,8 @@ def find_curve_intersections(
     grid_spacing = 2.0 * search_range / grid_resolution
     coarse_tolerance = max(0.06 * max_scale, 2.5 * max_scale * grid_spacing, 8 * policy.blended_tolerance(search_range))
 
-    # Quick check for identical curves (only if detect_overlap is enabled)
-    if detect_overlap and _are_curves_identical_fast(curve1, curve2, tol):
+    # Quick check for identical curves
+    if _are_curves_identical_fast(curve1, curve2, tol, search_range):
         return []  # Return empty for identical curves
     
     # Step 1: Coarse grid search to find approximate intersections
@@ -142,26 +142,49 @@ def find_curve_intersections(
                 return False
         
         return True
-    
-    for start_point in starting_points[:max_points]:
+
+    def are_curves_tangent(x, y, h=1e-5):
         try:
-            # Use numerical solver to refine the intersection
-            solution = fsolve(intersection_system, start_point, xtol=tol)
+            df1_dx = (curve1.evaluate(x + h, y) - curve1.evaluate(x - h, y)) / (2.0 * h)
+            df1_dy = (curve1.evaluate(x, y + h) - curve1.evaluate(x, y - h)) / (2.0 * h)
+            df2_dx = (curve2.evaluate(x + h, y) - curve2.evaluate(x - h, y)) / (2.0 * h)
+            df2_dy = (curve2.evaluate(x, y + h) - curve2.evaluate(x, y - h)) / (2.0 * h)
             
-            # Verify the solution
+            import math
+            norm1 = math.sqrt(df1_dx**2 + df1_dy**2)
+            norm2 = math.sqrt(df2_dx**2 + df2_dy**2)
+            
+            if norm1 < 1e-8 or norm2 < 1e-8:
+                return True
+                
+            cross_prod = abs(df1_dx * df2_dy - df1_dy * df2_dx)
+            normalized_det = cross_prod / (norm1 * norm2)
+            return normalized_det < 0.0005
+        except Exception:
+            return False
+
+    for start_point in starting_points:
+        if len(refined_intersections) >= max_points:
+            break
+        try:
+            solution, info, ier, mesg = fsolve(intersection_system, start_point, xtol=1e-10, full_output=True)
             residual = intersection_system(solution)
-            if np.linalg.norm(residual) < tol:
-                # Check if this point is valid for both curves (respects trimming)
-                if is_valid_intersection(solution[0], solution[1], tol * 10):
-                    # Check if this point is already in our list
-                    is_duplicate = False
-                    for existing_point in refined_intersections:
-                        if np.linalg.norm(np.array(solution) - np.array(existing_point)) < tol * 10:
-                            is_duplicate = True
-                            break
-                    
-                    if not is_duplicate and abs(solution[0]) < search_range and abs(solution[1]) < search_range:
-                        refined_intersections.append((float(solution[0]), float(solution[1])))
+            res_norm = np.linalg.norm(residual)
+            if ier == 1 or (ier in (2, 3, 4, 5) and res_norm < 1e-10):
+                if res_norm < tol:
+                    # Check if this point is valid for both curves (respects trimming)
+                    if is_valid_intersection(solution[0], solution[1], tol * 10):
+                        # Check if this point is already in our list
+                        is_duplicate = False
+                        is_tangent = are_curves_tangent(solution[0], solution[1])
+                        dup_tol = max(tol * 100, 0.01) if is_tangent else tol * 10
+                        for existing_point in refined_intersections:
+                            if np.linalg.norm(np.array(solution) - np.array(existing_point)) < dup_tol:
+                                is_duplicate = True
+                                break
+                        
+                        if not is_duplicate and abs(solution[0]) <= search_range + 1e-3 and abs(solution[1]) <= search_range + 1e-3:
+                            refined_intersections.append((float(solution[0]), float(solution[1])))
                         
         except Exception:
             continue
@@ -169,12 +192,18 @@ def find_curve_intersections(
     return refined_intersections[:max_points]
 
 
-def _are_curves_identical_fast(curve1, curve2, tolerance: float) -> bool:
+def _are_curves_identical_fast(curve1, curve2, tolerance: float, search_range: float = 5.0) -> bool:
     """
     Fast check if two curves are identical by sampling a few points.
     """
-    # Quick test with just a few points
-    test_points = [(0, 0), (1, 0), (0, 1)]
+    # Quick test with just a few points and distributed sampling points
+    test_points = [
+        (0.0, 0.0),
+        (0.5 * search_range, 0.2 * search_range),
+        (-0.3 * search_range, -0.7 * search_range),
+        (0.8 * search_range, -0.1 * search_range),
+        (-0.9 * search_range, 0.6 * search_range),
+    ]
     
     for x, y in test_points:
         try:

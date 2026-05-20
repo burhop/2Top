@@ -100,7 +100,7 @@ propertyPanel.on('style_changed', (objId, style) => {
 });
 
 // Shape creation buttons — create immediately at viewport center
-const CREATE_TOOLS = new Set(['circle','ellipse','line','rectangle','triangle','parabola','hyperbola','cubic']);
+const CREATE_TOOLS = new Set(['circle','ellipse','line','rectangle','triangle','parabola','hyperbola','cubic','periodic']);
 document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
     btn.addEventListener('click', (e) => {
         const tool = e.currentTarget.dataset.tool;
@@ -230,6 +230,9 @@ function createShapeAtCenter(tool) {
             break;
         case 'cubic':
             promise = uiClient.sendCommand('create_cubic', { obj_id: objId, center_x: cx, center_y: cy, scale: 1 / Math.max(r, 0.1) });
+            break;
+        case 'periodic':
+            promise = uiClient.sendCommand('create_periodic', { obj_id: objId, center_x: cx, center_y: cy, scale: 1 / Math.max(r, 0.1) });
             break;
         default:
             return;

@@ -17,6 +17,9 @@ from typing import Tuple, Optional, Union, Callable
 from .implicit_curve import ImplicitCurve
 
 
+from .precision import PrecisionPolicy, get_precision_policy
+
+
 class ProceduralCurve(ImplicitCurve):
     """
     Represents implicit curves defined by arbitrary Python functions.
@@ -28,7 +31,8 @@ class ProceduralCurve(ImplicitCurve):
     
     def __init__(self, function: Callable[[float, float], float], 
                  variables: Optional[Tuple[sp.Symbol, sp.Symbol]] = None,
-                 name: str = "custom"):
+                 name: str = "custom",
+                 precision_policy: Optional[PrecisionPolicy] = None):
         """
         Initialize a ProceduralCurve with a Python function.
         
@@ -36,6 +40,7 @@ class ProceduralCurve(ImplicitCurve):
             function: Python callable that takes (x, y) and returns f(x, y)
             variables: Tuple of two sympy symbols (x, y). If None, uses default x, y symbols.
             name: Descriptive name for the function (used in serialization and display)
+            precision_policy: Optional precision policy. If None, uses active default policy.
             
         Raises:
             ValueError: If function is not callable
@@ -60,6 +65,9 @@ class ProceduralCurve(ImplicitCurve):
         # We set expression to None and handle it specially
         self.expression = None
         self.variables = variables
+        
+        # Set up precision policy
+        self._precision_policy = precision_policy or get_precision_policy()
         
         # Don't call super().__init__ since we don't have a symbolic expression
         # Instead, manually set up what we need
@@ -91,16 +99,14 @@ class ProceduralCurve(ImplicitCurve):
         if x_arr.shape != y_arr.shape:
             raise ValueError("x and y arrays must have the same shape")
         
-        # Vectorized evaluation
-        result = np.zeros_like(x_arr, dtype=float)
-        flat_x = x_arr.flatten()
-        flat_y = y_arr.flatten()
-        flat_result = result.ravel()  # Use ravel() to get a view, not a copy
-        
-        for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
-            flat_result[i] = self.function(float(xi), float(yi))
-        
-        return result
+        # Vectorized evaluation path
+        try:
+            # Try evaluating directly (if the function supports vectorization)
+            return np.asarray(self.function(x_arr, y_arr), dtype=float)
+        except Exception:
+            # Fallback to numpy's vectorize wrapper
+            vfunc = np.vectorize(self.function, otypes=[float])
+            return vfunc(x_arr, y_arr)
     
     def gradient(self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """
@@ -127,21 +133,35 @@ class ProceduralCurve(ImplicitCurve):
         if x_arr.shape != y_arr.shape:
             raise ValueError("x and y arrays must have the same shape")
         
-        # Vectorized gradient computation
-        grad_x = np.zeros_like(x_arr, dtype=float)
-        grad_y = np.zeros_like(y_arr, dtype=float)
+        h = self._gradient_h
         
-        flat_x = x_arr.flatten()
-        flat_y = y_arr.flatten()
-        flat_grad_x = grad_x.ravel()  # Use ravel() to get a view, not a copy
-        flat_grad_y = grad_y.ravel()  # Use ravel() to get a view, not a copy
-        
-        for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
-            gx, gy = self._gradient_scalar(float(xi), float(yi))
-            flat_grad_x[i] = gx
-            flat_grad_y[i] = gy
-        
-        return grad_x, grad_y
+        try:
+            # Use vectorized evaluate to compute gradients at all points in one go
+            f_x_plus = self.evaluate(x_arr + h, y_arr)
+            f_x_minus = self.evaluate(x_arr - h, y_arr)
+            grad_x = (f_x_plus - f_x_minus) / (2 * h)
+            
+            f_y_plus = self.evaluate(x_arr, y_arr + h)
+            f_y_minus = self.evaluate(x_arr, y_arr - h)
+            grad_y = (f_y_plus - f_y_minus) / (2 * h)
+            
+            return grad_x, grad_y
+        except Exception:
+            # Fallback vectorized gradient computation
+            grad_x = np.zeros_like(x_arr, dtype=float)
+            grad_y = np.zeros_like(y_arr, dtype=float)
+            
+            flat_x = x_arr.flatten()
+            flat_y = y_arr.flatten()
+            flat_grad_x = grad_x.ravel()
+            flat_grad_y = grad_y.ravel()
+            
+            for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
+                gx, gy = self._gradient_scalar(float(xi), float(yi))
+                flat_grad_x[i] = gx
+                flat_grad_y[i] = gy
+            
+            return grad_x, grad_y
     
     def _gradient_scalar(self, x: float, y: float) -> Tuple[float, float]:
         """

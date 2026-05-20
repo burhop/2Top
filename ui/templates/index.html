@@ -54,6 +54,7 @@
         <button class="tool-btn" data-tool="parabola"  title="Parabola">⌒</button>
         <button class="tool-btn" data-tool="hyperbola" title="Hyperbola">⌓</button>
         <button class="tool-btn" data-tool="cubic"     title="Cubic curve">∿</button>
+        <button class="tool-btn" data-tool="periodic"  title="Periodic Curve">∼</button>
 
         <div class="sidebar-divider"></div>
         <div class="sidebar-section-label">Database Curves</div>
@@ -190,5 +191,6 @@
 <script src="{{ url_for('static', filename='js/components/PropertyPanel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/AnimationControls.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<div id="app-version" style="position:fixed;bottom:6px;right:10px;font:10px 'Space Grotesk',monospace;color:rgba(255,255,255,0.35);pointer-events:none;z-index:9999;">v0.12.3</div>
 </body>
 </html>
