@@ -69,7 +69,16 @@ def find_curve_intersections(
         print(f"Error evaluating curves: {e}")
         return []
     
-    # Find points where both curves are close to zero or cross zero (sign changes)
+    # Find points where both curves are close to zero or cross zero (sign changes).
+    # NaN values arise from out-of-domain evaluations (e.g. asin(x>1), sqrt(x<0)).
+    # - For standard sign-change detection, operate on Z1 directly: NaN*anything=NaN,
+    #   and NaN<=0 is False in NumPy, so NaN cells naturally self-exclude.
+    # - For restricted-domain curves (arcsin, sqrt), intersections occur at the
+    #   domain boundary. We detect this by marking finite cells adjacent to NaN cells.
+    nan_mask1 = ~np.isfinite(Z1)
+    nan_mask2 = ~np.isfinite(Z2)
+
+    # Standard sign-change detection on original Z (NaN cells excluded naturally)
     sign_change_x1 = np.zeros_like(Z1, dtype=bool)
     sign_change_x1[:, :-1] |= (Z1[:, :-1] * Z1[:, 1:] <= 0)
     sign_change_x1[:, 1:] |= (Z1[:, :-1] * Z1[:, 1:] <= 0)
@@ -78,7 +87,16 @@ def find_curve_intersections(
     sign_change_y1[:-1, :] |= (Z1[:-1, :] * Z1[1:, :] <= 0)
     sign_change_y1[1:, :] |= (Z1[:-1, :] * Z1[1:, :] <= 0)
 
-    mask1 = (np.abs(Z1) < coarse_tolerance) | sign_change_x1 | sign_change_y1
+    # Adjacent-to-NaN: finite cells neighboring a NaN cell are domain-boundary candidates
+    near_nan_x1 = np.zeros_like(nan_mask1)
+    near_nan_x1[:, :-1] |= nan_mask1[:, 1:]
+    near_nan_x1[:, 1:] |= nan_mask1[:, :-1]
+    near_nan_y1 = np.zeros_like(nan_mask1)
+    near_nan_y1[:-1, :] |= nan_mask1[1:, :]
+    near_nan_y1[1:, :] |= nan_mask1[:-1, :]
+
+    mask1 = ((np.abs(Z1) < coarse_tolerance) | sign_change_x1 | sign_change_y1 |
+             near_nan_x1 | near_nan_y1) & ~nan_mask1
 
     sign_change_x2 = np.zeros_like(Z2, dtype=bool)
     sign_change_x2[:, :-1] |= (Z2[:, :-1] * Z2[:, 1:] <= 0)
@@ -88,13 +106,21 @@ def find_curve_intersections(
     sign_change_y2[:-1, :] |= (Z2[:-1, :] * Z2[1:, :] <= 0)
     sign_change_y2[1:, :] |= (Z2[:-1, :] * Z2[1:, :] <= 0)
 
-    mask2 = (np.abs(Z2) < coarse_tolerance) | sign_change_x2 | sign_change_y2
+    near_nan_x2 = np.zeros_like(nan_mask2)
+    near_nan_x2[:, :-1] |= nan_mask2[:, 1:]
+    near_nan_x2[:, 1:] |= nan_mask2[:, :-1]
+    near_nan_y2 = np.zeros_like(nan_mask2)
+    near_nan_y2[:-1, :] |= nan_mask2[1:, :]
+    near_nan_y2[1:, :] |= nan_mask2[:-1, :]
+
+    mask2 = ((np.abs(Z2) < coarse_tolerance) | sign_change_x2 | sign_change_y2 |
+             near_nan_x2 | near_nan_y2) & ~nan_mask2
 
     intersection_mask = mask1 & mask2
-    
+
     # For trimmed curves, apply trimming masks efficiently
     intersection_mask = _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2)
-    
+
     if not np.any(intersection_mask):
         return []
     
@@ -124,7 +150,11 @@ def find_curve_intersections(
         try:
             f1 = curve1.evaluate(x_val, y_val)
             f2 = curve2.evaluate(x_val, y_val)
-            return [f1, f2]
+            v1 = float(f1[0]) if isinstance(f1, np.ndarray) else float(f1)
+            v2 = float(f2[0]) if isinstance(f2, np.ndarray) else float(f2)
+            if not np.isfinite(v1) or not np.isfinite(v2):
+                return [1e6, 1e6]
+            return [v1, v2]
         except Exception:
             return [1e6, 1e6]  # Large values to indicate failure
     
@@ -167,17 +197,45 @@ def find_curve_intersections(
         if len(refined_intersections) >= max_points:
             break
         try:
-            solution, info, ier, mesg = fsolve(intersection_system, start_point, xtol=1e-10, full_output=True)
+            # Clean up near-zero starting coordinates to prevent fsolve's relative-spacing step calculation from underflowing
+            start_point_cleaned = np.where(np.abs(start_point) < 1e-13, 0.0, start_point)
+            solution, info, ier, mesg = fsolve(intersection_system, start_point_cleaned, xtol=1e-10, full_output=True)
             residual = intersection_system(solution)
             res_norm = np.linalg.norm(residual)
-            if ier == 1 or (ier in (2, 3, 4, 5) and res_norm < 1e-10):
+            if ier == 1 or (ier in (2, 3, 4, 5) and res_norm < 1e-6):
                 if res_norm < tol:
                     # Check if this point is valid for both curves (respects trimming)
                     if is_valid_intersection(solution[0], solution[1], tol * 10):
                         # Check if this point is already in our list
+                        def _is_transcendental_or_procedural(c) -> bool:
+                            if hasattr(c, "base_curve") and c.base_curve is not None:
+                                c = c.base_curve
+                            if not hasattr(c, "expression") or c.expression is None:
+                                return True
+                            if "Procedural" in type(c).__name__:
+                                return True
+                            try:
+                                import sympy as sp
+                                expr = c.expression
+                                if expr.has(sp.sin, sp.cos, sp.tan, sp.exp, sp.log, sp.asin, sp.acos, sp.atan, sp.sinh, sp.cosh, sp.tanh):
+                                    return True
+                            except Exception:
+                                return True
+                            return False
+
+                        is_periodic_or_procedural = _is_transcendental_or_procedural(curve1) or _is_transcendental_or_procedural(curve2)
+                        
                         is_duplicate = False
                         is_tangent = are_curves_tangent(solution[0], solution[1])
-                        dup_tol = max(tol * 100, 0.01) if is_tangent else tol * 10
+                        
+                        if is_tangent:
+                            if is_periodic_or_procedural:
+                                dup_tol = max(tol * 500, 0.05)
+                            else:
+                                dup_tol = max(tol * 20, 0.005)
+                        else:
+                            dup_tol = tol * 10
+                            
                         for existing_point in refined_intersections:
                             if np.linalg.norm(np.array(solution) - np.array(existing_point)) < dup_tol:
                                 is_duplicate = True
@@ -195,26 +253,36 @@ def find_curve_intersections(
 def _are_curves_identical_fast(curve1, curve2, tolerance: float, search_range: float = 5.0) -> bool:
     """
     Fast check if two curves are identical by sampling a few points.
+    Returns True only if all test points give finite, close values on both curves.
     """
-    # Quick test with just a few points and distributed sampling points
+    # Quick test with just a few points and distributed sampling points.
+    # Added irrational offsets to prevent sampling points from landing exactly on periodic zeros (e.g., multiples of pi)
     test_points = [
-        (0.0, 0.0),
-        (0.5 * search_range, 0.2 * search_range),
-        (-0.3 * search_range, -0.7 * search_range),
-        (0.8 * search_range, -0.1 * search_range),
-        (-0.9 * search_range, 0.6 * search_range),
+        (0.123, 0.456),
+        (0.5 * search_range + 0.123, 0.2 * search_range + 0.456),
+        (-0.3 * search_range + 0.123, -0.7 * search_range + 0.456),
+        (0.8 * search_range + 0.123, -0.1 * search_range + 0.456),
+        (-0.9 * search_range + 0.123, 0.6 * search_range + 0.456),
     ]
     
+    finite_count = 0
     for x, y in test_points:
         try:
             val1 = curve1.evaluate(x, y)
             val2 = curve2.evaluate(x, y)
-            if abs(val1 - val2) > tolerance:
+            v1 = float(val1[0]) if hasattr(val1, '__len__') else float(val1)
+            v2 = float(val2[0]) if hasattr(val2, '__len__') else float(val2)
+            # If either value is non-finite (NaN from domain restriction), skip this test point
+            if not np.isfinite(v1) or not np.isfinite(v2):
+                continue
+            finite_count += 1
+            if abs(v1 - v2) > tolerance:
                 return False
         except Exception:
             return False
     
-    return True
+    # If we had no finite test points, we cannot conclude they are identical
+    return finite_count >= 3
 
 
 def _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2):
@@ -264,9 +332,12 @@ def _cluster_candidates_fast(candidate_points, grid_spacing: float = 0.02):
         # For small numbers, just return all points
         return candidate_points
     
-    # Sub-sample candidate points if there are too many, to prevent O(N^2) pdist performance bottlenecks
-    if len(candidate_points) > 400:
-        indices = np.linspace(0, len(candidate_points) - 1, 400, dtype=int)
+    # Sub-sample candidate points if there are too many, to prevent O(N^2) pdist performance bottlenecks.
+    # Use random sampling to avoid periodic aliasing/moire patterns that miss entire clusters.
+    if len(candidate_points) > 1000:
+        rng = np.random.default_rng(42)
+        indices = rng.choice(len(candidate_points), 1000, replace=False)
+        indices.sort()
         candidate_points = candidate_points[indices]
     
     # For larger numbers, use simple distance-based clustering

@@ -115,6 +115,8 @@ class ImplicitCurve:
         import math
         
         expr = self.expression
+        if expr is None:
+            return []
         free = expr.free_symbols
         x_sym = next((s for s in free if s.name == 'x'), None)
         y_sym = next((s for s in free if s.name == 'y'), None)

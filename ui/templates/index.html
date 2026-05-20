@@ -20,13 +20,14 @@
         </div>
 
         <div class="sidebar-section-label">Tests</div>
-
+        
         <!-- Transport controls -->
         <div class="runner-transport">
             <button class="run-btn" id="runner-prev"  title="Previous test">&#9664;</button>
             <button class="run-btn run-play" id="runner-play"  title="Play / auto-advance">&#9654;</button>
             <button class="run-btn run-pause" id="runner-pause" title="Pause" style="display:none">&#9646;&#9646;</button>
             <button class="run-btn" id="runner-next"  title="Next test">&#9654;&#9654;</button>
+            <button class="run-btn" id="runner-render-all" title="Auto-render all 155 periodic cases and save to disk" style="display:none">📸</button>
         </div>
         <!-- Speed selector -->
         <div class="runner-speed">
@@ -40,6 +41,12 @@
         </div>
         <!-- Test index indicator -->
         <div class="runner-index" id="runner-index">– / –</div>
+
+        <!-- Test Suite Selector Tabs -->
+        <div class="test-suite-selector">
+            <button class="suite-tab-btn active" id="suite-standard-btn" title="Load Standard geometric test suite">Standard</button>
+            <button class="suite-tab-btn" id="suite-periodic-btn" title="Load Periodic Curves test suite (155 cases)">Periodic</button>
+        </div>
 
         <!-- Scrollable test list -->
         <div id="geometry-test-list" class="test-list-scroll"></div>

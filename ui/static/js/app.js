@@ -39,8 +39,8 @@ uiClient.on('scene_updated', (data) => {
     // Single fetch replaces N per-object socket calls
     geometryStudio?.refreshSceneData();
     
-    // Hide verification panel if there are no database curves loaded
-    if (data.objects && !data.objects.some(id => id.startsWith('db_curve_'))) {
+    // Hide verification panel if there are no database curves loaded and we're not in periodic mode
+    if (data.objects && !data.objects.some(id => id.startsWith('db_curve_')) && (!geometryStudio || geometryStudio.suite !== 'periodic')) {
         document.getElementById('db-verification-panel')?.classList.add('hidden');
     }
 });

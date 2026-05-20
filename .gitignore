@@ -206,4 +206,8 @@ runner_output.log
 # Rendered images
 ui/static/renders/*.png
 
-
+# Periodic curve comparison outputs
+docs/renders/
+ui/static/renders/periodic_curves/
+docs/periodic_curve_gallery.html
+scratch/

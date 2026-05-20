@@ -320,23 +320,23 @@ class CanvasRenderer extends EventEmitter {
 
     renderIntersections() {
         this.ctx.save();
-        this.ctx.fillStyle = '#ff4d6d'; // Premium bright neon rose/red
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.shadowColor = 'rgba(255, 77, 109, 0.5)';
-        this.ctx.shadowBlur = 6; // Refined, clean glow
-        
         this.intersections.forEach((point) => {
             const screen = this.worldToScreen(point.x, point.y);
             const radius = 5.5; // Slightly smaller, refined dot
             
+            this.ctx.save();
             this.ctx.beginPath();
             this.ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = point.color || '#ff4d6d'; // Premium bright neon rose/red or custom
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 1.5;
+            this.ctx.shadowColor = point.color || 'rgba(255, 77, 109, 0.5)';
+            this.ctx.shadowBlur = 6; // Refined, clean glow
             this.ctx.fill();
             this.ctx.stroke();
+            this.ctx.restore();
 
             this.ctx.save();
-            this.ctx.shadowBlur = 0;
             this.ctx.fillStyle = '#f8fbff'; // Clean off-white
             this.ctx.strokeStyle = 'rgba(5, 6, 10, 0.85)'; // High-contrast dark outline
             this.ctx.lineWidth = 3;
@@ -606,14 +606,14 @@ class CanvasRenderer extends EventEmitter {
 
     renderKeyPoints(points, style) {
         const radius = 5 / this.viewport.scale;
-        const fill = style.color || '#ff6b6b';
 
         this.ctx.save();
-        this.ctx.fillStyle = fill;
-        this.ctx.strokeStyle = '#0d1b2a';
-        this.ctx.lineWidth = 1 / this.viewport.scale;
-
         points.forEach((point) => {
+            const fill = point.color || style.color || '#ff6b6b';
+            this.ctx.fillStyle = fill;
+            this.ctx.strokeStyle = '#0d1b2a';
+            this.ctx.lineWidth = 1 / this.viewport.scale;
+            
             this.ctx.beginPath();
             this.ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
             this.ctx.fill();

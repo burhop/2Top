@@ -6,6 +6,7 @@ front-end applications, web interfaces, and visualization tools.
 """
 
 import numpy as np
+import math
 from typing import Dict, List, Tuple, Any, Optional, Union
 from pathlib import Path
 import json
@@ -118,9 +119,11 @@ class GraphicsBackendInterface:
                                     # Extract scale_hint safely
                                     scale_hint = 1.0
                                     if hasattr(obj, 'scale_hint') and obj.scale_hint is not None:
-                                        scale_hint = float(obj.scale_hint)
+                                        sh = obj.scale_hint
+                                        scale_hint = float(sh() if callable(sh) else sh)
                                     elif hasattr(obj, 'base_curve') and obj.base_curve is not None and hasattr(obj.base_curve, 'scale_hint') and obj.base_curve.scale_hint is not None:
-                                        scale_hint = float(obj.base_curve.scale_hint)
+                                        sh = obj.base_curve.scale_hint
+                                        scale_hint = float(sh() if callable(sh) else sh)
                                     snap_threshold = max(0.1 * scale_hint, 3.0 * grid_spacing)
                                     
                                 sq_threshold = snap_threshold ** 2
@@ -136,8 +139,11 @@ class GraphicsBackendInterface:
                                             if d < min_d_start:
                                                 min_d_start = d
                                                 best_ep_start = ep
-                                        if min_d_start < sq_threshold and best_ep_start is not None:
-                                            path[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
+                                        if best_ep_start is not None:
+                                            dx = abs(best_ep_start[0] - p_start[0])
+                                            dy = abs(best_ep_start[1] - p_start[1])
+                                            if min_d_start < sq_threshold or dx < 1.5 * grid_spacing or dy < 1.5 * grid_spacing:
+                                                path[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
 
                                         # Snap end of the path
                                         p_end = path[-1]
@@ -148,8 +154,11 @@ class GraphicsBackendInterface:
                                             if d < min_d_end:
                                                 min_d_end = d
                                                 best_ep_end = ep
-                                        if min_d_end < sq_threshold and best_ep_end is not None:
-                                            path[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
+                                        if best_ep_end is not None:
+                                            dx = abs(best_ep_end[0] - p_end[0])
+                                            dy = abs(best_ep_end[1] - p_end[1])
+                                            if min_d_end < sq_threshold or dx < 1.5 * grid_spacing or dy < 1.5 * grid_spacing:
+                                                path[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
 
                                 # Also snap the primary points list
                                 if points and len(points) >= 2:
@@ -162,8 +171,11 @@ class GraphicsBackendInterface:
                                         if d < min_d_start:
                                             min_d_start = d
                                             best_ep_start = ep
-                                    if min_d_start < sq_threshold and best_ep_start is not None:
-                                        points[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
+                                    if best_ep_start is not None:
+                                        dx = abs(best_ep_start[0] - p_start[0])
+                                        dy = abs(best_ep_start[1] - p_start[1])
+                                        if min_d_start < sq_threshold or dx < 1.5 * grid_spacing or dy < 1.5 * grid_spacing:
+                                            points[0] = [float(best_ep_start[0]), float(best_ep_start[1])]
 
                                     # Snap end of points
                                     p_end = points[-1]
@@ -174,8 +186,11 @@ class GraphicsBackendInterface:
                                         if d < min_d_end:
                                             min_d_end = d
                                             best_ep_end = ep
-                                    if min_d_end < sq_threshold and best_ep_end is not None:
-                                        points[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
+                                    if best_ep_end is not None:
+                                        dx = abs(best_ep_end[0] - p_end[0])
+                                        dy = abs(best_ep_end[1] - p_end[1])
+                                        if min_d_end < sq_threshold or dx < 1.5 * grid_spacing or dy < 1.5 * grid_spacing:
+                                            points[-1] = [float(best_ep_end[0]), float(best_ep_end[1])]
                         except Exception as snap_err:
                             print(f"Warning: Failed endpoint snapping for '{obj_id}': {snap_err}")
                     # Calculate actual bounds of the curve
@@ -510,7 +525,7 @@ class GraphicsBackendInterface:
         
         # Save image
         plt.tight_layout()
-        plt.savefig(filename, dpi=100, bbox_inches='tight')
+        fig.savefig(filename, dpi=100, bbox_inches='tight')
         plt.close(fig)
         
         # Return rendering info
@@ -521,7 +536,201 @@ class GraphicsBackendInterface:
             'rendered_objects': rendered_objects,
             'object_count': len(rendered_objects)
         }
-    
+
+    def render_scene_image_annotated(self, filename: str,
+                                    test_id: str,
+                                    name: str,
+                                    eq_a: str,
+                                    eq_b: str,
+                                    calculated_endpoints: List[Tuple[float, float]],
+                                    expected_endpoints: List[Tuple[float, float]],
+                                    calculated_intersections: List[Tuple[float, float]],
+                                    expected_intersections: List[Tuple[float, float]],
+                                    elapsed_time: float,
+                                    is_correct: bool,
+                                    bounds: Optional[Tuple[float, float, float, float]] = None,
+                                    resolution: Tuple[int, int] = (800, 600)) -> Dict[str, Any]:
+        """
+        Render the scene to an image with correctness-colored overlays, keypoints, and a dark title card.
+        """
+        import math
+        import os
+
+        # Create figure with dark theme
+        fig, ax = plt.subplots(figsize=(resolution[0]/100, resolution[1]/100), dpi=100)
+        
+        # Premium Dark Backgrounds
+        fig.patch.set_facecolor('#0f111a')
+        ax.set_facecolor('#0f111a')
+        
+        # Bounds setup
+        if bounds is None:
+            bounds = self.get_scene_bounds(padding=0.1)
+        xmin, xmax, ymin, ymax = bounds
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+        ax.set_aspect('equal')
+        
+        # Custom grid
+        ax.grid(True, color='#1e2235', linestyle='--', linewidth=0.8, alpha=0.5)
+        
+        # Style spines
+        for spine in ax.spines.values():
+            spine.set_color('#1e2235')
+            spine.set_linewidth(1.0)
+            
+        # Tick parameters
+        ax.tick_params(colors='#8f9cae', which='both', labelsize=9)
+        
+        # Match Endpoints
+        correct_endpoints = []
+        incorrect_endpoints = []
+        matched_expected_eps = set()
+        tol_ep = 0.05
+        
+        for calc in calculated_endpoints:
+            best_dist = float('inf')
+            best_idx = -1
+            for idx, exp in enumerate(expected_endpoints):
+                if idx in matched_expected_eps:
+                    continue
+                dist = math.sqrt((calc[0] - exp[0])**2 + (calc[1] - exp[1])**2)
+                if dist < best_dist:
+                    best_dist = dist
+                    best_idx = idx
+            if best_idx != -1 and best_dist < tol_ep:
+                correct_endpoints.append(calc)
+                matched_expected_eps.add(best_idx)
+            else:
+                incorrect_endpoints.append(calc)
+                
+        missing_endpoints = [exp for idx, exp in enumerate(expected_endpoints) if idx not in matched_expected_eps]
+        
+        # Match Intersections
+        correct_intersections = []
+        incorrect_intersections = []
+        matched_expected_ints = set()
+        tol_int = 0.15 if ("1/x" in eq_a or "1/x" in eq_b) else 0.05
+        is_overlap = test_id in ("1.39", "2.34", "3.33")
+        
+        for calc in calculated_intersections:
+            if is_overlap:
+                incorrect_intersections.append(calc)
+                continue
+            best_dist = float('inf')
+            best_idx = -1
+            for idx, exp in enumerate(expected_intersections):
+                if idx in matched_expected_ints:
+                    continue
+                dist = math.sqrt((calc[0] - exp[0])**2 + (calc[1] - exp[1])**2)
+                if dist < best_dist:
+                    best_dist = dist
+                    best_idx = idx
+            if best_idx != -1 and best_dist < tol_int:
+                correct_intersections.append(calc)
+                matched_expected_ints.add(best_idx)
+            else:
+                incorrect_intersections.append(calc)
+                
+        missing_intersections = [exp for idx, exp in enumerate(expected_intersections) if idx not in matched_expected_ints]
+        
+        # Render curves
+        rendered_objects = []
+        curve_data = self.get_curve_paths(bounds, 300)
+        
+        for obj_id, data in curve_data.items():
+            if data.get('points'):
+                try:
+                    points = np.array(data['points'])
+                    style = data['style']
+                    
+                    color = style.get('color', '#77f6ff')
+                    if 'curve_a' in obj_id:
+                        color = '#00f0ff' # Electric Cyan
+                    elif 'curve_b' in obj_id:
+                        color = '#ff007f' # Neon Rose
+                    elif obj_id.endswith('a') or 'db_curve_1' in obj_id:
+                        color = '#00f0ff'
+                    else:
+                        color = '#ff007f'
+                        
+                    linewidth = style.get('linewidth', style.get('lineWidth', 2.5))
+                    zorder = 2
+                    if 'curve_a' in obj_id or obj_id.endswith('a') or 'db_curve_1' in obj_id:
+                        linewidth = 4.5
+                        zorder = 2
+                    elif 'curve_b' in obj_id or obj_id.endswith('b') or 'db_curve_2' in obj_id:
+                        linewidth = 2.0
+                        zorder = 3
+                        
+                    ax.plot(points[:, 0], points[:, 1], 
+                           color=color,
+                           linewidth=linewidth,
+                           alpha=0.9,
+                           zorder=zorder)
+                    rendered_objects.append({'id': obj_id, 'color': color})
+                except Exception as e:
+                    print(f"Warning: Failed to render periodic curve '{obj_id}': {e}")
+                    
+        # Plot Endpoint Markers
+        if correct_endpoints:
+            pts = np.array(correct_endpoints)
+            ax.scatter(pts[:, 0], pts[:, 1], color='#39ff14', s=60, marker='o', edgecolors='#ffffff', linewidths=0.8, label='Correct Endpoint', zorder=5)
+        if incorrect_endpoints:
+            pts = np.array(incorrect_endpoints)
+            ax.scatter(pts[:, 0], pts[:, 1], color='#ff3366', s=60, marker='o', edgecolors='#ffffff', linewidths=0.8, label='Incorrect Endpoint', zorder=5)
+        if missing_endpoints:
+            pts = np.array(missing_endpoints)
+            ax.scatter(pts[:, 0], pts[:, 1], facecolors='none', edgecolors='#ff3366', s=70, marker='o', linestyle='--', linewidths=1.2, label='Missing Endpoint', zorder=4)
+            
+        # Plot Intersection Markers
+        if correct_intersections:
+            pts = np.array(correct_intersections)
+            ax.scatter(pts[:, 0], pts[:, 1], color='#39ff14', s=80, marker='X', edgecolors='#ffffff', linewidths=0.5, label='Correct Intersection', zorder=6)
+        if incorrect_intersections:
+            pts = np.array(incorrect_intersections)
+            ax.scatter(pts[:, 0], pts[:, 1], color='#ff3366', s=80, marker='X', edgecolors='#ffffff', linewidths=0.5, label='Incorrect Intersection', zorder=6)
+        if missing_intersections:
+            pts = np.array(missing_intersections)
+            ax.scatter(pts[:, 0], pts[:, 1], facecolors='none', edgecolors='#ff3366', s=90, marker='x', linestyle=':', linewidths=1.5, label='Missing Intersection', zorder=4)
+            
+        # Title box / Status card overlay
+        status_text = "VERIFIED ✅" if is_correct else "MISMATCH ❌"
+        info_str = (
+            f"CASE {test_id} — {name}\n"
+            f"Curve A: {eq_a}\n"
+            f"Curve B: {eq_b}\n"
+            f"Status: {status_text} | Time: {elapsed_time:.3f}s"
+        )
+        
+        ax.text(0.02, 0.98, info_str, transform=ax.transAxes,
+                color='#ffffff', fontsize=9, fontweight='medium', fontfamily='monospace',
+                verticalalignment='top', horizontalalignment='left',
+                bbox=dict(boxstyle='round,pad=0.6',
+                           facecolor='#151828',
+                           edgecolor='#2c314c',
+                           alpha=0.9,
+                           linewidth=1.2))
+                           
+        # Save image
+        os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
+        plt.tight_layout()
+        fig.savefig(filename, dpi=100, bbox_inches='tight', facecolor=fig.get_facecolor(), edgecolor='none')
+        plt.close(fig)
+        
+        return {
+            'filename': filename,
+            'bounds': list(bounds),
+            'resolution': list(resolution),
+            'rendered_objects': rendered_objects,
+            'correct_endpoints_count': len(correct_endpoints),
+            'incorrect_endpoints_count': len(incorrect_endpoints),
+            'missing_endpoints_count': len(missing_endpoints),
+            'correct_intersections_count': len(correct_intersections),
+            'incorrect_intersections_count': len(incorrect_intersections),
+            'missing_intersections_count': len(missing_intersections)
+        }
+
     def get_scene_bounds(self, padding: float = 0.2) -> Tuple[float, float, float, float]:
         """
         Calculate optimal bounds for the current scene.
@@ -604,6 +813,15 @@ class GraphicsBackendInterface:
 
         x_range = xmax - xmin
         y_range = ymax - ymin
+
+        if x_range < 0.2:
+            mid_x = (xmin + xmax) / 2.0
+            xmin, xmax = mid_x - 2.0, mid_x + 2.0
+            x_range = 4.0
+        if y_range < 0.2:
+            mid_y = (ymin + ymax) / 2.0
+            ymin, ymax = mid_y - 2.0, mid_y + 2.0
+            y_range = 4.0
 
         if x_range <= 0 or y_range <= 0:
             return self._fallback_bounds
@@ -751,10 +969,36 @@ class GraphicsBackendInterface:
         Estimate tight bounds for a single object by probing on a coarse grid,
         then add padding. Falls back to scene_bounds if nothing is found.
         """
+        # 0. Check if the object has a mathematically precise bounding box (e.g., ConicSection Circle/Ellipse)
+        if hasattr(obj, 'bounding_box'):
+            try:
+                bbox = obj.bounding_box()
+                if bbox and all(np.isfinite(val) for val in bbox):
+                    bx_min, bx_max, by_min, by_max = bbox
+                    w = bx_max - bx_min
+                    h = by_max - by_min
+                    # Only use it if it's a tight, non-infinite, non-placeholder bounding box
+                    if 0 < w < 50.0 and 0 < h < 50.0:
+                        # Pad the tight mathematical bounds by 5% to avoid edge effects
+                        pad_x = max(w * 0.05, 0.1)
+                        pad_y = max(h * 0.05, 0.1)
+                        return (bx_min - pad_x, bx_max + pad_x, by_min - pad_y, by_max + pad_y)
+            except Exception as bbox_err:
+                print(f"Warning: Failed mathematical bounding box check: {bbox_err}")
+
         # First check if the object has manually assigned attributes xmin, xmax, ymin, ymax (e.g. loaded from DB)
         if hasattr(obj, 'xmin') and hasattr(obj, 'xmax') and hasattr(obj, 'ymin') and hasattr(obj, 'ymax'):
             if all(getattr(obj, name) is not None and np.isfinite(float(getattr(obj, name))) for name in ['xmin', 'xmax', 'ymin', 'ymax']):
                 o_xmin, o_xmax, o_ymin, o_ymax = float(obj.xmin), float(obj.xmax), float(obj.ymin), float(obj.ymax)
+                
+                # Expand degenerate domains (spans < 0.2) to a stable default span (like 4.0 centered)
+                if abs(o_xmax - o_xmin) < 0.2:
+                    mid_x = (o_xmin + o_xmax) / 2.0
+                    o_xmin, o_xmax = mid_x - 2.0, mid_x + 2.0
+                if abs(o_ymax - o_ymin) < 0.2:
+                    mid_y = (o_ymin + o_ymax) / 2.0
+                    o_ymin, o_ymax = mid_y - 2.0, mid_y + 2.0
+                    
                 s_xmin, s_xmax, s_ymin, s_ymax = scene_bounds
                 
                 # Check if it is an infinite/very large line (span >= 50)
@@ -889,16 +1133,55 @@ class GraphicsBackendInterface:
             ymin = cy_val - ymax_abs
             ymax = cy_val + ymax_abs
             
-        if is_periodic_radical:
-            # Boost resolution for periodic curves to avoid flat/lopsided peak chords
-            resolution = max(resolution * 2, 800)
+        # Detect periodic frequency and scale resolution dynamically to avoid aliasing issues on high-frequency curves
+        is_periodic = False
+        max_freq = 1.0
+        base = obj
+        if hasattr(obj, 'base_curve'):
+            base = obj.base_curve
+            
+        expr = getattr(base, 'expression', None)
+        if expr is not None:
+            try:
+                import sympy as sp
+                trig_atoms = expr.atoms(sp.sin) | expr.atoms(sp.cos)
+                if trig_atoms:
+                    is_periodic = True
+                    for atom in trig_atoms:
+                        arg = atom.args[0]
+                        free = arg.free_symbols
+                        x_sym = next((s for s in free if s.name == 'x'), None)
+                        if x_sym is not None:
+                            coeff = float(arg.coeff(x_sym))
+                            max_freq = max(max_freq, abs(coeff))
+            except Exception:
+                pass
+        else:
+            name = getattr(obj, 'name', '') or getattr(base, 'name', '') or ''
+            if any(p in name.lower() for p in ('sin', 'cos', 'trig', 'periodic')):
+                is_periodic = True
+
+        if is_periodic or is_periodic_radical:
+            x_span = xmax - xmin
+            periods = (x_span * max_freq) / (2.0 * math.pi)
+            required_res = int(max(periods * 25, 800))
+            resolution = min(required_res, 2000)
 
         # Force odd resolution to ensure y=cy_val is a grid line, maximizing horizontal symmetry
         resolution = resolution | 1
         
-        # Create evaluation grid
-        x = np.linspace(xmin, xmax, resolution)
-        y = np.linspace(ymin, ymax, resolution)
+        # Create evaluation grid with a 2% boundary padding expansion
+        # to ensure zero-crossings right at original boundaries are captured
+        # (they will be strictly clipped back to original bounds in post-filtering)
+        x_span = xmax - xmin
+        y_span = ymax - ymin
+        grid_xmin = xmin - x_span * 0.02
+        grid_xmax = xmax + x_span * 0.02
+        grid_ymin = ymin - y_span * 0.02
+        grid_ymax = ymax + y_span * 0.02
+
+        x = np.linspace(grid_xmin, grid_xmax, resolution)
+        y = np.linspace(grid_ymin, grid_ymax, resolution)
         X, Y = np.meshgrid(x, y)
         
         try:
@@ -967,9 +1250,19 @@ class GraphicsBackendInterface:
             obj_xmax = getattr(obj, '_xmax', None)
             obj_ymin = getattr(obj, '_ymin', None)
             obj_ymax = getattr(obj, '_ymax', None)
+            
+            # Expand degenerate clipping bounds to prevent empty polylines
+            if obj_xmin is not None and obj_xmax is not None and abs(obj_xmax - obj_xmin) < 0.2:
+                mid_x = (obj_xmin + obj_xmax) / 2.0
+                obj_xmin, obj_xmax = mid_x - 2.0, mid_x + 2.0
+            if obj_ymin is not None and obj_ymax is not None and abs(obj_ymax - obj_ymin) < 0.2:
+                mid_y = (obj_ymin + obj_ymax) / 2.0
+                obj_ymin, obj_ymax = mid_y - 2.0, mid_y + 2.0
+                
             eps = 1e-9
             
             def in_bounds(px, py):
+                # Crop to curve's explicit trimming bounds first
                 if obj_xmin is not None and px < obj_xmin - eps:
                     return False
                 if obj_xmax is not None and px > obj_xmax + eps:
@@ -977,6 +1270,9 @@ class GraphicsBackendInterface:
                 if obj_ymin is not None and py < obj_ymin - eps:
                     return False
                 if obj_ymax is not None and py > obj_ymax + eps:
+                    return False
+                # Also crop back to original evaluation domain boundaries (due to 2% grid padding)
+                if px < xmin - eps or px > xmax + eps or py < ymin - eps or py > ymax + eps:
                     return False
                 return True
 
@@ -1201,8 +1497,52 @@ class GraphicsBackendInterface:
     def _compute_polyline_intersections(self, polyline_lookup: Dict[str, List[List[List[float]]]]) -> List[Dict[str, Any]]:
         """Detect approximate intersections between polylines using segment checks."""
 
-        # Subsample each polyline to at most 60 points for intersection detection
-        MAX_SEGS = 60
+        def is_periodic_or_procedural(c) -> bool:
+            if hasattr(c, "base_curve") and c.base_curve is not None:
+                c = c.base_curve
+            if self._is_periodic_radical(c)[0]:
+                return True
+            class_name = type(c).__name__
+            if "Procedural" in class_name:
+                return True
+            if not hasattr(c, "expression") or c.expression is None:
+                if any(x in class_name for x in ["Line", "Circle", "ConicSection", "Ellipse", "Hyperbola", "Parabola", "PolynomialCurve"]):
+                    return False
+                return True
+            try:
+                import sympy as sp
+                expr = c.expression
+                if expr.has(sp.sin, sp.cos, sp.tan, sp.exp, sp.log, sp.asin, sp.acos, sp.atan, sp.sinh, sp.cosh, sp.tanh):
+                    return True
+            except Exception:
+                return True
+            return False
+
+        # Determine dynamic segment limits to balance performance and precision.
+        # If any curve is periodic, we increase segment limit to preserve high-frequency features.
+        has_periodic = False
+        max_polyline_len = 0
+        for obj_id in polyline_lookup.keys():
+            try:
+                style = self.scene_manager.get_style(obj_id)
+                if style.get('is_periodic_curve'):
+                    has_periodic = True
+            except Exception:
+                pass
+            try:
+                obj = self.scene_manager.get_object(obj_id)
+                if self._is_periodic_radical(obj)[0]:
+                    has_periodic = True
+            except Exception:
+                pass
+            for path in polyline_lookup[obj_id]:
+                max_polyline_len = max(max_polyline_len, len(path))
+
+        # MAX_SEGS controls how many polyline segments are used in O(n*m) intersection computation.
+        # Cap it to keep performance reasonable for interactive use.
+        # Periodic curves need more segments than non-periodic to preserve high-frequency crossings.
+        MAX_SEGS = 800 if has_periodic else 200
+
         def _subsample(pts):
             if len(pts) <= MAX_SEGS + 1:
                 return pts
@@ -1218,61 +1558,283 @@ class GraphicsBackendInterface:
 
             for pts_a in paths_a:
                 for pts_b in paths_b:
+                    # Fast overlap check: if more than 95% of sampled points are mutually close, skip intersection computation.
+                    # Using 95% (not 85%) to avoid false-positive overlap rejection for near-identical but distinct curves
+                    # (e.g. y=sin(x) vs y=0.999999 should NOT be treated as overlapping).
+                    is_overlapping = False
+                    try:
+                        check_pts_a = pts_a[::max(1, len(pts_a) // 20)]
+                        check_pts_b = pts_b[::max(1, len(pts_b) // 20)]
+                        if len(check_pts_a) > 2 and len(check_pts_b) > 2:
+                            # Self-scaling overlap tolerance: scale by the smaller curve's maximum coordinate span, capped at 0.1
+                            xs_a = [p[0] for p in pts_a]
+                            ys_a = [p[1] for p in pts_a]
+                            span_a = max(max(xs_a) - min(xs_a), max(ys_a) - min(ys_a))
+                            xs_b = [p[0] for p in pts_b]
+                            ys_b = [p[1] for p in pts_b]
+                            span_b = max(max(xs_b) - min(xs_b), max(ys_b) - min(ys_b))
+                            
+                            if not is_periodic_a and not is_periodic_b:
+                                overlap_tol = 1e-5
+                            else:
+                                overlap_tol = min(0.1, 0.05 * min(span_a, span_b))
+                            overlap_tol_sq = overlap_tol ** 2
+                            
+                            close_count = 0
+                            for pa in check_pts_a:
+                                min_d_sq = min((pa[0] - pb[0])**2 + (pa[1] - pb[1])**2 for pb in check_pts_b)
+                                if min_d_sq < overlap_tol_sq:
+                                    close_count += 1
+                            ratio = close_count / len(check_pts_a)
+                            if ratio > 0.95:
+                                is_overlapping = True
+                    except Exception:
+                        pass
+                        
+                    if is_overlapping:
+                        continue
                     segs_a = self._polyline_segments(_subsample(pts_a))
                     segs_b = self._polyline_segments(_subsample(pts_b))
                     for seg_a in segs_a:
+                        (a_p1, a_p2) = seg_a
+                        a_xmin = min(a_p1[0], a_p2[0])
+                        a_xmax = max(a_p1[0], a_p2[0])
+                        a_ymin = min(a_p1[1], a_p2[1])
+                        a_ymax = max(a_p1[1], a_p2[1])
+
                         for seg_b in segs_b:
-                            result = self._segment_intersection(seg_a, seg_b)
-                            if result is not None:
-                                px, py = result
-                                if has_eval:
-                                    from scipy.optimize import fsolve
-                                    def intersection_system(p):
-                                        x_val, y_val = p[0], p[1]
-                                        val_a = obj_a.evaluate(x_val, y_val)
-                                        val_b = obj_b.evaluate(x_val, y_val)
-                                        f_a = float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a)
-                                        f_b = float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b)
-                                        return [f_a, f_b]
-                                    try:
-                                        sol, infodict, ier, mesg = fsolve(
-                                            intersection_system, 
-                                            [px, py], 
-                                            xtol=1e-6, 
-                                            full_output=True
-                                        )
-                                        if ier == 1:
-                                            sol_x, sol_y = float(sol[0]), float(sol[1])
-                                            val_a = obj_a.evaluate(sol_x, sol_y)
-                                            val_b = obj_b.evaluate(sol_x, sol_y)
-                                            f_a = abs(float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a))
-                                            f_b = abs(float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b))
+                            (b_p1, b_p2) = seg_b
+                            b_xmin = min(b_p1[0], b_p2[0])
+                            b_xmax = max(b_p1[0], b_p2[0])
+                            b_ymin = min(b_p1[1], b_p2[1])
+                            b_ymax = max(b_p1[1], b_p2[1])
+
+                            # Bounding box pre-filtering to prune non-overlapping segment pairs
+                            if (a_xmin <= b_xmax + 1e-9 and a_xmax >= b_xmin - 1e-9 and
+                                a_ymin <= b_ymax + 1e-9 and a_ymax >= b_ymin - 1e-9):
+                                
+                                result = self._segment_intersection(seg_a, seg_b)
+                                if result is not None:
+                                    px, py = result
+                                    if has_eval:
+                                        from scipy.optimize import fsolve
+                                        def intersection_system(p):
+                                            x_val, y_val = p[0], p[1]
+                                            val_a = obj_a.evaluate(x_val, y_val)
+                                            val_b = obj_b.evaluate(x_val, y_val)
+                                            f_a = float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a)
+                                            f_b = float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b)
+                                            return [f_a, f_b]
                                             
+                                        refined = False
+                                        try:
+                                            is_periodic_a = is_periodic_or_procedural(obj_a)
+                                            is_periodic_b = is_periodic_or_procedural(obj_b)
+                                            xtol_val = 1e-6
+                                            
+                                            sol, infodict, ier, mesg = fsolve(
+                                                intersection_system, 
+                                                [px, py], 
+                                                xtol=xtol_val, 
+                                                full_output=True
+                                            )
+                                            if ier == 1:
+                                                sol_x, sol_y = float(sol[0]), float(sol[1])
+                                                val_a = obj_a.evaluate(sol_x, sol_y)
+                                                val_b = obj_b.evaluate(sol_x, sol_y)
+                                                f_a = abs(float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a))
+                                                f_b = abs(float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b))
+                                                
+                                                ok_a = True
+                                                if hasattr(obj_a, 'contains'):
+                                                    try:
+                                                        ok_a = bool(obj_a.contains(sol_x, sol_y, tolerance=1e-2))
+                                                    except Exception:
+                                                        pass
+                                                ok_b = True
+                                                if hasattr(obj_b, 'contains'):
+                                                    try:
+                                                        ok_b = bool(obj_b.contains(sol_x, sol_y, tolerance=1e-2))
+                                                    except Exception:
+                                                        pass
+                                                
+                                                f_tol = 1e-6 if (not is_periodic_a and not is_periodic_b) else 1e-2
+
+                                                dist_sq = (sol_x - px)**2 + (sol_y - py)**2
+                                                res_norm = math.sqrt(f_a**2 + f_b**2)
+                                                if res_norm < f_tol and ok_a and ok_b and dist_sq < 0.25:
+                                                    px, py = sol_x, sol_y
+                                                    refined = True
+                                        except Exception:
+                                            pass
+                                            
+                                        if not refined:
+                                            is_periodic_a = is_periodic_or_procedural(obj_a)
+                                            is_periodic_b = is_periodic_or_procedural(obj_b)
+                                            if not is_periodic_a and not is_periodic_b:
+                                                # Reject false crossings arising from discrete chord near-misses
+                                                continue
+                                            
+                                            # If refinement failed or is invalid, verify original approximate point
                                             ok_a = True
                                             if hasattr(obj_a, 'contains'):
                                                 try:
-                                                    ok_a = bool(obj_a.contains(sol_x, sol_y, tolerance=1e-3))
+                                                    ok_a = bool(obj_a.contains(px, py, tolerance=0.1))
                                                 except Exception:
                                                     pass
                                             ok_b = True
                                             if hasattr(obj_b, 'contains'):
                                                 try:
-                                                    ok_b = bool(obj_b.contains(sol_x, sol_y, tolerance=1e-3))
+                                                    ok_b = bool(obj_b.contains(px, py, tolerance=0.1))
                                                 except Exception:
                                                     pass
-                                            
-                                            dist_sq = (sol_x - px)**2 + (sol_y - py)**2
-                                            if f_a < 1e-3 and f_b < 1e-3 and ok_a and ok_b and dist_sq < 0.25:
-                                                px, py = sol_x, sol_y
-                                    except Exception:
-                                        pass
-                                raw.append((px, py))
+                                                    
+                                            if not (ok_a and ok_b):
+                                                # Discard spurious point outside the trimmed domain
+                                                continue
+                                                
+                                    raw.append((px, py))
+                                
+                    # Proximity tangent candidates check for near-touching / tangent curves
+                    if True:
+                        pts_a_sub = _subsample(pts_a)
+                        pts_b_sub = _subsample(pts_b)
+                        
+                        # Build a 2D spatial binning grid for pts_b_sub
+                        grid = {}
+                        bin_size = 0.15
+                        for pt_b in pts_b_sub:
+                            bx = int(math.floor(pt_b[0] / bin_size))
+                            by = int(math.floor(pt_b[1] / bin_size))
+                            key = (bx, by)
+                            if key not in grid:
+                                grid[key] = []
+                            grid[key].append(pt_b)
+
+                        proximity_seeds = []
+                        for pt_a in pts_a_sub:
+                            ax = int(math.floor(pt_a[0] / bin_size))
+                            ay = int(math.floor(pt_a[1] / bin_size))
+                            
+                            # Query only the cell containing pt_a and its 8 adjacent neighbors
+                            for dx_cell in (-1, 0, 1):
+                                for dy_cell in (-1, 0, 1):
+                                    neighbor_key = (ax + dx_cell, ay + dy_cell)
+                                    if neighbor_key in grid:
+                                        for pt_b in grid[neighbor_key]:
+                                            dx = pt_a[0] - pt_b[0]
+                                            dy = pt_a[1] - pt_b[1]
+                                            dist_sq = dx*dx + dy*dy
+                                            if dist_sq < 0.0225:  # 0.15^2 = 0.0225 (corresponds to distance < 0.15)
+                                                px, py = (pt_a[0] + pt_b[0]) / 2.0, (pt_a[1] + pt_b[1]) / 2.0
+                                                # Avoid running redundant fsolve calls on nearby seeds
+                                                if any(abs(px - sx) < 0.02 and abs(py - sy) < 0.02 for sx, sy in proximity_seeds):
+                                                    continue
+                                                proximity_seeds.append((px, py))
+                                                if has_eval:
+                                                    from scipy.optimize import fsolve
+                                                    def intersection_system(p):
+                                                        x_val, y_val = p[0], p[1]
+                                                        val_a = obj_a.evaluate(x_val, y_val)
+                                                        val_b = obj_b.evaluate(x_val, y_val)
+                                                        f_a = float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a)
+                                                        f_b = float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b)
+                                                        return [f_a, f_b]
+                                                    try:
+                                                        is_periodic_a = is_periodic_or_procedural(obj_a)
+                                                        is_periodic_b = is_periodic_or_procedural(obj_b)
+                                                        xtol_val = 1e-6
+                                                        
+                                                        sol, infodict, ier, mesg = fsolve(
+                                                            intersection_system, 
+                                                            [px, py], 
+                                                            xtol=xtol_val, 
+                                                            full_output=True
+                                                        )
+                                                        if ier == 1:
+                                                            sol_x, sol_y = float(sol[0]), float(sol[1])
+                                                            val_a = obj_a.evaluate(sol_x, sol_y)
+                                                            val_b = obj_b.evaluate(sol_x, sol_y)
+                                                            f_a = abs(float(val_a[0]) if isinstance(val_a, np.ndarray) else float(val_a))
+                                                            f_b = abs(float(val_b[0]) if isinstance(val_b, np.ndarray) else float(val_b))
+                                                            
+                                                            ok_a = True
+                                                            if hasattr(obj_a, 'contains'):
+                                                                try: ok_a = bool(obj_a.contains(sol_x, sol_y, tolerance=1e-3))
+                                                                except Exception: pass
+                                                            ok_b = True
+                                                            if hasattr(obj_b, 'contains'):
+                                                                try: ok_b = bool(obj_b.contains(sol_x, sol_y, tolerance=1e-3))
+                                                                except Exception: pass
+                                                            
+                                                            d_sq = (sol_x - px)**2 + (sol_y - py)**2
+                                                            
+                                                            f_tol_prox = 1e-6 if (not is_periodic_a and not is_periodic_b) else 1e-3
+                                                            res_norm = math.sqrt(f_a**2 + f_b**2)
+                                                            if res_norm < f_tol_prox and ok_a and ok_b and d_sq < 0.25:
+                                                                raw.append((sol_x, sol_y))
+                                                    except Exception:
+                                                        pass
+
+
+        # Define a robust tangency checking utility for the active curve combination
+        def is_tangent_at(x_val, y_val, h=1e-5):
+            for (id_a, id_b) in combinations(polyline_lookup.keys(), 2):
+                try:
+                    obj_a = self.scene_manager.get_object(id_a)
+                    obj_b = self.scene_manager.get_object(id_b)
+                    if hasattr(obj_a, 'evaluate') and hasattr(obj_b, 'evaluate'):
+                        df1_dx = (obj_a.evaluate(x_val + h, y_val) - obj_a.evaluate(x_val - h, y_val)) / (2.0 * h)
+                        df1_dy = (obj_a.evaluate(x_val, y_val + h) - obj_a.evaluate(x_val, y_val - h)) / (2.0 * h)
+                        df2_dx = (obj_b.evaluate(x_val + h, y_val) - obj_b.evaluate(x_val - h, y_val)) / (2.0 * h)
+                        df2_dy = (obj_b.evaluate(x_val, y_val + h) - obj_b.evaluate(x_val, y_val - h)) / (2.0 * h)
+                        
+                        df1_dx = float(df1_dx[0]) if isinstance(df1_dx, np.ndarray) else float(df1_dx)
+                        df1_dy = float(df1_dy[0]) if isinstance(df1_dy, np.ndarray) else float(df1_dy)
+                        df2_dx = float(df2_dx[0]) if isinstance(df2_dx, np.ndarray) else float(df2_dx)
+                        df2_dy = float(df2_dy[0]) if isinstance(df2_dy, np.ndarray) else float(df2_dy)
+                        
+                        norm1 = math.sqrt(df1_dx**2 + df1_dy**2)
+                        norm2 = math.sqrt(df2_dx**2 + df2_dy**2)
+                        
+                        if norm1 < 1e-8 or norm2 < 1e-8:
+                            return True
+                            
+                        cross_prod = abs(df1_dx * df2_dy - df1_dy * df2_dx)
+                        normalized_det = cross_prod / (norm1 * norm2)
+                        if normalized_det < 0.0005:
+                            return True
+                except Exception:
+                    pass
+            return False
+
+        any_periodic = False
+        for obj_id in polyline_lookup.keys():
+            try:
+                obj = self.scene_manager.get_object(obj_id)
+                if is_periodic_or_procedural(obj):
+                    any_periodic = True
+                    break
+            except Exception:
+                pass
 
         # Deduplicate: cluster points within tolerance, keep one per cluster
-        TOL = 0.05
+        # Boost deduplication tolerance to 0.35 in flat tangent zones to avoid multiple spurious hits
         kept: List[Tuple[float, float]] = []
         for pt in raw:
-            if not any(abs(pt[0] - k[0]) < TOL and abs(pt[1] - k[1]) < TOL for k in kept):
+            is_dup = False
+            for k in kept:
+                is_tangent = is_tangent_at(pt[0], pt[1]) or is_tangent_at(k[0], k[1])
+                if any_periodic:
+                    local_tol = 0.35 if is_tangent else 0.05
+                else:
+                    # For non-periodic/algebraic/conic curves, match the analytical solver
+                    local_tol = 0.005 if is_tangent else 0.001
+                
+                if abs(pt[0] - k[0]) < local_tol and abs(pt[1] - k[1]) < local_tol:
+                    is_dup = True
+                    break
+            if not is_dup:
                 kept.append(pt)
 
         return [

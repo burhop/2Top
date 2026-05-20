@@ -48,6 +48,14 @@ class SceneManager:
             'alpha': 1.0,
             'fill_alpha': 0.3
         }
+        
+    def clear(self) -> None:
+        """Clear all objects, styles, groups, and dependencies from the scene."""
+        self._objects.clear()
+        self._styles.clear()
+        self._groups.clear()
+        self._dependencies.clear()
+        self._reverse_dependencies.clear()
     
     # ================== Core Object Management ==================
     
