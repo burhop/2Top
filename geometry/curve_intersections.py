@@ -4,7 +4,7 @@ Curve intersection utilities - finding discrete intersection points
 
 import numpy as np
 import sympy as sp
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Any, Callable
 from scipy.optimize import fsolve
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import fcluster, linkage
@@ -40,6 +40,7 @@ def find_curve_intersections(
     max_points: int = 200,
     detect_overlap: bool = False,
     precision_policy: Optional[PrecisionPolicy] = None,
+    registry_callback: Optional[Callable[[float, float, Any, Any], None]] = None,
 ) -> List[Tuple[float, float]]:
     """
     Find intersection points between two implicit curves.
@@ -250,6 +251,13 @@ def find_curve_intersections(
         except Exception:
             continue
     
+    if registry_callback is not None:
+        for x_val, y_val in refined_intersections:
+            try:
+                registry_callback(x_val, y_val, curve1, curve2)
+            except Exception as e:
+                print(f"Error in registry callback: {e}")
+                
     return refined_intersections[:max_points]
 
 

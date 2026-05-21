@@ -344,6 +344,76 @@ class TrimmedImplicitCurve(ImplicitCurve):
         )
         return obj
 
+    @classmethod
+    def from_anchors(
+        cls,
+        base_curve: ImplicitCurve,
+        start_anchor: Union[Tuple[float, float], Any],
+        end_anchor: Union[Tuple[float, float], Any],
+        positive_half_plane: Optional[bool] = None,
+        tolerance: float = 1e-5,
+        **kwargs: Any,
+    ) -> 'TrimmedImplicitCurve':
+        """
+        Create a TrimmedImplicitCurve representing the segment between two anchors.
+
+        Args:
+            base_curve: The underlying ImplicitCurve to be trimmed.
+            start_anchor: The starting anchor, either a coordinate tuple/list or an Anchor object.
+            end_anchor: The ending anchor, either a coordinate tuple/list or an Anchor object.
+            positive_half_plane: Optional bool. If True, only includes points where the cross product
+                                 (P - P1) x (P2 - P1) >= -tolerance. If False, only <= tolerance.
+                                 If None, does not restrict by half-plane.
+            tolerance: Tolerance for boundary checks.
+            **kwargs: Additional arguments passed to TrimmedImplicitCurve constructor.
+        """
+        # Retrieve coordinates from either a tuple/list or an object with a coords attribute
+        p1 = start_anchor.coords if hasattr(start_anchor, "coords") else start_anchor
+        p2 = end_anchor.coords if hasattr(end_anchor, "coords") else end_anchor
+
+        if not isinstance(p1, (tuple, list)) or len(p1) < 2:
+            raise TypeError("start_anchor must be a coordinate pair or have a coords attribute")
+        if not isinstance(p2, (tuple, list)) or len(p2) < 2:
+            raise TypeError("end_anchor must be a coordinate pair or have a coords attribute")
+
+        x1, y1 = float(p1[0]), float(p1[1])
+        x2, y2 = float(p2[0]), float(p2[1])
+
+        dx = x2 - x1
+        dy = y2 - y1
+        lensq = dx*dx + dy*dy
+
+        if lensq < 1e-14:
+            # Degenerate case: start and end are the same point
+            mask = lambda px, py: abs(px - x1) < tolerance and abs(py - y1) < tolerance
+        else:
+            def mask(px: float, py: float) -> bool:
+                ux = px - x1
+                uy = py - y1
+                # Projection parameter t along the chord direction
+                t = (ux * dx + uy * dy) / lensq
+                if not (0.0 - tolerance <= t <= 1.0 + tolerance):
+                    return False
+                if positive_half_plane is not None:
+                    # Cross product (P - P1) x (P2 - P1)
+                    cross = ux * dy - uy * dx
+                    if positive_half_plane:
+                        if cross < -tolerance:
+                            return False
+                    else:
+                        if cross > tolerance:
+                            return False
+                return True
+
+        endpoints = [(x1, y1), (x2, y2)]
+
+        return cls(
+            base_curve=base_curve,
+            mask=mask,
+            endpoints=endpoints,
+            **kwargs
+        )
+
     def __str__(self) -> str:
         return f"TrimmedImplicitCurve({self.base_curve})"
 
