@@ -12,6 +12,25 @@ from scipy.cluster.hierarchy import fcluster, linkage
 from .precision import PrecisionPolicy, get_precision_policy
 
 
+def _is_transcendental_or_procedural(c) -> bool:
+    if c is None:
+        return False
+    if hasattr(c, "base_curve") and c.base_curve is not None:
+        c = c.base_curve
+    if not hasattr(c, "expression") or c.expression is None:
+        return True
+    if "Procedural" in type(c).__name__:
+        return True
+    try:
+        import sympy as sp
+        expr = c.expression
+        if expr.has(sp.sin, sp.cos, sp.tan, sp.exp, sp.log, sp.asin, sp.acos, sp.atan, sp.sinh, sp.cosh, sp.tanh):
+            return True
+    except Exception:
+        return True
+    return False
+
+
 def find_curve_intersections(
     curve1,
     curve2,
@@ -40,6 +59,8 @@ def find_curve_intersections(
     """
     
     policy = precision_policy or getattr(curve1, "precision_policy", lambda: None)() or getattr(curve2, "precision_policy", lambda: None)() or get_precision_policy()
+    
+    is_periodic_or_procedural = _is_transcendental_or_procedural(curve1) or _is_transcendental_or_procedural(curve2)
     
     # Safe scale hint extraction (handles both float attributes and methods)
     sh1 = getattr(curve1, "scale_hint", 1.0)
@@ -139,7 +160,7 @@ def find_curve_intersections(
     
     # Step 2: Cluster nearby points to avoid duplicates
     candidate_points = np.column_stack([x_candidates, y_candidates])
-    starting_points = _cluster_candidates_fast(candidate_points, grid_spacing=grid_spacing)
+    starting_points = _cluster_candidates_fast(candidate_points, grid_spacing=grid_spacing, is_periodic=is_periodic_or_procedural)
     
     # Step 3: Refine intersections using numerical solver
     refined_intersections = []
@@ -202,29 +223,11 @@ def find_curve_intersections(
             solution, info, ier, mesg = fsolve(intersection_system, start_point_cleaned, xtol=1e-10, full_output=True)
             residual = intersection_system(solution)
             res_norm = np.linalg.norm(residual)
-            if ier == 1 or (ier in (2, 3, 4, 5) and res_norm < 1e-6):
+            if ier == 1 or (ier in (2, 3, 4, 5) and res_norm < max(2.5e-5, tol)):
                 if res_norm < tol:
                     # Check if this point is valid for both curves (respects trimming)
                     if is_valid_intersection(solution[0], solution[1], tol * 10):
                         # Check if this point is already in our list
-                        def _is_transcendental_or_procedural(c) -> bool:
-                            if hasattr(c, "base_curve") and c.base_curve is not None:
-                                c = c.base_curve
-                            if not hasattr(c, "expression") or c.expression is None:
-                                return True
-                            if "Procedural" in type(c).__name__:
-                                return True
-                            try:
-                                import sympy as sp
-                                expr = c.expression
-                                if expr.has(sp.sin, sp.cos, sp.tan, sp.exp, sp.log, sp.asin, sp.acos, sp.atan, sp.sinh, sp.cosh, sp.tanh):
-                                    return True
-                            except Exception:
-                                return True
-                            return False
-
-                        is_periodic_or_procedural = _is_transcendental_or_procedural(curve1) or _is_transcendental_or_procedural(curve2)
-                        
                         is_duplicate = False
                         is_tangent = are_curves_tangent(solution[0], solution[1])
                         
@@ -232,9 +235,9 @@ def find_curve_intersections(
                             if is_periodic_or_procedural:
                                 dup_tol = max(tol * 500, 0.05)
                             else:
-                                dup_tol = max(tol * 20, 0.005)
+                                dup_tol = max(tol * 0.1, 1e-5)
                         else:
-                            dup_tol = tol * 10
+                            dup_tol = max(tol * 0.1, 1e-5)
                             
                         for existing_point in refined_intersections:
                             if np.linalg.norm(np.array(solution) - np.array(existing_point)) < dup_tol:
@@ -321,7 +324,7 @@ def _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2):
     return intersection_mask
 
 
-def _cluster_candidates_fast(candidate_points, grid_spacing: float = 0.02):
+def _cluster_candidates_fast(candidate_points, grid_spacing: float = 0.02, is_periodic: bool = True):
     """
     Fast clustering of candidate points.
     """
@@ -347,7 +350,7 @@ def _cluster_candidates_fast(candidate_points, grid_spacing: float = 0.02):
             # Use average linkage and a robust adaptive threshold to prevent chaining of close intersections
             # while avoiding over-segmentation under high grid resolutions
             linkage_matrix = linkage(distances, method='average')
-            threshold = max(2.0 * grid_spacing, 0.015)
+            threshold = max(1.1 * grid_spacing, 0.005) if is_periodic else 0.0005
             clusters = fcluster(linkage_matrix, max(1e-5, threshold), criterion='distance')
             
             # Get cluster centers as starting points

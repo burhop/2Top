@@ -144,7 +144,15 @@ class TrimmedImplicitCurve(ImplicitCurve):
         if np.isscalar(x) and np.isscalar(y):
             # Scalar case
             mask_satisfied = self.mask(x, y)
-            return bool(on_curve and mask_satisfied)
+            in_rect = True
+            if (self._xmin is not None and self._xmax is not None and
+                self._ymin is not None and self._ymax is not None):
+                eps = max(tol * 0.1, 1e-12)
+                in_rect = (
+                    (x >= (self._xmin - eps)) and (x <= (self._xmax + eps)) and
+                    (y >= (self._ymin - eps)) and (y <= (self._ymax + eps))
+                )
+            return bool(on_curve and mask_satisfied and in_rect)
         else:
             # Vectorized case
             x_array = np.asarray(x)

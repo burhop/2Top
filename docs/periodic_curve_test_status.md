@@ -1,6 +1,6 @@
 # Periodic Curve Test Status
 
-> Last updated: 2026-05-20 14:46:18 EST
+> Last updated: 2026-05-20 19:48:01 EST
 
 <!-- HIGH_LEVEL_STATUS_START -->
 ## High-Level Status Overview
@@ -23,12 +23,12 @@
 | Metric | Value |
 |--------|-------|
 | Total tests | 155 |
-| ✅ Passed | 155 |
+| ✅ Passed | 153 |
 | ❌ Failed / Not run | 0 |
 | 🟡 In progress | 0 |
-| ⚠️ Passed but slow (> 0.5s) | 0 |
-| Avg time (passed) | 0.118s |
-| Max time (passed) | 0.403s |
+| ⚠️ Passed but slow (> 0.5s) | 2 |
+| Avg time (passed) | 0.139s |
+| Max time (passed) | 0.744s |
 
 ---
 
@@ -36,173 +36,173 @@
 
 | # | Test | Status | Time | Details |
 |---|------|--------|------|---------|
-| 1.01 | `y - sin(x) = 0 ∩ y = 0.0000` | ✅ | 0.191s | 5/5 pts found |
-| 1.02 | `y - sin(x) = 0 ∩ y = 0.5000` | ✅ | 0.107s | 4/4 pts found |
-| 1.03 | `y - sin(x) = 0 ∩ y = 1.0000` | ✅ | 0.108s | 2/2 pts found |
-| 1.04 | `y - sin(x) = 0 ∩ y = -1.0000` | ✅ | 0.112s | 2/2 pts found |
-| 1.05 | `y - sin(x) = 0 ∩ y = 1.5000` | ✅ | 0.096s | 0/0 pts found |
-| 1.06 | `y - sin(x) = 0 ∩ y = -0.5000` | ✅ | 0.103s | 4/4 pts found |
-| 1.07 | `y - sin(x) = 0 ∩ y = 0.8415` | ✅ | 0.115s | 4/4 pts found |
-| 1.08 | `y - cos(x) = 0 ∩ y = 0.0000` | ✅ | 0.082s | 4/4 pts found |
-| 1.09 | `y - cos(x) = 0 ∩ y = 1.0000` | ✅ | 0.112s | 3/3 pts found |
-| 1.10 | `y - cos(x) = 0 ∩ y = -1.0000` | ✅ | 0.107s | 2/2 pts found |
-| 1.11 | `y - cos(x) = 0 ∩ y = 0.5000` | ✅ | 0.103s | 4/4 pts found |
-| 1.12 | `y - cos(x) = 0 ∩ y = -0.4161` | ✅ | 0.115s | 4/4 pts found |
-| 1.13 | `y - sin(x - pi/4) = 0 ∩ y = 0` | ✅ | 0.114s | 4/4 pts found |
-| 1.14 | `y - sin(x + pi/3) = 0 ∩ y - 0.5 = 0` | ✅ | 0.157s | 4/4 pts found |
-| 1.15 | `y - cos(x - pi/2) = 0 ∩ y = 0` | ✅ | 0.077s | 5/5 pts found |
+| 1.01 | `y - sin(x) = 0 ∩ y = 0.0000` | ✅ | 0.170s | 5/5 pts found |
+| 1.02 | `y - sin(x) = 0 ∩ y = 0.5000` | ✅ | 0.113s | 4/4 pts found |
+| 1.03 | `y - sin(x) = 0 ∩ y = 1.0000` | ✅ | 0.136s | 2/2 pts found |
+| 1.04 | `y - sin(x) = 0 ∩ y = -1.0000` | ✅ | 0.137s | 2/2 pts found |
+| 1.05 | `y - sin(x) = 0 ∩ y = 1.5000` | ✅ | 0.102s | 0/0 pts found |
+| 1.06 | `y - sin(x) = 0 ∩ y = -0.5000` | ✅ | 0.110s | 4/4 pts found |
+| 1.07 | `y - sin(x) = 0 ∩ y = 0.8415` | ✅ | 0.130s | 4/4 pts found |
+| 1.08 | `y - cos(x) = 0 ∩ y = 0.0000` | ✅ | 0.088s | 4/4 pts found |
+| 1.09 | `y - cos(x) = 0 ∩ y = 1.0000` | ✅ | 0.138s | 3/3 pts found |
+| 1.10 | `y - cos(x) = 0 ∩ y = -1.0000` | ✅ | 0.138s | 2/2 pts found |
+| 1.11 | `y - cos(x) = 0 ∩ y = 0.5000` | ✅ | 0.112s | 4/4 pts found |
+| 1.12 | `y - cos(x) = 0 ∩ y = -0.4161` | ✅ | 0.121s | 4/4 pts found |
+| 1.13 | `y - sin(x - pi/4) = 0 ∩ y = 0` | ✅ | 0.124s | 4/4 pts found |
+| 1.14 | `y - sin(x + pi/3) = 0 ∩ y - 0.5 = 0` | ✅ | 0.165s | 4/4 pts found |
+| 1.15 | `y - cos(x - pi/2) = 0 ∩ y = 0` | ✅ | 0.084s | 5/5 pts found |
 | 1.16 | `y - sin(x - 1) = 0 ∩ y = 0` | ✅ | 0.110s | 4/4 pts found |
-| 1.17 | `y - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.087s | 5/5 pts found |
-| 1.18 | `y - 2*sin(x) = 0 ∩ y - 1.5 = 0` | ✅ | 0.109s | 4/4 pts found |
-| 1.19 | `y - 0.5*sin(x) = 0 ∩ y - 0.3 = 0` | ✅ | 0.115s | 4/4 pts found |
-| 1.20 | `y - 3*cos(x) = 0 ∩ y - 2 = 0` | ✅ | 0.099s | 4/4 pts found |
-| 1.21 | `y - 2*sin(x) = 0 ∩ y - 2 = 0` | ✅ | 0.109s | 2/2 pts found |
-| 1.22 | `y - 2*sin(x) = 0 ∩ y - 3 = 0` | ✅ | 0.089s | 0/0 pts found |
-| 1.23 | `y - sin(2*x) = 0 ∩ y = 0` | ✅ | 0.096s | 9/9 pts found |
-| 1.24 | `y - sin(3*x) = 0 ∩ y = 0` | ✅ | 0.102s | 13/13 pts found |
-| 1.25 | `y - sin(0.5*x) = 0 ∩ y = 0` | ✅ | 0.099s | 3/3 pts found |
-| 1.26 | `y - cos(2*x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.131s | 8/8 pts found |
-| 1.27 | `y - sin(pi*x) = 0 ∩ y = 0` | ✅ | 0.101s | 7/7 pts found |
+| 1.17 | `y - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.090s | 5/5 pts found |
+| 1.18 | `y - 2*sin(x) = 0 ∩ y - 1.5 = 0` | ✅ | 0.116s | 4/4 pts found |
+| 1.19 | `y - 0.5*sin(x) = 0 ∩ y - 0.3 = 0` | ✅ | 0.137s | 4/4 pts found |
+| 1.20 | `y - 3*cos(x) = 0 ∩ y - 2 = 0` | ✅ | 0.106s | 4/4 pts found |
+| 1.21 | `y - 2*sin(x) = 0 ∩ y - 2 = 0` | ✅ | 0.126s | 2/2 pts found |
+| 1.22 | `y - 2*sin(x) = 0 ∩ y - 3 = 0` | ✅ | 0.092s | 0/0 pts found |
+| 1.23 | `y - sin(2*x) = 0 ∩ y = 0` | ✅ | 0.101s | 9/9 pts found |
+| 1.24 | `y - sin(3*x) = 0 ∩ y = 0` | ✅ | 0.108s | 13/13 pts found |
+| 1.25 | `y - sin(0.5*x) = 0 ∩ y = 0` | ✅ | 0.104s | 3/3 pts found |
+| 1.26 | `y - cos(2*x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.138s | 8/8 pts found |
+| 1.27 | `y - sin(pi*x) = 0 ∩ y = 0` | ✅ | 0.112s | 7/7 pts found |
 | 1.28 | `y - sin(x) = 0 ∩ x - pi/6 = 0` | ✅ | 0.017s | 1/1 pts found |
-| 1.29 | `y - sin(x) = 0 ∩ x = 0` | ✅ | 0.016s | 1/1 pts found |
-| 1.30 | `y - sin(x) = 0 ∩ y - x = 0` | ✅ | 0.109s | 1/1 pts found |
-| 1.31 | `y - sin(x) = 0 ∩ y - x/pi = 0` | ✅ | 0.118s | 3/3 pts found |
-| 1.32 | `y - cos(x) = 0 ∩ y + x = 0` | ✅ | 0.093s | 1/1 pts found |
-| 1.33 | `ProceduralCurve(y - sin(x)) = 0 ∩ y = 0` | ✅ | 0.080s | 5/5 pts found |
-| 1.34 | `ProceduralCurve(y - cos(x)) = 0 ∩ y = 0` | ✅ | 0.078s | 4/4 pts found |
-| 1.35 | `ProceduralCurve(y - sin(2*x)) = 0 ∩ y = 0` | ✅ | 0.089s | 9/9 pts found |
-| 1.36 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - 0.5) = 0` | ✅ | 0.103s | 4/4 pts found |
-| 1.37 | `y - sin(x) = 0 ∩ y - 1.0000000001 = 0` | ✅ | 0.117s | 2/2 pts found |
-| 1.38 | `y - sin(x) = 0 ∩ y - 0.999999 = 0` | ✅ | 0.118s | 4/4 pts found |
+| 1.29 | `y - sin(x) = 0 ∩ x = 0` | ✅ | 0.014s | 1/1 pts found |
+| 1.30 | `y - sin(x) = 0 ∩ y - x = 0` | ✅ | 0.150s | 1/1 pts found |
+| 1.31 | `y - sin(x) = 0 ∩ y - x/pi = 0` | ✅ | 0.120s | 3/3 pts found |
+| 1.32 | `y - cos(x) = 0 ∩ y + x = 0` | ✅ | 0.097s | 1/1 pts found |
+| 1.33 | `ProceduralCurve(y - sin(x)) = 0 ∩ y = 0` | ✅ | 0.084s | 5/5 pts found |
+| 1.34 | `ProceduralCurve(y - cos(x)) = 0 ∩ y = 0` | ✅ | 0.083s | 4/4 pts found |
+| 1.35 | `ProceduralCurve(y - sin(2*x)) = 0 ∩ y = 0` | ✅ | 0.099s | 9/9 pts found |
+| 1.36 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - 0.5) = 0` | ✅ | 0.106s | 4/4 pts found |
+| 1.37 | `y - sin(x) = 0 ∩ y - 1.0000000001 = 0` | ✅ | 0.142s | 2/2 pts found |
+| 1.38 | `y - sin(x) = 0 ∩ y - 0.999999 = 0` | ✅ | 0.132s | 4/4 pts found |
 | 1.39 | `y - sin(x) = 0 ∩ y - sin(x) = 0` | ✅ | 0.002s | 0/0 pts found |
-| 1.40 | `y - sin(100*x) = 0 ∩ y = 0` | ✅ | 0.234s | 63/63 pts found |
+| 1.40 | `y - sin(100*x) = 0 ∩ y = 0` | ✅ | 0.304s | 63/63 pts found |
 
 ## Tier 2 — Periodic + Conic (40 cases)
 
 | # | Test | Status | Time | Details |
 |---|------|--------|------|---------|
-| 2.01 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.107s | 2/2 pts found |
-| 2.02 | `y - sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.087s | 2/2 pts found |
-| 2.03 | `y - sin(x) = 0 ∩ (x-pi)**2 + y**2 - 1 = 0` | ✅ | 0.138s | 2/2 pts found |
-| 2.04 | `y - sin(x) = 0 ∩ x**2 + y**2 - 0.01 = 0` | ✅ | 0.153s | 2/2 pts found |
+| 2.01 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.100s | 2/2 pts found |
+| 2.02 | `y - sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.090s | 2/2 pts found |
+| 2.03 | `y - sin(x) = 0 ∩ (x-pi)**2 + y**2 - 1 = 0` | ✅ | 0.140s | 2/2 pts found |
+| 2.04 | `y - sin(x) = 0 ∩ x**2 + y**2 - 0.01 = 0` | ✅ | 0.207s | 2/2 pts found |
 | 2.05 | `y - sin(x) = 0 ∩ (x-10)**2 + y**2 - 1 = 0` | ✅ | 0.114s | 2/2 pts found |
-| 2.06 | `y - cos(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.244s | 1/1 pts found |
-| 2.07 | `y - sin(2*x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.093s | 2/2 pts found |
-| 2.08 | `y - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.092s | 2/2 pts found |
-| 2.09 | `y - sin(x) = 0 ∩ x**2/4 + y**2 - 1 = 0` | ✅ | 0.094s | 2/2 pts found |
-| 2.10 | `y - sin(x) = 0 ∩ x**2 + y**2/4 - 1 = 0` | ✅ | 0.096s | 2/2 pts found |
-| 2.11 | `y - cos(x) = 0 ∩ x**2/9 + y**2/4 - 1 = 0` | ✅ | 0.112s | 2/2 pts found |
-| 2.12 | `y - sin(x) = 0 ∩ (x-1)**2/4 + y**2 - 1 = 0` | ✅ | 0.145s | 4/4 pts found |
-| 2.13 | `y - sin(x) = 0 ∩ y - x**2 = 0` | ✅ | 0.101s | 2/2 pts found |
-| 2.14 | `y - sin(x) = 0 ∩ y + x**2 = 0` | ✅ | 0.099s | 2/2 pts found |
-| 2.15 | `y - sin(x) = 0 ∩ y - x**2/4 = 0` | ✅ | 0.105s | 2/2 pts found |
-| 2.16 | `y - cos(x) = 0 ∩ y - x**2 + 1 = 0` | ✅ | 0.103s | 2/2 pts found |
-| 2.17 | `y - sin(x) = 0 ∩ x - pi/4 = 0` | ✅ | 0.017s | 1/1 pts found |
+| 2.06 | `y - cos(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.422s | 1/1 pts found |
+| 2.07 | `y - sin(2*x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.099s | 2/2 pts found |
+| 2.08 | `y - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.094s | 2/2 pts found |
+| 2.09 | `y - sin(x) = 0 ∩ x**2/4 + y**2 - 1 = 0` | ✅ | 0.099s | 2/2 pts found |
+| 2.10 | `y - sin(x) = 0 ∩ x**2 + y**2/4 - 1 = 0` | ✅ | 0.095s | 2/2 pts found |
+| 2.11 | `y - cos(x) = 0 ∩ x**2/9 + y**2/4 - 1 = 0` | ✅ | 0.123s | 2/2 pts found |
+| 2.12 | `y - sin(x) = 0 ∩ (x-1)**2/4 + y**2 - 1 = 0` | ✅ | 0.170s | 4/4 pts found |
+| 2.13 | `y - sin(x) = 0 ∩ y - x**2 = 0` | ✅ | 0.105s | 2/2 pts found |
+| 2.14 | `y - sin(x) = 0 ∩ y + x**2 = 0` | ✅ | 0.106s | 2/2 pts found |
+| 2.15 | `y - sin(x) = 0 ∩ y - x**2/4 = 0` | ✅ | 0.111s | 2/2 pts found |
+| 2.16 | `y - cos(x) = 0 ∩ y - x**2 + 1 = 0` | ✅ | 0.105s | 2/2 pts found |
+| 2.17 | `y - sin(x) = 0 ∩ x - pi/4 = 0` | ✅ | 0.016s | 1/1 pts found |
 | 2.18 | `y - sin(x) = 0 ∩ x - pi = 0` | ✅ | 0.017s | 1/1 pts found |
 | 2.19 | `y - cos(x) = 0 ∩ x = 0` | ✅ | 0.013s | 1/1 pts found |
-| 2.20 | `y - sin(x) = 0 ∩ x + y = 0` | ✅ | 0.102s | 1/1 pts found |
-| 2.21 | `y**2 - sin(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.107s | 4/4 pts found |
-| 2.22 | `y**2 - sin(x) = 0 ∩ y = 0` | ✅ | 0.070s | 5/5 pts found |
-| 2.23 | `y**2 - sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.099s | 2/2 pts found |
-| 2.24 | `y**2 - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.073s | 5/5 pts found |
-| 2.25 | `y**2 - 2*sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.075s | 4/4 pts found |
-| 2.26 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.107s | 2/2 pts found |
-| 2.27 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.096s | 2/2 pts found |
-| 2.28 | `y**2 - cos(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.101s | 4/4 pts found |
-| 2.29 | `y - 3*sin(x) = 0 ∩ x**2 + y**2 - 9 = 0` | ✅ | 0.110s | 6/6 pts found |
+| 2.20 | `y - sin(x) = 0 ∩ x + y = 0` | ✅ | 0.093s | 1/1 pts found |
+| 2.21 | `y**2 - sin(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.105s | 4/4 pts found |
+| 2.22 | `y**2 - sin(x) = 0 ∩ y = 0` | ✅ | 0.079s | 5/5 pts found |
+| 2.23 | `y**2 - sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.118s | 2/2 pts found |
+| 2.24 | `y**2 - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.080s | 5/5 pts found |
+| 2.25 | `y**2 - 2*sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.080s | 4/4 pts found |
+| 2.26 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.092s | 2/2 pts found |
+| 2.27 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.094s | 2/2 pts found |
+| 2.28 | `y**2 - cos(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.103s | 4/4 pts found |
+| 2.29 | `y - 3*sin(x) = 0 ∩ x**2 + y**2 - 9 = 0` | ✅ | 0.109s | 6/6 pts found |
 | 2.30 | `y - sin(3*x) = 0 ∩ x**2 + y**2 - 1 = 0` | ✅ | 0.110s | 6/6 pts found |
-| 2.31 | `y**2 - sin(2*x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.129s | 8/8 pts found |
-| 2.32 | `y**2 - 3*cos(x) = 0 ∩ y - 1 = 0` | ✅ | 0.090s | 4/4 pts found |
-| 2.33 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1e-8 = 0` | ✅ | 0.166s | 1/1 pts found |
-| 2.34 | `y**2 - sin(x) = 0 ∩ y**2 - sin(x) = 0` | ✅ | 0.003s | 0/0 pts found |
-| 2.35 | `y - sin(x) = 0 ∩ y - x**2 + 1 = 0` | ✅ | 0.110s | 2/2 pts found |
-| 2.36 | `y**2 - sin(x) = 0 ∩ y + 0.5 = 0` | ✅ | 0.100s | 4/4 pts found |
-| 2.37 | `y**2 - sin(x) = 0 ∩ y - 1.5 = 0` | ✅ | 0.089s | 0/0 pts found |
+| 2.31 | `y**2 - sin(2*x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.125s | 8/8 pts found |
+| 2.32 | `y**2 - 3*cos(x) = 0 ∩ y - 1 = 0` | ✅ | 0.086s | 4/4 pts found |
+| 2.33 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1e-8 = 0` | ✅ | 0.322s | 2/2 pts found |
+| 2.34 | `y**2 - sin(x) = 0 ∩ y**2 - sin(x) = 0` | ✅ | 0.002s | 0/0 pts found |
+| 2.35 | `y - sin(x) = 0 ∩ y - x**2 + 1 = 0` | ✅ | 0.109s | 2/2 pts found |
+| 2.36 | `y**2 - sin(x) = 0 ∩ y + 0.5 = 0` | ✅ | 0.097s | 4/4 pts found |
+| 2.37 | `y**2 - sin(x) = 0 ∩ y - 1.5 = 0` | ✅ | 0.085s | 0/0 pts found |
 | 2.38 | `y - sin(x) = 0 ∩ x**2 - y**2 - 1 = 0` | ✅ | 0.086s | 2/2 pts found |
-| 2.39 | `y - sin(x) = 0 ∩ x*y - 1 = 0` | ✅ | 0.112s | 4/4 pts found |
-| 2.40 | `y**2 - 2*sin(x) = 0 ∩ y - x = 0` | ✅ | 0.087s | 2/2 pts found |
+| 2.39 | `y - sin(x) = 0 ∩ x*y - 1 = 0` | ✅ | 0.114s | 4/4 pts found |
+| 2.40 | `y**2 - 2*sin(x) = 0 ∩ y - x = 0` | ✅ | 0.083s | 2/2 pts found |
 
 ## Tier 3 — Periodic + Periodic (40 cases)
 
 | # | Test | Status | Time | Details |
 |---|------|--------|------|---------|
-| 3.01 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.116s | 4/4 pts found |
-| 3.02 | `y - sin(x) = 0 ∩ y - sin(x + pi/2) = 0` | ✅ | 0.107s | 4/4 pts found |
-| 3.03 | `y - sin(x) = 0 ∩ y - sin(x + pi) = 0` | ✅ | 0.091s | 5/5 pts found |
-| 3.04 | `y - sin(x) = 0 ∩ y - sin(x + pi/4) = 0` | ✅ | 0.147s | 4/4 pts found |
-| 3.05 | `y - cos(x) = 0 ∩ y - cos(x + pi/3) = 0` | ✅ | 0.146s | 4/4 pts found |
-| 3.06 | `y - sin(x) = 0 ∩ y - sin(x + pi/6) = 0` | ✅ | 0.148s | 4/4 pts found |
-| 3.07 | `y - sin(x) = 0 ∩ y - sin(2*x) = 0` | ✅ | 0.127s | 9/9 pts found |
-| 3.08 | `y - sin(x) = 0 ∩ y - sin(3*x) = 0` | ✅ | 0.168s | 13/13 pts found |
-| 3.09 | `y - sin(x) = 0 ∩ y - cos(2*x) = 0` | ✅ | 0.129s | 6/6 pts found |
-| 3.10 | `y - cos(x) = 0 ∩ y - sin(2*x) = 0` | ✅ | 0.123s | 8/8 pts found |
-| 3.11 | `y - sin(2*x) = 0 ∩ y - sin(3*x) = 0` | ✅ | 0.140s | 13/13 pts found |
-| 3.12 | `y - sin(x) = 0 ∩ y - sin(0.5*x) = 0` | ✅ | 0.123s | 5/5 pts found |
-| 3.13 | `y - sin(2*x) = 0 ∩ y - cos(3*x) = 0` | ✅ | 0.139s | 12/12 pts found |
-| 3.14 | `y - sin(x) = 0 ∩ y - 2*sin(x) = 0` | ✅ | 0.084s | 5/5 pts found |
-| 3.15 | `y - sin(x) = 0 ∩ y - 0.5*sin(x) = 0` | ✅ | 0.101s | 5/5 pts found |
-| 3.16 | `y - 2*sin(x) = 0 ∩ y - 3*cos(x) = 0` | ✅ | 0.121s | 4/4 pts found |
-| 3.17 | `y - sin(x) = 0 ∩ y + sin(x) = 0` | ✅ | 0.089s | 5/5 pts found |
-| 3.18 | `y - sin(x) = 0 ∩ y + cos(x) = 0` | ✅ | 0.113s | 4/4 pts found |
-| 3.19 | `y**2 - sin(x) = 0 ∩ y**2 - cos(x) = 0` | ✅ | 0.087s | 4/4 pts found |
-| 3.20 | `y**2 - 2*sin(x) = 0 ∩ y**2 - 2*cos(x) = 0` | ✅ | 0.124s | 4/4 pts found |
-| 3.21 | `y**2 - sin(x) = 0 ∩ y**2 - sin(2*x) = 0` | ✅ | 0.238s | 9/9 pts found |
-| 3.22 | `y**2 - sin(x) = 0 ∩ y**2 - 0.5*sin(x) = 0` | ✅ | 0.403s | 5/5 pts found |
-| 3.23 | `y**2 - sin(x) = 0 ∩ (y-1)**2 - sin(x) = 0` | ✅ | 0.087s | 4/4 pts found |
-| 3.24 | `ImplicitCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.104s | 4/4 pts found |
-| 3.25 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.103s | 4/4 pts found |
-| 3.26 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - sin(2*x)) = 0` | ✅ | 0.118s | 9/9 pts found |
-| 3.27 | `y - sin(x)*cos(x) = 0 ∩ y = 0` | ✅ | 0.102s | 9/9 pts found |
-| 3.28 | `y - sin(x)**2 = 0 ∩ y - 0.5 = 0` | ✅ | 0.124s | 8/8 pts found |
-| 3.29 | `y - (sin(x)+cos(x)) = 0 ∩ y = 0` | ✅ | 0.115s | 4/4 pts found |
-| 3.30 | `y - sin(x)*cos(x) = 0 ∩ y - sin(x) = 0` | ✅ | 0.158s | 5/5 pts found |
-| 3.31 | `ProceduralCurve(y - abs(sin(x))) = 0 ∩ y - 0.5 = 0` | ✅ | 0.125s | 8/8 pts found |
-| 3.32 | `y - sin(x**2) = 0 ∩ y = 0` | ✅ | 0.350s | 5/5 pts found |
-| 3.33 | `y - sin(x) = 0 ∩ y - sin(x) = 0` | ✅ | 0.003s | 0/0 pts found |
+| 3.01 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.120s | 4/4 pts found |
+| 3.02 | `y - sin(x) = 0 ∩ y - sin(x + pi/2) = 0` | ✅ | 0.112s | 4/4 pts found |
+| 3.03 | `y - sin(x) = 0 ∩ y - sin(x + pi) = 0` | ✅ | 0.092s | 5/5 pts found |
+| 3.04 | `y - sin(x) = 0 ∩ y - sin(x + pi/4) = 0` | ✅ | 0.149s | 4/4 pts found |
+| 3.05 | `y - cos(x) = 0 ∩ y - cos(x + pi/3) = 0` | ✅ | 0.149s | 4/4 pts found |
+| 3.06 | `y - sin(x) = 0 ∩ y - sin(x + pi/6) = 0` | ✅ | 0.155s | 4/4 pts found |
+| 3.07 | `y - sin(x) = 0 ∩ y - sin(2*x) = 0` | ✅ | 0.141s | 9/9 pts found |
+| 3.08 | `y - sin(x) = 0 ∩ y - sin(3*x) = 0` | ✅ | 0.147s | 13/13 pts found |
+| 3.09 | `y - sin(x) = 0 ∩ y - cos(2*x) = 0` | ✅ | 0.147s | 6/6 pts found |
+| 3.10 | `y - cos(x) = 0 ∩ y - sin(2*x) = 0` | ✅ | 0.127s | 8/8 pts found |
+| 3.11 | `y - sin(2*x) = 0 ∩ y - sin(3*x) = 0` | ✅ | 0.147s | 13/13 pts found |
+| 3.12 | `y - sin(x) = 0 ∩ y - sin(0.5*x) = 0` | ✅ | 0.142s | 5/5 pts found |
+| 3.13 | `y - sin(2*x) = 0 ∩ y - cos(3*x) = 0` | ✅ | 0.148s | 12/12 pts found |
+| 3.14 | `y - sin(x) = 0 ∩ y - 2*sin(x) = 0` | ✅ | 0.094s | 5/5 pts found |
+| 3.15 | `y - sin(x) = 0 ∩ y - 0.5*sin(x) = 0` | ✅ | 0.115s | 5/5 pts found |
+| 3.16 | `y - 2*sin(x) = 0 ∩ y - 3*cos(x) = 0` | ✅ | 0.127s | 4/4 pts found |
+| 3.17 | `y - sin(x) = 0 ∩ y + sin(x) = 0` | ✅ | 0.093s | 5/5 pts found |
+| 3.18 | `y - sin(x) = 0 ∩ y + cos(x) = 0` | ✅ | 0.118s | 4/4 pts found |
+| 3.19 | `y**2 - sin(x) = 0 ∩ y**2 - cos(x) = 0` | ✅ | 0.089s | 4/4 pts found |
+| 3.20 | `y**2 - 2*sin(x) = 0 ∩ y**2 - 2*cos(x) = 0` | ✅ | 0.108s | 4/4 pts found |
+| 3.21 | `y**2 - sin(x) = 0 ∩ y**2 - sin(2*x) = 0` | ✅ | 0.322s | 9/9 pts found |
+| 3.22 | `y**2 - sin(x) = 0 ∩ y**2 - 0.5*sin(x) = 0` | ⚠️ | 0.586s | 5/5 pts found (SLOW: 0.586s > 0.5s target) |
+| 3.23 | `y**2 - sin(x) = 0 ∩ (y-1)**2 - sin(x) = 0` | ✅ | 0.094s | 4/4 pts found |
+| 3.24 | `ImplicitCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.108s | 4/4 pts found |
+| 3.25 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.107s | 4/4 pts found |
+| 3.26 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - sin(2*x)) = 0` | ✅ | 0.126s | 9/9 pts found |
+| 3.27 | `y - sin(x)*cos(x) = 0 ∩ y = 0` | ✅ | 0.115s | 9/9 pts found |
+| 3.28 | `y - sin(x)**2 = 0 ∩ y - 0.5 = 0` | ✅ | 0.142s | 8/8 pts found |
+| 3.29 | `y - (sin(x)+cos(x)) = 0 ∩ y = 0` | ✅ | 0.117s | 4/4 pts found |
+| 3.30 | `y - sin(x)*cos(x) = 0 ∩ y - sin(x) = 0` | ✅ | 0.234s | 5/5 pts found |
+| 3.31 | `ProceduralCurve(y - abs(sin(x))) = 0 ∩ y - 0.5 = 0` | ✅ | 0.143s | 8/8 pts found |
+| 3.32 | `y - sin(x**2) = 0 ∩ y = 0` | ⚠️ | 0.744s | 5/5 pts found (SLOW: 0.744s > 0.5s target) |
+| 3.33 | `y - sin(x) = 0 ∩ y - sin(x) = 0` | ✅ | 0.002s | 0/0 pts found |
 | 3.34 | `y - sin(x) = 0 ∩ y - sin(x) - 1e-10 = 0` | ✅ | 0.003s | 0/0 pts found |
 | 3.35 | `y - sin(x) = 0 ∩ y - sin(x+1e-8) = 0` | ✅ | 0.043s | 0/0 pts found |
-| 3.36 | `y**2 - sin(x) = 0 ∩ y = 0` | ✅ | 0.071s | 2/2 pts found |
-| 3.37 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.121s | 1/1 pts found |
-| 3.38 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.111s | 1/1 pts found |
-| 3.39 | `ProceduralCurve(y - sin(1/x)) = 0 ∩ y = 0` | ✅ | 0.124s | 15/23 pts found |
-| 3.40 | `ProceduralCurve(y - x*sin(1/x)) = 0 ∩ y = 0` | ✅ | 0.184s | 38/64 pts found |
+| 3.36 | `y**2 - sin(x) = 0 ∩ y = 0` | ✅ | 0.088s | 2/2 pts found |
+| 3.37 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.145s | 1/1 pts found |
+| 3.38 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.134s | 1/1 pts found |
+| 3.39 | `ProceduralCurve(y - sin(1/x)) = 0 ∩ y = 0` | ✅ | 0.151s | 27/23 pts found |
+| 3.40 | `ProceduralCurve(y - x*sin(1/x)) = 0 ∩ y = 0` | ✅ | 0.246s | 54/64 pts found |
 
 ## Tier 4 — Performance / Extended Domain (35 cases)
 
 | # | Test | Status | Time | Details |
 |---|------|--------|------|---------|
-| 4.01 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.106s | 21/21 pts found |
-| 4.02 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.240s | 101/101 pts found |
-| 4.03 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.183s | 63/63 pts found |
-| 4.04 | `y - sin(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.225s | 63/63 pts found |
-| 4.05 | `y - sin(2*x) = 0 ∩ y = 0` | ✅ | 0.278s | 127/127 pts found |
-| 4.06 | `y - sin(10*x) = 0 ∩ y = 0` | ✅ | 0.175s | 63/63 pts found |
-| 4.07 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.259s | 64/64 pts found |
-| 4.08 | `y**2 - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.078s | 13/13 pts found |
-| 4.09 | `y**2 - 2*sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.081s | 13/13 pts found |
-| 4.10 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.087s | 2/2 pts found |
-| 4.11 | `y**2 - sin(x) = 0 ∩ y**2 - cos(x) = 0` | ✅ | 0.104s | 14/14 pts found |
-| 4.12 | `y**2 - 2*sin(x) = 0 ∩ y**2 - 2*cos(x) = 0` | ✅ | 0.106s | 14/14 pts found |
-| 4.13 | `ProceduralCurve(y - sin(x)) = 0 ∩ y = 0` | ✅ | 0.180s | 63/63 pts found |
-| 4.14 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.215s | 64/64 pts found |
-| 4.15 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y) = 0` | ✅ | 0.124s | 31/31 pts found |
-| 4.16 | `ProceduralCurve(y - sin(2*x)) = 0 ∩ y = 0` | ✅ | 0.174s | 63/63 pts found |
-| 4.17 | `y - sin(x) = 0 ∩ y = 0 (grid_res=100)` | ✅ | 0.071s | 5/5 pts found |
-| 4.18 | `y - sin(x) = 0 ∩ y = 0 (grid_res=200)` | ✅ | 0.072s | 5/5 pts found |
-| 4.19 | `y - sin(x) = 0 ∩ y = 0 (grid_res=500)` | ✅ | 0.079s | 5/5 pts found |
-| 4.20 | `y - sin(x) = 0 ∩ y = 0 (grid_res=1000)` | ✅ | 0.115s | 5/5 pts found |
-| 4.21 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=1000)` | ✅ | 0.187s | 41/41 pts found |
-| 4.22 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=1500)` | ✅ | 0.237s | 41/41 pts found |
-| 4.23 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=2000)` | ✅ | 0.314s | 41/41 pts found |
-| 4.24 | `y - sin(x) = 0 ∩ y = 0 (Symbolic, 10 runs)` | ✅ | 0.192s | 5/5 pts found |
-| 4.25 | `Procedural(y - sin(x)) ∩ y = 0 (10 runs)` | ✅ | 0.190s | 5/5 pts found |
-| 4.26 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1 = 0 (10 runs)` | ✅ | 0.189s | 2/2 pts found |
-| 4.27 | `y - sin(x) = 0 ∩ y - cos(x) = 0 (10 runs)` | ✅ | 0.224s | 4/4 pts found |
-| 4.28 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0 (10 runs)` | ✅ | 0.209s | 2/2 pts found |
-| 4.29 | `y - sin(x) = 0 ∩ y = 0 (search_range=2.0)` | ✅ | 0.083s | 1/1 pts found |
-| 4.30 | `y - sin(x) = 0 ∩ y = 0 (search_range=5.0)` | ✅ | 0.078s | 3/3 pts found |
-| 4.31 | `y - sin(x) = 0 ∩ y = 0 (search_range=10.0)` | ✅ | 0.082s | 7/7 pts found |
-| 4.32 | `y - sin(x) = 0 ∩ y = 0 (search_range=50.0)` | ✅ | 0.123s | 31/31 pts found |
+| 4.01 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.131s | 21/21 pts found |
+| 4.02 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.339s | 101/101 pts found |
+| 4.03 | `y - sin(x) = 0 ∩ y = 0` | ✅ | 0.248s | 63/63 pts found |
+| 4.04 | `y - sin(x) = 0 ∩ y - 0.5 = 0` | ✅ | 0.296s | 63/63 pts found |
+| 4.05 | `y - sin(2*x) = 0 ∩ y = 0` | ✅ | 0.409s | 127/127 pts found |
+| 4.06 | `y - sin(10*x) = 0 ∩ y = 0` | ✅ | 0.207s | 63/63 pts found |
+| 4.07 | `y - sin(x) = 0 ∩ y - cos(x) = 0` | ✅ | 0.333s | 64/64 pts found |
+| 4.08 | `y**2 - 2*sin(x) = 0 ∩ y = 0` | ✅ | 0.091s | 13/13 pts found |
+| 4.09 | `y**2 - 2*sin(x) = 0 ∩ y - 1 = 0` | ✅ | 0.097s | 13/13 pts found |
+| 4.10 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0` | ✅ | 0.093s | 2/2 pts found |
+| 4.11 | `y**2 - sin(x) = 0 ∩ y**2 - cos(x) = 0` | ✅ | 0.101s | 14/14 pts found |
+| 4.12 | `y**2 - 2*sin(x) = 0 ∩ y**2 - 2*cos(x) = 0` | ✅ | 0.110s | 14/14 pts found |
+| 4.13 | `ProceduralCurve(y - sin(x)) = 0 ∩ y = 0` | ✅ | 0.250s | 63/63 pts found |
+| 4.14 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y - cos(x)) = 0` | ✅ | 0.287s | 64/64 pts found |
+| 4.15 | `ProceduralCurve(y - sin(x)) = 0 ∩ ProceduralCurve(y) = 0` | ✅ | 0.178s | 31/31 pts found |
+| 4.16 | `ProceduralCurve(y - sin(2*x)) = 0 ∩ y = 0` | ✅ | 0.230s | 63/63 pts found |
+| 4.17 | `y - sin(x) = 0 ∩ y = 0 (grid_res=100)` | ✅ | 0.083s | 5/5 pts found |
+| 4.18 | `y - sin(x) = 0 ∩ y = 0 (grid_res=200)` | ✅ | 0.078s | 5/5 pts found |
+| 4.19 | `y - sin(x) = 0 ∩ y = 0 (grid_res=500)` | ✅ | 0.087s | 5/5 pts found |
+| 4.20 | `y - sin(x) = 0 ∩ y = 0 (grid_res=1000)` | ✅ | 0.146s | 5/5 pts found |
+| 4.21 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=1000)` | ✅ | 0.227s | 41/41 pts found |
+| 4.22 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=1500)` | ✅ | 0.301s | 41/41 pts found |
+| 4.23 | `y - sin(10*x) = 0 ∩ y = 0 (grid_res=2000)` | ✅ | 0.388s | 41/41 pts found |
+| 4.24 | `y - sin(x) = 0 ∩ y = 0 (Symbolic, 10 runs)` | ✅ | 0.242s | 5/5 pts found |
+| 4.25 | `Procedural(y - sin(x)) ∩ y = 0 (10 runs)` | ✅ | 0.232s | 5/5 pts found |
+| 4.26 | `y - sin(x) = 0 ∩ x**2 + y**2 - 1 = 0 (10 runs)` | ✅ | 0.215s | 2/2 pts found |
+| 4.27 | `y - sin(x) = 0 ∩ y - cos(x) = 0 (10 runs)` | ✅ | 0.269s | 4/4 pts found |
+| 4.28 | `y**2 - 2*sin(x) = 0 ∩ x**2 + y**2 - 4 = 0 (10 runs)` | ✅ | 0.223s | 2/2 pts found |
+| 4.29 | `y - sin(x) = 0 ∩ y = 0 (search_range=2.0)` | ✅ | 0.104s | 1/1 pts found |
+| 4.30 | `y - sin(x) = 0 ∩ y = 0 (search_range=5.0)` | ✅ | 0.087s | 3/3 pts found |
+| 4.31 | `y - sin(x) = 0 ∩ y = 0 (search_range=10.0)` | ✅ | 0.098s | 7/7 pts found |
+| 4.32 | `y - sin(x) = 0 ∩ y = 0 (search_range=50.0)` | ✅ | 0.162s | 31/31 pts found |
 | 4.33 | `y**2 - 2*sin(x) = 0 (endpoint count [-100, 100])` | ✅ | 0.002s | 63/64 pts found |
-| 4.34 | `y**2 - 2*sin(x) = 0 (endpoint count [-1000, 1000])` | ✅ | 0.001s | 637/637 pts found |
+| 4.34 | `y**2 - 2*sin(x) = 0 (endpoint count [-1000, 1000])` | ✅ | 0.002s | 637/637 pts found |
 | 4.35 | `y**2 - 2*cos(x) = 0 (endpoint count [-100, 100])` | ✅ | 0.001s | 64/64 pts found |
