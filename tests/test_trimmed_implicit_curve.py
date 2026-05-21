@@ -395,6 +395,114 @@ class TestTrimmedImplicitCurveComplexMasks:
                 assert isinstance(result, (bool, np.bool_))
 
 
+class TestTrimmedImplicitCurveExtensive:
+    """Extensive unit and boundary test cases for TrimmedImplicitCurve"""
+
+    def test_bounding_box_scenarios(self):
+        """Test bounding box paths: explicit, endpoints-derived, fallback, infinite"""
+        x, y = sp.symbols('x y')
+        base_circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        mask = lambda px, py: px >= 0
+
+        # Case 1: Explicit rectangular bounds
+        curve1 = TrimmedImplicitCurve(base_circle, mask, xmin=-0.5, xmax=0.5, ymin=-0.8, ymax=0.8)
+        assert curve1.bounding_box() == (-0.5, 0.5, -0.8, 0.8)
+
+        # Case 2: Derived from endpoints
+        curve2 = TrimmedImplicitCurve(base_circle, mask, endpoints=[(0.0, 1.0), (1.0, 0.0)])
+        assert curve2.bounding_box() == (0.0, 1.0, 0.0, 1.0)
+
+        # Case 3: Fallback to base curve
+        curve3 = TrimmedImplicitCurve(base_circle, mask)
+        assert curve3.bounding_box() == base_circle.bounding_box()
+
+        # Case 4: Unbounded base curve (infinite)
+        base_hyperbola = ConicSection(x**2 - y**2 - 1, variables=(x, y))
+        curve4 = TrimmedImplicitCurve(base_hyperbola, mask)
+        bb = curve4.bounding_box()
+        # Verify it contains infinite bounds
+        assert float('-inf') in bb or float('inf') in bb or any(np.isinf(v) for v in bb)
+
+    def test_serialization_round_trip(self):
+        """Test serialization round-trip with and without explicit bounding-box masks"""
+        x, y = sp.symbols('x y')
+        base_circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        
+        # Scenario A: Trimmed curve with explicit bounds
+        curve_a = TrimmedImplicitCurve(base_circle, lambda px, py: px >= 0.5, xmin=0.5, xmax=1.0, ymin=-0.5, ymax=0.5, endpoints=[(0.5, 0.5), (1.0, 0.0)])
+        data_a = curve_a.to_dict()
+        
+        assert data_a["type"] == "TrimmedImplicitCurve"
+        assert data_a["xmin"] == 0.5
+        assert data_a["xmax"] == 1.0
+        assert data_a["endpoints"] == [[0.5, 0.5], [1.0, 0.0]]
+        
+        reconstructed_a = TrimmedImplicitCurve.from_dict(data_a)
+        assert reconstructed_a._xmin == 0.5
+        assert reconstructed_a._xmax == 1.0
+        assert reconstructed_a.endpoints == [(0.5, 0.5), (1.0, 0.0)]
+        assert reconstructed_a.variables == (x, y)
+        
+        # Test that reconstructed mask restricts correctly using bounds
+        assert reconstructed_a.contains(0.8, 0.0, tolerance=0.5) is True
+        assert reconstructed_a.contains(0.2, 0.0, tolerance=0.5) is False  # outside xmin=0.5
+
+        # Scenario B: Trimmed curve without bounds (pass-through fallback)
+        curve_b = TrimmedImplicitCurve(base_circle, lambda px, py: px >= 0.0)
+        data_b = curve_b.to_dict()
+        reconstructed_b = TrimmedImplicitCurve.from_dict(data_b)
+        
+        assert hasattr(reconstructed_b, "_deserialization_warning")
+        # Mask should act as pass-through
+        assert reconstructed_b.contains(1.0, 0.0) is True
+        assert reconstructed_b.contains(-1.0, 0.0) is True  # Pass-through accepts left half on base curve
+
+    def test_vectorized_bounds_vs_fallback(self):
+        """Test vectorized fast-path contains vs general loop fallback"""
+        x, y = sp.symbols('x y')
+        base_circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        
+        mask = lambda px, py: px >= 0.0 and py >= 0.0
+        
+        # Curve 1: Fast-path bounds provided
+        curve_fast = TrimmedImplicitCurve(base_circle, mask, xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0)
+        
+        # Curve 2: Fallback (no bounds)
+        curve_fallback = TrimmedImplicitCurve(base_circle, mask)
+        
+        xs = np.array([1.0, -1.0, 0.0, 0.5, 1/math.sqrt(2)])
+        ys = np.array([0.0, 0.0, 1.0, 0.5, 1/math.sqrt(2)])
+        
+        res_fast = curve_fast.contains(xs, ys, tolerance=1e-3)
+        res_fallback = curve_fallback.contains(xs, ys, tolerance=1e-3)
+        
+        # Since xs, ys are in first quadrant or boundaries, the results should be identical for valid points
+        np.testing.assert_array_equal(res_fast, res_fallback)
+
+    def test_numerical_robustness(self):
+        """Test evaluation under extreme coordinates, NaNs, infs, and gradient propagation"""
+        x, y = sp.symbols('x y')
+        base_circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        trimmed = TrimmedImplicitCurve(base_circle, lambda px, py: True)
+        
+        # Extreme evaluation coordinates
+        val_huge = trimmed.evaluate(1e10, 1e10)
+        assert np.isinf(val_huge) or val_huge > 1e15
+        
+        # NaN and Inf inputs should propagate correctly from evaluate
+        assert np.isnan(trimmed.evaluate(np.nan, 1.0))
+        assert np.isinf(trimmed.evaluate(np.inf, 1.0))
+        
+        # Gradient and Normal propagation
+        gx, gy = trimmed.gradient(1.0, 0.0)
+        assert gx == pytest.approx(2.0)
+        assert gy == pytest.approx(0.0)
+        
+        nx, ny = trimmed.normal(1.0, 0.0)
+        assert nx == pytest.approx(1.0)
+        assert ny == pytest.approx(0.0)
+
+
 if __name__ == "__main__":
     # Run tests
     pytest.main([__file__, "-v"])

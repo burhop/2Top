@@ -430,5 +430,240 @@ class TestAreaRegionStringRepresentation:
         assert "holes" in repr_str
 
 
+class TestAreaRegionExtensive:
+    """Extensive tests for AreaRegion covering boundary containment, polygonal Shoelace area, field strategy integration, and error validations."""
+
+    def test_boundary_containment(self):
+        """Test contains_boundary(x, y) under various scenarios."""
+        # Create a simple 2x2 square centered at the origin
+        square = create_square_from_edges((-1, -1), (1, 1))
+        region = AreaRegion(square)
+        
+        # Points exactly on the boundary
+        assert region.contains_boundary(1.0, 0.0) is True   # Right edge
+        assert region.contains_boundary(0.0, 1.0) is True   # Top edge
+        assert region.contains_boundary(-1.0, 0.0) is True  # Left edge
+        assert region.contains_boundary(0.0, -1.0) is True  # Bottom edge
+        
+        # Points inside the region (not on the boundary)
+        assert region.contains_boundary(0.0, 0.0) is False
+        assert region.contains_boundary(0.5, 0.5) is False
+        
+        # Points outside the region (not on the boundary)
+        assert region.contains_boundary(2.0, 2.0) is False
+        assert region.contains_boundary(-1.5, 0.0) is False
+
+        # Test with custom tolerance
+        # A point slightly off the boundary (0.005 away)
+        assert region.contains_boundary(1.005, 0.0, tolerance=1e-5) is False
+        assert region.contains_boundary(1.005, 0.0, tolerance=1e-2) is True
+
+        # Now test with holes
+        outer = create_square_from_edges((-3, -3), (3, 3))
+        hole = create_square_from_edges((-1, -1), (1, 1))
+        region_with_hole = AreaRegion(outer, [hole])
+
+        # Point on outer boundary
+        assert region_with_hole.contains_boundary(3.0, 0.0) is True
+        # Point on hole boundary
+        assert region_with_hole.contains_boundary(1.0, 0.0) is True
+        # Point inside region (between outer and hole)
+        assert region_with_hole.contains_boundary(2.0, 2.0) is False
+        # Point inside hole
+        assert region_with_hole.contains_boundary(0.0, 0.0) is False
+
+    def test_polygonal_area_calculation(self):
+        """Test area calculations with polygonal approximations, non-squares, and holes."""
+        from geometry.composite_curve import create_polygon_from_edges
+
+        # 1. Triangle area (polygonal calculation using precise vertices)
+        # Vertices (0, 0), (2, 0), (0, 2) has area 0.5 * 2 * 2 = 2.0
+        triangle = create_polygon_from_edges([(0.0, 0.0), (2.0, 0.0), (0.0, 2.0)])
+        tri_region = AreaRegion(triangle)
+        assert np.isclose(tri_region.area(), 2.0)
+
+        # 2. Circle area (curves approximated using high-resolution regular polygon to bypass grid sampling limits)
+        # Approximate circle using 64-sided regular polygon
+        def make_polygon_circle(radius, center=(0.0, 0.0), num_sides=64):
+            cx, cy = center
+            theta = np.linspace(0, 2 * np.pi, num_sides, endpoint=False)
+            vertices = [(cx + radius * np.cos(t), cy + radius * np.sin(t)) for t in theta]
+            return create_polygon_from_edges(vertices)
+
+        circle_composite = make_polygon_circle(3.0)
+        circle_region = AreaRegion(circle_composite)
+        
+        # Approximate area should be extremely close to 9 * pi
+        assert np.isclose(circle_region.area(), 9.0 * np.pi, rtol=0.05)
+
+        # 3. Annular/Holes area subtraction
+        # Circle radius 3 with circle radius 1 hole. Area = pi * (3^2 - 1^2) = 8 * pi = ~25.132
+        circle_hole_composite = make_polygon_circle(1.0)
+        
+        annular_region = AreaRegion(circle_composite, [circle_hole_composite])
+        assert np.isclose(annular_region.area(), 8.0 * np.pi, rtol=0.05)
+
+        # Subtracting multiple different holes
+        # Square (-3, -3) to (3, 3) area = 36
+        # Subtract triangle hole of area 2.0 and square hole of area 1.0 (from 0 to 1, 0 to 1)
+        outer_square = create_square_from_edges((-3, -3), (3, 3))
+        hole_tri = create_polygon_from_edges([(1.0, 1.0), (3.0, 1.0), (1.0, 3.0)])  # Area = 2.0
+        hole_sq = create_square_from_edges((-2, -2), (-1, -1)) # Area = 1.0
+        
+        multi_hole_region = AreaRegion(outer_square, [hole_tri, hole_sq])
+        # Area = 36 - 2.0 - 1.0 = 33.0
+        assert np.isclose(multi_hole_region.area(), 33.0)
+
+    def test_field_strategy_integration(self):
+        """Test generating scalar fields using field strategy design pattern."""
+        from geometry import SignedDistanceStrategy, OccupancyFillStrategy, SignedDistanceField, OccupancyField
+
+        square = create_square_from_edges((-1, -1), (1, 1))
+        region = AreaRegion(square)
+
+        # 1. Signed Distance Strategy
+        sdf_strategy = SignedDistanceStrategy(resolution=0.1)
+        assert sdf_strategy.resolution == 0.1
+
+        strat_dict = sdf_strategy.to_dict()
+        assert strat_dict['type'] == 'SignedDistanceStrategy'
+        reconstructed_strategy = SignedDistanceStrategy.from_dict(strat_dict)
+        assert reconstructed_strategy.resolution == 0.1
+
+        with pytest.raises(ValueError, match="does not represent a SignedDistanceStrategy"):
+            SignedDistanceStrategy.from_dict({'type': 'Wrong'})
+
+        with pytest.raises(ValueError, match="resolution must be positive"):
+            SignedDistanceStrategy(resolution=-0.5)
+
+        sdf = region.get_field(sdf_strategy)
+        assert isinstance(sdf, SignedDistanceField)
+        assert sdf.resolution == 0.1
+
+        # Inside scalar evaluation (negative distance to boundary)
+        val_inside = sdf.evaluate(0.0, 0.0)
+        assert val_inside < 0
+        assert np.isclose(val_inside, -1.0, atol=1.5e-2)
+
+        # Outside scalar evaluation (positive distance to boundary)
+        val_outside = sdf.evaluate(2.0, 0.0)
+        assert val_outside > 0
+        assert np.isclose(val_outside, 1.0, atol=1.5e-2)
+
+        # Vectorized evaluation
+        x_arr = np.array([0.0, 2.0])
+        y_arr = np.array([0.0, 0.0])
+        results = sdf.evaluate(x_arr, y_arr)
+        assert np.allclose(results, [-1.0, 1.0], atol=1.5e-2)
+
+        # NaN propagation
+        x_nan = np.array([0.0, np.nan, 2.0])
+        y_nan = np.array([0.0, 0.0, np.nan])
+        results_nan = sdf.evaluate(x_nan, y_nan)
+        assert np.isnan(results_nan[1])
+        assert np.isnan(results_nan[2])
+        assert np.isclose(results_nan[0], -1.0, atol=1.5e-2)
+
+        # Gradient evaluation
+        grad_x, grad_y = sdf.gradient(2.0, 0.0)
+        assert np.isclose(grad_x, 1.0, atol=2e-2)
+        assert np.isclose(grad_y, 0.0, atol=2e-2)
+
+        # Level set extraction
+        lvl_set = sdf.level_set(0.0)
+        from geometry.procedural_curve import ProceduralCurve
+        assert isinstance(lvl_set, ProceduralCurve)
+        val_lvl = lvl_set.evaluate(1.0, 0.0)
+        assert np.isclose(val_lvl, 0.0, atol=0.15)
+
+        # Serialization round-trip
+        sdf_dict = sdf.to_dict()
+        assert sdf_dict['type'] == 'SignedDistanceField'
+        reconstructed_sdf = SignedDistanceField.from_dict(sdf_dict)
+        assert isinstance(reconstructed_sdf, SignedDistanceField)
+        assert reconstructed_sdf.resolution == 0.1
+        assert np.isclose(reconstructed_sdf.evaluate(0.0, 0.0), -1.0, atol=1.5e-2)
+
+        with pytest.raises(ValueError, match="does not represent a SignedDistanceField"):
+            SignedDistanceField.from_dict({'type': 'Wrong'})
+
+        # 2. Occupancy Fill Strategy
+        occ_strategy = OccupancyFillStrategy(inside_value=5.0, outside_value=-1.0)
+        assert occ_strategy.inside_value == 5.0
+        assert occ_strategy.outside_value == -1.0
+
+        occ_strat_dict = occ_strategy.to_dict()
+        assert occ_strat_dict['type'] == 'OccupancyFillStrategy'
+        reconstructed_occ_strat = OccupancyFillStrategy.from_dict(occ_strat_dict)
+        assert reconstructed_occ_strat.inside_value == 5.0
+        assert reconstructed_occ_strat.outside_value == -1.0
+
+        with pytest.raises(ValueError, match="does not represent an OccupancyFillStrategy"):
+            OccupancyFillStrategy.from_dict({'type': 'Wrong'})
+
+        occ = region.get_field(occ_strategy)
+        assert isinstance(occ, OccupancyField)
+        assert occ.inside_value == 5.0
+        assert occ.outside_value == -1.0
+
+        # Scalar evaluation
+        assert occ.evaluate(0.0, 0.0) == 5.0
+        assert occ.evaluate(2.0, 0.0) == -1.0
+
+        # Vectorized evaluation
+        results_occ = occ.evaluate(x_arr, y_arr)
+        assert np.allclose(results_occ, [5.0, -1.0])
+
+        # Gradient (always returns zeros)
+        assert occ.gradient(0.0, 0.0) == (0.0, 0.0)
+        grad_x, grad_y = occ.gradient(x_arr, y_arr)
+        assert np.allclose(grad_x, 0.0)
+        assert np.allclose(grad_y, 0.0)
+
+        # Level set
+        occ_lvl_set = occ.level_set(2.0)
+        assert isinstance(occ_lvl_set, ProceduralCurve)
+        assert np.isclose(occ_lvl_set.evaluate(0.0, 0.0), 3.0)
+
+        # Serialization round-trip
+        occ_dict = occ.to_dict()
+        assert occ_dict['type'] == 'OccupancyField'
+        reconstructed_occ = OccupancyField.from_dict(occ_dict)
+        assert isinstance(reconstructed_occ, OccupancyField)
+        assert reconstructed_occ.inside_value == 5.0
+        assert reconstructed_occ.outside_value == -1.0
+        assert reconstructed_occ.evaluate(0.0, 0.0) == 5.0
+
+        with pytest.raises(ValueError, match="does not represent an OccupancyField"):
+            OccupancyField.from_dict({'type': 'Wrong'})
+
+    def test_error_validations(self):
+        """Test error conditions, invalid setups, and shape segment count limitations."""
+        square = create_square_from_edges((-1, -1), (1, 1))
+        region = AreaRegion(square)
+
+        # Strategy mismatch
+        with pytest.raises(TypeError, match="strategy must be a FieldStrategy instance"):
+            region.get_field("not a strategy")
+
+        # Closed 2-segment curve validation (should fail AreaRegion constructor)
+        x, y = sp.symbols('x y')
+        line1 = PolynomialCurve(y)
+        seg1 = TrimmedImplicitCurve(line1, lambda x, y: -1 <= x <= 1, endpoints=((-1.0, 0.0), (1.0, 0.0)))
+        seg2 = TrimmedImplicitCurve(line1, lambda x, y: -1 <= x <= 1, endpoints=((1.0, 0.0), (-1.0, 0.0)))
+        two_segment_composite = CompositeCurve([seg1, seg2])
+        
+        # Mock is_closed to return True so we can bypass the closure check and hit the segment count check
+        two_segment_composite.is_closed = lambda *args, **kwargs: True
+
+        with pytest.raises(ValueError, match="outer_boundary must have at least 3 segments to form a closed region"):
+            AreaRegion(two_segment_composite)
+
+        # Same for holes
+        outer = create_square_from_edges((-3, -3), (3, 3))
+        with pytest.raises(ValueError, match="holes\\[0\\] must have at least 3 segments to form a closed region"):
+            AreaRegion(outer, [two_segment_composite])
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

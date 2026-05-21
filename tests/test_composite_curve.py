@@ -517,12 +517,184 @@ class TestCompositeCurveGoldenDigests:
         segment1 = TrimmedImplicitCurve(circle, lambda x, y: x >= 0)  # Right half
         segment2 = TrimmedImplicitCurve(circle, lambda x, y: y >= 0)  # Upper half
         
+        segment2 = TrimmedImplicitCurve(circle, lambda x, y: y >= 0)  # Upper half
+        
         overlapping_composite = CompositeCurve([segment1, segment2])
         
         # Should work - contains should return True if point is on any segment
         assert overlapping_composite.contains(1.0, 0.0) == True  # On both segments
         assert overlapping_composite.contains(0.0, 1.0) == True  # On both segments
         assert overlapping_composite.contains(1/math.sqrt(2), 1/math.sqrt(2)) == True  # On both segments
+
+
+class TestCompositeCurveExtensive:
+    """Extensive unit and functional test cases for CompositeCurve"""
+    
+    global create_square_from_edges, create_polygon_from_edges
+    from geometry.composite_curve import create_square_from_edges, create_polygon_from_edges
+
+    def test_connectivity_extended(self):
+        """Test extended closure paths: inherently closed conics with/without masks, rectangles, and sampling fallback"""
+        x, y = sp.symbols('x y')
+        circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+
+        # 1. Inherently closed single segment with pass-through mask
+        closed_single = TrimmedImplicitCurve(circle, lambda px, py: True)
+        composite_single_closed = CompositeCurve([closed_single])
+        assert composite_single_closed.is_closed() is True
+
+        # 2. Inherently closed single segment with restrictive mask
+        open_single = TrimmedImplicitCurve(circle, lambda px, py: px >= 0.0)
+        composite_single_open = CompositeCurve([open_single])
+        assert composite_single_open.is_closed() is False
+
+        # 3. Square boundary created by factory (uses _is_closed_rectangle)
+        square = create_square_from_edges((0.0, 0.0), (1.0, 1.0))
+        assert square.is_closed() is True
+
+        # 4. Sampling fallback when explicit endpoints are missing
+        # Create segments without explicit endpoints
+        seg1 = TrimmedImplicitCurve(circle, lambda px, py: px >= 0.0 and py >= 0.0)
+        seg2 = TrimmedImplicitCurve(circle, lambda px, py: px <= 0.0 and py >= 0.0)
+        seg3 = TrimmedImplicitCurve(circle, lambda px, py: px <= 0.0 and py <= 0.0)
+        seg4 = TrimmedImplicitCurve(circle, lambda px, py: px >= 0.0 and py <= 0.0)
+        
+        # Clear endpoints to force sampling fallback
+        seg1.endpoints = []
+        seg2.endpoints = []
+        seg3.endpoints = []
+        seg4.endpoints = []
+        
+        composite_sampled = CompositeCurve([seg1, seg2, seg3, seg4])
+        # It should fall back to sampling and identify it is closed
+        assert composite_sampled.is_closed(tolerance=0.1) is True
+
+    def test_ray_casting_concave_shapes(self):
+        """Test ray-casting algorithm on a concave L-shaped polygon"""
+        # An L-shape with vertices:
+        # (0,0) -> (2,0) -> (2,1) -> (1,1) -> (1,2) -> (0,2) -> back to (0,0)
+        vertices = [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0), (1.0, 1.0), (1.0, 2.0), (0.0, 2.0)]
+        l_shape = create_polygon_from_edges(vertices)
+        assert l_shape.is_closed() is True
+
+        # Points inside the L-shape region
+        assert l_shape.contains(0.5, 0.5, region_containment=True) is True
+        assert l_shape.contains(1.5, 0.5, region_containment=True) is True
+        assert l_shape.contains(0.5, 1.5, region_containment=True) is True
+
+        # Point in the concave "cutout" (outside)
+        assert l_shape.contains(1.5, 1.5, region_containment=True) is False
+        # Far outside
+        assert l_shape.contains(3.0, 3.0, region_containment=True) is False
+
+    def test_fast_path_metadata_evaluation(self):
+        """Test square and polygon fast-path evaluation and containment"""
+        # 1. Square fast-path
+        square = create_square_from_edges((0.0, 0.0), (2.0, 2.0))
+        assert getattr(square, "_is_square", False) is True
+        
+        # Scalar checks
+        assert square.contains(1.0, 1.0, region_containment=True) is True
+        assert square.contains(-0.5, 1.0, region_containment=True) is False
+        
+        # Vectorized checks
+        xs = np.array([1.0, 3.0, -0.1, 1.5])
+        ys = np.array([1.0, 1.0, 1.5, 2.1])
+        expected = np.array([True, False, False, False])
+        np.testing.assert_array_equal(square.contains(xs, ys, region_containment=True), expected)
+
+        # 2. Convex polygon fast-path
+        # A triangle with vertices (0,0), (2,0), (0,2)
+        triangle = create_polygon_from_edges([(0.0, 0.0), (2.0, 0.0), (0.0, 2.0)])
+        assert getattr(triangle, "_is_convex_polygon", False) is True
+        
+        # Scalar and vectorized contains checks (which uses _edges_ab and _edges_c)
+        assert triangle.contains(0.5, 0.5, region_containment=True) is True
+        assert triangle.contains(1.5, 1.5, region_containment=True) is False
+        
+        np.testing.assert_array_equal(
+            triangle.contains(np.array([0.5, 1.5]), np.array([0.5, 1.5]), region_containment=True),
+            np.array([True, False])
+        )
+
+    def test_evaluation_active_segments(self):
+        """Test general composite minimum evaluation and supporting segment gradients"""
+        x, y = sp.symbols('x y')
+        line_v = PolynomialCurve(x - 1, variables=(x, y))  # x = 1
+        line_h = PolynomialCurve(y - 2, variables=(x, y))  # y = 2
+        
+        seg_v = TrimmedImplicitCurve(line_v, lambda px, py: py >= 0)
+        seg_h = TrimmedImplicitCurve(line_h, lambda px, py: px >= 0)
+        
+        composite = CompositeCurve([seg_v, seg_h])
+        
+        # Evaluate should return minimum of the segment evaluations
+        val_at_point = composite.evaluate(2.0, 3.0)
+        expected_val = min(seg_v.evaluate(2.0, 3.0), seg_h.evaluate(2.0, 3.0))
+        assert val_at_point == pytest.approx(expected_val)
+        
+        # Gradient should be selected from the active/supporting segment (minimal value)
+        gx, gy = composite.gradient(2.0, 3.0)
+        # At (2,3), evaluate for x=1 is 2-1=1. evaluate for y=2 is 3-2=1.
+        # Let's test a point where one is clearly smaller: (1.5, 4.0) -> v is 0.5, h is 2.0. V segment is active.
+        gx, gy = composite.gradient(1.5, 4.0)
+        assert gx == pytest.approx(1.0)
+        assert gy == pytest.approx(0.0)
+
+    def test_segment_modification_apis(self):
+        """Test adding, retrieving, counting, and removing segments along with index errors"""
+        x, y = sp.symbols('x y')
+        circle = ConicSection(x**2 + y**2 - 1, variables=(x, y))
+        
+        seg1 = TrimmedImplicitCurve(circle, lambda px, py: px >= 0.0)
+        seg2 = TrimmedImplicitCurve(circle, lambda px, py: px <= 0.0)
+        
+        composite = CompositeCurve([seg1])
+        assert composite.get_segment_count() == 1
+        assert len(composite) == 1
+        
+        # Test add_segment
+        composite.add_segment(seg2)
+        assert composite.get_segment_count() == 2
+        assert composite[1] == seg2
+        
+        # Test IndexError
+        with pytest.raises(IndexError):
+            composite.get_segment(5)
+            
+        # Test remove_segment
+        composite.remove_segment(1)
+        assert composite.get_segment_count() == 1
+        assert composite[0] == seg1
+        
+        # Cannot remove last segment
+        with pytest.raises(ValueError, match="Cannot remove the last remaining segment"):
+            composite.remove_segment(0)
+
+    def test_serialization_metadata_round_trip(self):
+        """Test full dict round-trip preserving special tags like squares and convex polygons"""
+        # 1. Square Serialization
+        square = create_square_from_edges((0.0, 0.0), (3.0, 3.0))
+        square_dict = square.to_dict()
+        
+        assert square_dict["is_square"] is True
+        assert square_dict["square_bounds"] == (0.0, 3.0, 0.0, 3.0)
+        
+        reconstructed_square = CompositeCurve.from_dict(square_dict)
+        assert getattr(reconstructed_square, "_is_square", False) is True
+        assert reconstructed_square._square_bounds == (0.0, 3.0, 0.0, 3.0)
+
+        # 2. Polygon Serialization
+        triangle = create_polygon_from_edges([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)])
+        poly_dict = triangle.to_dict()
+        
+        assert poly_dict["is_convex_polygon"] is True
+        assert "convex_edges_abc" in poly_dict
+        assert "polygon_vertices" in poly_dict
+        
+        reconstructed_poly = CompositeCurve.from_dict(poly_dict)
+        assert getattr(reconstructed_poly, "_is_convex_polygon", False) is True
+        assert hasattr(reconstructed_poly, "_convex_edges_abc")
 
 
 if __name__ == "__main__":
