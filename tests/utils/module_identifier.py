@@ -11,17 +11,17 @@ class ModuleIdentifier:
     """
     Utility to identify and work with modules
     """
-    
+
     def __init__(self):
         self.modules = {}  # In a real system, this would be a database or registry
-    
+
     def get_module_by_id(self, module_id: str) -> Optional[Module]:
         """
         Get a module by its ID
-        
+
         Args:
             module_id: The ID of the module to retrieve
-            
+
         Returns:
             The module if found, None otherwise
         """
@@ -30,14 +30,14 @@ class ModuleIdentifier:
         if module_id in self.modules:
             return self.modules[module_id]
         return None
-    
+
     def get_module_by_test_case(self, test_case: TestCase) -> Optional[Module]:
         """
         Get the module that a test case belongs to
-        
+
         Args:
             test_case: The test case to find the module for
-            
+
         Returns:
             The module that the test case belongs to, or None if not found
         """
@@ -47,22 +47,22 @@ class ModuleIdentifier:
             id=test_case.module_id,
             name=f"Module {test_case.module_id}",
             description="Module that contains the test case",
-            path=f"/path/to/{test_case.module_id}"
+            path=f"/path/to/{test_case.module_id}",
         )
-    
+
     def add_module(self, module: Module) -> None:
         """
         Add a module to the identifier
-        
+
         Args:
             module: The module to add
         """
         self.modules[module.id] = module
-    
+
     def get_all_modules(self) -> list:
         """
         Get all registered modules
-        
+
         Returns:
             List of all registered modules
         """

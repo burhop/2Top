@@ -191,3 +191,27 @@ pytest_results.xml
 scene_cache/
 *.scene_cache
 
+# SQLite Database
+*.db
+
+# Temporary scratch and experiment scripts
+scratch_*.py
+sceneM
+
+# Runner state
+runner_cmd.json
+runner_status.json
+runner_output.log
+
+# Test gallery generated images and scenes
+tests/gallery/images/
+tests/gallery/scenes/
+
+# Rendered images
+ui/static/renders/*.png
+
+# Periodic curve comparison outputs
+docs/renders/
+ui/static/renders/periodic_curves/
+docs/periodic_curve_gallery.html
+scratch/

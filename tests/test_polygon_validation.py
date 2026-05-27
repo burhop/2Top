@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy as sp
 
 from geometry.composite_curve import create_polygon_from_edges
 

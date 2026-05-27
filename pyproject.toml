@@ -1,3 +1,23 @@
+[project]
+name = "twotop"
+version = "0.1.0"
+description = "2Top Implicit Geometry Engine"
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "sympy>=1.12",
+    "matplotlib>=3.6.0"
+]
+
+[tool.setuptools]
+packages = ["geometry", "scene_management", "graphics_backend", "visual_tests"]
+
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+
 [tool.ruff]
 # Like Black, use double quotes for strings.
 quote-style = "double"

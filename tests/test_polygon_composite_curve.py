@@ -1,8 +1,9 @@
 import numpy as np
-import sympy as sp
-import pytest
 
-from geometry.composite_curve import CompositeCurve, create_polygon_from_edges, create_square_from_edges
+from geometry.composite_curve import (
+    CompositeCurve,
+    create_polygon_from_edges,
+)
 
 
 def test_convex_polygon_evaluation_triangle():

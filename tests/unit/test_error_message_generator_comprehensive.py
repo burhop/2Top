@@ -41,7 +41,7 @@ class TestErrorMessageGenerator(unittest.TestCase):
             status="failed",
             timestamp=datetime.now(),
             execution_time=0.01,
-            error_details="Test failed with unexpected result"
+            error_details="Test failed with unexpected result",
         )
 
         # Store the test result to make sure it exists
@@ -54,9 +54,9 @@ class TestErrorMessageGenerator(unittest.TestCase):
             error_message = self.error_generator.generate_error_message(
                 test_result_id=test_result.id,
                 message="Test error message",
-                severity="error"
+                severity="error",
             )
-            
+
             # Verify the error message was created
             self.assertIsNotNone(error_message)
             self.assertEqual(error_message.test_result_id, test_result.id)
@@ -76,7 +76,7 @@ class TestErrorMessageGenerator(unittest.TestCase):
             status="failed",
             timestamp=datetime.now(),
             execution_time=0.01,
-            error_details="Test error details"
+            error_details="Test error details",
         )
 
         # Store the test result
@@ -87,7 +87,7 @@ class TestErrorMessageGenerator(unittest.TestCase):
             id="error-001",
             test_result_id=test_result.id,
             message="Test error message",
-            severity="error"
+            severity="error",
         )
 
         # Store the error message
@@ -96,6 +96,7 @@ class TestErrorMessageGenerator(unittest.TestCase):
 
         # Verify the file was created
         import os
+
         filename = f"{error_msg.id}.json"
         filepath = os.path.join(self.temp_dir, filename)
         self.assertTrue(os.path.exists(filepath))

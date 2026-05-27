@@ -1,5 +1,3 @@
-import numpy as np
-import sympy as sp
 import pytest
 
 from geometry import AreaRegion
@@ -26,9 +24,9 @@ def test_non_square_quadrilateral_does_not_use_square_fast_path():
     # to ensure _is_square is not set (e.g., a 3x3 square translated/rotated would still be polygonal here).
     verts = [
         (-1.5, -1.0),
-        ( 1.5, -1.0),
-        ( 1.2,  1.3),
-        (-1.8,  1.1),
+        (1.5, -1.0),
+        (1.2, 1.3),
+        (-1.8, 1.1),
     ]
     poly = create_polygon_from_edges(verts)
     region = AreaRegion(poly)
@@ -43,7 +41,9 @@ def test_square_uses_square_bounds_area_correct():
     """
     Squares built via create_square_from_edges() should have correct area via _square_bounds.
     """
-    sq = create_square_from_edges((-2.0, -2.0), (1.0, 4.0))  # width=3, height=6 => area=18
+    sq = create_square_from_edges(
+        (-2.0, -2.0), (1.0, 4.0)
+    )  # width=3, height=6 => area=18
     region = AreaRegion(sq)
 
     area = region.area()

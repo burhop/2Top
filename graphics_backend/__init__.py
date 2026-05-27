@@ -8,4 +8,4 @@ applications and external services.
 from .graphics_interface import GraphicsBackendInterface
 from .mcp_handler import MCPCommandHandler
 
-__all__ = ['GraphicsBackendInterface', 'MCPCommandHandler']
+__all__ = ["GraphicsBackendInterface", "MCPCommandHandler"]

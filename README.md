@@ -2,7 +2,7 @@
 
 A complete, tested framework for planar implicit geometry: define curves by f(x, y) = 0, compose them via constructive operations, build piecewise boundaries and filled regions, and generate scalar fields (signed distance, occupancy).
 
-All tests pass: 449/449. Robust handling of vectorization, masks, NaN/∞, serialization, and headless plotting.
+Robust handling of vectorization, masks, NaN/∞, serialization, and headless plotting.
 
 ## Installation
 
@@ -10,10 +10,27 @@ All tests pass: 449/449. Robust handling of vectorization, masks, NaN/∞, seria
 pip install -r requirements.txt
 ```
 
+Dependencies: `sympy`, `numpy`, `matplotlib`, `PySide6`, `ruff`, `black`.
+
+## Development Tooling
+
+Code style is enforced with [ruff](https://docs.astral.sh/ruff/) and [black](https://black.readthedocs.io/). Configuration lives in `pyproject.toml` (line length 88, Python 3.11 target).
+
+```bash
+ruff check .
+black .
+```
+
 ## Running Tests
 
 ```bash
 pytest
+```
+
+Run only the fast geometry suite:
+
+```bash
+python tests/fast_geo_runner.py
 ```
 
 ## Quickstart
@@ -128,11 +145,72 @@ occ = OccupancyFillStrategy(inside_value=1.0, outside_value=0.0).generate_field(
 - Matplotlib is configured for non-interactive environments. Use `curve.plot(...)` or custom visual tests.
 - Backend: `'Agg'` to avoid tkinter/Tcl issues.
 
+## Interactive Web UI & Visualizer Studio
+
+The library includes a complete, real-time Web UI visualizer studio on top of the geometry engine for interactive coordinate plotting, database inspections, and comparative math verifications.
+
+### Running the Web UI Studio
+
+Start the Flask-based web application:
+
+```bash
+python -m ui.app
+```
+
+Then visit **`http://localhost:5000`** in your browser.
+
+**Key UI Features:**
+- **Dynamic 2D Canvas**: Rich 2D graphics canvas with smooth drag panning, mouse-wheel cursor-centered zooming, coordinate axes ticks, grid snapping, and adaptive LOD.
+- **Neon Dark-Mode Design**: Harmonious modern dark design with high-contrast neon accents, floating control panels, and custom-styled scrolling widgets.
+- **Database Loader Controls**:
+  - Enter a **Curve ID** to load and reconstruct any implicit or trimmed curve from `curves.db` directly onto the viewport.
+  - Enter a **Group ID** to reconstruct entire spatial sets of overlapping equations, rendered with alternating high-contrast color palettes to clearly distinguish boundaries.
+- **Mathematical Verification Panel**:
+  - The **Verify Scene** button queries the backend to calculate numerical/analytical endpoints and intersection coordinates for all loaded database curves.
+  - Compares active calculations against database ground-truth records using strict, adaptive scale-factored tolerances.
+  - Opens a floating detailed report card tracking exact match/mismatch statuses, error diff logs, and intersection relations.
+- **Visual Test Runner HUD**: Steps, plays, and auto-navigates predefined geometry test cases in sequence using dedicated transport playback controls.
+
+### Continuous Test Runner
+
+To watch python source file modifications and automatically stream test suite executions visually to the active Web UI canvas:
+
+```bash
+python tools/continuous_runner.py
+```
+
+### Advanced Mathematical Testing
+
+We have expanded the precision test suite to verify complex algebraic edge cases and metamorphic properties:
+- **Metamorphic Invariant Testing** (`tests/property/test_metamorphic_invariants.py`): Validates consistency of R-functions and conic intersections under rigid coordinate translations, rotations, and scaling.
+- **Singularity Verification** (`tests/unit/test_singularities.py`): Asserts exact evaluations and robust domain clipping around cusps, self-intersections, and isolated singular coordinates.
+- **Ground Truth Comparison** (`tests/unit/test_verify_geometry_against_dataset.py`): Programmatically reconstructs thousands of database records to verify intersection locations under strict tolerance boundaries.
+
+For a deep-dive on the internal architectures of these visual and mathematical testing systems, see the **[Visualizer Studio Developer Guide](file:///d:/repos/2Top/docs/VISUALIZER_STUDIO.md)**.
+
 ## API Tips
 
 - __Numerical stability__: `ImplicitCurve.evaluate()` preserves mathematically correct NaN/∞ when inputs are NaN/∞, and guards against numerical overflow.
 - __Vectorization__: All evaluate/gradient methods accept scalars or numpy arrays; internal implementations use `ravel()`-based views where needed.
 - __Bounding boxes__: Use `ConicSection.bounding_box()` for precise bounds; other types may provide conservative boxes.
+
+## Test Infrastructure
+
+The `tests/` package is organized into focused sub-packages:
+
+| Package | Purpose |
+|---|---|
+| `tests/models/` | Data models: `TestCase`, `TestResult`, `ErrorMessage`, `Module` |
+| `tests/utils/` | Utilities: `TestCaseManager`, `TestCaseExecutor`, `TestResultAnalyzer`, `ErrorMessageGenerator`, `ResultStorageManager`, `TestCaseFailureDetector`, `ModuleIdentifier` |
+| `tests/unit/` | Unit tests for geometry modules and test-system utilities |
+| `tests/factories/` | Reusable curve scenario factories (`curve_scenarios.py`) |
+| `tests/helpers/` | Geometry fixture builders (`builders.py`) and precision helpers (`precision.py`) |
+| `tests/golden/` | Golden digest files (`digests/`) and loader; regenerate via `python -m tests.utils.golden_cli <name> --write` |
+| `tests/integration/` | Integration-level test stubs |
+| `tests/property/` | Property-based / fuzz tests (`test_geometry_fuzz.py`) |
+| `tests/contract/` | Contract test stubs |
+
+Test results are persisted to `./test_results/` as JSON by `ResultStorageManager`.
 
 ## Roadmap Alignment
 

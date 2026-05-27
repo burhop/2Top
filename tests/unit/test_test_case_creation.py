@@ -5,14 +5,11 @@ Unit tests for test case creation functionality
 import sys
 import os
 import unittest
-from datetime import datetime
 
 # Add the current directory to the path to import from the project
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from tests.utils.test_case_manager import TestCaseManager
-from tests.models.test_case import TestCase
-from tests.models.module import Module
 from tests.utils.result_storage_manager import ResultStorageManager
 
 
@@ -28,9 +25,7 @@ class TestTestCaseCreation(unittest.TestCase):
         """Test creating a test case successfully"""
         # Create a module first
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Create a test case
@@ -40,7 +35,7 @@ class TestTestCaseCreation(unittest.TestCase):
             module_id=module.id,
             test_type="unit",
             input_data={"param1": "value1"},
-            expected_result="expected_result"
+            expected_result="expected_result",
         )
 
         # Verify the test case was created correctly
@@ -59,9 +54,7 @@ class TestTestCaseCreation(unittest.TestCase):
         """Test creating a test case with validation"""
         # Create a module first
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Create an invalid test case
@@ -73,21 +66,21 @@ class TestTestCaseCreation(unittest.TestCase):
             input_data={"param1": "value1"},
             expected_result="expected_result",
             valid=False,
-            validation_reason="Invalid test case due to missing parameters"
+            validation_reason="Invalid test case due to missing parameters",
         )
 
         # Verify the test case was created correctly
         self.assertIsNotNone(test_case)
         self.assertFalse(test_case.valid)
-        self.assertEqual(test_case.validation_reason, "Invalid test case due to missing parameters")
+        self.assertEqual(
+            test_case.validation_reason, "Invalid test case due to missing parameters"
+        )
 
     def test_get_test_case(self):
         """Test retrieving a test case by ID"""
         # Create a module first
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Create a test case
@@ -97,7 +90,7 @@ class TestTestCaseCreation(unittest.TestCase):
             module_id=module.id,
             test_type="unit",
             input_data={"param1": "value1"},
-            expected_result="expected_result"
+            expected_result="expected_result",
         )
 
         # Retrieve the test case
@@ -110,9 +103,7 @@ class TestTestCaseCreation(unittest.TestCase):
         """Test retrieving test cases by module"""
         # Create a module
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Create multiple test cases for the same module
@@ -122,7 +113,7 @@ class TestTestCaseCreation(unittest.TestCase):
             module_id=module.id,
             test_type="unit",
             input_data={"param1": "value1"},
-            expected_result="expected_result1"
+            expected_result="expected_result1",
         )
 
         test_case2 = self.test_case_manager.create_test_case(
@@ -131,23 +122,23 @@ class TestTestCaseCreation(unittest.TestCase):
             module_id=module.id,
             test_type="unit",
             input_data={"param2": "value2"},
-            expected_result="expected_result2"
+            expected_result="expected_result2",
         )
 
         # Create a test case for a different module
         module2 = self.test_case_manager.create_module(
             name="Another Module",
             description="Another test module",
-            path="/path/to/another/module"
+            path="/path/to/another/module",
         )
-        
+
         test_case3 = self.test_case_manager.create_test_case(
             name="Test Case 3",
             description="Third test case",
             module_id=module2.id,
             test_type="unit",
             input_data={"param3": "value3"},
-            expected_result="expected_result3"
+            expected_result="expected_result3",
         )
 
         # Get test cases for the first module

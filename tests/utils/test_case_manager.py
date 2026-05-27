@@ -20,15 +20,17 @@ class TestCaseManager:
         self.test_cases: Dict[str, TestCase] = {}
         self.modules: Dict[str, Module] = {}
 
-    def create_test_case(self,
-                         name: str,
-                         description: str,
-                         module_id: str,
-                         test_type: str,
-                         input_data: Dict[str, Any],
-                         expected_result: Any,
-                         valid: bool = True,
-                         validation_reason: Optional[str] = None) -> TestCase:
+    def create_test_case(
+        self,
+        name: str,
+        description: str,
+        module_id: str,
+        test_type: str,
+        input_data: Dict[str, Any],
+        expected_result: Any,
+        valid: bool = True,
+        validation_reason: Optional[str] = None,
+    ) -> TestCase:
         """
         Create a new test case
 
@@ -58,7 +60,7 @@ class TestCaseManager:
             input_data=input_data,
             expected_result=expected_result,
             valid=valid,
-            validation_reason=validation_reason
+            validation_reason=validation_reason,
         )
 
         # Store the test case
@@ -109,15 +111,15 @@ class TestCaseManager:
             return False
 
         test_case = self.test_cases[test_case_id]
-        
+
         # Update the fields
         for key, value in kwargs.items():
             if hasattr(test_case, key):
                 setattr(test_case, key, value)
-        
+
         # Update the last modified timestamp
         test_case.last_modified = datetime.now()
-        
+
         return True
 
     def delete_test_case(self, test_case_id: str) -> bool:
@@ -137,16 +139,14 @@ class TestCaseManager:
         test_case = self.test_cases[test_case_id]
         if test_case.module_id in self.modules:
             self.modules[test_case.module_id].test_case_ids.remove(test_case_id)
-        
+
         # Delete the test case
         del self.test_cases[test_case_id]
         return True
 
-    def create_module(self,
-                      name: str,
-                      description: str,
-                      path: str,
-                      dependencies: List[str] = None) -> Module:
+    def create_module(
+        self, name: str, description: str, path: str, dependencies: List[str] = None
+    ) -> Module:
         """
         Create a new module
 
@@ -168,7 +168,7 @@ class TestCaseManager:
             name=name,
             description=description,
             path=path,
-            dependencies=dependencies or []
+            dependencies=dependencies or [],
         )
 
         # Store the module

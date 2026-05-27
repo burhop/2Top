@@ -1,8 +1,6 @@
-import numpy as np
 import sympy as sp
 
 from geometry.composite_curve import (
-    CompositeCurve,
     create_polygon_from_edges,
     create_square_from_edges,
 )
@@ -14,8 +12,16 @@ def test_convex_polygon_metadata_and_halfspaces():
     poly = create_polygon_from_edges(pts)
 
     # New convenience methods (fallback to attributes if absent)
-    is_convex = poly.is_convex_polygon() if hasattr(poly, "is_convex_polygon") else getattr(poly, "_is_convex_polygon", False)
-    edges = poly.halfspace_edges() if hasattr(poly, "halfspace_edges") else getattr(poly, "_convex_edges_abc", None)
+    is_convex = (
+        poly.is_convex_polygon()
+        if hasattr(poly, "is_convex_polygon")
+        else getattr(poly, "_is_convex_polygon", False)
+    )
+    edges = (
+        poly.halfspace_edges()
+        if hasattr(poly, "halfspace_edges")
+        else getattr(poly, "_convex_edges_abc", None)
+    )
 
     assert is_convex is True
     assert isinstance(edges, (list, tuple))
@@ -36,8 +42,16 @@ def test_nonconvex_polygon_has_no_convex_metadata():
     pts = [(0, 0), (2, 1), (0, 2), (0.5, 1)]
     poly = create_polygon_from_edges(pts)
 
-    is_convex = poly.is_convex_polygon() if hasattr(poly, "is_convex_polygon") else getattr(poly, "_is_convex_polygon", False)
-    edges = poly.halfspace_edges() if hasattr(poly, "halfspace_edges") else getattr(poly, "_convex_edges_abc", None)
+    is_convex = (
+        poly.is_convex_polygon()
+        if hasattr(poly, "is_convex_polygon")
+        else getattr(poly, "_is_convex_polygon", False)
+    )
+    edges = (
+        poly.halfspace_edges()
+        if hasattr(poly, "halfspace_edges")
+        else getattr(poly, "_convex_edges_abc", None)
+    )
 
     assert is_convex is False
     assert edges is None

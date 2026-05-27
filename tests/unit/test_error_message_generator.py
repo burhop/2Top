@@ -28,12 +28,12 @@ class TestErrorMessageGenerator(unittest.TestCase):
             execution_time=0.012,
             error_details=None,
             output="Test output",
-            diagnosis=None
+            diagnosis=None,
         )
-        
+
         # Generate the error message
         error_message = self.error_generator.generate_error_message(test_result)
-        
+
         # Check the error message
         self.assertEqual(error_message, "Test passed - no error to report")
 
@@ -49,14 +49,16 @@ class TestErrorMessageGenerator(unittest.TestCase):
             execution_time=0.015,
             error_details="AssertionError: 1 != 3",
             output="Test output",
-            diagnosis="The function returned 1 instead of 3, indicating a bug in the implementation"
+            diagnosis="The function returned 1 instead of 3, indicating a bug in the implementation",
         )
 
         # Generate the error message
         error_message = self.error_generator.generate_error_message(test_result)
 
         # Check the error message
-        self.assertIn("Test 'test_002' in module 'Module module_001' failed", error_message)
+        self.assertIn(
+            "Test 'test_002' in module 'Module module_001' failed", error_message
+        )
         self.assertIn("Error details: AssertionError: 1 != 3", error_message)
         self.assertIn("Suggested actions:", error_message)
 
@@ -72,17 +74,24 @@ class TestErrorMessageGenerator(unittest.TestCase):
             execution_time=0.015,
             error_details="AssertionError: 1 != 3",
             output="Test output",
-            diagnosis="The function returned 1 instead of 3, indicating a bug in the implementation"
+            diagnosis="The function returned 1 instead of 3, indicating a bug in the implementation",
         )
 
         # Generate the detailed error message
-        detailed_error = self.error_generator.generate_detailed_error_message(test_result)
+        detailed_error = self.error_generator.generate_detailed_error_message(
+            test_result
+        )
 
         # Check the detailed error message
         self.assertIn("Test Failure Report", detailed_error)
-        self.assertIn("Test Case ID: test_003", detailed_error)  # Note: it's the test case id, not result id
+        self.assertIn(
+            "Test Case ID: test_003", detailed_error
+        )  # Note: it's the test case id, not result id
         self.assertIn("Error type: AssertionError: 1 != 3", detailed_error)
-        self.assertIn("Root cause analysis: The function returned 1 instead of 3, indicating a bug in the implementation", detailed_error)
+        self.assertIn(
+            "Root cause analysis: The function returned 1 instead of 3, indicating a bug in the implementation",
+            detailed_error,
+        )
         self.assertIn("Recommended actions:", detailed_error)
 
     def tearDown(self):
@@ -90,5 +99,5 @@ class TestErrorMessageGenerator(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

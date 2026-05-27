@@ -168,6 +168,43 @@ trimmed = TrimmedImplicitCurve(base_curve, mask)     # Apply mask
 composite = CompositeCurve([trimmed1, trimmed2])     # Combine segments
 ```
 
+## Visualizer Studio & Test Automation Component Layout
+
+We have integrated an interactive visual test dashboard and verification engine on top of the geometry core:
+
+1. **Flask API App (`ui/app.py`)**: Runs the web app controller serving standard static files and providing WebSocket links for bidirectional visual testing streams.
+2. **GeometryStudio Client (`ui/static/js/core/GeometryStudio.js`)**: Coordinates user canvas event handling, sidebar parameters, WebSocket links, and sequential database loading transactions.
+3. **CanvasRenderer (`ui/static/js/core/CanvasRenderer.js`)**: Executes fast screen coordinate mappings, grids, ticking, and alternating color curve paths.
+4. **Continuous Test Runner (`tools/continuous_runner.py`)**: Orchestrates file watching, automated command-queue processing, periodic loops, and WebSocket failures streaming.
+
+### Interactive Viewport LOD Sync Sequence
+
+The following step sequence shows how the client-side canvas dragging/zooming maps to backend viewport-clipping math to deliver seamless LOD snapping without server flooding:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Developer / User
+    participant Canvas as Client CanvasRenderer
+    participant Studio as Client GeometryStudio
+    participant Flask as Flask Server (ui/app.py)
+    participant Solver as Geometry Solver (curve_intersections.py)
+
+    User->>Canvas: Drag Pan / Mouse-Wheel Zoom
+    Canvas->>Canvas: Redraw grid ticks instantly using local cached polylines
+    Note over Canvas: Viewport coordinates shifting rapidly
+    Canvas->>Studio: Trigger viewport_changed event
+    Note over Studio: Intercepted by 150ms debounce scheduler
+    Note over User: User stops dragging (150ms elapsed)
+    Studio->>Flask: GET /api/geometry-scene?min_x=..&max_x=.. (Viewport limits)
+    Flask->>Solver: Intersect curve domains with visible viewport limits
+    Solver->>Solver: Redistribute 150 subdivision points in visible segment
+    Solver-->>Flask: Return smooth high-LOD coordinates list
+    Flask-->>Studio: Stream coordinate points via WebSocket / HTTP JSON
+    Studio->>Canvas: Update local polylines
+    Canvas->>Canvas: Redraw high-definition smooth segments & snap keypoints
+```
+
 ## Future Extensions Suggested by UML
 
 The UML diagrams reveal several extension points:

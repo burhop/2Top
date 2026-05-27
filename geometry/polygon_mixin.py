@@ -24,7 +24,9 @@ class CompositePolygonMixin:
     def polygon_vertices(self) -> Optional[List[Tuple[float, float]]]:
         return getattr(self, "_polygon_vertices", None)
 
-    def polygon_normals(self) -> Optional[List[Tuple[Tuple[float, float], Tuple[float, float]]]]:
+    def polygon_normals(
+        self,
+    ) -> Optional[List[Tuple[Tuple[float, float], Tuple[float, float]]]]:
         """
         Returns a list of ((mx, my), (nx, ny)) where (mx, my) is the midpoint of an edge
         and (nx, ny) is an outward unit normal of that edge. Returns None if metadata is missing.

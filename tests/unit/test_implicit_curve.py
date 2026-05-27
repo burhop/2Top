@@ -20,7 +20,7 @@ class TestImplicitCurve(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         # Create a simple implicit curve: x^2 + y^2 - 1 = 0 (circle)
-        x, y = sp.symbols('x y')
+        x, y = sp.symbols("x y")
         expression = x**2 + y**2 - 1
         self.curve = ImplicitCurve(expression, (x, y))
 
@@ -28,7 +28,7 @@ class TestImplicitCurve(unittest.TestCase):
         """Test that the curve initializes correctly"""
         self.assertEqual(str(self.curve), "x**2 + y**2 - 1 = 0")
         self.assertIsNotNone(self.curve.expression)
-        self.assertEqual(self.curve.variables, (sp.Symbol('x'), sp.Symbol('y')))
+        self.assertEqual(self.curve.variables, (sp.Symbol("x"), sp.Symbol("y")))
 
     def test_curve_evaluation(self):
         """Test curve evaluation at various points"""
@@ -37,10 +37,10 @@ class TestImplicitCurve(unittest.TestCase):
         self.assertEqual(self.curve.evaluate(0, 1), 0)
         self.assertEqual(self.curve.evaluate(-1, 0), 0)
         self.assertEqual(self.curve.evaluate(0, -1), 0)
-        
+
         # Point inside the circle
         self.assertLess(self.curve.evaluate(0.5, 0.5), 0)
-        
+
         # Point outside the circle
         self.assertGreater(self.curve.evaluate(2, 0), 0)
 

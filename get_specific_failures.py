@@ -21,48 +21,54 @@ failing_tests = [
     "tests/test_composite_curve.py::TestCompositeCurveContainsMethod::test_contains_tolerance_handling",
     "tests/test_composite_curve.py::TestCompositeCurveEdgeCases::test_overlapping_segments",
     "tests/test_field_strategy.py::TestSignedDistanceField::test_evaluate_vectorized",
-    "tests/test_field_strategy.py::TestOccupancyField::test_evaluate_vectorized"
+    "tests/test_field_strategy.py::TestOccupancyField::test_evaluate_vectorized",
 ]
+
 
 def run_single_test(test_name):
     """Run a single test with detailed output"""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"RUNNING: {test_name}")
-    print('='*80)
-    
-    result = subprocess.run([
-        sys.executable, '-m', 'pytest', test_name, 
-        '-v', '-s', '--tb=short'
-    ], capture_output=True, text=True, cwd='.')
-    
+    print("=" * 80)
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", test_name, "-v", "-s", "--tb=short"],
+        capture_output=True,
+        text=True,
+        cwd=".",
+    )
+
     print("STDOUT:")
     print(result.stdout)
     if result.stderr:
         print("\nSTDERR:")
         print(result.stderr)
     print(f"\nReturn code: {result.returncode}")
-    
+
     return result.returncode == 0
+
 
 def main():
     print("Running detailed analysis of failing tests...")
-    
+
     passed = 0
     failed = 0
-    
+
     # Write all output to a file
-    with open('detailed_failure_analysis.txt', 'w') as f:
+    with open("detailed_failure_analysis.txt", "w") as f:
         f.write("DETAILED FAILURE ANALYSIS\n")
         f.write("=" * 80 + "\n\n")
-        
+
         for i, test in enumerate(failing_tests, 1):
             print(f"\n[{i}/{len(failing_tests)}] Running: {test}")
-            
-            result = subprocess.run([
-                sys.executable, '-m', 'pytest', test, 
-                '-v', '-s', '--tb=short'
-            ], capture_output=True, text=True, cwd='.')
-            
+
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", test, "-v", "-s", "--tb=short"],
+                capture_output=True,
+                text=True,
+                cwd=".",
+            )
+
             f.write(f"TEST {i}: {test}\n")
             f.write("-" * 80 + "\n")
             f.write("STDOUT:\n")
@@ -72,19 +78,20 @@ def main():
                 f.write(result.stderr)
             f.write(f"\nReturn code: {result.returncode}\n")
             f.write("\n" + "=" * 80 + "\n\n")
-            
+
             if result.returncode == 0:
                 passed += 1
-                print(f"  ✅ PASSED")
+                print("  ✅ PASSED")
             else:
                 failed += 1
-                print(f"  ❌ FAILED")
-    
-    print(f"\n\nSUMMARY:")
+                print("  ❌ FAILED")
+
+    print("\n\nSUMMARY:")
     print(f"  Passed: {passed}")
     print(f"  Failed: {failed}")
     print(f"  Total:  {len(failing_tests)}")
-    print(f"\nDetailed output written to: detailed_failure_analysis.txt")
+    print("\nDetailed output written to: detailed_failure_analysis.txt")
+
 
 if __name__ == "__main__":
     main()

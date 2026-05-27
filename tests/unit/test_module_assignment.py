@@ -10,7 +10,6 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from tests.utils.test_case_manager import TestCaseManager
-from tests.models.module import Module
 from tests.utils.result_storage_manager import ResultStorageManager
 
 
@@ -29,7 +28,7 @@ class TestModuleAssignment(unittest.TestCase):
             name="Test Module",
             description="A test module",
             path="/path/to/test/module",
-            dependencies=["dependency1", "dependency2"]
+            dependencies=["dependency1", "dependency2"],
         )
 
         # Verify the module was created correctly
@@ -43,9 +42,7 @@ class TestModuleAssignment(unittest.TestCase):
         """Test retrieving a module by ID"""
         # Create a module
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Retrieve the module
@@ -60,13 +57,13 @@ class TestModuleAssignment(unittest.TestCase):
         module1 = self.test_case_manager.create_module(
             name="Test Module 1",
             description="First test module",
-            path="/path/to/test/module1"
+            path="/path/to/test/module1",
         )
 
         module2 = self.test_case_manager.create_module(
             name="Test Module 2",
             description="Second test module",
-            path="/path/to/test/module2"
+            path="/path/to/test/module2",
         )
 
         # Get all modules
@@ -82,7 +79,7 @@ class TestModuleAssignment(unittest.TestCase):
             name="Module with Dependencies",
             description="A module with dependencies",
             path="/path/to/module/with/dependencies",
-            dependencies=["dep1", "dep2", "dep3"]
+            dependencies=["dep1", "dep2", "dep3"],
         )
 
         # Verify dependencies are stored correctly
@@ -92,9 +89,7 @@ class TestModuleAssignment(unittest.TestCase):
         """Test that modules properly associate with test cases"""
         # Create a module
         module = self.test_case_manager.create_module(
-            name="Test Module",
-            description="A test module",
-            path="/path/to/test/module"
+            name="Test Module", description="A test module", path="/path/to/test/module"
         )
 
         # Create a test case for this module
@@ -104,12 +99,12 @@ class TestModuleAssignment(unittest.TestCase):
             module_id=module.id,
             test_type="unit",
             input_data={"param1": "value1"},
-            expected_result="expected_result"
+            expected_result="expected_result",
         )
 
         # Verify the test case was added to the module
         self.assertIn(test_case.id, module.test_case_ids)
-        
+
         # Verify the module was added to the test case
         retrieved_case = self.test_case_manager.get_test_case(test_case.id)
         self.assertEqual(retrieved_case.module_id, module.id)

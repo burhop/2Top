@@ -8,14 +8,15 @@ Demonstrates:
 - Accurate area calculation using square fast-path and polygon vertices
 """
 
-import numpy as np
 from geometry import AreaRegion
 from geometry.factories import create_square_from_edges, create_polygon_from_edges
 
 
 def demo_square():
     # Axis-aligned rectangle via square factory (with metadata for fast-path)
-    sq = create_square_from_edges((-2.0, -2.0), (1.0, 4.0))  # width=3, height=6 => area=18
+    sq = create_square_from_edges(
+        (-2.0, -2.0), (1.0, 4.0)
+    )  # width=3, height=6 => area=18
     region = AreaRegion(sq)
 
     print("Square region area (expected 18):", region.area())

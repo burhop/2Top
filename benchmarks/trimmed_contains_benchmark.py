@@ -15,7 +15,7 @@ from geometry.implicit_curve import ImplicitCurve
 
 
 def make_line_through_origin():
-    x, y = sp.symbols('x y')
+    x, y = sp.symbols("x y")
     # Line: y = 0
     expr = y
     return ImplicitCurve(expr, (x, y))
@@ -24,20 +24,25 @@ def make_line_through_origin():
 def rect_mask_factory(xmin, xmax, ymin, ymax):
     def mask(px, py):
         return (xmin <= px <= xmax) and (ymin <= py <= ymax)
+
     return mask
 
 
 def run_benchmark(n_points: int = 200_000):
     rng = np.random.default_rng(123)
     xs = rng.uniform(-2.0, 2.0, size=n_points)
-    ys = rng.uniform(-0.01, 0.01, size=n_points)  # near the line y=0 to hit on-curve more often
+    ys = rng.uniform(
+        -0.01, 0.01, size=n_points
+    )  # near the line y=0 to hit on-curve more often
 
     base = make_line_through_origin()
     xmin, xmax, ymin, ymax = -1.0, 1.0, -0.5, 0.5
     mask = rect_mask_factory(xmin, xmax, ymin, ymax)
 
     # With explicit bounds (vectorized fast-path)
-    trimmed_fast = TrimmedImplicitCurve(base, mask, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+    trimmed_fast = TrimmedImplicitCurve(
+        base, mask, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax
+    )
 
     # Without explicit bounds (forces per-point mask loop)
     trimmed_slow = TrimmedImplicitCurve(base, mask)

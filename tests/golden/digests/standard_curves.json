@@ -1,0 +1,63 @@
+{
+  "unit_circle": {
+    "description": "Circle at origin with radius 1: x^2 + y^2 - 1 = 0",
+    "closed": true,
+    "point_count_min": 30,
+    "bounds": [-1.0, 1.0, -1.0, 1.0],
+    "bounds_tolerance": 0.3,
+    "all_points_on_curve_tolerance": 0.15,
+    "no_nan": true
+  },
+  "circle_r2": {
+    "description": "Circle at origin with radius 2: x^2 + y^2 - 4 = 0",
+    "closed": true,
+    "point_count_min": 30,
+    "bounds": [-2.0, 2.0, -2.0, 2.0],
+    "bounds_tolerance": 0.3,
+    "all_points_on_curve_tolerance": 0.15,
+    "no_nan": true
+  },
+  "standard_ellipse": {
+    "description": "Ellipse with a=3, b=2: x^2/9 + y^2/4 - 1 = 0",
+    "closed": true,
+    "point_count_min": 30,
+    "bounds": [-3.0, 3.0, -2.0, 2.0],
+    "bounds_tolerance": 0.4,
+    "all_points_on_curve_tolerance": 0.15,
+    "no_nan": true
+  },
+  "open_parabola": {
+    "description": "Parabola: y - x^2 = 0",
+    "closed": false,
+    "point_count_min": 10,
+    "no_nan": true
+  },
+  "vertical_line": {
+    "description": "Vertical line: x - 1 = 0",
+    "closed": false,
+    "point_count_min": 5,
+    "no_nan": true
+  },
+  "horizontal_line": {
+    "description": "Horizontal line: y = 0",
+    "closed": false,
+    "point_count_min": 5,
+    "no_nan": true
+  },
+  "hyperbola": {
+    "description": "Hyperbola: x^2 - y^2 - 1 = 0",
+    "closed": false,
+    "point_count_min": 5,
+    "no_nan": true
+  },
+  "unit_square_region": {
+    "description": "Square region with vertices at (0,0), (1,0), (1,1), (0,1)",
+    "closed": true,
+    "point_count_min": 8,
+    "bounds": [0.0, 1.0, 0.0, 1.0],
+    "bounds_tolerance": 0.2,
+    "no_nan": true,
+    "perimeter": 4.0,
+    "area": 1.0
+  }
+}
