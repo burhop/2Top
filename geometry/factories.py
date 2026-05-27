@@ -295,16 +295,24 @@ def create_L_shape(
 
     # Vertical line: x = -0.5, y from -1 to 0
     vertical = PolynomialCurve(x + 0.5, variables)
+
     def vertical_mask(x_val, y_val):
-        return (-0.65 <= x_val <= -0.35) and (-1.05 <= y_val <= 0.05)  # Increased tolerance
+        return (-0.65 <= x_val <= -0.35) and (
+            -1.05 <= y_val <= 0.05
+        )  # Increased tolerance
+
     vertical_segment = TrimmedImplicitCurve(
         vertical, vertical_mask, endpoints=[(-0.5, -1), (-0.5, 0)]
     )
 
     # Horizontal line: y = -1, x from -0.5 to 0.5
     horizontal = PolynomialCurve(y + 1, variables)
+
     def horizontal_mask(x_val, y_val):
-        return (-0.55 <= x_val <= 0.55) and (-1.15 <= y_val <= -0.85)  # Increased tolerance
+        return (-0.55 <= x_val <= 0.55) and (
+            -1.15 <= y_val <= -0.85
+        )  # Increased tolerance
+
     horizontal_segment = TrimmedImplicitCurve(
         horizontal, horizontal_mask, endpoints=[(-0.5, -1), (0.5, -1)]
     )
@@ -331,8 +339,12 @@ def create_T_shape(
 
     # Horizontal top: y = 0.5, x from -1 to 0 (left part)
     horizontal_left = PolynomialCurve(y - 0.5, variables)
+
     def horizontal_left_mask(x_val, y_val):
-        return (-1.05 <= x_val <= 0.05) and (0.35 <= y_val <= 0.65)  # Increased tolerance
+        return (-1.05 <= x_val <= 0.05) and (
+            0.35 <= y_val <= 0.65
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(
             horizontal_left, horizontal_left_mask, endpoints=[(-1, 0.5), (0, 0.5)]
@@ -341,16 +353,24 @@ def create_T_shape(
 
     # Vertical stem: x = 0, y from 0.5 to -1
     vertical = PolynomialCurve(x, variables)
+
     def vertical_mask(x_val, y_val):
-        return (-0.15 <= x_val <= 0.15) and (-1.05 <= y_val <= 0.55)  # Increased tolerance
+        return (-0.15 <= x_val <= 0.15) and (
+            -1.05 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(vertical, vertical_mask, endpoints=[(0, 0.5), (0, -1)])
     )
 
     # Horizontal top: y = 0.5, x from 0 to 1 (right part)
     horizontal_right = PolynomialCurve(y - 0.5, variables)
+
     def horizontal_right_mask(x_val, y_val):
-        return (-0.05 <= x_val <= 1.05) and (0.35 <= y_val <= 0.65)  # Increased tolerance
+        return (-0.05 <= x_val <= 1.05) and (
+            0.35 <= y_val <= 0.65
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(
             horizontal_right, horizontal_right_mask, endpoints=[(0, 0.5), (1, 0.5)]
@@ -374,8 +394,12 @@ def create_triangle(
 
     # Bottom edge: y = -0.5, x from -1 to 1
     bottom = PolynomialCurve(y + 0.5, variables)
+
     def bottom_mask(x_val, y_val):
-        return (-1.05 <= x_val <= 1.05) and (-0.65 <= y_val <= -0.35)  # Increased tolerance
+        return (-1.05 <= x_val <= 1.05) and (
+            -0.65 <= y_val <= -0.35
+        )  # Increased tolerance
+
     bottom_segment = TrimmedImplicitCurve(
         bottom, bottom_mask, endpoints=[(-1, -0.5), (1, -0.5)]
     )
@@ -384,8 +408,12 @@ def create_triangle(
     # slope = (1 - (-0.5)) / (0 - 1) = -1.5
     # y - (-0.5) = -1.5(x - 1) => y = -1.5x + 1
     right = PolynomialCurve(y + 1.5 * x - 1, variables)
+
     def right_mask(x_val, y_val):
-        return (-0.05 <= x_val <= 1.05) and (-0.55 <= y_val <= 1.05)  # Increased tolerance
+        return (-0.05 <= x_val <= 1.05) and (
+            -0.55 <= y_val <= 1.05
+        )  # Increased tolerance
+
     right_segment = TrimmedImplicitCurve(
         right, right_mask, endpoints=[(1, -0.5), (0, 1)]
     )
@@ -394,8 +422,12 @@ def create_triangle(
     # slope = (-0.5 - 1) / (-1 - 0) = 1.5
     # y - 1 = 1.5(x - 0) => y = 1.5x + 1
     left = PolynomialCurve(y - 1.5 * x - 1, variables)
+
     def left_mask(x_val, y_val):
-        return (-1.05 <= x_val <= 0.05) and (-0.55 <= y_val <= 1.05)  # Increased tolerance
+        return (-1.05 <= x_val <= 0.05) and (
+            -0.55 <= y_val <= 1.05
+        )  # Increased tolerance
+
     left_segment = TrimmedImplicitCurve(left, left_mask, endpoints=[(0, 1), (-1, -0.5)])
 
     return CompositeCurve(
@@ -420,24 +452,36 @@ def create_house_shape(
 
     # Bottom: y = -1, x from -0.5 to 0.5
     bottom = PolynomialCurve(y + 1, variables)
+
     def bottom_mask(x_val, y_val):
-        return (-0.55 <= x_val <= 0.55) and (-1.15 <= y_val <= -0.85)  # Increased tolerance
+        return (-0.55 <= x_val <= 0.55) and (
+            -1.15 <= y_val <= -0.85
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(bottom, bottom_mask, endpoints=[(-0.5, -1), (0.5, -1)])
     )
 
     # Right: x = 0.5, y from -1 to 0
     right = PolynomialCurve(x - 0.5, variables)
+
     def right_mask(x_val, y_val):
-        return (0.35 <= x_val <= 0.65) and (-1.05 <= y_val <= 0.05)  # Increased tolerance
+        return (0.35 <= x_val <= 0.65) and (
+            -1.05 <= y_val <= 0.05
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(right, right_mask, endpoints=[(0.5, -1), (0.5, 0)])
     )
 
     # Roof right: from (0.5, 0) to (0, 0.5)
     roof_right = PolynomialCurve(y + x - 0.5, variables)
+
     def roof_right_mask(x_val, y_val):
-        return (-0.05 <= x_val <= 0.55) and (-0.05 <= y_val <= 0.55)  # Increased tolerance
+        return (-0.05 <= x_val <= 0.55) and (
+            -0.05 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(
             roof_right, roof_right_mask, endpoints=[(0.5, 0), (0, 0.5)]
@@ -446,16 +490,24 @@ def create_house_shape(
 
     # Roof left: from (0, 0.5) to (-0.5, 0)
     roof_left = PolynomialCurve(y - x - 0.5, variables)
+
     def roof_left_mask(x_val, y_val):
-        return (-0.55 <= x_val <= 0.05) and (-0.05 <= y_val <= 0.55)  # Increased tolerance
+        return (-0.55 <= x_val <= 0.05) and (
+            -0.05 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(roof_left, roof_left_mask, endpoints=[(0, 0.5), (-0.5, 0)])
     )
 
     # Left: x = -0.5, y from 0 to -1
     left = PolynomialCurve(x + 0.5, variables)
+
     def left_mask(x_val, y_val):
-        return (-0.65 <= x_val <= -0.35) and (-1.05 <= y_val <= 0.05)  # Increased tolerance
+        return (-0.65 <= x_val <= -0.35) and (
+            -1.05 <= y_val <= 0.05
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(left, left_mask, endpoints=[(-0.5, 0), (-0.5, -1)])
     )
@@ -481,8 +533,12 @@ def create_zigzag_pattern(
     # Segment 1: from (-1, -0.5) to (0, 0.5) - diagonal up
     # Line equation: y - (-0.5) = 1(x - (-1)) => y = x + 0.5
     seg1 = PolynomialCurve(y - x - 0.5, variables)
+
     def seg1_mask(x_val, y_val):
-        return (-1.05 <= x_val <= 0.05) and (-0.55 <= y_val <= 0.55)  # Increased tolerance
+        return (-1.05 <= x_val <= 0.05) and (
+            -0.55 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(seg1, seg1_mask, endpoints=[(-1, -0.5), (0, 0.5)])
     )
@@ -490,8 +546,12 @@ def create_zigzag_pattern(
     # Segment 2: from (0, 0.5) to (1, -0.5) - diagonal down
     # Line equation: y - 0.5 = -1(x - 0) => y = -x + 0.5
     seg2 = PolynomialCurve(y + x - 0.5, variables)
+
     def seg2_mask(x_val, y_val):
-        return (-0.05 <= x_val <= 1.05) and (-0.55 <= y_val <= 0.55)  # Increased tolerance
+        return (-0.05 <= x_val <= 1.05) and (
+            -0.55 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(seg2, seg2_mask, endpoints=[(0, 0.5), (1, -0.5)])
     )
@@ -515,42 +575,66 @@ def create_staircase(
 
     # Step 1: horizontal from (-1, -1) to (-0.5, -1)
     h1 = PolynomialCurve(y + 1, variables)
+
     def h1_mask(x_val, y_val):
-        return (-1.05 <= x_val <= -0.45) and (-1.15 <= y_val <= -0.85)  # Increased tolerance
+        return (-1.05 <= x_val <= -0.45) and (
+            -1.15 <= y_val <= -0.85
+        )  # Increased tolerance
+
     segments.append(TrimmedImplicitCurve(h1, h1_mask, endpoints=[(-1, -1), (-0.5, -1)]))
 
     # Step 1: vertical from (-0.5, -1) to (-0.5, -0.5)
     v1 = PolynomialCurve(x + 0.5, variables)
+
     def v1_mask(x_val, y_val):
-        return (-0.65 <= x_val <= -0.35) and (-1.05 <= y_val <= -0.45)  # Increased tolerance
+        return (-0.65 <= x_val <= -0.35) and (
+            -1.05 <= y_val <= -0.45
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(v1, v1_mask, endpoints=[(-0.5, -1), (-0.5, -0.5)])
     )
 
     # Step 2: horizontal from (-0.5, -0.5) to (0, -0.5)
     h2 = PolynomialCurve(y + 0.5, variables)
+
     def h2_mask(x_val, y_val):
-        return (-0.55 <= x_val <= 0.05) and (-0.65 <= y_val <= -0.35)  # Increased tolerance
+        return (-0.55 <= x_val <= 0.05) and (
+            -0.65 <= y_val <= -0.35
+        )  # Increased tolerance
+
     segments.append(
         TrimmedImplicitCurve(h2, h2_mask, endpoints=[(-0.5, -0.5), (0, -0.5)])
     )
 
     # Step 2: vertical from (0, -0.5) to (0, 0)
     v2 = PolynomialCurve(x, variables)
+
     def v2_mask(x_val, y_val):
-        return (-0.15 <= x_val <= 0.15) and (-0.55 <= y_val <= 0.05)  # Increased tolerance
+        return (-0.15 <= x_val <= 0.15) and (
+            -0.55 <= y_val <= 0.05
+        )  # Increased tolerance
+
     segments.append(TrimmedImplicitCurve(v2, v2_mask, endpoints=[(0, -0.5), (0, 0)]))
 
     # Step 3: horizontal from (0, 0) to (0.5, 0)
     h3 = PolynomialCurve(y, variables)
+
     def h3_mask(x_val, y_val):
-        return (-0.05 <= x_val <= 0.55) and (-0.15 <= y_val <= 0.15)  # Increased tolerance
+        return (-0.05 <= x_val <= 0.55) and (
+            -0.15 <= y_val <= 0.15
+        )  # Increased tolerance
+
     segments.append(TrimmedImplicitCurve(h3, h3_mask, endpoints=[(0, 0), (0.5, 0)]))
 
     # Step 3: vertical from (0.5, 0) to (0.5, 0.5)
     v3 = PolynomialCurve(x - 0.5, variables)
+
     def v3_mask(x_val, y_val):
-        return (0.35 <= x_val <= 0.65) and (-0.05 <= y_val <= 0.55)  # Increased tolerance
+        return (0.35 <= x_val <= 0.65) and (
+            -0.05 <= y_val <= 0.55
+        )  # Increased tolerance
+
     segments.append(TrimmedImplicitCurve(v3, v3_mask, endpoints=[(0.5, 0), (0.5, 0.5)]))
 
     return CompositeCurve(segments, validate_continuity=True)
@@ -739,11 +823,9 @@ def create_multi_conic_flower(
             curve = ConicSection(
                 (x - center_x) ** 2 + (y - center_y) ** 2 - 0.16, variables
             )
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y: (x_val - cx) ** 2
-                + (y_val - cy) ** 2
-                <= 0.17
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y):
+                return (x_val - cx) ** 2 + (y_val - cy) ** 2 <= 0.17
 
         elif curve_type == 1:
             # Ellipse petal (stretched toward center)
@@ -756,11 +838,9 @@ def create_multi_conic_flower(
                 - 1
             )
             curve = ConicSection(curve_expr, variables)
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y: (x_val - cx) ** 2
-                + (y_val - cy) ** 2
-                <= 0.3
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y):
+                return (x_val - cx) ** 2 + (y_val - cy) ** 2 <= 0.3
 
         else:
             # Parabola petal (opening toward center)
@@ -768,11 +848,9 @@ def create_multi_conic_flower(
             curve = ConicSection(
                 (x - center_x) ** 2 + (y - center_y) ** 2 - 0.09, variables
             )
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y: (x_val - cx) ** 2
-                + (y_val - cy) ** 2
-                <= 0.1
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y):
+                return (x_val - cx) ** 2 + (y_val - cy) ** 2 <= 0.1
 
         # Create petal segment (not continuous between petals - this is decorative)
         segment = TrimmedImplicitCurve(curve, mask)
@@ -872,32 +950,44 @@ def create_spiral_approximation(
         )
 
         if quadrant == 0:  # First quadrant
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y, r=radius: (x_val >= cx)
-                and (y_val >= cy)
-                and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y, r=radius):
+                return (
+                    (x_val >= cx)
+                    and (y_val >= cy)
+                    and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
+                )
+
             endpoints = [(center_x + radius, center_y), (center_x, center_y + radius)]
         elif quadrant == 1:  # Second quadrant
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y, r=radius: (x_val <= cx)
-                and (y_val >= cy)
-                and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y, r=radius):
+                return (
+                    (x_val <= cx)
+                    and (y_val >= cy)
+                    and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
+                )
+
             endpoints = [(center_x, center_y + radius), (center_x - radius, center_y)]
         elif quadrant == 2:  # Third quadrant
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y, r=radius: (x_val <= cx)
-                and (y_val <= cy)
-                and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y, r=radius):
+                return (
+                    (x_val <= cx)
+                    and (y_val <= cy)
+                    and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
+                )
+
             endpoints = [(center_x - radius, center_y), (center_x, center_y - radius)]
         else:  # Fourth quadrant
-            mask = (
-                lambda x_val, y_val, cx=center_x, cy=center_y, r=radius: (x_val >= cx)
-                and (y_val <= cy)
-                and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
-            )
+
+            def mask(x_val, y_val, cx=center_x, cy=center_y, r=radius):
+                return (
+                    (x_val >= cx)
+                    and (y_val <= cy)
+                    and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
+                )
+
             endpoints = [(center_x, center_y - radius), (center_x + radius, center_y)]
 
         segment = TrimmedImplicitCurve(circle, mask, endpoints=endpoints)

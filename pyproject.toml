@@ -36,6 +36,10 @@ select = ["E", "F"]
 extend-ignore = [
     # Allow unused variables in test files
     "F841",
+    # Ignore line too long warnings (E501)
+    "E501",
+    # Ignore module level import not at top of file (E402)
+    "E402",
 ]
 
 [tool.black]

@@ -270,8 +270,10 @@ def reconstruct_geometry_curve(c_row):
     base_curve.scale_hint = scale
 
     if endpoints:
+
         def default_mask(px, py):
             return True
+
         mask = default_mask
         sqrt_terms = [
             atom

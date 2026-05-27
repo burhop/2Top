@@ -45,6 +45,7 @@ def translate_curve(curve, x0, y0):
 
         endpoints_trans = [(pt[0] - x0, pt[1] - y0) for pt in curve.endpoints]
         original_mask = curve.mask
+
         def mask_trans(px, py, om=original_mask, dx=x0, dy=y0):
             return om(px + dx, py + dy)
 
@@ -146,8 +147,10 @@ def reconstruct_db_curve(c_row):
 
     # 2. Always wrap database curves in TrimmedImplicitCurve to respect viewport/rectangular bounds
     if True:
+
         def mask(px, py):
             return True
+
         sqrt_terms = [
             atom
             for atom in expr.atoms(sp.Pow)
@@ -158,17 +161,20 @@ def reconstruct_db_curve(c_row):
         if sqrt_terms:
             sqrt_arg = sqrt_terms[0].base
             arg_func = sp.lambdify((x, y), sqrt_arg, "numpy")
+
             def mask(px, py, arg_func=arg_func):
                 return arg_func(px, py) >= -0.05
         elif asin_terms:
             asin_arg = list(asin_terms)[0].args[0]
             arg_func = sp.lambdify((x, y), asin_arg, "numpy")
+
             def mask(px, py, arg_func=arg_func):
                 return abs(arg_func(px, py)) <= 1.0 + 0.05
         elif c_type == "periodic_radical":
             # Domain where y^2 - expr >= 0 (since expr is y^2 - f(x))
             f_x = y**2 - expr
             f_func = sp.lambdify((x, y), f_x, "numpy")
+
             def mask(px, py, f_func=f_func):
                 return f_func(px, py) >= -0.05
 

@@ -86,8 +86,8 @@ def render_and_time(sm, scene_id, bounds=(-5, 5, -5, 5)):
                 parts = color_str.replace("hsl(", "").replace(")", "").split(",")
                 h = float(parts[0].strip()) / 360.0
                 s = float(parts[1].replace("%", "").strip()) / 100.0
-                l = float(parts[2].replace("%", "").strip()) / 100.0
-                r, g, b = colorsys.hls_to_rgb(h, l, s)
+                luminance = float(parts[2].replace("%", "").strip()) / 100.0
+                r, g, b = colorsys.hls_to_rgb(h, luminance, s)
                 return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
             except Exception:
                 pass
@@ -1145,9 +1145,9 @@ def main():
                 name = "Composite Curve with Dependencies"
                 desc = "A composite D-shape where the straight segment depends on the circular outer boundary."
                 c = create_circle_from_quarters((0, 0), 1.5)
-                l = _line(1, 0, 0)
+                line_seg = _line(1, 0, 0)
                 sm.add_object("boundary", c, {"color": "#1f77b4"})
-                sm.add_object("divider", l, {"color": "#d62728"})
+                sm.add_object("divider", line_seg, {"color": "#d62728"})
                 sm.register_dependency(
                     "divider",
                     "boundary",

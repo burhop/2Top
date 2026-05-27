@@ -3081,7 +3081,7 @@ class GraphicsBackendInterface:
                             val = val[0] if len(val) > 0 else float("inf")
                         if abs(val) < tolerance:  # Close to boundary
                             points.append([float(x), float(y)])
-                    except:
+                    except Exception:
                         continue
 
             # If we found some boundary points, return them
@@ -3110,7 +3110,7 @@ class GraphicsBackendInterface:
                         val = val[0] if len(val) > 0 else float("inf")
                     if abs(val) < 1.0:  # Very lenient
                         valid_points.append([float(x), float(y)])
-                except:
+                except Exception:
                     continue
 
             if valid_points:
