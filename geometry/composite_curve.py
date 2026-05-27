@@ -1094,8 +1094,6 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
             "polygon_vertices": getattr(self, "_polygon_vertices", None),
         }
 
-
-
     # Backward-compatibility shim: some test environments expect this method
     # to be defined directly on CompositeCurve. The actual implementation
     # lives in CompositePolygonMixin, so we just delegate.

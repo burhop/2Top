@@ -382,9 +382,11 @@ class TrimmedImplicitCurve(ImplicitCurve):
             and ymin is not None
             and ymax is not None
         ):
+
             def mask(px, py, _xmin=xmin, _xmax=xmax, _ymin=ymin, _ymax=ymax):
                 return _xmin <= px <= _xmax and _ymin <= py <= _ymax
         else:
+
             def mask(px, py):
                 return True
 

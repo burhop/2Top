@@ -82,7 +82,8 @@ class ImageView(QLabel):
         if self._on_mouse_move is not None:
             pos = event.position()
             xw, yw = self._pixel_to_world(
-                pos.x(), pos.y()  # type: ignore[attr-defined]
+                pos.x(),
+                pos.y(),  # type: ignore[attr-defined]
             )
             self._on_mouse_move(xw, yw)
         if self._dragging and self._last_pos is not None:

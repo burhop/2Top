@@ -19,6 +19,7 @@ from .base_field import BaseField
 
 if TYPE_CHECKING:
     from .area_region import AreaRegion
+    from .implicit_curve import ImplicitCurve
 
 
 class FieldStrategy(ABC):
