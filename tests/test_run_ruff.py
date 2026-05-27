@@ -2,10 +2,12 @@ import subprocess
 
 import os
 
+import sys
+
 def test_run_ruff():
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     result = subprocess.run(
-        ["uv", "run", "ruff", "check", "."],
+        [sys.executable, "-m", "ruff", "check", "."],
         capture_output=True,
         text=True,
         cwd=root
