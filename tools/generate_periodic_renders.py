@@ -8,16 +8,18 @@ import sys
 import os
 import time
 import math
-import json
 import sympy as sp
-import numpy as np
 
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from graphics_backend.graphics_interface import GraphicsBackendInterface
 from scene_management.scene_manager import SceneManager
-from tests.test_periodic_curves import TEST_CONFIGS, reconstruct_curve, get_expected_intersections
+from tests.test_periodic_curves import (
+    TEST_CONFIGS,
+    reconstruct_curve,
+    get_expected_intersections,
+)
 from geometry import ProceduralCurve
 from geometry.curve_intersections import find_curve_intersections
 
@@ -26,90 +28,116 @@ def main():
     print("======================================================================")
     print(" 2Top Geometry Studio - Batch Solver & Renders Generator")
     print("======================================================================")
-    
+
     # 1. Setup folders
     docs_renders_dir = os.path.join("docs", "renders", "periodic_curves")
     ui_renders_dir = os.path.join("ui", "static", "renders", "periodic_curves")
     os.makedirs(docs_renders_dir, exist_ok=True)
     os.makedirs(ui_renders_dir, exist_ok=True)
-    
+
     # Initialize components in headless mode
     scene_manager = SceneManager()
     graphics_interface = GraphicsBackendInterface(scene_manager)
-    
+
     results = []
     total_cases = len(TEST_CONFIGS)
     passed_count = 0
-    
+
     t_start = time.perf_counter()
-    
+
     # Sort cases naturally by numeric parts of test_id (e.g. 1.1, 1.2, ..., 1.10, 2.1)
-    sorted_test_ids = sorted(TEST_CONFIGS.keys(), key=lambda x: [int(c) for c in x.split('.')])
+    sorted_test_ids = sorted(
+        TEST_CONFIGS.keys(), key=lambda x: [int(c) for c in x.split(".")]
+    )
     for idx, test_id in enumerate(sorted_test_ids):
         config = TEST_CONFIGS[test_id]
-        name_safe = config['name'].replace('\u2229', 'intersection')
-        print(f"[{idx+1}/{total_cases}] Solving Case {test_id}: {name_safe}...", end="", flush=True)
-        
+        name_safe = config["name"].replace("\u2229", "intersection")
+        print(
+            f"[{idx + 1}/{total_cases}] Solving Case {test_id}: {name_safe}...",
+            end="",
+            flush=True,
+        )
+
         # Clear active scene
         scene_manager.clear()
-        
+
         # Reconstruct curves A and B
-        x_sym, y_sym = sp.symbols('x y', real=True)
+        x_sym, y_sym = sp.symbols("x y", real=True)
         dom = config["domain"]
-        
+
         try:
             curve_a = reconstruct_curve(config["eq_a"], x_sym, y_sym)
             eq_b = config.get("eq_b")
             curve_b = reconstruct_curve(eq_b, x_sym, y_sym) if eq_b else None
-            
+
             # Set properties for rendering
             curve_a.xmin, curve_a.xmax = dom[0], dom[1]
             curve_a.ymin, curve_a.ymax = -4.0, 4.0
             if curve_b:
                 curve_b.xmin, curve_b.xmax = dom[0], dom[1]
                 curve_b.ymin, curve_b.ymax = -4.0, 4.0
-            
-            style_a = {'color': '#00f0ff', 'linewidth': 4.5, 'alpha': 1.0, 'is_periodic_curve': True, 'curve_name': config['eq_a']}
-            scene_manager.add_object('periodic_curve_a', curve_a, style_a)
-            
+
+            style_a = {
+                "color": "#00f0ff",
+                "linewidth": 4.5,
+                "alpha": 1.0,
+                "is_periodic_curve": True,
+                "curve_name": config["eq_a"],
+            }
+            scene_manager.add_object("periodic_curve_a", curve_a, style_a)
+
             if curve_b:
-                style_b = {'color': '#ff007f', 'linewidth': 2.0, 'alpha': 1.0, 'is_periodic_curve': True, 'curve_name': eq_b}
-                scene_manager.add_object('periodic_curve_b', curve_b, style_b)
-            
+                style_b = {
+                    "color": "#ff007f",
+                    "linewidth": 2.0,
+                    "alpha": 1.0,
+                    "is_periodic_curve": True,
+                    "curve_name": eq_b,
+                }
+                scene_manager.add_object("periodic_curve_b", curve_b, style_b)
+
             # Solve Endpoints
             t0 = time.perf_counter()
             endpoints_a = []
             endpoints_b = []
-            if hasattr(curve_a, 'get_endpoints'):
+            if hasattr(curve_a, "get_endpoints"):
                 endpoints_a = curve_a.get_endpoints(xmin=dom[0], xmax=dom[1])
-            if curve_b and hasattr(curve_b, 'get_endpoints'):
+            if curve_b and hasattr(curve_b, "get_endpoints"):
                 endpoints_b = curve_b.get_endpoints(xmin=dom[0], xmax=dom[1])
-            
+
             calculated_endpoints = [tuple(pt) for pt in (endpoints_a + endpoints_b)]
-            
+
             # Solve Intersections
             search_range = config.get("search_range", (dom[1] - dom[0]) / 2.0)
             if search_range < 0.1:
                 search_range = 1.0
             grid_res = config.get("grid_res", 500)
             center_x = (dom[0] + dom[1]) / 2.0
-            
+
             calculated_intersections = []
-            
+
             # Only solve intersections if we have a second curve
             if curve_b:
                 # Shift domain logic to focus grid search
                 if abs(center_x) > 1e-4:
-                    expr_a_trans = curve_a.expression.subs(x_sym, x_sym + center_x) if hasattr(curve_a, "expression") and curve_a.expression else None
-                    expr_b_trans = curve_b.expression.subs(x_sym, x_sym + center_x) if hasattr(curve_b, "expression") and curve_b.expression else None
-                    
+                    expr_a_trans = (
+                        curve_a.expression.subs(x_sym, x_sym + center_x)
+                        if hasattr(curve_a, "expression") and curve_a.expression
+                        else None
+                    )
+                    expr_b_trans = (
+                        curve_b.expression.subs(x_sym, x_sym + center_x)
+                        if hasattr(curve_b, "expression") and curve_b.expression
+                        else None
+                    )
+
                     if expr_a_trans and expr_b_trans:
                         if isinstance(curve_a, ProceduralCurve):
                             func_a = sp.lambdify((x_sym, y_sym), expr_a_trans, "numpy")
                             c_a = ProceduralCurve(func_a, variables=(x_sym, y_sym))
                         else:
                             c_a = reconstruct_curve(str(expr_a_trans), x_sym, y_sym)
-                            
+
                         if isinstance(curve_b, ProceduralCurve):
                             func_b = sp.lambdify((x_sym, y_sym), expr_b_trans, "numpy")
                             c_b = ProceduralCurve(func_b, variables=(x_sym, y_sym))
@@ -118,31 +146,47 @@ def main():
                     else:
                         if isinstance(curve_a, ProceduralCurve):
                             orig_func = curve_a.function
-                            c_a = ProceduralCurve(lambda x_v, y_v: orig_func(x_v + center_x, y_v), variables=(x_sym, y_sym))
+                            c_a = ProceduralCurve(
+                                lambda x_v, y_v: orig_func(x_v + center_x, y_v),
+                                variables=(x_sym, y_sym),
+                            )
                         else:
                             c_a = curve_a
-                            
+
                         if isinstance(curve_b, ProceduralCurve):
                             orig_func = curve_b.function
-                            c_b = ProceduralCurve(lambda x_v, y_v: orig_func(x_v + center_x, y_v), variables=(x_sym, y_sym))
+                            c_b = ProceduralCurve(
+                                lambda x_v, y_v: orig_func(x_v + center_x, y_v),
+                                variables=(x_sym, y_sym),
+                            )
                         else:
                             c_b = curve_b
                 else:
                     c_a = curve_a
                     c_b = curve_b
-                    
+
                 detect_overlap = test_id in ("1.39", "2.34", "3.33")
-                found_pts_trans = find_curve_intersections(c_a, c_b, search_range=search_range, grid_resolution=grid_res, detect_overlap=detect_overlap)
-                calculated_intersections = [(float(pt[0] + center_x), float(pt[1])) for pt in found_pts_trans]
-            
+                found_pts_trans = find_curve_intersections(
+                    c_a,
+                    c_b,
+                    search_range=search_range,
+                    grid_resolution=grid_res,
+                    detect_overlap=detect_overlap,
+                )
+                calculated_intersections = [
+                    (float(pt[0] + center_x), float(pt[1])) for pt in found_pts_trans
+                ]
+
             elapsed_time = time.perf_counter() - t0
-            
+
             # Ground truth matching
             expected_intersections = []
             if curve_b:
                 oracle_dom = (center_x - search_range, center_x + search_range)
-                expected_intersections = get_expected_intersections(config["eq_a"], eq_b, oracle_dom)
-            
+                expected_intersections = get_expected_intersections(
+                    config["eq_a"], eq_b, oracle_dom
+                )
+
             expected_endpoints = []
             if "expected_endpoint_count" in config:
                 try:
@@ -161,7 +205,7 @@ def main():
                                 expected_endpoints.append((x_val, 0.0))
                 except Exception:
                     pass
-            
+
             is_correct = True
             if "expected_endpoint_count" in config:
                 expected_ep_count = config["expected_endpoint_count"]
@@ -171,7 +215,7 @@ def main():
             else:
                 expected_int_count = len(expected_intersections)
                 found_int_count = len(calculated_intersections)
-                
+
                 if test_id in ("1.39", "2.34", "3.33"):
                     if found_int_count > 0:
                         is_correct = False
@@ -185,19 +229,21 @@ def main():
                         allowed_count_diff = max(6, int(0.45 * expected_int_count))
                     elif expected_int_count > 100:
                         allowed_count_diff = max(2, int(0.02 * expected_int_count))
-                        
+
                     if abs(found_int_count - expected_int_count) > allowed_count_diff:
                         is_correct = False
-                        
+
                     max_error = 0.0
                     matched_exp = set()
                     for f_pt in calculated_intersections:
-                        best_err = float('inf')
+                        best_err = float("inf")
                         best_idx = -1
                         for idx, e_pt in enumerate(expected_intersections):
                             if idx in matched_exp:
                                 continue
-                            err = math.sqrt((f_pt[0] - e_pt[0])**2 + (f_pt[1] - e_pt[1])**2)
+                            err = math.sqrt(
+                                (f_pt[0] - e_pt[0]) ** 2 + (f_pt[1] - e_pt[1]) ** 2
+                            )
                             if err < best_err:
                                 best_err = err
                                 best_idx = idx
@@ -207,22 +253,22 @@ def main():
                                 max_error = best_err
                         else:
                             if not ("1/x" in config["eq_a"] or has_eq_b_1_x):
-                                max_error = float('inf')
+                                max_error = float("inf")
                             else:
                                 max_error = max(max_error, 0.1)
-                            
+
                     tolerance_limit = 0.05
                     if "1/x" in config["eq_a"] or has_eq_b_1_x:
                         tolerance_limit = 0.15
-                        
+
                     if max_error > tolerance_limit:
                         is_correct = False
-            
+
             # Save files to both folders for local gallery and active UI server
             filename = f"case_{test_id.replace('.', '_')}.png"
             docs_filepath = os.path.join(docs_renders_dir, filename)
             ui_filepath = os.path.join(ui_renders_dir, filename)
-            
+
             x_span = dom[1] - dom[0]
             if x_span < 0.2:
                 xmin_render = dom[0] - 2.0
@@ -231,14 +277,14 @@ def main():
                 padding_x = x_span * 0.05
                 xmin_render = dom[0] - padding_x
                 xmax_render = dom[1] + padding_x
-            
+
             # Calculate dynamic y range to avoid extremely squeezed/compressed x-axis under equal aspect ratio
             render_x_span = xmax_render - xmin_render
             y_span = max(2.5, min(8.0, render_x_span * 0.75))
             ymin_render = -y_span / 2.0
             ymax_render = y_span / 2.0
             bounds = (xmin_render, xmax_render, ymin_render, ymax_render)
-            
+
             # Render to docs
             graphics_interface.render_scene_image_annotated(
                 filename=docs_filepath,
@@ -252,102 +298,111 @@ def main():
                 expected_intersections=expected_intersections,
                 elapsed_time=elapsed_time,
                 is_correct=is_correct,
-                bounds=bounds
+                bounds=bounds,
             )
-            
+
             # Render to ui static
             import shutil
+
             shutil.copy2(docs_filepath, ui_filepath)
-            
+
             if is_correct:
                 passed_count += 1
                 status_str = "SUCCESS"
             else:
                 status_str = "FAILED"
-                
-            print(f" {status_str} in {elapsed_time:.3f}s (Ints found: {len(calculated_intersections)})")
-            
-            results.append({
-                "test_id": test_id,
-                "name": config["name"],
-                "eq_a": config["eq_a"],
-                "eq_b": eq_b or "",
-                "tier": config["tier"],
-                "elapsed_time": elapsed_time,
-                "is_correct": is_correct,
-                "ints_found": len(calculated_intersections),
-                "expected_ints": len(expected_intersections),
-                "image_path": f"renders/periodic_curves/{filename}"
-            })
+
+            print(
+                f" {status_str} in {elapsed_time:.3f}s (Ints found: {len(calculated_intersections)})"
+            )
+
+            results.append(
+                {
+                    "test_id": test_id,
+                    "name": config["name"],
+                    "eq_a": config["eq_a"],
+                    "eq_b": eq_b or "",
+                    "tier": config["tier"],
+                    "elapsed_time": elapsed_time,
+                    "is_correct": is_correct,
+                    "ints_found": len(calculated_intersections),
+                    "expected_ints": len(expected_intersections),
+                    "image_path": f"renders/periodic_curves/{filename}",
+                }
+            )
         except Exception as e:
             print(f" ERROR: {e}")
-            results.append({
-                "test_id": test_id,
-                "name": config["name"],
-                "eq_a": config["eq_a"],
-                "eq_b": config.get("eq_b", ""),
-                "tier": config["tier"],
-                "elapsed_time": 0.0,
-                "is_correct": False,
-                "ints_found": 0,
-                "expected_ints": 0,
-                "image_path": ""
-            })
-            
+            results.append(
+                {
+                    "test_id": test_id,
+                    "name": config["name"],
+                    "eq_a": config["eq_a"],
+                    "eq_b": config.get("eq_b", ""),
+                    "tier": config["tier"],
+                    "elapsed_time": 0.0,
+                    "is_correct": False,
+                    "ints_found": 0,
+                    "expected_ints": 0,
+                    "image_path": "",
+                }
+            )
+
     total_time = time.perf_counter() - t_start
     print("======================================================================")
-    print(f" Batch Rendering Complete! {passed_count}/{total_cases} passed in {total_time:.2f}s.")
+    print(
+        f" Batch Rendering Complete! {passed_count}/{total_cases} passed in {total_time:.2f}s."
+    )
     print("======================================================================")
-    
+
     # 2. Generate HTML Gallery
     generate_gallery(results, passed_count, total_cases, total_time)
 
 
 def generate_gallery(results, passed, total, total_time):
     print("Generating responsive HTML gallery at docs/periodic_curve_gallery.html...")
-    
+
     cards_html = []
     for r in results:
         status_class = "verified" if r["is_correct"] else "mismatch"
         status_tag = "VERIFIED ✅" if r["is_correct"] else "MISMATCH ❌"
-        
+
         card = f"""
-        <div class="card" data-tier="{r['tier']}" data-status="{status_class}">
+        <div class="card" data-tier="{r["tier"]}" data-status="{status_class}">
             <div class="card-header">
                 <div class="card-title">
-                    <span class="case-id">Case {r['test_id']}</span>
-                    <span class="case-tier">Tier {r['tier']}</span>
+                    <span class="case-id">Case {r["test_id"]}</span>
+                    <span class="case-tier">Tier {r["tier"]}</span>
                 </div>
-                <h3>{r['name']}</h3>
+                <h3>{r["name"]}</h3>
             </div>
             
             <div class="equations">
-                <div class="eq"><span class="eq-label">Curve A:</span> <code>{r['eq_a']}</code></div>
-                <div class="eq"><span class="eq-label">Curve B:</span> <code>{r['eq_b']}</code></div>
+                <div class="eq"><span class="eq-label">Curve A:</span> <code>{r["eq_a"]}</code></div>
+                <div class="eq"><span class="eq-label">Curve B:</span> <code>{r["eq_b"]}</code></div>
             </div>
             
             <div class="stats-row">
                 <div class="stat">
                     <span class="stat-label">Solver Time</span>
-                    <span class="stat-val">{r['elapsed_time']:.3f}s</span>
+                    <span class="stat-val">{r["elapsed_time"]:.3f}s</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Intersections</span>
-                    <span class="stat-val">{r['ints_found']} / {r['expected_ints']}</span>
+                    <span class="stat-val">{r["ints_found"]} / {r["expected_ints"]}</span>
                 </div>
                 <div class="stat-badge {status_class}">
                     {status_tag}
                 </div>
             </div>
             
-            <div class="render-preview" onclick="openLightbox('{r['image_path']}', 'Case {r['test_id']} — {r['name']}')">
-                <img src="{r['image_path']}" alt="Case {r['test_id']} Render" loading="lazy">
+            <div class="render-preview" onclick="openLightbox('{r["image_path"]}', 'Case {r["test_id"]} — {r["name"]}')">
+                <img src="{r["image_path"]}" alt="Case {r["test_id"]} Render" loading="lazy">
                 <div class="zoom-overlay">🔍 Click to zoom</div>
             </div>
         </div>
         """
         cards_html.append(card)
-        
+
     gallery_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -855,11 +910,11 @@ def generate_gallery(results, passed, total, total_time):
 </body>
 </html>
 """
-    
+
     gallery_filepath = os.path.join("docs", "periodic_curve_gallery.html")
     with open(gallery_filepath, "w", encoding="utf-8") as f:
         f.write(gallery_html)
-        
+
     print(f"Gallery review dashboard generated successfully at {gallery_filepath}!")
 
 

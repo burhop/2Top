@@ -28,49 +28,45 @@ from .base_field import BaseField, CurveField, BlendedField
 
 # Import field strategy classes
 from .field_strategy import (
-    FieldStrategy, 
-    SignedDistanceStrategy, 
+    FieldStrategy,
+    SignedDistanceStrategy,
     OccupancyFillStrategy,
     SignedDistanceField,
-    OccupancyField
+    OccupancyField,
 )
 
 # Define what gets imported with "from geometry import *"
 __all__ = [
     # Core curve classes
-    'ImplicitCurve',
-    'ConicSection', 
-    'PolynomialCurve',
-    'Superellipse',
-    'ProceduralCurve',
-    'RFunctionCurve',
-    'TrimmedImplicitCurve',
-    'CompositeCurve',
-    'AreaRegion',
-    'PrecisionPolicy',
-    'get_precision_policy',
-    'set_precision_policy',
-    'precision_context',
-    
+    "ImplicitCurve",
+    "ConicSection",
+    "PolynomialCurve",
+    "Superellipse",
+    "ProceduralCurve",
+    "RFunctionCurve",
+    "TrimmedImplicitCurve",
+    "CompositeCurve",
+    "AreaRegion",
+    "PrecisionPolicy",
+    "get_precision_policy",
+    "set_precision_policy",
+    "precision_context",
     # Constructive geometry functions
-    'union',
-    'intersect', 
-    'difference',
-    'blend',
-    
+    "union",
+    "intersect",
+    "difference",
+    "blend",
     # Piecewise curve utilities
-    'create_circle_from_quarters',
-    'create_square_from_edges',
-    
+    "create_circle_from_quarters",
+    "create_square_from_edges",
     # Scalar field classes
-    'BaseField',
-    'CurveField',
-    'BlendedField',
-    
+    "BaseField",
+    "CurveField",
+    "BlendedField",
     # Field strategy classes
-    'FieldStrategy',
-    'SignedDistanceStrategy',
-    'OccupancyFillStrategy',
-    'SignedDistanceField',
-    'OccupancyField'
+    "FieldStrategy",
+    "SignedDistanceStrategy",
+    "OccupancyFillStrategy",
+    "SignedDistanceField",
+    "OccupancyField",
 ]

@@ -1,7 +1,11 @@
 import math
 import sympy as sp
 
-from geometry.composite_curve import create_polygon_from_edges, create_square_from_edges, CompositeCurve
+from geometry.composite_curve import (
+    create_polygon_from_edges,
+    create_square_from_edges,
+    CompositeCurve,
+)
 
 
 def test_polygon_vertices_preserved_and_serialized():
@@ -45,6 +49,10 @@ def test_polygon_normals_square_unit_length_and_count():
         l = math.hypot(nx, ny)
         assert abs(l - 1.0) < 1e-12
         # Midpoints should lie exactly on square edges (either x=+-1 with y in [-1,1] or y=+-1)
-        on_vertical = (abs(mx - 1.0) < 1e-9 or abs(mx + 1.0) < 1e-9) and (-1.0 - 1e-9 <= my <= 1.0 + 1e-9)
-        on_horizontal = (abs(my - 1.0) < 1e-9 or abs(my + 1.0) < 1e-9) and (-1.0 - 1e-9 <= mx <= 1.0 + 1e-9)
+        on_vertical = (abs(mx - 1.0) < 1e-9 or abs(mx + 1.0) < 1e-9) and (
+            -1.0 - 1e-9 <= my <= 1.0 + 1e-9
+        )
+        on_horizontal = (abs(my - 1.0) < 1e-9 or abs(my + 1.0) < 1e-9) and (
+            -1.0 - 1e-9 <= mx <= 1.0 + 1e-9
+        )
         assert on_vertical or on_horizontal

@@ -18,7 +18,13 @@ class ImageView(QLabel):
     - Optionally reports mouse world coordinates via on_mouse_move(x, y)
     """
 
-    def __init__(self, viewport: Viewport, on_viewport_changed: Callable[[], None], on_mouse_move: Optional[Callable[[float, float], None]] = None, parent=None):
+    def __init__(
+        self,
+        viewport: Viewport,
+        on_viewport_changed: Callable[[], None],
+        on_mouse_move: Optional[Callable[[float, float], None]] = None,
+        parent=None,
+    ):
         super().__init__(parent)
         self._viewport = viewport
         self._on_change = on_viewport_changed
@@ -74,7 +80,10 @@ class ImageView(QLabel):
     def mouseMoveEvent(self, event):  # type: ignore[override]
         # Always report mouse position if requested
         if self._on_mouse_move is not None:
-            xw, yw = self._pixel_to_world(event.position().x(), event.position().y())  # type: ignore[attr-defined]
+            pos = event.position()
+            xw, yw = self._pixel_to_world(
+                pos.x(), pos.y()  # type: ignore[attr-defined]
+            )
             self._on_mouse_move(xw, yw)
         if self._dragging and self._last_pos is not None:
             cur = event.pos()
@@ -84,7 +93,8 @@ class ImageView(QLabel):
             h = max(1, self.height())
             # Drag right moves content right -> pan viewport left (negative frac)
             frac_x = -float(dx) / float(w)
-            # Drag down moves content down -> pan viewport up (negative y), but Qt y+ is down
+            # Drag down moves content down -> pan viewport up (negative y),
+            # but Qt y+ is down
             frac_y = float(dy) / float(h)
             self._viewport.pan(frac_x, frac_y)
             self._last_pos = cur

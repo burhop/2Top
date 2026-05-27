@@ -55,7 +55,9 @@ class ParameterDialog(QDialog):
                     w.setValue(0.0)
             elif ftype == "int":
                 w = QSpinBox()
-                w.setRange(int(field.get("min", -10**9)), int(field.get("max", 10**9)))
+                w.setRange(
+                    int(field.get("min", -(10**9))), int(field.get("max", 10**9))
+                )
                 w.setSingleStep(int(field.get("step", 1)))
                 try:
                     w.setValue(int(default) if default is not None else 0)
@@ -99,13 +101,17 @@ class ParameterDialog(QDialog):
 
 
 class ObjectSelectorDialog(QDialog):
-    def __init__(self, title: str, items: List[Tuple[str, str]], multi: bool = True, parent=None):
+    def __init__(
+        self, title: str, items: List[Tuple[str, str]], multi: bool = True, parent=None
+    ):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.selected_ids: List[str] = []
         vbox = QVBoxLayout(self)
         self.listw = QListWidget()
-        self.listw.setSelectionMode(QListWidget.MultiSelection if multi else QListWidget.SingleSelection)
+        self.listw.setSelectionMode(
+            QListWidget.MultiSelection if multi else QListWidget.SingleSelection
+        )
         for obj_id, label in items:
             it = QListWidgetItem(f"{obj_id} — {label}")
             it.setData(Qt.UserRole, obj_id)

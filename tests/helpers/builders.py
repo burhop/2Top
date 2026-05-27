@@ -28,7 +28,9 @@ def make_line_segment(point_a, point_b) -> TrimmedImplicitCurve:
     return TrimmedImplicitCurve(line, mask, endpoints=[point_a, point_b])
 
 
-def build_axis_aligned_rectangle(min_x: float, min_y: float, width: float, height: float, **kwargs) -> CompositeCurve:
+def build_axis_aligned_rectangle(
+    min_x: float, min_y: float, width: float, height: float, **kwargs
+) -> CompositeCurve:
     """Return a CompositeCurve for an axis-aligned rectangle."""
 
     max_x = min_x + width
@@ -39,10 +41,7 @@ def build_axis_aligned_rectangle(min_x: float, min_y: float, width: float, heigh
         (max_x, max_y),
         (min_x, max_y),
     ]
-    segments = [
-        make_line_segment(points[i], points[(i + 1) % 4])
-        for i in range(4)
-    ]
+    segments = [make_line_segment(points[i], points[(i + 1) % 4]) for i in range(4)]
     return CompositeCurve(segments, **kwargs)
 
 

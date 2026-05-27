@@ -9,6 +9,7 @@ import traceback
 from typing import Tuple
 
 import matplotlib
+
 matplotlib.use("Agg", force=True)
 import matplotlib.pyplot as plt
 
@@ -16,6 +17,7 @@ from .view_state import Viewport
 
 # Local logger for rendering module
 LOG_PATH = os.path.join(tempfile.gettempdir(), "2top_ui.log")
+
 
 def get_logger() -> logging.Logger:
     logger = logging.getLogger("2top_ui")
@@ -28,7 +30,13 @@ def get_logger() -> logging.Logger:
     return logger
 
 
-def render_scene_to_png(scene, filename: str, viewport: Viewport, figsize: Tuple[int, int] = (8, 6), dpi: int = 100) -> None:
+def render_scene_to_png(
+    scene,
+    filename: str,
+    viewport: Viewport,
+    figsize: Tuple[int, int] = (8, 6),
+    dpi: int = 100,
+) -> None:
     """
     Render the given scene to a PNG file using matplotlib.
 
@@ -60,7 +68,12 @@ def render_scene_to_png(scene, filename: str, viewport: Viewport, figsize: Tuple
                             mstyle = scene.get_style(mid).copy()
                             mstyle["alpha"] = min(alpha, mstyle.get("alpha", 1.0)) * 0.9
                             if hasattr(mobj, "plot"):
-                                mobj.plot(xlim=viewport.xlim, ylim=viewport.ylim, ax=ax, **mstyle)
+                                mobj.plot(
+                                    xlim=viewport.xlim,
+                                    ylim=viewport.ylim,
+                                    ax=ax,
+                                    **mstyle,
+                                )
                         except Exception:
                             logger.error(
                                 "Render error for composite member %s (from %s):\n%s",

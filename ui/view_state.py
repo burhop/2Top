@@ -11,7 +11,14 @@ class Viewport:
     xlim: Tuple[float, float] = (-5.0, 5.0)
     ylim: Tuple[float, float] = (-5.0, 5.0)
 
-    def apply(self, xmin: float, xmax: float, ymin: float, ymax: float, pad_ratio: float = 0.02) -> None:
+    def apply(
+        self,
+        xmin: float,
+        xmax: float,
+        ymin: float,
+        ymax: float,
+        pad_ratio: float = 0.02,
+    ) -> None:
         vals = np.array([xmin, xmax, ymin, ymax], dtype=float)
         if not np.isfinite(vals).all():
             return
@@ -51,11 +58,17 @@ class Viewport:
     def pan(self, frac_x: float, frac_y: float) -> None:
         xmin, xmax = self.xlim
         ymin, ymax = self.ylim
-        dx = (xmax - xmin)
-        dy = (ymax - ymin)
+        dx = xmax - xmin
+        dy = ymax - ymin
         shift_x = dx * float(frac_x)
         shift_y = dy * float(frac_y)
-        self.apply(xmin + shift_x, xmax + shift_x, ymin + shift_y, ymax + shift_y, pad_ratio=0.0)
+        self.apply(
+            xmin + shift_x,
+            xmax + shift_x,
+            ymin + shift_y,
+            ymax + shift_y,
+            pad_ratio=0.0,
+        )
 
     def fit_to_scene(self, scene, pad_ratio: float = 0.05) -> bool:
         # Aggregate bounds across all objects exposing bounding_box()

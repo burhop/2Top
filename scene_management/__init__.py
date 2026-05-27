@@ -7,4 +7,4 @@ styles, groups, and persistence operations.
 
 from .scene_manager import SceneManager
 
-__all__ = ['SceneManager']
+__all__ = ["SceneManager"]

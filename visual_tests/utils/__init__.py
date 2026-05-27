@@ -11,11 +11,11 @@ from .grid_evaluation import GridEvaluator
 from .baseline_manager import VisualBaselineManager, get_baseline_manager
 
 __all__ = [
-    'PlotManager',
-    'register_embed_viewer',
-    'CurveFactory',
-    'RegionFactory', 
-    'GridEvaluator',
-    'VisualBaselineManager',
-    'get_baseline_manager'
+    "PlotManager",
+    "register_embed_viewer",
+    "CurveFactory",
+    "RegionFactory",
+    "GridEvaluator",
+    "VisualBaselineManager",
+    "get_baseline_manager",
 ]

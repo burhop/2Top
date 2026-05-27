@@ -16,7 +16,6 @@ from geometry import (
     ImplicitCurve,
     ConicSection,
     PolynomialCurve,
-    Superellipse,
     ProceduralCurve,
 )
 
@@ -88,6 +87,7 @@ def test_high_order_vanishing_gradient():
 
 def test_procedural_curve_singularity():
     """Verify that ProceduralCurve (which uses numerical gradients) behaves gracefully at singularities."""
+
     # Define a cusp curve numerically
     def cusp_func(x_val, y_val):
         return y_val**2 - x_val**3

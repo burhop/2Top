@@ -9,9 +9,4 @@ from .utils.plotting import PlotManager
 from .utils.test_objects import CurveFactory, RegionFactory
 from .utils.grid_evaluation import GridEvaluator
 
-__all__ = [
-    'PlotManager',
-    'CurveFactory', 
-    'RegionFactory',
-    'GridEvaluator'
-]
+__all__ = ["PlotManager", "CurveFactory", "RegionFactory", "GridEvaluator"]

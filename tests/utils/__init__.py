@@ -8,11 +8,11 @@ from .test_case_manager import TestCaseManager
 from .test_case_executor import TestCaseExecutor
 
 __all__ = [
-    'ResultStorageManager',
-    'ErrorMessageGenerator',
-    'TestResultAnalyzer',
-    'TestCaseFailureDetector',
-    'ModuleIdentifier',
-    'TestCaseManager',
-    'TestCaseExecutor'
+    "ResultStorageManager",
+    "ErrorMessageGenerator",
+    "TestResultAnalyzer",
+    "TestCaseFailureDetector",
+    "ModuleIdentifier",
+    "TestCaseManager",
+    "TestCaseExecutor",
 ]

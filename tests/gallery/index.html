@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Top Graphics Test Suite Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #0b0f1d;
+            --bg-surface: rgba(22, 28, 45, 0.6);
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --border-glow: rgba(139, 92, 246, 0.15);
+            --border-hover: rgba(139, 92, 246, 0.4);
+            
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.3);
+            --primary-hover: #a78bfa;
+            
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.2);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.2);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-code: 'Fira Code', monospace;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+            padding-bottom: 60px;
+        }
+
+        /* Utility Styles */
+        .glass {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 32px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            margin-bottom: 32px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .title-area h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-area p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        /* Stats Dashboard */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            border-radius: 16px;
+            padding: 18px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-glow);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .stat-card.success::after { background: var(--success); }
+        .stat-card.warning::after { background: var(--warning); }
+        .stat-card.danger::after { background: var(--danger); }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .stat-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Controls Section */
+        .controls-panel {
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-sort-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }
+
+        .search-wrapper svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 20px;
+            height: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 16px 14px 48px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 15px;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+        }
+
+        .select-wrapper {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .sort-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px 40px 14px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 15px;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            transition: var(--transition-smooth);
+        }
+
+        .sort-select:focus {
+            border-color: var(--primary);
+        }
+
+        .select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid var(--text-secondary);
+            pointer-events: none;
+        }
+
+        /* Filter Pills */
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            user-select: none;
+        }
+
+        .pill:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 16px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .checkbox-label:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .checkbox-label input {
+            cursor: pointer;
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Error/Fallback Screen */
+        .error-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 40px;
+            text-align: center;
+            border-radius: 20px;
+            margin-top: 40px;
+        }
+
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        .error-screen h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .error-screen p {
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto 24px auto;
+            font-size: 15px;
+        }
+
+        .code-box {
+            background: #090d16;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 16px 24px;
+            font-family: var(--font-code);
+            font-size: 13px;
+            color: var(--success);
+            max-width: 600px;
+            text-align: left;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        /* Results Info */
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Photo Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        /* Card */
+        .card {
+            border-radius: 16px;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1.5px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 40%, rgba(139, 92, 246, 0.05));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.1);
+            border-color: var(--border-hover);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 83%; /* aspect ratio 6:5 */
+            background: #0d121f;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 4px;
+            transition: var(--transition-smooth);
+        }
+
+        .card:hover .image-container img {
+            transform: scale(1.03);
+        }
+
+        .card-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-id {
+            font-family: var(--font-code);
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .card-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .meta-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 6px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .meta-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: var(--font-code);
+        }
+
+        .meta-lbl {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--text-muted);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 12px;
+            margin-top: auto;
+        }
+
+        .tier-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .tier-badge.t1 { background: rgba(59, 130, 246, 0.12); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .tier-badge.t2 { background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.2); }
+        .tier-badge.t3 { background: rgba(236, 72, 153, 0.12); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.2); }
+        .tier-badge.t4 { background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .tier-badge.t5 { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .tier-badge.t6 { background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .time-badge {
+            font-family: var(--font-code);
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 8px;
+        }
+
+        .time-badge.optimal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .time-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .time-badge.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 10, 19, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: #0f1626;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            width: 100%;
+            max-width: 1100px;
+            height: 90vh;
+            max-height: 750px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            display: grid;
+            grid-template-columns: 55% 45%;
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            z-index: 10;
+            outline: none;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-left {
+            background: #070a13;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 32px;
+            overflow: hidden;
+        }
+
+        .modal-left img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            background: #0d121f;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .modal-right {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 32px 32px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .modal-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Tabs Container */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 12px;
+            gap: 16px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 4px 12px 4px;
+            cursor: pointer;
+            position: relative;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        /* Specs block */
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .spec-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .spec-val {
+            font-family: var(--font-code);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* JSON block */
+        .json-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #090d16;
+            margin-top: 10px;
+        }
+
+        .json-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .json-lang {
+            font-size: 11px;
+            font-family: var(--font-code);
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+            font-family: var(--font-main);
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .json-block {
+            padding: 16px;
+            margin: 0;
+            font-family: var(--font-code);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #a78bfa;
+            overflow-x: auto;
+            max-height: 320px;
+            white-space: pre-wrap;
+        }
+
+        /* Dependency tree styling */
+        .dep-tree-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .dep-tree-root {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 8px 0;
+        }
+        
+        .dep-tree-node-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dep-tree-branch {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-left: 28px;
+            margin-top: 8px;
+        }
+        
+        /* Tree guide dashed lines */
+        .dep-tree-branch::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: -12px;
+            bottom: 22px;
+            width: 2px;
+            border-left: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        
+        .dep-tree-branch::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 22px;
+            width: 14px;
+            height: 2px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+        
+        .dep-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .dep-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateX(3px);
+        }
+        
+        .dep-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        
+        .dep-card-title {
+            font-family: var(--font-code);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+        }
+        
+        .dep-card-color-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px currentColor;
+        }
+        
+        .dep-card-badge {
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-family: var(--font-code);
+        }
+        
+        .dep-card-body {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-code);
+            margin-top: 2px;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.01);
+            color: #a78bfa;
+        }
+        
+        .dep-card-inherits {
+            font-size: 10px;
+            color: var(--primary-hover);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 2px;
+        }
+
+        /* Alerts and Warnings inside details modal */
+        .outlier-alert {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px dashed rgba(239, 68, 68, 0.25);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-top: 10px;
+        }
+
+        .outlier-icon {
+            color: var(--danger);
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .outlier-text h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .outlier-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .optimal-alert {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px dashed rgba(16, 185, 129, 0.25);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-top: 10px;
+        }
+
+        .optimal-icon {
+            color: var(--success);
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .optimal-text h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .optimal-text p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Modal */
+        @media (max-width: 850px) {
+            .modal {
+                grid-template-columns: 1fr;
+                height: 95vh;
+                max-height: none;
+            }
+            .modal-left {
+                height: 35vh;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                padding: 16px;
+            }
+            .modal-right {
+                height: 60vh;
+            }
+            .modal-body {
+                padding: 20px 24px;
+            }
+            .modal-header {
+                padding: 24px 24px 16px 24px;
+            }
+        }
+
+        /* Bug Report Styles */
+        .action-btn {
+            background: var(--primary-glow);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 10px 18px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        #clear-bug-report-btn:hover {
+            background: var(--danger) !important;
+            border-color: var(--danger) !important;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+            transform: translateY(-2px);
+        }
+
+        .bug-section {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bug-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bug-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition-smooth);
+        }
+
+        .bug-label:hover {
+            color: var(--text-primary);
+        }
+
+        .bug-checkbox {
+            cursor: pointer;
+            accent-color: var(--danger);
+            width: 16px;
+            height: 16px;
+        }
+
+        .bug-editor {
+            width: 100%;
+            transition: var(--transition-smooth);
+        }
+
+        .bug-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 12px;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .bug-input:focus {
+            border-color: var(--danger);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <div class="logo-area">
+                    <div class="logo-icon">2T</div>
+                    <div class="title-area">
+                        <h1>Graphics Test Suite Dashboard</h1>
+                        <p>Procedural stress testing & visual correctness validator</p>
+                    </div>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+                    <button id="clear-bug-report-btn" class="action-btn glass" style="border-color: rgba(239, 68, 68, 0.2); color: var(--text-secondary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; vertical-align: middle;">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Clear All Checked
+                    </button>
+                    <button id="export-bug-report-btn" class="action-btn glass">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px; vertical-align: middle;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export Bug Report (<span id="bug-count-badge">0</span>)
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div id="stats-bar" class="stats-bar">
+            <!-- Loading template stats (populated by JS) -->
+            <div class="stat-card glass">
+                <span class="stat-label">Total Cases</span>
+                <span class="stat-value" id="stat-total-cases">-</span>
+                <span class="stat-meta">Procedural objects</span>
+            </div>
+            <div class="stat-card glass success">
+                <span class="stat-label">Avg Render Time</span>
+                <span class="stat-value" id="stat-avg-time">-</span>
+                <span class="stat-meta" id="stat-time-detail">Across all tiers</span>
+            </div>
+            <div class="stat-card glass warning">
+                <span class="stat-label">Heavy Cases (>150ms)</span>
+                <span class="stat-value" id="stat-heavy-cases">-</span>
+                <span class="stat-meta" id="stat-heavy-pct">Optimizations required</span>
+            </div>
+            <div class="stat-card glass danger">
+                <span class="stat-label">Max Render Time</span>
+                <span class="stat-value" id="stat-max-time">-</span>
+                <span class="stat-meta" id="stat-slowest-id">Slowest case</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel glass">
+            <div class="search-sort-row">
+                <!-- Search -->
+                <div class="search-wrapper">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search test cases by ID, name, or keywords...">
+                </div>
+
+                <!-- Sort -->
+                <div class="select-wrapper">
+                    <select id="sort-select" class="sort-select">
+                        <option value="id-asc">Sort by: Case ID (Ascending)</option>
+                        <option value="id-desc">Sort by: Case ID (Descending)</option>
+                        <option value="time-desc">Sort by: Render Time (Slowest)</option>
+                        <option value="time-asc">Sort by: Render Time (Fastest)</option>
+                        <option value="curves-desc">Sort by: Curves Count (High)</option>
+                        <option value="fields-desc">Sort by: Fields Count (High)</option>
+                        <option value="depth-desc">Sort by: Dependency Depth (Deep)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="filter-row">
+                <span class="filter-label">Complexity Tier:</span>
+                <div class="filter-pills" id="filter-pills">
+                    <div class="pill active" data-tier="all">All Tiers</div>
+                    <div class="pill" data-tier="1">Tier 1: Simple Curves</div>
+                    <div class="pill" data-tier="2">Tier 2: Duals & Hybrids</div>
+                    <div class="pill" data-tier="3">Tier 3: Composites & Spirals</div>
+                    <div class="pill" data-tier="4">Tier 4: Fields & Regions</div>
+                    <div class="pill" data-tier="5">Tier 5: Deep Dependency Trees</div>
+                    <div class="pill" data-tier="6">Tier 6: Extreme Stress</div>
+                </div>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="quick-filters">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="filter-slow-only">
+                    <span>Performance Outliers Only (&gt; 150ms)</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="filter-fields-only">
+                    <span>Has Scalar Fields (SDF / Occupancy)</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="filter-deps-only">
+                    <span>Has Dependencies (Tree Structure)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Dynamic Results Screen -->
+        <div class="results-info">
+            <span id="results-count">Showing - of 100 test cases</span>
+            <span id="results-filtered-status" style="display: none; color: var(--primary-hover);">Filters active</span>
+        </div>
+
+        <!-- Main Photo Grid -->
+        <div class="grid" id="cases-grid">
+            <!-- Dynamically populated card nodes -->
+        </div>
+
+        <!-- Error Panel (CORS fallback warning) -->
+        <div id="error-screen" class="error-screen glass" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <h2>Scene Metadata File Not Found</h2>
+            <p>We could not load the scene records or render statistics. Ensure you have run the gallery generator script to compile the metadata:</p>
+            <div class="code-box">python scripts/generate_gallery.py</div>
+            <p style="font-size: 13px; color: var(--text-muted);">This script generates all 100 test cases, renders them using the graphics backend, and saves their timings and configurations to a metadata manifest.</p>
+        </div>
+    </div>
+
+    <!-- Modal Details view -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="details-modal">
+            <button class="close-btn" id="modal-close" aria-label="Close panel">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            
+            <div class="modal-left">
+                <!-- Large rendering image -->
+                <img id="modal-img" src="" alt="Rendered geometric scene">
+            </div>
+
+            <div class="modal-right">
+                <div class="modal-header">
+                    <div class="modal-title-row">
+                        <h2 class="modal-title" id="modal-title">-</h2>
+                        <span class="card-id" id="modal-id">-</span>
+                    </div>
+                    <p class="modal-desc" id="modal-desc">-</p>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Modal Bug Section -->
+                    <div class="modal-bug-section glass" style="margin-bottom: 20px; border-radius: 12px; padding: 16px; border: 1px solid rgba(239, 68, 68, 0.15); display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label class="bug-label" style="font-size: 14px; font-weight: 700; color: var(--text-primary);">
+                                <input type="checkbox" id="modal-bug-checkbox" class="bug-checkbox" style="accent-color: var(--danger); width: 18px; height: 18px; margin-right: 8px; vertical-align: middle;">
+                                <span>Flag as Render Bug</span>
+                            </label>
+                            <span style="font-size: 11px; text-transform: uppercase; color: var(--danger); font-weight: 700; letter-spacing: 0.5px; background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);" id="modal-bug-badge">Inactive</span>
+                        </div>
+                        <div id="modal-bug-editor" style="display: none; width: 100%;">
+                            <textarea id="modal-bug-input" placeholder="Explain the geometry, snapping, boundaries, or rendering defect in detail..." style="width: 100%; height: 60px; background: rgba(7, 10, 19, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; color: var(--text-primary); font-family: var(--font-main); font-size: 13px; outline: none; resize: none; transition: var(--transition-smooth);"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="tab-specs">Specs & Timings</button>
+                        <button class="tab-btn" data-tab="tab-json">Scene Definition</button>
+                        <button class="tab-btn" data-tab="tab-deps">Dependency Web</button>
+                    </div>
+
+                    <!-- Tab: Specs -->
+                    <div class="tab-content active" id="tab-specs">
+                        <div id="performance-alert-container">
+                            <!-- Populated with performance warning or optimal alert -->
+                        </div>
+                        
+                        <div class="spec-grid">
+                            <div class="spec-item">
+                                <span class="meta-lbl">Render Time</span>
+                                <span class="spec-val" id="spec-time" style="color: var(--primary-hover);">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="meta-lbl">Complexity Tier</span>
+                                <span class="spec-val" id="spec-tier" style="font-size: 13px;">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="meta-lbl">Implicit Curves</span>
+                                <span class="spec-val" id="spec-curves">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="meta-lbl">Scalar Fields</span>
+                                <span class="spec-val" id="spec-fields">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="meta-lbl">Dependency Depth</span>
+                                <span class="spec-val" id="spec-depth">-</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="meta-lbl">Save Location</span>
+                                <span class="spec-val" id="spec-file" style="font-size: 11px; color: var(--text-muted); font-family: var(--font-code);">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: JSON -->
+                    <div class="tab-content" id="tab-json">
+                        <div class="json-wrapper">
+                            <div class="json-header">
+                                <span class="json-lang">Scene Manager JSON Schema</span>
+                                <button class="copy-btn" id="btn-copy-json">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    Copy Schema
+                                </button>
+                            </div>
+                            <pre class="json-block"><code id="modal-json-content"></code></pre>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Dependencies -->
+                    <div class="tab-content" id="tab-deps">
+                        <p class="modal-desc" style="font-size: 13px; margin-bottom: 12px;" id="dep-explain-text">
+                            Directed acyclic evaluation tree for coordinate propagation:
+                        </p>
+                        <div class="dep-tree-container" id="modal-dep-tree">
+                            <!-- Populated with dependency tree nodes -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Block -->
+    <!-- Attempt to load metadata.js for CORS-bypass double click compatibility -->
+    <script src="metadata.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let sceneData = [];
+
+            // Local Storage Bug State Management
+            let bugReport = JSON.parse(localStorage.getItem('2top_graphics_bug_report') || '{}');
+
+            function updateBugState(sceneId, isBug, description) {
+                if (isBug) {
+                    bugReport[sceneId] = {
+                        id: sceneId,
+                        isBug: true,
+                        description: description || ""
+                    };
+                } else {
+                    delete bugReport[sceneId];
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('2top_graphics_bug_report', JSON.stringify(bugReport));
+                
+                // Update badge in header
+                updateBugBadge();
+                
+                // Update active card elements if rendered in grid
+                const cardCheckbox = document.querySelector(`.bug-checkbox[data-scene-id="${sceneId}"]`);
+                const cardInput = document.querySelector(`.bug-input[data-scene-id="${sceneId}"]`);
+                const cardEditor = cardInput ? cardInput.closest('.bug-editor') : null;
+                
+                if (cardCheckbox) {
+                    cardCheckbox.checked = isBug;
+                }
+                if (cardEditor) {
+                    cardEditor.style.display = isBug ? 'block' : 'none';
+                }
+                if (cardInput) {
+                    cardInput.value = description || "";
+                }
+                
+                // Update active modal elements if open for the current item
+                const modalIdEl = document.getElementById('modal-id');
+                if (modalIdEl && modalIdEl.textContent === sceneId) {
+                    const modalCheckbox = document.getElementById('modal-bug-checkbox');
+                    const modalInput = document.getElementById('modal-bug-input');
+                    const modalEditor = document.getElementById('modal-bug-editor');
+                    const modalBadge = document.getElementById('modal-bug-badge');
+                    
+                    if (modalCheckbox) modalCheckbox.checked = isBug;
+                    if (modalEditor) modalEditor.style.display = isBug ? 'block' : 'none';
+                    if (modalInput) modalInput.value = description || "";
+                    if (modalBadge) {
+                        modalBadge.textContent = isBug ? 'BUG DETECTED' : 'Inactive';
+                        modalBadge.style.color = isBug ? 'var(--danger)' : 'var(--text-muted)';
+                        modalBadge.style.borderColor = isBug ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+                        modalBadge.style.background = isBug ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+                    }
+                }
+            }
+
+            function updateBugBadge() {
+                const count = Object.keys(bugReport).length;
+                const badge = document.getElementById('bug-count-badge');
+                if (badge) {
+                    badge.textContent = count;
+                }
+            }
+
+            // Bind Clear Button
+            const clearBtn = document.getElementById('clear-bug-report-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    const count = Object.keys(bugReport).length;
+                    if (count === 0) {
+                        alert('No bugs are currently flagged.');
+                        return;
+                    }
+                    if (confirm(`Are you sure you want to clear all ${count} flagged bug reports?`)) {
+                        const sceneIds = Object.keys(bugReport);
+                        sceneIds.forEach(sceneId => {
+                            updateBugState(sceneId, false, '');
+                        });
+                        bugReport = {};
+                        localStorage.removeItem('2top_graphics_bug_report');
+                        updateBugBadge();
+                    }
+                });
+            }
+
+            // Bind Export Button
+            const exportBtn = document.getElementById('export-bug-report-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    const count = Object.keys(bugReport).length;
+                    if (count === 0) {
+                        alert('No bugs have been flagged yet. Click "Mark as Bug" on any scene to start compiling your review.');
+                        return;
+                    }
+                    
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bugReport, null, 2));
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href",     dataStr     );
+                    downloadAnchor.setAttribute("download", "bug_report.json");
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                });
+            }
+            
+            // Initialize count badge on load
+            updateBugBadge();
+
+            // Check if metadata loaded via JS script block.
+            // If not, try to fetch it asynchronously as JSON (for HTTP server contexts).
+            if (window.SCENE_METADATA) {
+                sceneData = window.SCENE_METADATA;
+                initDashboard(sceneData);
+            } else {
+                fetch('metadata.json')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Metadata not found');
+                        return response.json();
+                    })
+                    .then(data => {
+                        sceneData = data;
+                        initDashboard(sceneData);
+                    })
+                    .catch(err => {
+                        console.error('CORS blocked or metadata file missing: ', err);
+                        // Show error screen
+                        document.getElementById('stats-bar').style.display = 'none';
+                        document.querySelector('.controls-panel').style.display = 'none';
+                        document.querySelector('.results-info').style.display = 'none';
+                        document.getElementById('error-screen').style.display = 'flex';
+                    });
+            }
+
+            function initDashboard(data) {
+                // Populate Dashboard Metrics
+                const total = data.length;
+                const times = data.map(d => d.total_time_ms);
+                const avg = times.reduce((a, b) => a + b, 0) / total;
+                const heavyCases = data.filter(d => d.total_time_ms > 150).length;
+                
+                let maxTime = 0;
+                let slowest = null;
+                data.forEach(d => {
+                    if (d.total_time_ms > maxTime) {
+                        maxTime = d.total_time_ms;
+                        slowest = d;
+                    }
+                });
+
+                document.getElementById('stat-total-cases').textContent = total;
+                document.getElementById('stat-avg-time').textContent = `${avg.toFixed(1)} ms`;
+                document.getElementById('stat-heavy-cases').textContent = heavyCases;
+                document.getElementById('stat-heavy-pct').textContent = `${((heavyCases / total) * 100).toFixed(0)}% of total suite`;
+                document.getElementById('stat-max-time').textContent = `${maxTime.toFixed(0)} ms`;
+                document.getElementById('stat-slowest-id').textContent = slowest ? slowest.id : 'None';
+
+                // Render Photo Grid
+                renderGrid(data);
+
+                // Setup Listeners
+                const searchInput = document.getElementById('search-input');
+                const sortSelect = document.getElementById('sort-select');
+                const pills = document.querySelectorAll('#filter-pills .pill');
+                const slowChkbx = document.getElementById('filter-slow-only');
+                const fieldsChkbx = document.getElementById('filter-fields-only');
+                const depsChkbx = document.getElementById('filter-deps-only');
+
+                let activeTier = 'all';
+
+                // Search & Filters trigger
+                const filterAndSort = () => {
+                    const searchVal = searchInput.value.toLowerCase().trim();
+                    const sortVal = sortSelect.value;
+                    const slowOnly = slowChkbx.checked;
+                    const fieldsOnly = fieldsChkbx.checked;
+                    const depsOnly = depsChkbx.checked;
+
+                    let filtered = data.filter(item => {
+                        // Search matches
+                        const matchesSearch = 
+                            item.id.toLowerCase().includes(searchVal) ||
+                            item.name.toLowerCase().includes(searchVal) ||
+                            item.description.toLowerCase().includes(searchVal);
+
+                        // Tier matches
+                        const matchesTier = activeTier === 'all' || item.complexity_tier.toString() === activeTier;
+
+                        // Checkbox matches
+                        const matchesSlow = !slowOnly || item.total_time_ms > 150;
+                        const matchesFields = !fieldsOnly || item.fields_count > 0;
+                        const matchesDeps = !depsOnly || item.dependency_depth > 0;
+
+                        return matchesSearch && matchesTier && matchesSlow && matchesFields && matchesDeps;
+                    });
+
+                    // Sorting logic
+                    filtered.sort((a, b) => {
+                        if (sortVal === 'id-asc') {
+                            return a.id.localeCompare(b.id);
+                        } else if (sortVal === 'id-desc') {
+                            return b.id.localeCompare(a.id);
+                        } else if (sortVal === 'time-desc') {
+                            return b.total_time_ms - a.total_time_ms;
+                        } else if (sortVal === 'time-asc') {
+                            return a.total_time_ms - b.total_time_ms;
+                        } else if (sortVal === 'curves-desc') {
+                            return b.curves_count - a.curves_count;
+                        } else if (sortVal === 'fields-desc') {
+                            return b.fields_count - a.fields_count;
+                        } else if (sortVal === 'depth-desc') {
+                            return b.dependency_depth - a.dependency_depth;
+                        }
+                        return 0;
+                    });
+
+                    renderGrid(filtered);
+                    
+                    // Show Filter Status
+                    const hasActiveFilters = searchVal !== '' || activeTier !== 'all' || slowOnly || fieldsOnly || depsOnly;
+                    document.getElementById('results-filtered-status').style.display = hasActiveFilters ? 'inline' : 'none';
+                    document.getElementById('results-count').textContent = `Showing ${filtered.length} of ${total} test cases`;
+                };
+
+                // Bind Controls
+                searchInput.addEventListener('input', filterAndSort);
+                sortSelect.addEventListener('change', filterAndSort);
+                slowChkbx.addEventListener('change', filterAndSort);
+                fieldsChkbx.addEventListener('change', filterAndSort);
+                depsChkbx.addEventListener('change', filterAndSort);
+
+                pills.forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        pills.forEach(p => p.classList.remove('active'));
+                        pill.classList.add('active');
+                        activeTier = pill.getAttribute('data-tier');
+                        filterAndSort();
+                    });
+                });
+            }
+
+            function renderGrid(items) {
+                const grid = document.getElementById('cases-grid');
+                grid.innerHTML = '';
+
+                if (items.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1 / -1; padding: 60px 20px; text-align: center; color: var(--text-secondary);">
+                            <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary);">No Test Cases Found</h3>
+                            <p style="font-size: 13px; margin-top: 4px;">Try relaxing your search terms or unchecking some quick filters.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'card glass';
+                    
+                    // Time speed category
+                    let timeClass = 'optimal';
+                    if (item.total_time_ms > 150) {
+                        timeClass = 'danger';
+                    } else if (item.total_time_ms > 45) {
+                        timeClass = 'warning';
+                    }
+
+                    // Lookup current bug status
+                    const bugInfo = bugReport[item.id] || { isBug: false, description: "" };
+                    const isBug = bugInfo.isBug;
+                    const bugDesc = bugInfo.description || "";
+
+                    // Render stats meta values
+                    card.innerHTML = `
+                        <div class="image-container">
+                            <img src="${item.image_file}" alt="${item.name}" loading="lazy">
+                        </div>
+                        <div class="card-body">
+                            <div class="card-header">
+                                <span class="card-title" title="${item.name}">${item.name}</span>
+                                <span class="card-id">${item.id}</span>
+                            </div>
+                            <div class="card-meta-grid">
+                                <div class="meta-item">
+                                    <span class="meta-val">${item.curves_count}</span>
+                                    <span class="meta-lbl">Curves</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-val">${item.fields_count}</span>
+                                    <span class="meta-lbl">Fields</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-val">${item.dependency_depth}</span>
+                                    <span class="meta-lbl">Depth</span>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="tier-badge t${item.complexity_tier}">Tier ${item.complexity_tier}</span>
+                                <span class="time-badge ${timeClass}">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:2px;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    ${item.total_time_ms.toFixed(1)}ms
+                                </span>
+                            </div>
+                            <div class="bug-section" onclick="event.stopPropagation()">
+                                <div class="bug-row">
+                                    <label class="bug-label">
+                                        <input type="checkbox" class="bug-checkbox" data-scene-id="${item.id}" ${isBug ? 'checked' : ''}>
+                                        <span>Mark as Bug</span>
+                                    </label>
+                                </div>
+                                <div class="bug-editor" style="${isBug ? 'display: block;' : 'display: none;'}">
+                                    <input type="text" class="bug-input" data-scene-id="${item.id}" placeholder="Specify graphics error..." value="${bugDesc}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Bind Bug Listeners
+                    const checkbox = card.querySelector('.bug-checkbox');
+                    const input = card.querySelector('.bug-input');
+                    const editor = card.querySelector('.bug-editor');
+                    
+                    checkbox.addEventListener('change', (e) => {
+                        const active = e.target.checked;
+                        editor.style.display = active ? 'block' : 'none';
+                        updateBugState(item.id, active, input.value);
+                    });
+                    
+                    input.addEventListener('input', (e) => {
+                        updateBugState(item.id, checkbox.checked, e.target.value);
+                    });
+
+                    card.addEventListener('click', () => openModal(item));
+                    grid.appendChild(card);
+                });
+            }
+
+            /* Modal operations */
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalImg = document.getElementById('modal-img');
+            const modalTitle = document.getElementById('modal-title');
+            const modalId = document.getElementById('modal-id');
+            const modalDesc = document.getElementById('modal-desc');
+            const modalJson = document.getElementById('modal-json-content');
+            const modalDepTree = document.getElementById('modal-dep-tree');
+            const specTime = document.getElementById('spec-time');
+            const specTier = document.getElementById('spec-tier');
+            const specCurves = document.getElementById('spec-curves');
+            const specFields = document.getElementById('spec-fields');
+            const specDepth = document.getElementById('spec-depth');
+            const specFile = document.getElementById('spec-file');
+            const perfAlertContainer = document.getElementById('performance-alert-container');
+            const depExplainText = document.getElementById('dep-explain-text');
+
+            let currentJsonContent = "";
+
+            function openModal(item) {
+                // Populate basic info
+                modalImg.src = item.image_file;
+                modalTitle.textContent = item.name;
+                modalId.textContent = item.id;
+                modalDesc.textContent = item.description;
+
+                // Populate Bug info in Modal
+                const bugInfo = bugReport[item.id] || { isBug: false, description: "" };
+                const isBug = bugInfo.isBug;
+                const bugDesc = bugInfo.description || "";
+                
+                const modalCheckbox = document.getElementById('modal-bug-checkbox');
+                const modalInput = document.getElementById('modal-bug-input');
+                const modalEditor = document.getElementById('modal-bug-editor');
+                const modalBadge = document.getElementById('modal-bug-badge');
+                
+                modalCheckbox.checked = isBug;
+                modalEditor.style.display = isBug ? 'block' : 'none';
+                modalInput.value = bugDesc;
+                
+                modalBadge.textContent = isBug ? 'BUG DETECTED' : 'Inactive';
+                modalBadge.style.color = isBug ? 'var(--danger)' : 'var(--text-muted)';
+                modalBadge.style.borderColor = isBug ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.1)';
+                modalBadge.style.background = isBug ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.05)';
+                
+                // Remove old listeners to avoid multiple attachments by cloning
+                const newCheckbox = modalCheckbox.cloneNode(true);
+                modalCheckbox.parentNode.replaceChild(newCheckbox, modalCheckbox);
+                
+                const newStrInput = modalInput.cloneNode(true);
+                modalInput.parentNode.replaceChild(newStrInput, modalInput);
+                
+                // Add fresh listeners
+                newCheckbox.addEventListener('change', (e) => {
+                    const active = e.target.checked;
+                    modalEditor.style.display = active ? 'block' : 'none';
+                    updateBugState(item.id, active, newStrInput.value);
+                });
+                
+                newStrInput.addEventListener('input', (e) => {
+                    updateBugState(item.id, newCheckbox.checked, e.target.value);
+                });
+
+                // Specs tab
+                specTime.textContent = `${item.total_time_ms.toFixed(2)} ms`;
+                specTier.textContent = `Tier ${item.complexity_tier} (${item.tier_name})`;
+                specCurves.textContent = item.curves_count;
+                specFields.textContent = item.fields_count;
+                specDepth.textContent = item.dependency_depth;
+                specFile.textContent = item.scene_file;
+
+                // Set outlier warning alert
+                perfAlertContainer.innerHTML = '';
+                if (item.total_time_ms > 150) {
+                    perfAlertContainer.innerHTML = `
+                        <div class="outlier-alert">
+                            <span class="outlier-icon">⚠️</span>
+                            <div class="outlier-text">
+                                <h4>Performance Degradation Detected</h4>
+                                <p>Render elapsed time (${item.total_time_ms.toFixed(1)}ms) represents an outlier. Heavy SymPy implicit grids, deep nesting, or redundant field evaluations are likely bottlenecks.</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.total_time_ms < 20) {
+                    perfAlertContainer.innerHTML = `
+                        <div class="optimal-alert">
+                            <span class="optimal-icon">⚡</span>
+                            <div class="optimal-text">
+                                <h4>Highly Optimal Execution</h4>
+                                <p>This scene evaluates almost instantaneously. Good candidate for rapid unit-test pipelines.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // JSON Tab
+                // Render scene JSON (if embedded, else placeholder)
+                if (item.scene_data && Object.keys(item.scene_data).length > 0) {
+                    currentJsonContent = JSON.stringify(item.scene_data, null, 2);
+                    modalJson.textContent = currentJsonContent;
+                } else {
+                    currentJsonContent = `{\n  "error": "Full scene definition not embedded.",\n  "file_path": "${item.scene_file}"\n}`;
+                    modalJson.textContent = currentJsonContent;
+                }
+
+                // Dependencies Tab
+                modalDepTree.innerHTML = '';
+                if (item.scene_data && item.scene_data.objects && Object.keys(item.scene_data.objects).length > 0) {
+                    depExplainText.style.display = 'block';
+                    
+                    const objects = item.scene_data.objects;
+                    const styles = item.scene_data.styles || {};
+                    const dependencies = item.scene_data.dependencies || {}; // parent -> [children]
+                    const reverse_deps = item.scene_data.reverse_dependencies || {}; // child -> [parents]
+                    
+                    // Identify all root nodes in the dependency graph
+                    const allNodeIds = Object.keys(objects);
+                    const childNodes = new Set();
+                    Object.values(dependencies).forEach(childrenList => {
+                        if (Array.isArray(childrenList)) {
+                            childrenList.forEach(childId => childNodes.add(childId));
+                        }
+                    });
+                    
+                    // Roots are nodes that are NOT in childNodes
+                    const rootNodes = allNodeIds.filter(id => !childNodes.has(id));
+                    
+                    // Recursive node renderer
+                    function renderNode(nodeId, depth = 0, isLast = true) {
+                        const obj = objects[nodeId] || {};
+                        const style = styles[nodeId] || {};
+                        const color = style.color || '#1f77b4';
+                        const type = obj.type || 'Unknown';
+                        const conicType = obj.conic_type || '';
+                        const expression = obj.expression || '';
+                        
+                        const children = dependencies[nodeId] || [];
+                        const parents = reverse_deps[nodeId] || [];
+                        
+                        const nodeDiv = document.createElement('div');
+                        nodeDiv.className = depth === 0 ? 'dep-tree-node-wrapper' : 'dep-tree-branch';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'dep-card';
+                        card.style.borderLeftColor = color;
+                        
+                        let badgeText = type;
+                        if (conicType) badgeText += ` (${conicType})`;
+                        
+                        let inheritsHtml = '';
+                        if (parents.length > 0) {
+                            const depDescriptions = item.scene_data.dependency_descriptions || {};
+                            const nodeDescriptions = depDescriptions[nodeId] || {};
+                            
+                            inheritsHtml = `
+                                <div class="dep-card-inherits">
+                                    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <polyline points="19 12 12 19 5 12"></polyline>
+                                        </svg>
+                                        <span style="font-weight: 600;">Dependency Anchors:</span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 14px;">
+                                        ${parents.map(p => {
+                                            const pColor = styles[p]?.color || '#ffffff';
+                                            const desc = nodeDescriptions[p] ? `: <span style="color: var(--text-muted); font-style: italic;">${nodeDescriptions[p]}</span>` : '';
+                                            return `<div style="font-size: 11px; line-height: 1.4;"><span style="color: ${pColor}; font-weight: bold;">${p}</span>${desc}</div>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        let bodyHtml = '';
+                        if (expression) {
+                            bodyHtml = `<div class="dep-card-body">f(x, y) = ${expression}</div>`;
+                        }
+                        
+                        card.innerHTML = `
+                            <div class="dep-card-header">
+                                <div class="dep-card-title">
+                                    <span class="dep-card-color-dot" style="background-color: ${color}; color: ${color};"></span>
+                                    <span>${nodeId}</span>
+                                </div>
+                                <span class="dep-card-badge">${badgeText}</span>
+                            </div>
+                            ${bodyHtml}
+                            ${inheritsHtml}
+                        `;
+                        
+                        nodeDiv.appendChild(card);
+                        
+                        if (children.length > 0) {
+                            children.forEach((childId, idx) => {
+                                const childBranch = renderNode(childId, depth + 1, idx === children.length - 1);
+                                nodeDiv.appendChild(childBranch);
+                            });
+                        }
+                        
+                        return nodeDiv;
+                    }
+                    
+                    const treeContainer = document.createElement('div');
+                    treeContainer.className = 'dep-tree-root';
+                    
+                    // Render all roots
+                    rootNodes.forEach(rootId => {
+                        const rootTree = renderNode(rootId, 0, true);
+                        treeContainer.appendChild(rootTree);
+                    });
+                    
+                    modalDepTree.appendChild(treeContainer);
+                } else {
+                    depExplainText.style.display = 'none';
+                    modalDepTree.innerHTML = `
+                        <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                            No coordinates dependencies configured. Evaluated in global space.
+                        </div>
+                    `;
+                }
+
+                // Default tab active
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelector('.tab-btn[data-tab="tab-specs"]').classList.add('active');
+                document.getElementById('tab-specs').classList.add('active');
+
+                // Open overlay
+                modalOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            // Tabs toggle listener
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+
+            // Copy JSON logic
+            document.getElementById('btn-copy-json').addEventListener('click', () => {
+                navigator.clipboard.writeText(currentJsonContent).then(() => {
+                    const btn = document.getElementById('btn-copy-json');
+                    const origText = btn.innerHTML;
+                    btn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--success);">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copied!
+                    `;
+                    btn.style.borderColor = 'var(--success)';
+                    btn.style.color = 'var(--success)';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = origText;
+                        btn.style.borderColor = '';
+                        btn.style.color = '';
+                    }, 2000);
+                });
+            });
+
+            // Escape key listener for modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

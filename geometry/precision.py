@@ -42,7 +42,9 @@ class PrecisionPolicy:
         rel_component = self.relative * max(scale, 1.0)
         return max(self.absolute, rel_component)
 
-    def fuzzy_equal(self, value_a: float, value_b: float, scale_hint: Optional[float] = None) -> bool:
+    def fuzzy_equal(
+        self, value_a: float, value_b: float, scale_hint: Optional[float] = None
+    ) -> bool:
         """Return True if two values are equal within blended tolerance."""
 
         tol = self.blended_tolerance(scale_hint)
@@ -69,7 +71,13 @@ def _load_policy_from_env() -> Optional[PrecisionPolicy]:
     except json.JSONDecodeError:
         return None
     allowed: Dict[str, Any] = {}
-    for key in ("absolute", "relative", "angular", "distance_factor", "iteration_limit"):
+    for key in (
+        "absolute",
+        "relative",
+        "angular",
+        "distance_factor",
+        "iteration_limit",
+    ):
         if key in payload:
             allowed[key] = payload[key]
     try:

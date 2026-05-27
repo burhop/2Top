@@ -5,7 +5,6 @@ Unit tests for the test result analyzer
 import unittest
 from tests.models.test_case import TestCase
 from tests.models.module import Module
-from tests.models.test_result import TestResult
 from tests.utils.test_result_analyzer import TestResultAnalyzer as _TestResultAnalyzer
 from tests.utils.result_storage_manager import ResultStorageManager
 from tests.utils.test_case_manager import TestCaseManager
@@ -38,7 +37,7 @@ class TestResultAnalyzer(unittest.TestCase):
             id="module_001",
             name="Test Module 1",
             description="A test module for integration",
-            path="/path/to/test_module_1"
+            path="/path/to/test_module_1",
         )
 
         # Get the summary (will be empty since no results)
@@ -59,17 +58,19 @@ class TestResultAnalyzer(unittest.TestCase):
             module_id="module_001",
             test_type="unit",
             input_data={"param1": 1, "param2": 2},
-            expected_result=3
+            expected_result=3,
         )
 
         # Get detailed results (will be empty since no results)
         detailed = self.analyzer.get_detailed_test_results(test_case.id)
-        self.assertIn("error", detailed)  # Should return error since test case doesn't exist
+        self.assertIn(
+            "error", detailed
+        )  # Should return error since test case doesn't exist
 
     def tearDown(self):
         """Clean up after each test method."""
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -10,18 +10,16 @@ import math
 import pytest
 import sympy as sp
 import numpy as np
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List
 
 from geometry import (
     ImplicitCurve,
-    ConicSection,
-    PolynomialCurve,
-    Superellipse,
-    ProceduralCurve,
 )
 
 
-def get_taxonomic_curves() -> List[Tuple[str, sp.Expr, Tuple[sp.Symbol, sp.Symbol], List[Tuple[float, float]]]]:
+def get_taxonomic_curves() -> List[
+    Tuple[str, sp.Expr, Tuple[sp.Symbol, sp.Symbol], List[Tuple[float, float]]]
+]:
     """Return a suite of taxonomic test curves representing diverse algebraic and transcendental families,
     along with stable test points for evaluation.
     """
@@ -31,35 +29,80 @@ def get_taxonomic_curves() -> List[Tuple[str, sp.Expr, Tuple[sp.Symbol, sp.Symbo
         # 1. Algebraic: Degree 1 (Linear)
         ("horizontal_line", y - 1.5, (x, y), [(0.0, 1.5), (2.0, 1.5), (-1.0, 2.5)]),
         ("vertical_line", x + 0.5, (x, y), [(-0.5, 0.0), (-0.5, 3.0), (1.0, 1.0)]),
-        ("diagonal_line", 2 * x - y + 1, (x, y), [(0.0, 1.0), (1.0, 3.0), (-2.0, -3.0)]),
-
+        (
+            "diagonal_line",
+            2 * x - y + 1,
+            (x, y),
+            [(0.0, 1.0), (1.0, 3.0), (-2.0, -3.0)],
+        ),
         # 2. Algebraic: Degree 2 (Conics)
         ("circle", x**2 + y**2 - 4.0, (x, y), [(2.0, 0.0), (0.0, 2.0), (1.0, 1.0)]),
-        ("ellipse", x**2 / 9.0 + y**2 / 4.0 - 1.0, (x, y), [(3.0, 0.0), (0.0, 2.0), (1.5, 1.0)]),
+        (
+            "ellipse",
+            x**2 / 9.0 + y**2 / 4.0 - 1.0,
+            (x, y),
+            [(3.0, 0.0), (0.0, 2.0), (1.5, 1.0)],
+        ),
         ("parabola", y - x**2, (x, y), [(0.0, 0.0), (1.0, 1.0), (-2.0, 4.0)]),
-        ("hyperbola", x**2 - y**2 - 1.0, (x, y), [(1.0, 0.0), (2.0, math.sqrt(3.0)), (-1.0, 0.0)]),
-
+        (
+            "hyperbola",
+            x**2 - y**2 - 1.0,
+            (x, y),
+            [(1.0, 0.0), (2.0, math.sqrt(3.0)), (-1.0, 0.0)],
+        ),
         # 3. Degenerate Conics (Intersection of lines, points)
-        ("intersecting_lines", x**2 - y**2, (x, y), [(0.0, 0.0), (1.0, 1.0), (2.0, -2.0)]),
+        (
+            "intersecting_lines",
+            x**2 - y**2,
+            (x, y),
+            [(0.0, 0.0), (1.0, 1.0), (2.0, -2.0)],
+        ),
         ("single_point", x**2 + y**2, (x, y), [(0.0, 0.0), (1.0, 1.0), (-0.5, 0.5)]),
-
         # 4. Algebraic: Degree 3 (Cubics)
-        ("semicubical_parabola", y**2 - x**3, (x, y), [(0.0, 0.0), (1.0, 1.0), (4.0, 8.0)]),
-        ("folium_of_descartes", x**3 + y**3 - 3 * x * y, (x, y), [(0.0, 0.0), (1.5, 1.5), (2.0, 1.0)]),
-
+        (
+            "semicubical_parabola",
+            y**2 - x**3,
+            (x, y),
+            [(0.0, 0.0), (1.0, 1.0), (4.0, 8.0)],
+        ),
+        (
+            "folium_of_descartes",
+            x**3 + y**3 - 3 * x * y,
+            (x, y),
+            [(0.0, 0.0), (1.5, 1.5), (2.0, 1.0)],
+        ),
         # 5. Algebraic: Degree 4 (Quartics)
-        ("lemniscate", (x**2 + y**2)**2 - 2 * (x**2 - y**2), (x, y), [(0.0, 0.0), (math.sqrt(2), 0.0)]),
-        ("cardioid", (x**2 + y**2 - x)**2 - (x**2 + y**2), (x, y), [(0.0, 0.0), (2.0, 0.0)]),
-
+        (
+            "lemniscate",
+            (x**2 + y**2) ** 2 - 2 * (x**2 - y**2),
+            (x, y),
+            [(0.0, 0.0), (math.sqrt(2), 0.0)],
+        ),
+        (
+            "cardioid",
+            (x**2 + y**2 - x) ** 2 - (x**2 + y**2),
+            (x, y),
+            [(0.0, 0.0), (2.0, 0.0)],
+        ),
         # 6. Transcendental
-        ("periodic_wavy", sp.sin(x) - sp.cos(y), (x, y), [(0.0, math.pi / 2), (math.pi, math.pi / 2)]),
+        (
+            "periodic_wavy",
+            sp.sin(x) - sp.cos(y),
+            (x, y),
+            [(0.0, math.pi / 2), (math.pi, math.pi / 2)],
+        ),
         ("exponential_open", y - sp.exp(x), (x, y), [(0.0, 1.0), (1.0, math.e)]),
     ]
     return curves
 
 
 @pytest.mark.parametrize("name, expr, vars_tuple, test_points", get_taxonomic_curves())
-def test_translation_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symbol, sp.Symbol], test_points: List[Tuple[float, float]]):
+def test_translation_invariance(
+    name: str,
+    expr: sp.Expr,
+    vars_tuple: Tuple[sp.Symbol, sp.Symbol],
+    test_points: List[Tuple[float, float]],
+):
     """Metamorphic Invariant: Translating curve f(x, y) by (dx, dy) yields f'(x, y) = f(x - dx, y - dy).
     Therefore, f'(x + dx, y + dy) == f(x, y).
     """
@@ -88,7 +131,12 @@ def test_translation_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.S
 
 
 @pytest.mark.parametrize("name, expr, vars_tuple, test_points", get_taxonomic_curves())
-def test_positive_scaling_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symbol, sp.Symbol], test_points: List[Tuple[float, float]]):
+def test_positive_scaling_invariance(
+    name: str,
+    expr: sp.Expr,
+    vars_tuple: Tuple[sp.Symbol, sp.Symbol],
+    test_points: List[Tuple[float, float]],
+):
     """Metamorphic Invariant: Multiplying expression f(x, y) by k > 0 scales the gradient magnitude,
     but keeps the sign and unit normal direction identical.
     """
@@ -106,7 +154,9 @@ def test_positive_scaling_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple
         assert math.isclose(scaled_val, k * orig_val, abs_tol=1e-9)
 
         # Signs are preserved
-        assert np.sign(orig_val) == np.sign(scaled_val) or (abs(orig_val) < 1e-12 and abs(scaled_val) < 1e-12)
+        assert np.sign(orig_val) == np.sign(scaled_val) or (
+            abs(orig_val) < 1e-12 and abs(scaled_val) < 1e-12
+        )
 
         # Gradients are scaled by k
         orig_gx, orig_gy = original_curve.gradient(px, py)
@@ -124,7 +174,12 @@ def test_positive_scaling_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple
 
 
 @pytest.mark.parametrize("name, expr, vars_tuple, test_points", get_taxonomic_curves())
-def test_rotation_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symbol, sp.Symbol], test_points: List[Tuple[float, float]]):
+def test_rotation_invariance(
+    name: str,
+    expr: sp.Expr,
+    vars_tuple: Tuple[sp.Symbol, sp.Symbol],
+    test_points: List[Tuple[float, float]],
+):
     """Metamorphic Invariant: Rotating curve by angle theta and rotating the test points yields the same values."""
     x, y = vars_tuple
     theta = math.pi / 6  # 30 degrees
@@ -137,10 +192,9 @@ def test_rotation_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symb
     # rx = px * cos_t - py * sin_t
     # ry = px * sin_t + py * cos_t
     # Rotated coordinate substitution with simultaneous=True
-    rotated_expr = expr.subs({
-        x: x * cos_t + y * sin_t,
-        y: -x * sin_t + y * cos_t
-    }, simultaneous=True)
+    rotated_expr = expr.subs(
+        {x: x * cos_t + y * sin_t, y: -x * sin_t + y * cos_t}, simultaneous=True
+    )
     rotated_curve = ImplicitCurve(rotated_expr, variables=(x, y))
 
     for px, py in test_points:
@@ -155,7 +209,12 @@ def test_rotation_invariance(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symb
 
 
 @pytest.mark.parametrize("name, expr, vars_tuple, test_points", get_taxonomic_curves())
-def test_gradient_tangent_orthogonality(name: str, expr: sp.Expr, vars_tuple: Tuple[sp.Symbol, sp.Symbol], test_points: List[Tuple[float, float]]):
+def test_gradient_tangent_orthogonality(
+    name: str,
+    expr: sp.Expr,
+    vars_tuple: Tuple[sp.Symbol, sp.Symbol],
+    test_points: List[Tuple[float, float]],
+):
     """Mathematical Invariant: At any smooth point, the gradient vector is perpendicular to the tangent of the level set.
     For small step h along tangent t, f(p + h * t) - f(p) should be o(h).
     """

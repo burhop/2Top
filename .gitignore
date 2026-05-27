@@ -203,6 +203,10 @@ runner_cmd.json
 runner_status.json
 runner_output.log
 
+# Test gallery generated images and scenes
+tests/gallery/images/
+tests/gallery/scenes/
+
 # Rendered images
 ui/static/renders/*.png
 

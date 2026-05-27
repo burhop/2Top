@@ -21,8 +21,8 @@ class TestResultAnalyzer(unittest.TestCase):
     def test_analyzer_initialization(self):
         """Test that the analyzer can be initialized"""
         self.assertIsNotNone(self.analyzer)
-        self.assertTrue(hasattr(self.analyzer, 'get_test_results_summary'))
-        self.assertTrue(hasattr(self.analyzer, 'get_module_test_summary'))
+        self.assertTrue(hasattr(self.analyzer, "get_test_results_summary"))
+        self.assertTrue(hasattr(self.analyzer, "get_module_test_summary"))
 
     def test_get_test_results_summary_empty(self):
         """Test getting test results summary with no data"""
@@ -38,5 +38,5 @@ class TestResultAnalyzer(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

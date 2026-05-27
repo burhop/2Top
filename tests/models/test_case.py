@@ -3,24 +3,26 @@ Data model for test cases in the 2Top test system
 """
 
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
 
 class TestCase:
     """
     Represents a test case in the 2Top test system
     """
-    
-    def __init__(self, 
-                 id: str,
-                 name: str,
-                 description: str,
-                 module_id: str,
-                 test_type: str,
-                 input_data: Dict[str, Any],
-                 expected_result: Any,
-                 valid: bool = True,
-                 validation_reason: Optional[str] = None):
+
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        description: str,
+        module_id: str,
+        test_type: str,
+        input_data: Dict[str, Any],
+        expected_result: Any,
+        valid: bool = True,
+        validation_reason: Optional[str] = None,
+    ):
         self.id = id
         self.name = name
         self.description = description
@@ -33,7 +35,7 @@ class TestCase:
         self.last_modified = datetime.now()
         self.valid = valid
         self.validation_reason = validation_reason
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert the test case to a dictionary for storage"""
         return {
@@ -48,16 +50,24 @@ class TestCase:
             "created_at": self.created_at.isoformat(),
             "last_modified": self.last_modified.isoformat(),
             "valid": self.valid,
-            "validation_reason": self.validation_reason
+            "validation_reason": self.validation_reason,
         }
-    
+
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'TestCase':
+    def from_dict(cls, data: Dict[str, Any]) -> "TestCase":
         """Create a test case from a dictionary"""
         # Convert datetime strings back to datetime objects
-        created_at = datetime.fromisoformat(data["created_at"]) if isinstance(data["created_at"], str) else data["created_at"]
-        last_modified = datetime.fromisoformat(data["last_modified"]) if isinstance(data["last_modified"], str) else data["last_modified"]
-        
+        created_at = (
+            datetime.fromisoformat(data["created_at"])
+            if isinstance(data["created_at"], str)
+            else data["created_at"]
+        )
+        last_modified = (
+            datetime.fromisoformat(data["last_modified"])
+            if isinstance(data["last_modified"], str)
+            else data["last_modified"]
+        )
+
         tc = cls(
             id=data["id"],
             name=data["name"],
@@ -67,7 +77,7 @@ class TestCase:
             input_data=data["input_data"],
             expected_result=data["expected_result"],
             valid=data.get("valid", True),
-            validation_reason=data.get("validation_reason")
+            validation_reason=data.get("validation_reason"),
         )
         tc.status = data.get("status", "pending")
         tc.created_at = created_at

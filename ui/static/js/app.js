@@ -86,6 +86,39 @@ objectBrowser.on('object_visibility_changed', (objId, visible) => {
     canvasRenderer.setObjectVisibility(objId, visible);
 });
 
+objectBrowser.on('create_field_from_curve', ({ sourceId, type }) => {
+    // Sanitize source ID to keep it a safe, clean string for the backend ID
+    const cleanSourceId = sourceId.replace(/[^a-zA-Z0-9_]/g, '');
+    const fieldId = `${type.toLowerCase()}_for_${cleanSourceId}_${Date.now().toString(36)}`;
+    let color = '#77f6ff';
+    if (type === 'SignedDistanceField') color = '#ff6b9c';
+    if (type === 'OccupancyField') color = '#a0fe38';
+    
+    uiClient.sendCommand('create_field', {
+        obj_id: fieldId,
+        source_id: sourceId,
+        field_type: type,
+        style: { color: color }
+    })
+    .then(() => {
+        showNotification(`Created ${type} from ${sourceId}`, 'success');
+        geometryStudio?.refreshSceneData();
+    })
+    .catch(err => showNotification(`Failed: ${err.message}`, 'error'));
+});
+
+objectBrowser.on('delete_multiple_objects', (objIds) => {
+    const promises = objIds.map(id => uiClient.deleteObject(id));
+    Promise.all(promises)
+        .then(() => {
+            showNotification(`Deleted ${objIds.length} field(s)`, 'success');
+            geometryStudio?.refreshSceneData();
+        })
+        .catch(err => {
+            showNotification(`Failed to delete some fields: ${err.message}`, 'error');
+        });
+});
+
 // Property panel event handlers
 propertyPanel.on('parameter_changed', (objId, parameter, value) => {
     uiClient.updateParameter(objId, parameter, value)

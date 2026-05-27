@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterator, List
+from typing import List
 
 import pytest
 
@@ -17,9 +17,13 @@ class PrecisionProfile:
 
 
 DEFAULT_PROFILES: List[PrecisionProfile] = [
-    PrecisionProfile("tight", PrecisionPolicy(absolute=1e-7, relative=1e-6, distance_factor=1e-5)),
+    PrecisionProfile(
+        "tight", PrecisionPolicy(absolute=1e-7, relative=1e-6, distance_factor=1e-5)
+    ),
     PrecisionProfile("default", PrecisionPolicy()),
-    PrecisionProfile("loose", PrecisionPolicy(absolute=1e-5, relative=1e-4, distance_factor=5e-4)),
+    PrecisionProfile(
+        "loose", PrecisionPolicy(absolute=1e-5, relative=1e-4, distance_factor=5e-4)
+    ),
 ]
 
 

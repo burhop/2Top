@@ -12,6 +12,10 @@ dependencies = [
 [tool.setuptools]
 packages = ["geometry", "scene_management", "graphics_backend", "visual_tests"]
 
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 
 
 [tool.ruff]

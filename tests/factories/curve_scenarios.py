@@ -8,12 +8,10 @@ regression harness; this file only focuses on producing structured inputs.
 
 from __future__ import annotations
 
-import math
 import random
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
-import numpy as np
 import sympy as sp
 
 from geometry import (
@@ -46,9 +44,13 @@ def _default_precision_policy() -> PrecisionPolicy:
     return PrecisionPolicy()
 
 
-def _make_quarter_circle(center: Tuple[float, float], radius: float, quadrant: int) -> TrimmedImplicitCurve:
+def _make_quarter_circle(
+    center: Tuple[float, float], radius: float, quadrant: int
+) -> TrimmedImplicitCurve:
     x, y = sp.symbols("x y")
-    circle = ConicSection((x - center[0]) ** 2 + (y - center[1]) ** 2 - radius**2, variables=(x, y))
+    circle = ConicSection(
+        (x - center[0]) ** 2 + (y - center[1]) ** 2 - radius**2, variables=(x, y)
+    )
     mask: Callable[[float, float], bool]
 
     if quadrant == 0:
@@ -75,10 +77,7 @@ def generate_quarter_circle_composites(
         cx = rng.uniform(-5.0, 5.0)
         cy = rng.uniform(-5.0, 5.0)
         radius = rng.uniform(0.5, 5.0)
-        quadrants = [
-            _make_quarter_circle((cx, cy), radius, q)
-            for q in range(4)
-        ]
+        quadrants = [_make_quarter_circle((cx, cy), radius, q) for q in range(4)]
         composite = CompositeCurve(quadrants, precision_policy=policy)
         yield CurveScenario(
             name=f"quarter-circle-{idx}",
@@ -88,7 +87,9 @@ def generate_quarter_circle_composites(
         )
 
 
-def _make_line_segment(point_a: Tuple[float, float], point_b: Tuple[float, float]) -> TrimmedImplicitCurve:
+def _make_line_segment(
+    point_a: Tuple[float, float], point_b: Tuple[float, float]
+) -> TrimmedImplicitCurve:
     x, y = sp.symbols("x y")
     ax, ay = point_a
     bx, by = point_b
@@ -98,8 +99,10 @@ def _make_line_segment(point_a: Tuple[float, float], point_b: Tuple[float, float
         return TrimmedImplicitCurve(
             line,
             lambda px, py, _ay=ay, _by=by: min(_ay, _by) <= py <= max(_ay, _by),
-            xmin=min(ax, bx), xmax=max(ax, bx),
-            ymin=min(ay, by), ymax=max(ay, by),
+            xmin=min(ax, bx),
+            xmax=max(ax, bx),
+            ymin=min(ay, by),
+            ymax=max(ay, by),
             endpoints=[point_a, point_b],
         )
     else:
@@ -109,8 +112,10 @@ def _make_line_segment(point_a: Tuple[float, float], point_b: Tuple[float, float
         return TrimmedImplicitCurve(
             line,
             lambda px, py, _ax=ax, _bx=bx: min(_ax, _bx) <= px <= max(_ax, _bx),
-            xmin=min(ax, bx), xmax=max(ax, bx),
-            ymin=min(ay, by), ymax=max(ay, by),
+            xmin=min(ax, bx),
+            xmax=max(ax, bx),
+            ymin=min(ay, by),
+            ymax=max(ay, by),
             endpoints=[point_a, point_b],
         )
 
@@ -137,8 +142,7 @@ def generate_axis_aligned_rectangles(
             (min_x, max_y),
         ]
         segments = [
-            _make_line_segment(points[i], points[(i + 1) % 4])
-            for i in range(4)
+            _make_line_segment(points[i], points[(i + 1) % 4]) for i in range(4)
         ]
         composite = CompositeCurve(segments, precision_policy=policy)
         yield CurveScenario(
@@ -166,15 +170,17 @@ def generate_random_open_polylines(
             last_x, last_y = points[-1]
             points.append((last_x + dx, last_y + dy))
         segments = [
-            _make_line_segment(points[i], points[i + 1])
-            for i in range(len(points) - 1)
+            _make_line_segment(points[i], points[i + 1]) for i in range(len(points) - 1)
         ]
         composite = CompositeCurve(segments, precision_policy=policy)
         yield CurveScenario(
             name=f"polyline-{idx}",
             curves=segments,
             composite=composite,
-            metadata={"num_segments": len(segments), "closed": float(composite.is_closed())},
+            metadata={
+                "num_segments": len(segments),
+                "closed": float(composite.is_closed()),
+            },
         )
 
 

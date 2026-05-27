@@ -33,8 +33,11 @@ class GeometryStudio {
             toggleAxes:          document.getElementById('toggle-axes'),
             toggleKeypoints:     document.getElementById('toggle-keypoints'),
             toggleIntersections: document.getElementById('toggle-intersections'),
+            toggleHeatmap:       document.getElementById('toggle-heatmap'),
             suiteStandard:       document.getElementById('suite-standard-btn'),
             suitePeriodic:       document.getElementById('suite-periodic-btn'),
+            fieldExtentSlider:   document.getElementById('field-extent-slider'),
+            fieldExtentVal:      document.getElementById('field-extent-val'),
         };
 
         this._bindRendererEvents();
@@ -69,11 +72,25 @@ class GeometryStudio {
     }
 
     _bindToggles() {
-        const { toggleGrid, toggleAxes, toggleKeypoints, toggleIntersections } = this.elements;
+        const { toggleGrid, toggleAxes, toggleKeypoints, toggleIntersections, toggleHeatmap, fieldExtentSlider, fieldExtentVal } = this.elements;
         toggleGrid?.addEventListener('change', (e) => this.canvasRenderer.setGridVisibility(e.target.checked));
         toggleAxes?.addEventListener('change', (e) => this.canvasRenderer.setAxisVisibility(e.target.checked));
         toggleKeypoints?.addEventListener('change', (e) => this.canvasRenderer.setKeyPointVisibility(e.target.checked));
         toggleIntersections?.addEventListener('change', (e) => this.canvasRenderer.setIntersectionVisibility(e.target.checked));
+        toggleHeatmap?.addEventListener('change', (e) => this.canvasRenderer.setHeatmapVisibility(e.target.checked));
+
+        if (fieldExtentSlider) {
+            fieldExtentSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                if (fieldExtentVal) {
+                    fieldExtentVal.textContent = Math.round(val);
+                }
+                this.canvasRenderer.glowSliderValue = val;
+                this.canvasRenderer.fieldExtent = (val / 100.0) * 20.0;
+                this.canvasRenderer.isExplicitFieldExtent = true;
+                this.canvasRenderer.render();
+            });
+        }
     }
 
     // ── Transport controls ────────────────────────────────────────────────────

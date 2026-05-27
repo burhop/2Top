@@ -28,7 +28,12 @@ class CanvasRenderer extends EventEmitter {
         this.showKeyPoints = true;
         this.intersections = [];
         this.showIntersections = true;
+        this.showHeatmap = true;
+        this.fields = [];
         this._fallbackBounds = { minX: -100, maxX: 100, minY: -100, maxY: 100 };
+        this.fieldExtent = null;
+        this.isExplicitFieldExtent = false;
+        this.glowSliderValue = 10.0;
         
         this.setupEventHandlers();
         this.render();
@@ -178,6 +183,11 @@ class CanvasRenderer extends EventEmitter {
 
         this.objects.clear();
         this.selectedObjects.clear();
+        this.fields = sceneData.fields || [];
+        if (!this.isExplicitFieldExtent) {
+            this.fieldExtent = null;
+            this.glowSliderValue = 10.0;
+        }
 
         sceneData.objects.forEach((obj) => {
             const existing = this.objects.get(obj.id) || {};
@@ -264,6 +274,11 @@ class CanvasRenderer extends EventEmitter {
 
     setIntersectionVisibility(show) {
         this.showIntersections = Boolean(show);
+        this.render();
+    }
+
+    setHeatmapVisibility(show) {
+        this.showHeatmap = Boolean(show);
         this.render();
     }
 
@@ -359,6 +374,10 @@ class CanvasRenderer extends EventEmitter {
         this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
         this.ctx.scale(this.viewport.scale, -this.viewport.scale);
         this.ctx.translate(-this.viewport.x, -this.viewport.y);
+
+        if (this.showHeatmap) {
+            this.renderHeatmaps();
+        }
 
         if (this.showGrid) {
             this.renderGrid();
@@ -577,7 +596,7 @@ class CanvasRenderer extends EventEmitter {
     }
 
     renderObject(id, obj) {
-        if (!obj.data || obj.visible === false) return;
+        if (!obj.data || obj.visible === false || obj.type === 'field') return;
 
         this.ctx.save();
         
@@ -718,6 +737,202 @@ class CanvasRenderer extends EventEmitter {
         this.objects.clear();
         this.selectedObjects.clear();
         this.intersections = [];
+        this.fieldExtent = null;
+        this.isExplicitFieldExtent = false;
+        this.glowSliderValue = 10.0;
         this.render();
+    }
+
+    renderHeatmaps() {
+        if (!this.fields || this.fields.length === 0) return;
+        
+        if (this.glowSliderValue === undefined || this.glowSliderValue === null) {
+            this.glowSliderValue = 10.0;
+        }
+        if (this.fieldExtent === null) {
+            this.fieldExtent = (this.glowSliderValue / 100.0) * 20.0;
+        }
+
+        // Configure the glow slider range statically from 0 to 100
+        const slider = document.getElementById('field-extent-slider');
+        const label = document.getElementById('field-extent-val');
+        if (slider) {
+            slider.min = "0";
+            slider.max = "100";
+            slider.step = "1";
+            slider.value = this.glowSliderValue;
+        }
+        if (label) {
+            label.textContent = Math.round(this.glowSliderValue);
+        }
+
+        this.fields.forEach((field) => {
+            if (field.error || !field.data || !field.bounds) return;
+            
+            const resolution = field.resolution;
+            const bounds = field.bounds;
+            const [xmin, xmax, ymin, ymax] = bounds;
+            const vmin = field.vmin;
+            const vmax = field.vmax;
+            
+            // Create an upscaled offscreen canvas for ultra-smooth grid interpolation
+            const renderRes = 512;
+            const offscreen = document.createElement('canvas');
+            offscreen.width = renderRes;
+            offscreen.height = renderRes;
+            const octx = offscreen.getContext('2d');
+            const imgData = octx.createImageData(renderRes, renderRes);
+            const data = imgData.data;
+            
+            const dx = (xmax - xmin) / (resolution - 1 || 1);
+            const dy = (ymax - ymin) / (resolution - 1 || 1);
+            const vrange = vmax - vmin || 1e-9;
+            
+            const flippedData = [...field.data].reverse();
+
+            // Bilinear grid interpolation to completely eliminate blocky pixels!
+            const interpolateGrid = (grid, r, c) => {
+                const r_idx = Math.floor(r);
+                const c_idx = Math.floor(c);
+                const r_next = Math.min(resolution - 1, r_idx + 1);
+                const c_next = Math.min(resolution - 1, c_idx + 1);
+                
+                const tr = r - r_idx;
+                const tc = c - c_idx;
+                
+                const v00 = grid[r_idx] ? grid[r_idx][c_idx] : null;
+                const v01 = grid[r_idx] ? grid[r_idx][c_next] : null;
+                const v10 = grid[r_next] ? grid[r_next][c_idx] : null;
+                const v11 = grid[r_next] ? grid[r_next][c_next] : null;
+                
+                const w00 = (v00 !== null && v00 !== undefined && !isNaN(v00)) ? v00 : 0;
+                const w01 = (v01 !== null && v01 !== undefined && !isNaN(v01)) ? v01 : w00;
+                const w10 = (v10 !== null && v10 !== undefined && !isNaN(v10)) ? v10 : w00;
+                const w11 = (v11 !== null && v11 !== undefined && !isNaN(v11)) ? v11 : w00;
+                
+                return (1 - tr) * ((1 - tc) * w00 + tc * w01) + tr * ((1 - tc) * w10 + tc * w11);
+            };
+            
+            const dx_render = (xmax - xmin) / (renderRes - 1 || 1);
+            const dy_render = (ymax - ymin) / (renderRes - 1 || 1);
+            
+            for (let r = 0; r < renderRes; r++) {
+                const gridR = (r / (renderRes - 1)) * (resolution - 1);
+                for (let c = 0; c < renderRes; c++) {
+                    const gridC = (c / (renderRes - 1)) * (resolution - 1);
+                    const val = interpolateGrid(flippedData, gridR, gridC);
+                    const idx = (r * renderRes + c) * 4;
+                    
+                    if (val === null || val === undefined || isNaN(val)) {
+                        data[idx] = 0;
+                        data[idx + 1] = 0;
+                        data[idx + 2] = 0;
+                        data[idx + 3] = 0;
+                    } else {
+                        // Estimate distance to zero isoline in world units and compute fade multiplier
+                        let fade = 1.0;
+                        if (field.type !== 'OccupancyField') {
+                            let d_world;
+                            if (field.type === 'SignedDistanceField') {
+                                d_world = Math.abs(val);
+                            } else {
+                                const prev_c = c > 0 ? c - 1 : c;
+                                const next_c = c < renderRes - 1 ? c + 1 : c;
+                                const prev_r = r > 0 ? r - 1 : r;
+                                const next_r = r < renderRes - 1 ? r + 1 : r;
+                                
+                                const val_prev_c = interpolateGrid(flippedData, gridR, (prev_c / (renderRes - 1)) * (resolution - 1));
+                                const val_next_c = interpolateGrid(flippedData, gridR, (next_c / (renderRes - 1)) * (resolution - 1));
+                                const val_prev_r = interpolateGrid(flippedData, (prev_r / (renderRes - 1)) * (resolution - 1), gridC);
+                                const val_next_r = interpolateGrid(flippedData, (next_r / (renderRes - 1)) * (resolution - 1), gridC);
+                                
+                                const df_dx = (val_next_c - val_prev_c) / (((next_c - prev_c) || 1) * dx_render);
+                                const df_dy = (val_next_r - val_prev_r) / (((next_r - prev_r) || 1) * dy_render);
+                                
+                                const grad_norm = Math.sqrt(df_dx * df_dx + df_dy * df_dy);
+                                d_world = Math.abs(val) / (grad_norm + 1e-6);
+                            }
+                            
+                            if (this.fieldExtent !== null) {
+                                const fade_start = 0.15 * this.fieldExtent;
+                                const fade_end = this.fieldExtent;
+                                if (d_world <= fade_start) {
+                                    fade = 1.0;
+                                } else if (d_world >= fade_end) {
+                                    fade = 0.0;
+                                } else {
+                                    const u = (d_world - fade_start) / (fade_end - fade_start);
+                                    fade = 0.5 + 0.5 * Math.cos(u * Math.PI);
+                                }
+                            }
+                        }
+
+                        // Normalize val to [0, 1]
+                        const t = (val - vmin) / vrange;
+                        const [colorR, colorG, colorB, colorA] = this.getColorForT(t, field.type);
+                        data[idx] = colorR;
+                        data[idx + 1] = colorG;
+                        data[idx + 2] = colorB;
+                        data[idx + 3] = Math.round(colorA * fade * 255);
+                    }
+                }
+            }
+            
+            octx.putImageData(imgData, 0, 0);
+            
+            const screenMin = this.worldToScreen(xmin, ymax); // ymax is top of screen in world coordinates
+            const screenMax = this.worldToScreen(xmax, ymin); // ymin is bottom of screen in world coordinates
+            
+            // Draw onto main canvas
+            this.ctx.save();
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to draw in screen pixel coordinates
+            this.ctx.drawImage(offscreen, screenMin.x, screenMin.y, screenMax.x - screenMin.x, screenMax.y - screenMin.y);
+            this.ctx.restore();
+        });
+    }
+
+    getColorForT(t, fieldType = 'SignedDistanceField') {
+        t = Math.max(0, Math.min(1, t));
+        let stops;
+        if (fieldType === 'OccupancyField') {
+            stops = [
+                { t: 0.0,  r: 20,  g: 22,  b: 30,  a: 0.0 },
+                { t: 0.5,  r: 20,  g: 22,  b: 30,  a: 0.0 },
+                { t: 0.75, r: 160, g: 254, b: 56,  a: 0.35 },
+                { t: 1.0,  r: 160, g: 254, b: 56,  a: 0.60 }
+            ];
+        } else {
+            stops = [
+                { t: 0.0,   r: 10,  g: 80,  b: 220, a: 0.70 }, // Rich blue
+                { t: 0.49,  r: 40,  g: 120, b: 255, a: 0.75 },
+                { t: 0.51,  r: 255, g: 70,  b: 70,  a: 0.75 },
+                { t: 1.0,   r: 220, g: 20,  b: 40,  a: 0.70 }  // Rich red
+            ];
+        }
+        
+        let i = 0;
+        for (; i < stops.length - 1; i++) {
+            if (t <= stops[i+1].t) break;
+        }
+        const s1 = stops[i];
+        const s2 = stops[i+1];
+        const range = s2.t - s1.t;
+        const factor = range > 0 ? (t - s1.t) / range : 0;
+        
+        const r = Math.round(s1.r + (s2.r - s1.r) * factor);
+        const g = Math.round(s1.g + (s2.g - s1.g) * factor);
+        const b = Math.round(s1.b + (s2.b - s1.b) * factor);
+        const a = s1.a + (s2.a - s1.a) * factor;
+        
+        return [r, g, b, a];
+    }
+
+    formatExtentValue(val) {
+        if (val === null || val === undefined || isNaN(val)) return '–';
+        if (val >= 100) return val.toFixed(0);
+        if (val >= 10) return val.toFixed(1);
+        if (val >= 0.1) return val.toFixed(2);
+        if (val >= 0.001) return val.toFixed(4);
+        return val.toExponential(2);
     }
 }

@@ -1,3 +1,31 @@
-# Ruff ignore file for 2Top test system
-# Ignore the test system from being checked by ruff
+# Ruff ignore file for 2Top project
+
+# Root-level debug, scratch, and demo scripts (not production code)
+debug_*.py
+scratch_*.py
+sprint*_demo*.py
+test_*.py
+final_*.py
+fix_*.py
+get_specific_failures.py
+add_validate_method.py
+diagnose_real_problem.py
+demo_revival.py
+triangle_with_endpoints.py
+run_visualizer_debug.py
+curve_evaluation_report.py
+curve_intersection_analysis.py
+curve_ui_summary.py
+*_curve_visualizer.py
+curve_visualizer.py
+cleanup_generated_images.py
+
+# Test directories (tests have their own conventions)
 tests/
+benchmarks/
+test_results/
+
+# Build/cache artifacts
+__pycache__/
+*.egg-info/
+.venv/

@@ -21,7 +21,7 @@ class TestAreaRegion(unittest.TestCase):
         # Just make sure the class can be imported and referenced
         # We won't create a real instance since it requires complex setup
         self.assertIsNotNone(AreaRegion)
-        self.assertTrue(hasattr(AreaRegion, '__init__'))
+        self.assertTrue(hasattr(AreaRegion, "__init__"))
 
 
 if __name__ == "__main__":

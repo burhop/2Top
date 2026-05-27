@@ -3,7 +3,7 @@ Error message generation system for the 2Top test system
 """
 
 import uuid
-from typing import Optional, Dict, Any
+from typing import Optional
 from tests.models.error_message import ErrorMessage
 from tests.models.test_result import TestResult
 from tests.utils.result_storage_manager import ResultStorageManager
@@ -64,11 +64,13 @@ class ErrorMessageGenerator:
         lines.append("  - Check the test case implementation")
         return "\n".join(lines)
 
-    def generate_error_for_test_result(self,
-                                      test_result: TestResult,
-                                      error_type: str,
-                                      error_details: str,
-                                      suggested_fix: Optional[str] = None) -> ErrorMessage:
+    def generate_error_for_test_result(
+        self,
+        test_result: TestResult,
+        error_type: str,
+        error_details: str,
+        suggested_fix: Optional[str] = None,
+    ) -> ErrorMessage:
         """
         Generate an error message for a test result
 

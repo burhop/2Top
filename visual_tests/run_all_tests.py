@@ -16,6 +16,7 @@ try:
     import tkinter as tk
     from tkinter import ttk, scrolledtext
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
     TK_AVAILABLE = True
 except Exception:  # pragma: no cover
     TK_AVAILABLE = False
@@ -46,21 +47,32 @@ def load_visual_tests() -> List[VisualTestCase]:
     from visual_tests.comprehensive.test_grid_showcase import (
         run_all_comprehensive_tests,
     )
-    from visual_tests.utils.plotting import register_embed_viewer
     from visual_tests.demos.basic_demo import run_basic_demo
     from visual_tests.demos.advanced_demo import run_advanced_demo
 
     return [
         VisualTestCase("Basic Curves", "Conic sections", run_all_basic_curve_tests),
-        VisualTestCase("Composite Curves", "Trimmed/composite curves", run_all_composite_curve_tests),
-        VisualTestCase("Regions", "Filled regions & containment", run_all_basic_region_tests),
-        VisualTestCase("Grid Showcase", "Comprehensive grid of examples", run_all_comprehensive_tests),
+        VisualTestCase(
+            "Composite Curves",
+            "Trimmed/composite curves",
+            run_all_composite_curve_tests,
+        ),
+        VisualTestCase(
+            "Regions", "Filled regions & containment", run_all_basic_region_tests
+        ),
+        VisualTestCase(
+            "Grid Showcase",
+            "Comprehensive grid of examples",
+            run_all_comprehensive_tests,
+        ),
         VisualTestCase("Basic Demo", "Interactive walkthrough", run_basic_demo),
         VisualTestCase("Advanced Demo", "Advanced visualizations", run_advanced_demo),
     ]
 
 
-def run_tests_cli(tests: List[VisualTestCase], start: int = 0, stop: Optional[int] = None) -> bool:
+def run_tests_cli(
+    tests: List[VisualTestCase], start: int = 0, stop: Optional[int] = None
+) -> bool:
     stop_index = stop if stop is not None else len(tests)
     all_passed = True
     print("\n" + "=" * 80)
@@ -114,7 +126,9 @@ class VisualTestPlayer:
         # Test list
         list_frame = ttk.Frame(main)
         list_frame.grid(row=0, column=0, rowspan=3, sticky="nsw", padx=(0, 12))
-        ttk.Label(list_frame, text="Tests", font=("Segoe UI", 11, "bold")).pack(anchor="w")
+        ttk.Label(list_frame, text="Tests", font=("Segoe UI", 11, "bold")).pack(
+            anchor="w"
+        )
         self.listbox = tk.Listbox(list_frame, height=20, exportselection=False)
         for case in self.tests:
             self.listbox.insert(tk.END, case.name)
@@ -127,8 +141,12 @@ class VisualTestPlayer:
         detail.columnconfigure(0, weight=1)
         self.title_var = tk.StringVar(value="Select a test")
         self.desc_var = tk.StringVar(value="")
-        ttk.Label(detail, textvariable=self.title_var, font=("Segoe UI", 14, "bold")).grid(row=0, column=0, sticky="w")
-        ttk.Label(detail, textvariable=self.desc_var, font=("Segoe UI", 10), foreground="#666").grid(row=1, column=0, sticky="w")
+        ttk.Label(
+            detail, textvariable=self.title_var, font=("Segoe UI", 14, "bold")
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Label(
+            detail, textvariable=self.desc_var, font=("Segoe UI", 10), foreground="#666"
+        ).grid(row=1, column=0, sticky="w")
 
         # Output/log + canvas
         display_frame = ttk.Frame(main)
@@ -151,14 +169,18 @@ class VisualTestPlayer:
         control = ttk.Frame(main)
         control.grid(row=2, column=1, sticky="ew", pady=(12, 0))
         control.columnconfigure(1, weight=1)
-        self.prev_btn = ttk.Button(control, text="◀ Previous", command=self.run_previous)
+        self.prev_btn = ttk.Button(
+            control, text="◀ Previous", command=self.run_previous
+        )
         self.prev_btn.grid(row=0, column=0, padx=4)
         self.play_btn = ttk.Button(control, text="► Play", command=self.toggle_play)
         self.play_btn.grid(row=0, column=1, padx=4)
         self.next_btn = ttk.Button(control, text="Next ▶", command=self.run_next)
         self.next_btn.grid(row=0, column=2, padx=4)
         self.status_var = tk.StringVar(value="Idle")
-        ttk.Label(control, textvariable=self.status_var).grid(row=1, column=0, columnspan=3, sticky="w", pady=(8, 0))
+        ttk.Label(control, textvariable=self.status_var).grid(
+            row=1, column=0, columnspan=3, sticky="w", pady=(8, 0)
+        )
 
         self.listbox.selection_set(0)
         self._update_detail()
@@ -188,7 +210,9 @@ class VisualTestPlayer:
         if self.current_thread and self.current_thread.is_alive():
             return
         self._set_status(f"Running: {self.tests[index].name}")
-        self.current_thread = threading.Thread(target=self._run_test_thread, args=(index,), daemon=True)
+        self.current_thread = threading.Thread(
+            target=self._run_test_thread, args=(index,), daemon=True
+        )
         self.current_thread.start()
 
     def _on_select(self, event=None) -> None:
@@ -224,7 +248,9 @@ class VisualTestPlayer:
     def toggle_play(self) -> None:
         self.playing = not self.playing
         self.play_btn.config(text="❚❚ Pause" if self.playing else "► Play")
-        if self.playing and not (self.current_thread and self.current_thread.is_alive()):
+        if self.playing and not (
+            self.current_thread and self.current_thread.is_alive()
+        ):
             self.run_current()
 
     def _poll_queue(self) -> None:
@@ -238,7 +264,9 @@ class VisualTestPlayer:
                     if error:
                         log_line += f" — {error}"
                     self._log(log_line)
-                    self._set_status("Idle" if success else f"Failed: {self.tests[idx].name}")
+                    self._set_status(
+                        "Idle" if success else f"Failed: {self.tests[idx].name}"
+                    )
                     if self.playing:
                         if success and idx < len(self.tests) - 1:
                             self.index = idx + 1
@@ -278,7 +306,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Visual geometry test runner")
     parser.add_argument("--mode", choices=["gui", "cli"], default="gui")
     parser.add_argument("--start", type=int, default=1, help="Start index for CLI mode")
-    parser.add_argument("--stop", type=int, default=None, help="Stop index (exclusive) for CLI mode")
+    parser.add_argument(
+        "--stop", type=int, default=None, help="Stop index (exclusive) for CLI mode"
+    )
     args = parser.parse_args()
 
     tests = load_visual_tests()

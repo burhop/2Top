@@ -6,7 +6,6 @@ import sys
 import os
 import unittest
 import sympy as sp
-import numpy as np
 
 # Add the current directory to the path to import from the project
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,7 +21,7 @@ class TestImplicitCurve(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures"""
         # Create a simple implicit curve: x^2 + y^2 - 1 = 0 (circle)
-        x, y = sp.symbols('x y')
+        x, y = sp.symbols("x y")
         expression = x**2 + y**2 - 1
         self.curve = ConicSection(expression, (x, y))
 
@@ -34,7 +33,7 @@ class TestImplicitCurve(unittest.TestCase):
 
         # Test evaluation
         self.assertEqual(self.curve.evaluate(0, 0), -1)  # Point inside circle
-        self.assertEqual(self.curve.evaluate(1, 0), 0)   # Point on circle
+        self.assertEqual(self.curve.evaluate(1, 0), 0)  # Point on circle
 
     def test_curve_evaluation(self):
         """Test curve evaluation at various points"""
@@ -74,11 +73,11 @@ class TestConicSection(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        x, y = sp.symbols('x y')
+        x, y = sp.symbols("x y")
         # Create a circle: x^2 + y^2 - 1 = 0
         self.circle = ConicSection(x**2 + y**2 - 1, (x, y))
         # Create an ellipse: x^2/4 + y^2/9 - 1 = 0
-        self.ellipse = ConicSection(x**2/4 + y**2/9 - 1, (x, y))
+        self.ellipse = ConicSection(x**2 / 4 + y**2 / 9 - 1, (x, y))
         # Create a parabola: y - x^2 = 0
         self.parabola = ConicSection(y - x**2, (x, y))
 

@@ -43,12 +43,43 @@ class ObjectBrowser extends EventEmitter {
     }
 
     getObjectTypeFromId(objId) {
-        if (objId.includes('circle')) return 'circle';
-        if (objId.includes('rectangle')) return 'rectangle';
-        if (objId.includes('triangle')) return 'triangle';
-        if (objId.includes('ellipse')) return 'ellipse';
-        if (objId.includes('line')) return 'line';
+        const idLower = objId.toLowerCase();
+        if (idLower.includes('circle')) return 'circle';
+        if (idLower.includes('rectangle')) return 'rectangle';
+        if (idLower.includes('triangle')) return 'triangle';
+        if (idLower.includes('ellipse')) return 'ellipse';
+        if (idLower.includes('line')) return 'line';
+        if (idLower.includes('parabola')) return 'parabola';
+        if (idLower.includes('hyperbola')) return 'hyperbola';
+        if (idLower.includes('cubic')) return 'cubic';
+        if (idLower.includes('periodic')) return 'periodic';
+        if (idLower.includes('curvefield')) return 'curvefield';
+        if (idLower.includes('signeddistancefield') || idLower.includes('sdf')) return 'sdf';
+        if (idLower.includes('occupancyfield') || idLower.includes('occupancy')) return 'occupancy';
+        if (idLower.includes('db_curve')) return 'db_curve';
         return 'unknown';
+    }
+
+    getAssociatedFields(objId) {
+        const fields = [];
+        const targetIdClean = objId.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+        for (const [key, val] of this.objects.entries()) {
+            const keyLower = key.toLowerCase();
+            const isField = keyLower.includes('curvefield') || 
+                            keyLower.includes('signeddistancefield') || 
+                            keyLower.includes('occupancyfield') ||
+                            keyLower.includes('sdf') ||
+                            keyLower.includes('occupancy');
+            if (isField) {
+                // Match either strict _for_sourceId_ format or a simpler _sourceId match
+                if (keyLower.includes(`_for_${targetIdClean}_`) || 
+                    keyLower.includes(`_${targetIdClean}_`) || 
+                    keyLower.endsWith(`_${targetIdClean}`)) {
+                    fields.push(key);
+                }
+            }
+        }
+        return fields;
     }
 
     render() {
@@ -102,26 +133,78 @@ class ObjectBrowser extends EventEmitter {
             existingMenu.remove();
         }
 
+        const type = this.getObjectTypeFromId(objId);
+        const isField = type === 'curvefield' || type === 'sdf' || type === 'occupancy';
+        const associatedFields = this.getAssociatedFields(objId);
+
         // Create context menu
         const menu = document.createElement('div');
         menu.className = 'context-menu';
-        menu.style.left = event.pageX + 'px';
-        menu.style.top = event.pageY + 'px';
+        menu.style.visibility = 'hidden';
+        menu.style.position = 'absolute';
         
-        menu.innerHTML = `
-            <button class="context-menu-item" data-action="rename">Rename</button>
-            <button class="context-menu-item" data-action="duplicate">Duplicate</button>
-            <div class="context-menu-separator"></div>
-            <button class="context-menu-item" data-action="delete">Delete</button>
-        `;
+        let menuHtml = '';
+        if (isField) {
+            menuHtml = `
+                <button class="context-menu-item" data-action="rename">Rename</button>
+                <div class="context-menu-separator"></div>
+                <button class="context-menu-item danger" data-action="delete">Delete Field</button>
+            `;
+        } else {
+            // It's a curve / database curve / etc.
+            menuHtml = `
+                <button class="context-menu-item" data-action="rename">Rename</button>
+                <button class="context-menu-item" data-action="duplicate">Duplicate</button>
+                <div class="context-menu-separator"></div>
+                <button class="context-menu-item" data-action="create_curve_field">Add CurveField</button>
+                <button class="context-menu-item" data-action="create_sdf">Add SignedDistanceField (SDF)</button>
+                <button class="context-menu-item" data-action="create_occupancy">Add OccupancyField</button>
+            `;
+            
+            if (associatedFields.length > 0) {
+                menuHtml += `
+                    <div class="context-menu-separator"></div>
+                    <button class="context-menu-item danger" data-action="delete_associated_fields">Delete Applied Fields (${associatedFields.length})</button>
+                `;
+            }
+            
+            menuHtml += `
+                <div class="context-menu-separator"></div>
+                <button class="context-menu-item danger" data-action="delete">Delete Curve</button>
+            `;
+        }
 
+        menu.innerHTML = menuHtml;
         document.body.appendChild(menu);
+
+        // Adjust position dynamically to fit completely within the viewport bounds
+        const rect = menu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        let left = event.pageX;
+        let top = event.pageY;
+        
+        // If the menu overflows the right edge, shift it left by its width
+        if (left + rect.width > viewportWidth) {
+            left = Math.max(10, left - rect.width);
+        }
+        // If the menu overflows the bottom edge, shift it up to stay visible
+        if (top + rect.height > viewportHeight) {
+            top = Math.max(10, viewportHeight - rect.height - 15);
+        }
+        
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+        menu.style.visibility = 'visible';
 
         // Handle menu actions
         menu.addEventListener('click', (e) => {
-            const action = e.target.dataset.action;
+            const button = e.target.closest('.context-menu-item');
+            if (!button) return;
+            const action = button.dataset.action;
             if (action) {
-                this.handleContextAction(action, objId);
+                this.handleContextAction(action, objId, associatedFields);
                 menu.remove();
             }
         });
@@ -136,7 +219,7 @@ class ObjectBrowser extends EventEmitter {
         setTimeout(() => document.addEventListener('click', removeMenu), 0);
     }
 
-    handleContextAction(action, objId) {
+    handleContextAction(action, objId, associatedFields = []) {
         switch (action) {
             case 'rename':
                 this.renameObject(objId);
@@ -144,8 +227,25 @@ class ObjectBrowser extends EventEmitter {
             case 'duplicate':
                 this.emit('object_duplicate', objId);
                 break;
+            case 'create_curve_field':
+                this.emit('create_field_from_curve', { sourceId: objId, type: 'CurveField' });
+                break;
+            case 'create_sdf':
+                this.emit('create_field_from_curve', { sourceId: objId, type: 'SignedDistanceField' });
+                break;
+            case 'create_occupancy':
+                this.emit('create_field_from_curve', { sourceId: objId, type: 'OccupancyField' });
+                break;
+            case 'delete_associated_fields':
+                if (confirm(`Delete all ${associatedFields.length} field(s) applied to curve ${objId}?`)) {
+                    this.emit('delete_multiple_objects', associatedFields);
+                }
+                break;
             case 'delete':
-                if (confirm(`Delete object ${objId}?`)) {
+                const type = this.getObjectTypeFromId(objId);
+                const isField = type === 'curvefield' || type === 'sdf' || type === 'occupancy';
+                const label = isField ? 'field' : 'object';
+                if (confirm(`Delete ${label} ${objId}?`)) {
                     this.emit('object_deleted', objId);
                 }
                 break;

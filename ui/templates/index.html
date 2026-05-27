@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2Top Geometry</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css', v='0.12.8') }}">
+    <link class="cache-buster-css" rel="stylesheet" href="{{ url_for('static', filename='css/components.css', v='0.12.8') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -143,6 +144,17 @@
             <input type="checkbox" id="toggle-intersections" checked>
             <span>✕</span>
         </label>
+        <label class="toggle-btn" title="Heatmap" id="toggle-heatmap-lbl">
+            <input type="checkbox" id="toggle-heatmap" checked>
+            <span style="font-weight: bold; background: linear-gradient(90deg, #ff6b9c, #77f6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">♨</span>
+        </label>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label" title="Field Glow Extent (World units)">Glow</div>
+        <div class="field-control-container" style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+            <span id="field-extent-val" style="font-size: 9px; font-family: monospace; color: var(--accent); font-weight: bold; text-align: center; width: 36px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="Current fade extent in world units">2.00</span>
+            <input type="range" id="field-extent-slider" class="frame-slider" style="height: 60px; margin: 2px 0;" min="0" max="100" step="1" value="10" title="Field Glow Extent">
+        </div>
 
         <div class="sidebar-divider"></div>
         <div class="sidebar-section-label">Export</div>
@@ -190,14 +202,15 @@
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<script src="{{ url_for('static', filename='js/core/EventEmitter.js') }}"></script>
-<script src="{{ url_for('static', filename='js/core/MCPClient.js') }}"></script>
-<script src="{{ url_for('static', filename='js/core/CanvasRenderer.js') }}"></script>
-<script src="{{ url_for('static', filename='js/core/GeometryStudio.js') }}"></script>
-<script src="{{ url_for('static', filename='js/components/ObjectBrowser.js') }}"></script>
-<script src="{{ url_for('static', filename='js/components/PropertyPanel.js') }}"></script>
-<script src="{{ url_for('static', filename='js/components/AnimationControls.js') }}"></script>
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
-<div id="app-version" style="position:fixed;bottom:6px;right:10px;font:10px 'Space Grotesk',monospace;color:rgba(255,255,255,0.35);pointer-events:none;z-index:9999;">v0.12.3</div>
+<script src="{{ url_for('static', filename='js/core/EventEmitter.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/core/MCPClient.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/core/CanvasRenderer.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/core/GeometryStudio.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/components/ObjectBrowser.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/components/PropertyPanel.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/components/AnimationControls.js', v='0.12.8') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js', v='0.12.8') }}"></script>
+<div id="app-version" style="position:fixed;bottom:6px;right:10px;font:10px 'Space Grotesk',monospace;color:rgba(255,255,255,0.35);pointer-events:none;z-index:9999;">v0.12.8</div>
 </body>
 </html>
+

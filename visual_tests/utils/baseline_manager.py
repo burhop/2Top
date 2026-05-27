@@ -32,7 +32,9 @@ class VisualBaselineManager:
         self.threshold = float(os.getenv("VISUAL_DIFF_THRESHOLD", "0.01"))
         default_output = root / "output"
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        self.output_dir = Path(os.getenv("VISUAL_OUTPUT_DIR", default_output / timestamp))
+        self.output_dir = Path(
+            os.getenv("VISUAL_OUTPUT_DIR", default_output / timestamp)
+        )
         self.baseline_dir = Path(os.getenv("VISUAL_BASELINE_DIR", root / "baselines"))
         self.diff_dir = Path(os.getenv("VISUAL_DIFF_DIR", self.output_dir / "diffs"))
         for directory in [self.output_dir, self.diff_dir]:

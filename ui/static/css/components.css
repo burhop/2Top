@@ -425,41 +425,67 @@
     border-color: rgba(0,0,0,0.8) transparent transparent transparent;
 }
 
-/* Context Menu Components */
+/* Context Menu Components - Glassmorphic Premium Dark Theme */
 .context-menu {
     position: absolute;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 0.25rem 0;
-    min-width: 150px;
-    z-index: 1000;
+    background: rgba(8, 12, 22, 0.95);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(70, 194, 255, 0.15);
+    padding: 0.35rem 0;
+    min-width: 180px;
+    z-index: 10000;
+    animation: context-menu-fade-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes context-menu-fade-in {
+    from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .context-menu-item {
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.78rem;
+    font-weight: 500;
     border: none;
     background: none;
     width: 100%;
     text-align: left;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s, color 0.15s;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
 }
 
 .context-menu-item:hover {
-    background: #f8f9fa;
+    background: rgba(70, 194, 255, 0.12);
+    color: var(--accent);
+}
+
+.context-menu-item.danger {
+    color: #ff6b9c;
+}
+
+.context-menu-item.danger:hover {
+    background: rgba(255, 107, 156, 0.15);
+    color: #ff85ae;
 }
 
 .context-menu-item:disabled {
-    color: #999;
+    color: var(--muted);
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
 .context-menu-separator {
     height: 1px;
-    background: #e0e0e0;
-    margin: 0.25rem 0;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.35rem 0;
 }
 
 /* Notification Components */

@@ -1,6 +1,39 @@
 # Ruff configuration for 2Top project
 # See https://docs.astral.sh/ruff/settings/
 
+line-length = 88
+indent-width = 4
+
+exclude = [
+    ".git",
+    ".venv",
+    "*_backup.py",
+    "tests",
+    "benchmarks",
+    "test_results",
+    "visual_tests",
+    "ui/geometry_tests.py",
+    "ui/tests",
+    "debug_*.py",
+    "scratch_*.py",
+    "sprint*_demo*.py",
+    "test_*.py",
+    "final_*.py",
+    "fix_*.py",
+    "get_specific_failures.py",
+    "add_validate_method.py",
+    "diagnose_real_problem.py",
+    "demo_revival.py",
+    "triangle_with_endpoints.py",
+    "run_visualizer_debug.py",
+    "curve_evaluation_report.py",
+    "curve_intersection_analysis.py",
+    "curve_ui_summary.py",
+    "*_curve_visualizer.py",
+    "curve_visualizer.py",
+    "cleanup_generated_images.py"
+]
+
 [lint]
 # Enable the pycodestyle (`E`) and Pyflakes (`F`) rules by default.
 # Note: We could be more selective and only enable the specific rules we want,
@@ -9,6 +42,10 @@ select = ["E", "F"]
 extend-ignore = [
     # Allow unused variables in test files
     "F841",
+    # Ignore line too long warnings (E501)
+    "E501",
+    # Ignore module level import not at top of file (E402)
+    "E402",
 ]
 
 [format]
@@ -16,7 +53,3 @@ extend-ignore = [
 quote-style = "double"
 # Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
-# Like Black, respect line length.
-line-length = 88
-# Like Black, use 4 space indents.
-tab-size = 4

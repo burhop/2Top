@@ -68,14 +68,18 @@ def write_artifacts(out_dir: Path, chunk_index: int, chunk_results: List[dict]) 
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run fast geometry regression scenarios")
+    parser = argparse.ArgumentParser(
+        description="Run fast geometry regression scenarios"
+    )
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--count", type=int, default=1000)
     parser.add_argument("--policy-abs", type=float, default=None)
     parser.add_argument("--policy-rel", type=float, default=None)
     parser.add_argument("--chunk-size", type=int, default=100)
     parser.add_argument("--max-failures", type=int, default=50)
-    parser.add_argument("--output", type=Path, default=None, help="Directory for artifact output")
+    parser.add_argument(
+        "--output", type=Path, default=None, help="Directory for artifact output"
+    )
     args = parser.parse_args()
 
     policy_kwargs = {}
@@ -115,10 +119,15 @@ def main() -> None:
 
     if output_dir is not None:
         summary_file = output_dir / "summary.json"
-        summary_file.write_text(json.dumps({
-            "summary": summary,
-            "failing_scenarios": failing_scenarios,
-        }, indent=2))
+        summary_file.write_text(
+            json.dumps(
+                {
+                    "summary": summary,
+                    "failing_scenarios": failing_scenarios,
+                },
+                indent=2,
+            )
+        )
         print(f"Summary written to {summary_file}")
     else:
         print(json.dumps(summary, indent=2))
