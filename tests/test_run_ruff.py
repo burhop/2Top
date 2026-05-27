@@ -20,5 +20,5 @@ def test_run_ruff():
         f.write("\nSTDERR:\n")
         f.write(result.stderr)
     
-    # Assert False to make pytest print it if we want, or just let it pass
-    assert False, f"Ruff finished with exit code {result.returncode}. Output written to scratch_ruff_output.txt"
+    # Assert return code is 0 to let the test pass if Ruff succeeds
+    assert result.returncode == 0, f"Ruff finished with exit code {result.returncode}. Output:\n{result.stdout}\n{result.stderr}"
