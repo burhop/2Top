@@ -191,33 +191,33 @@ def create_square_from_edges(
         # Bottom edge: from (xmin, ymin) to (xmax, ymin)
         TrimmedImplicitCurve(
             bottom_line,
-            lambda X, Y, ymin=ymin, xmin=xmin, xmax=xmax, e=eps: (X >= xmin - e)
-            and (X <= xmax + e)
-            and (abs(Y - ymin) <= e),
+            lambda X, Y, ymin=ymin, xmin=xmin, xmax=xmax, e=eps: (
+                (X >= xmin - e) and (X <= xmax + e) and (abs(Y - ymin) <= e)
+            ),
             endpoints=[(xmin, ymin), (xmax, ymin)],
         ),
         # Right edge: from (xmax, ymin) to (xmax, ymax)
         TrimmedImplicitCurve(
             right_line,
-            lambda X, Y, xmax=xmax, ymin=ymin, ymax=ymax, e=eps: (Y >= ymin - e)
-            and (Y <= ymax + e)
-            and (abs(X - xmax) <= e),
+            lambda X, Y, xmax=xmax, ymin=ymin, ymax=ymax, e=eps: (
+                (Y >= ymin - e) and (Y <= ymax + e) and (abs(X - xmax) <= e)
+            ),
             endpoints=[(xmax, ymin), (xmax, ymax)],
         ),
         # Top edge: from (xmax, ymax) to (xmin, ymax)
         TrimmedImplicitCurve(
             top_line,
-            lambda X, Y, ymax=ymax, xmin=xmin, xmax=xmax, e=eps: (X >= xmin - e)
-            and (X <= xmax + e)
-            and (abs(Y - ymax) <= e),
+            lambda X, Y, ymax=ymax, xmin=xmin, xmax=xmax, e=eps: (
+                (X >= xmin - e) and (X <= xmax + e) and (abs(Y - ymax) <= e)
+            ),
             endpoints=[(xmax, ymax), (xmin, ymax)],
         ),
         # Left edge: from (xmin, ymax) to (xmin, ymin)
         TrimmedImplicitCurve(
             left_line,
-            lambda X, Y, xmin=xmin, ymin=ymin, ymax=ymax, e=eps: (Y >= ymin - e)
-            and (Y <= ymax + e)
-            and (abs(X - xmin) <= e),
+            lambda X, Y, xmin=xmin, ymin=ymin, ymax=ymax, e=eps: (
+                (Y >= ymin - e) and (Y <= ymax + e) and (abs(X - xmin) <= e)
+            ),
             endpoints=[(xmin, ymax), (xmin, ymin)],
         ),
     ]
@@ -663,8 +663,9 @@ def create_figure_eight(
     # Upper circle - right half (x >= 0)
     upper_right = TrimmedImplicitCurve(
         upper_circle,
-        lambda x_val, y_val, r=radius, tol=tolerance: (x_val >= -tol)
-        and (x_val**2 + (y_val - 0.5) ** 2 <= (r + tol) ** 2),
+        lambda x_val, y_val, r=radius, tol=tolerance: (
+            (x_val >= -tol) and (x_val**2 + (y_val - 0.5) ** 2 <= (r + tol) ** 2)
+        ),
         endpoints=[(0, 0), (0, 1)],  # From center crossing to top
     )
     segments.append(upper_right)
@@ -672,8 +673,9 @@ def create_figure_eight(
     # Upper circle - left half (x <= 0)
     upper_left = TrimmedImplicitCurve(
         upper_circle,
-        lambda x_val, y_val, r=radius, tol=tolerance: (x_val <= tol)
-        and (x_val**2 + (y_val - 0.5) ** 2 <= (r + tol) ** 2),
+        lambda x_val, y_val, r=radius, tol=tolerance: (
+            (x_val <= tol) and (x_val**2 + (y_val - 0.5) ** 2 <= (r + tol) ** 2)
+        ),
         endpoints=[(0, 1), (0, 0)],  # From top back to center crossing
     )
     segments.append(upper_left)
@@ -684,8 +686,9 @@ def create_figure_eight(
     # Lower circle - left half (x <= 0)
     lower_left = TrimmedImplicitCurve(
         lower_circle,
-        lambda x_val, y_val, r=radius, tol=tolerance: (x_val <= tol)
-        and (x_val**2 + (y_val + 0.5) ** 2 <= (r + tol) ** 2),
+        lambda x_val, y_val, r=radius, tol=tolerance: (
+            (x_val <= tol) and (x_val**2 + (y_val + 0.5) ** 2 <= (r + tol) ** 2)
+        ),
         endpoints=[(0, 0), (0, -1)],  # From center crossing to bottom
     )
     segments.append(lower_left)
@@ -693,8 +696,9 @@ def create_figure_eight(
     # Lower circle - right half (x >= 0)
     lower_right = TrimmedImplicitCurve(
         lower_circle,
-        lambda x_val, y_val, r=radius, tol=tolerance: (x_val >= -tol)
-        and (x_val**2 + (y_val + 0.5) ** 2 <= (r + tol) ** 2),
+        lambda x_val, y_val, r=radius, tol=tolerance: (
+            (x_val >= -tol) and (x_val**2 + (y_val + 0.5) ** 2 <= (r + tol) ** 2)
+        ),
         endpoints=[(0, -1), (0, 0)],  # From bottom back to center crossing
     )
     segments.append(lower_right)
@@ -728,9 +732,9 @@ def create_circle_line_hybrid(
     circle = ConicSection((x - cx) ** 2 + (y - cy) ** 2 - radius**2, variables)
     semicircle = TrimmedImplicitCurve(
         circle,
-        lambda x_val, y_val, cx=cx, cy=cy, r=radius: (x_val >= cx - 0.05)
-        and (
-            (x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2
+        lambda x_val, y_val, cx=cx, cy=cy, r=radius: (
+            (x_val >= cx - 0.05)
+            and ((x_val - cx) ** 2 + (y_val - cy) ** 2 <= (r + 0.1) ** 2)
         ),  # Increased tolerance
         endpoints=[(cx, cy - radius), (cx, cy + radius)],
     )
@@ -739,8 +743,10 @@ def create_circle_line_hybrid(
     line = PolynomialCurve(x - cx, variables)
     line_segment = TrimmedImplicitCurve(
         line,
-        lambda x_val, y_val, cx=cx, cy=cy, r=radius: (cx - 0.15 <= x_val <= cx + 0.15)
-        and (cy - r - 0.05 <= y_val <= cy + r + 0.05),  # Increased tolerance
+        lambda x_val, y_val, cx=cx, cy=cy, r=radius: (
+            (cx - 0.15 <= x_val <= cx + 0.15)
+            and (cy - r - 0.05 <= y_val <= cy + r + 0.05)
+        ),  # Increased tolerance
         endpoints=[(cx, cy + radius), (cx, cy - radius)],
     )
 
@@ -775,8 +781,9 @@ def create_ellipse_parabola_hybrid(
     ellipse = ConicSection(x**2 / 4 + y**2 - 1, variables)
     ellipse_lower = TrimmedImplicitCurve(
         ellipse,
-        lambda x_val, y_val, iy=intersection_y: (y_val <= iy + 0.05)
-        and (x_val**2 / 4 + y_val**2 <= 1.2),
+        lambda x_val, y_val, iy=intersection_y: (
+            (y_val <= iy + 0.05) and (x_val**2 / 4 + y_val**2 <= 1.2)
+        ),
         endpoints=[(-intersection_x, intersection_y), (intersection_x, intersection_y)],
     )
 
@@ -785,9 +792,8 @@ def create_ellipse_parabola_hybrid(
     parabola_upper = TrimmedImplicitCurve(
         parabola,
         lambda x_val, y_val, ix=intersection_x, iy=intersection_y: (
-            -ix - 0.1 <= x_val <= ix + 0.1
-        )
-        and (iy - 0.05 <= y_val <= 1.2),
+            (-ix - 0.1 <= x_val <= ix + 0.1) and (iy - 0.05 <= y_val <= 1.2)
+        ),
         endpoints=[(intersection_x, intersection_y), (-intersection_x, intersection_y)],
     )
 
@@ -879,8 +885,9 @@ def create_superellipse_circle_hybrid(
     # Use the right half of the superellipse
     superellipse_right = TrimmedImplicitCurve(
         superellipse,
-        lambda x_val, y_val: (x_val >= -0.05)
-        and (abs(x_val) ** 4 + abs(y_val) ** 4 <= 1.15),  # Increased tolerance
+        lambda x_val, y_val: (
+            (x_val >= -0.05) and (abs(x_val) ** 4 + abs(y_val) ** 4 <= 1.15)
+        ),  # Increased tolerance
         endpoints=[(0, -1), (0, 1)],
     )
 
@@ -888,8 +895,9 @@ def create_superellipse_circle_hybrid(
     circle = ConicSection((x + 0.5) ** 2 + y**2 - 1.25, variables)
     circle_left = TrimmedImplicitCurve(
         circle,
-        lambda x_val, y_val: (x_val <= 0.05)
-        and ((x_val + 0.5) ** 2 + y_val**2 <= 1.4),  # Increased tolerance
+        lambda x_val, y_val: (
+            (x_val <= 0.05) and ((x_val + 0.5) ** 2 + y_val**2 <= 1.4)
+        ),  # Increased tolerance
         endpoints=[(0, 1), (0, -1)],
     )
 
@@ -1017,9 +1025,11 @@ def create_heart_shape(
     left_circle = ConicSection((x + 0.5) ** 2 + (y - 0.25) ** 2 - 0.25, variables)
     left_lobe = TrimmedImplicitCurve(
         left_circle,
-        lambda x_val, y_val: (x_val >= -1.05)
-        and (y_val >= -0.05)
-        and ((x_val + 0.5) ** 2 + (y_val - 0.25) ** 2 <= 0.35),
+        lambda x_val, y_val: (
+            (x_val >= -1.05)
+            and (y_val >= -0.05)
+            and ((x_val + 0.5) ** 2 + (y_val - 0.25) ** 2 <= 0.35)
+        ),
         endpoints=[(-1, 0), (0, 0.5)],  # From left bottom to top center
     )
 
@@ -1027,9 +1037,11 @@ def create_heart_shape(
     right_circle = ConicSection((x - 0.5) ** 2 + (y - 0.25) ** 2 - 0.25, variables)
     right_lobe = TrimmedImplicitCurve(
         right_circle,
-        lambda x_val, y_val: (x_val <= 1.05)
-        and (y_val >= -0.05)
-        and ((x_val - 0.5) ** 2 + (y_val - 0.25) ** 2 <= 0.35),
+        lambda x_val, y_val: (
+            (x_val <= 1.05)
+            and (y_val >= -0.05)
+            and ((x_val - 0.5) ** 2 + (y_val - 0.25) ** 2 <= 0.35)
+        ),
         endpoints=[(0, 0.5), (1, 0)],  # From top center to right bottom
     )
 
@@ -1083,33 +1095,33 @@ def create_robust_square(
         # Bottom edge: from (xmin, ymin) to (xmax, ymin)
         TrimmedImplicitCurve(
             bottom_line,
-            lambda X, Y, xmin=xmin, xmax=xmax, ymin=ymin, t=tol: (X >= xmin - t)
-            and (X <= xmax + t)
-            and (abs(Y - ymin) <= t),
+            lambda X, Y, xmin=xmin, xmax=xmax, ymin=ymin, t=tol: (
+                (X >= xmin - t) and (X <= xmax + t) and (abs(Y - ymin) <= t)
+            ),
             endpoints=[(xmin, ymin), (xmax, ymin)],
         ),
         # Right edge: from (xmax, ymin) to (xmax, ymax)
         TrimmedImplicitCurve(
             right_line,
-            lambda X, Y, xmax=xmax, ymin=ymin, ymax=ymax, t=tol: (Y >= ymin - t)
-            and (Y <= ymax + t)
-            and (abs(X - xmax) <= t),
+            lambda X, Y, xmax=xmax, ymin=ymin, ymax=ymax, t=tol: (
+                (Y >= ymin - t) and (Y <= ymax + t) and (abs(X - xmax) <= t)
+            ),
             endpoints=[(xmax, ymin), (xmax, ymax)],
         ),
         # Top edge: from (xmax, ymax) to (xmin, ymax)
         TrimmedImplicitCurve(
             top_line,
-            lambda X, Y, xmin=xmin, xmax=xmax, ymax=ymax, t=tol: (X >= xmin - t)
-            and (X <= xmax + t)
-            and (abs(Y - ymax) <= t),
+            lambda X, Y, xmin=xmin, xmax=xmax, ymax=ymax, t=tol: (
+                (X >= xmin - t) and (X <= xmax + t) and (abs(Y - ymax) <= t)
+            ),
             endpoints=[(xmax, ymax), (xmin, ymax)],
         ),
         # Left edge: from (xmin, ymax) to (xmin, ymin)
         TrimmedImplicitCurve(
             left_line,
-            lambda X, Y, xmin=xmin, ymin=ymin, ymax=ymax, t=tol: (Y >= ymin - t)
-            and (Y <= ymax + t)
-            and (abs(X - xmin) <= t),
+            lambda X, Y, xmin=xmin, ymin=ymin, ymax=ymax, t=tol: (
+                (Y >= ymin - t) and (Y <= ymax + t) and (abs(X - xmin) <= t)
+            ),
             endpoints=[(xmin, ymax), (xmin, ymin)],
         ),
     ]
@@ -1141,8 +1153,9 @@ def create_lens_shape(
     left_circle = ConicSection((x + 0.5) ** 2 + y**2 - 1, variables)
     left_arc = TrimmedImplicitCurve(
         left_circle,
-        lambda x_val, y_val: (x_val >= -0.05)
-        and ((x_val + 0.5) ** 2 + y_val**2 <= 1.2),  # Right half with tolerance
+        lambda x_val, y_val: (
+            (x_val >= -0.05) and ((x_val + 0.5) ** 2 + y_val**2 <= 1.2)
+        ),  # Right half with tolerance
         endpoints=[(0, intersection_y), (0, -intersection_y)],
     )
 
@@ -1150,8 +1163,9 @@ def create_lens_shape(
     right_circle = ConicSection((x - 0.5) ** 2 + y**2 - 1, variables)
     right_arc = TrimmedImplicitCurve(
         right_circle,
-        lambda x_val, y_val: (x_val <= 0.05)
-        and ((x_val - 0.5) ** 2 + y_val**2 <= 1.2),  # Left half with tolerance
+        lambda x_val, y_val: (
+            (x_val <= 0.05) and ((x_val - 0.5) ** 2 + y_val**2 <= 1.2)
+        ),  # Left half with tolerance
         endpoints=[(0, -intersection_y), (0, intersection_y)],
     )
 

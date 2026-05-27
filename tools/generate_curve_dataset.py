@@ -186,9 +186,9 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [],
                         "scale": scale,
-                        "eval": lambda x, y, a=a, b=b, offset=offset: a * x
-                        + b * y
-                        - offset,
+                        "eval": lambda x, y, a=a, b=b, offset=offset: (
+                            a * x + b * y - offset
+                        ),
                         "deriv": lambda x, y, a=a, b=b: (a, b),
                     }
                 )
@@ -203,9 +203,9 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx, cy=cy, r=r: (x - cx) ** 2
-                        + (y - cy) ** 2
-                        - r**2,
+                        "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                            (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy: (
                             2 * (x - cx),
                             2 * (y - cy),
@@ -225,12 +225,8 @@ def generate_spatial_group(args):
                         "endpoints": [],
                         "scale": scale,
                         "eval": lambda x, y, cx=cx, cy=cy, a=a_param, b=b_param: (
-                            x - cx
-                        )
-                        ** 2
-                        / a**2
-                        + (y - cy) ** 2 / b**2
-                        - 1,
+                            (x - cx) ** 2 / a**2 + (y - cy) ** 2 / b**2 - 1
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy, a=a_param, b=b_param: (
                             2 * (x - cx) / a**2,
                             2 * (y - cy) / b**2,
@@ -250,9 +246,9 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx, cy=cy, a=a_param: y
-                        - cy
-                        - a * (x - cx) ** 2,
+                        "eval": lambda x, y, cx=cx, cy=cy, a=a_param: (
+                            y - cy - a * (x - cx) ** 2
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy, a=a_param: (
                             -2 * a * (x - cx),
                             1.0,
@@ -278,11 +274,11 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [[gx, gy], [gx + 2 * r, gy]],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx, cy=cy, r=r: y
-                        - cy
-                        - math.sqrt(max(0, r**2 - (x - cx) ** 2))
-                        if abs(x - cx) <= r
-                        else 1e3,
+                        "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                            y - cy - math.sqrt(max(0, r**2 - (x - cx) ** 2))
+                            if abs(x - cx) <= r
+                            else 1e3
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy, r=r: (
                             (x - cx) / math.sqrt(max(1e-9, r**2 - (x - cx) ** 2)),
                             1.0,
@@ -301,11 +297,11 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [[gx - 2 * r, gy], [gx, gy]],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx, cy=cy, r=r: y
-                        - cy
-                        - math.sqrt(max(0, r**2 - (x - cx) ** 2))
-                        if abs(x - cx) <= r
-                        else 1e3,
+                        "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                            y - cy - math.sqrt(max(0, r**2 - (x - cx) ** 2))
+                            if abs(x - cx) <= r
+                            else 1e3
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy, r=r: (
                             (x - cx) / math.sqrt(max(1e-9, r**2 - (x - cx) ** 2)),
                             1.0,
@@ -325,11 +321,11 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [[gx + eps, gy], [gx + eps + 2 * r, gy]],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx, cy=cy, r=r: y
-                        - cy
-                        - math.sqrt(max(0, r**2 - (x - cx) ** 2))
-                        if abs(x - cx) <= r
-                        else 1e3,
+                        "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                            y - cy - math.sqrt(max(0, r**2 - (x - cx) ** 2))
+                            if abs(x - cx) <= r
+                            else 1e3
+                        ),
                         "deriv": lambda x, y, cx=cx, cy=cy, r=r: (
                             (x - cx) / math.sqrt(max(1e-9, r**2 - (x - cx) ** 2)),
                             1.0,
@@ -346,11 +342,9 @@ def generate_spatial_group(args):
                         "equation": equation,
                         "endpoints": [[gx, gy]],
                         "scale": scale,
-                        "eval": lambda x, y, cx=gx, cy=gy, k=k: y
-                        - cy
-                        - k * math.sqrt(max(0, x - cx))
-                        if x >= cx
-                        else 1e3,
+                        "eval": lambda x, y, cx=gx, cy=gy, k=k: (
+                            y - cy - k * math.sqrt(max(0, x - cx)) if x >= cx else 1e3
+                        ),
                         "deriv": lambda x, y, cx=gx, cy=gy, k=k: (
                             -k / (2 * math.sqrt(max(1e-9, x - cx))),
                             1.0,
@@ -368,9 +362,9 @@ def generate_spatial_group(args):
                 "equation": f"(x - {gx:.6f})**2 + (y - {gy:.6f})**2 - {r1**2:.6f}",
                 "endpoints": [],
                 "scale": scale,
-                "eval": lambda x, y, cx=gx, cy=gy, r=r1: (x - cx) ** 2
-                + (y - cy) ** 2
-                - r**2,
+                "eval": lambda x, y, cx=gx, cy=gy, r=r1: (
+                    (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                ),
                 "deriv": lambda x, y, cx=gx, cy=gy: (2 * (x - cx), 2 * (y - cy)),
             }
         )
@@ -384,9 +378,9 @@ def generate_spatial_group(args):
                 "equation": f"(x - {cx2:.6f})**2 + (y - {gy:.6f})**2 - {r2**2:.6f}",
                 "endpoints": [],
                 "scale": scale,
-                "eval": lambda x, y, cx=cx2, cy=gy, r=r2: (x - cx) ** 2
-                + (y - cy) ** 2
-                - r**2,
+                "eval": lambda x, y, cx=cx2, cy=gy, r=r2: (
+                    (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                ),
                 "deriv": lambda x, y, cx=cx2, cy=gy: (2 * (x - cx), 2 * (y - cy)),
             }
         )
@@ -413,9 +407,9 @@ def generate_spatial_group(args):
                 "equation": f"(x - {cx3:.6f})**2 + (y - {gy:.6f})**2 - {r3**2:.6f}",
                 "endpoints": [],
                 "scale": scale,
-                "eval": lambda x, y, cx=cx3, cy=gy, r=r3: (x - cx) ** 2
-                + (y - cy) ** 2
-                - r**2,
+                "eval": lambda x, y, cx=cx3, cy=gy, r=r3: (
+                    (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                ),
                 "deriv": lambda x, y, cx=cx3, cy=gy: (2 * (x - cx), 2 * (y - cy)),
             }
         )
@@ -431,9 +425,9 @@ def generate_spatial_group(args):
                     "equation": f"(x - {cx:.6f})**2 + (y - {cy:.6f})**2 - {r**2:.6f}",
                     "endpoints": [],
                     "scale": scale,
-                    "eval": lambda x, y, cx=cx, cy=cy, r=r: (x - cx) ** 2
-                    + (y - cy) ** 2
-                    - r**2,
+                    "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                        (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                    ),
                     "deriv": lambda x, y, cx=cx, cy=cy: (2 * (x - cx), 2 * (y - cy)),
                 }
             )
@@ -455,9 +449,9 @@ def generate_spatial_group(args):
                     "equation": f"(x - {cx_a:.6f})**2 + (y - {gy:.6f})**2 - {r1**2:.6f}",
                     "endpoints": [],
                     "scale": scale,
-                    "eval": lambda x, y, cx=cx_a, cy=gy, r=r1: (x - cx) ** 2
-                    + (y - cy) ** 2
-                    - r**2,
+                    "eval": lambda x, y, cx=cx_a, cy=gy, r=r1: (
+                        (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                    ),
                     "deriv": lambda x, y, cx=cx_a, cy=gy: (2 * (x - cx), 2 * (y - cy)),
                 }
             )
@@ -470,9 +464,9 @@ def generate_spatial_group(args):
                     "equation": f"(x - {cx_b:.6f})**2 + (y - {gy:.6f})**2 - {r2**2:.6f}",
                     "endpoints": [],
                     "scale": scale,
-                    "eval": lambda x, y, cx=cx_b, cy=gy, r=r2: (x - cx) ** 2
-                    + (y - cy) ** 2
-                    - r**2,
+                    "eval": lambda x, y, cx=cx_b, cy=gy, r=r2: (
+                        (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                    ),
                     "deriv": lambda x, y, cx=cx_b, cy=gy: (2 * (x - cx), 2 * (y - cy)),
                 }
             )
@@ -501,10 +495,11 @@ def generate_spatial_group(args):
                 "equation": equation,
                 "endpoints": endpoints,
                 "scale": scale,
-                "eval": lambda x, y, a=a_param, b=b_param, c=c_param: y**2
-                - a * math.sin(b * x + c)
-                if a * math.sin(b * x + c) >= -1e-9
-                else 1e3,
+                "eval": lambda x, y, a=a_param, b=b_param, c=c_param: (
+                    y**2 - a * math.sin(b * x + c)
+                    if a * math.sin(b * x + c) >= -1e-9
+                    else 1e3
+                ),
                 "deriv": lambda x, y, a=a_param, b=b_param, c=c_param: (
                     -a * b * math.cos(b * x + c),
                     2 * y,
@@ -527,11 +522,11 @@ def generate_spatial_group(args):
                     [cx + 1 / b_arcsin, cy + a_arcsin * math.pi / 2],
                 ],
                 "scale": scale,
-                "eval": lambda x, y, cx=cx, cy=cy, a=a_arcsin, b=b_arcsin: y
-                - cy
-                - a * math.asin(max(-1.0, min(1.0, b * (x - cx))))
-                if abs(b * (x - cx)) <= 1.0
-                else 1e3,
+                "eval": lambda x, y, cx=cx, cy=cy, a=a_arcsin, b=b_arcsin: (
+                    y - cy - a * math.asin(max(-1.0, min(1.0, b * (x - cx))))
+                    if abs(b * (x - cx)) <= 1.0
+                    else 1e3
+                ),
                 "deriv": lambda x, y, cx=cx, cy=cy, a=a_arcsin, b=b_arcsin: (
                     -a * b / math.sqrt(max(1e-9, 1.0 - (b * (x - cx)) ** 2)),
                     1.0,
@@ -564,9 +559,9 @@ def generate_spatial_group(args):
                         "equation": f"(x - {cx_c:.6f})**2 + (y - {cy_c:.6f})**2 - {r**2:.6f}",
                         "endpoints": [],
                         "scale": scale,
-                        "eval": lambda x, y, cx=cx_c, cy=cy_c, r=r: (x - cx) ** 2
-                        + (y - cy) ** 2
-                        - r**2,
+                        "eval": lambda x, y, cx=cx_c, cy=cy_c, r=r: (
+                            (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                        ),
                         "deriv": lambda x, y, cx=cx_c, cy=cy_c: (
                             2 * (x - cx),
                             2 * (y - cy),
@@ -586,10 +581,9 @@ def generate_spatial_group(args):
                 "endpoints": [],
                 "scale": scale,
                 "eval": lambda x, y, cx=gx, cy=gy, a=a_lem: (
-                    (x - cx) ** 2 + (y - cy) ** 2
-                )
-                ** 2
-                - 2 * a**2 * ((x - cx) ** 2 - (y - cy) ** 2),
+                    ((x - cx) ** 2 + (y - cy) ** 2) ** 2
+                    - 2 * a**2 * ((x - cx) ** 2 - (y - cy) ** 2)
+                ),
                 "deriv": lambda x, y, cx=gx, cy=gy, a=a_lem: (
                     4 * (x - cx) * ((x - cx) ** 2 + (y - cy) ** 2)
                     - 4 * a**2 * (x - cx),
@@ -609,10 +603,9 @@ def generate_spatial_group(args):
                 "equation": equation,
                 "endpoints": [],
                 "scale": scale,
-                "eval": lambda x, y, cx=gx, cy=gy, a=a_c, b=b_c: (y - cy) ** 2
-                - (x - cx) ** 3
-                - a * (x - cx)
-                - b,
+                "eval": lambda x, y, cx=gx, cy=gy, a=a_c, b=b_c: (
+                    (y - cy) ** 2 - (x - cx) ** 3 - a * (x - cx) - b
+                ),
                 "deriv": lambda x, y, cx=gx, cy=gy, a=a_c: (
                     -3 * (x - cx) ** 2 - a,
                     2 * (y - cy),
@@ -629,9 +622,9 @@ def generate_spatial_group(args):
                 "equation": equation,
                 "endpoints": [],
                 "scale": scale,
-                "eval": lambda x, y, cx=gx, cy=gy, a=a_f: (x - cx) ** 3
-                + (y - cy) ** 3
-                - 3 * a * (x - cx) * (y - cy),
+                "eval": lambda x, y, cx=gx, cy=gy, a=a_f: (
+                    (x - cx) ** 3 + (y - cy) ** 3 - 3 * a * (x - cx) * (y - cy)
+                ),
                 "deriv": lambda x, y, cx=gx, cy=gy, a=a_f: (
                     3 * (x - cx) ** 2 - 3 * a * (y - cy),
                     3 * (y - cy) ** 2 - 3 * a * (x - cx),
@@ -650,9 +643,9 @@ def generate_spatial_group(args):
                     "equation": f"(x - {cx:.6f})**2 + (y - {cy:.6f})**2 - {r**2:.6f}",
                     "endpoints": [],
                     "scale": scale,
-                    "eval": lambda x, y, cx=cx, cy=cy, r=r: (x - cx) ** 2
-                    + (y - cy) ** 2
-                    - r**2,
+                    "eval": lambda x, y, cx=cx, cy=cy, r=r: (
+                        (x - cx) ** 2 + (y - cy) ** 2 - r**2
+                    ),
                     "deriv": lambda x, y, cx=cx, cy=cy: (2 * (x - cx), 2 * (y - cy)),
                 }
             )
