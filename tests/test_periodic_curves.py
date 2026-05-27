@@ -18,7 +18,11 @@ from geometry.curve_intersections import find_curve_intersections
 class TestDashboard:
     """Manages the live status dashboard markdown file."""
 
-    STATUS_PATH = r"d:\repos\2Top\docs\periodic_curve_test_status.md"
+    STATUS_PATH = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "docs",
+        "periodic_curve_test_status.md",
+    )
 
     def __init__(self):
         self.tests = {}  # test_id -> {name, status, time, details, tier}
