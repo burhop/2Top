@@ -121,6 +121,19 @@ class GraphicsBackendInterface:
                 # huge global grid (which produces degenerate/line contours).
                 obj_bounds = self._estimate_object_bounds(obj, bounds)
 
+                cache_key = (tuple(obj_bounds), resolution)
+                if getattr(obj, "_polyline_cache_key", None) == cache_key:
+                    points, paths, closed, curve_bounds = obj._polyline_cache
+                    curve_data[obj_id] = {
+                        "type": "curve",
+                        "points": points,
+                        "paths": paths,
+                        "closed": closed,
+                        "style": style or {},
+                        "bounds": curve_bounds,
+                    }
+                    continue
+
                 paths = []
                 # Generate polyline approximation
                 if hasattr(obj, "get_polyline_approximation"):
@@ -444,6 +457,9 @@ class GraphicsBackendInterface:
                     ]
                 else:
                     curve_bounds = list(bounds)
+
+                obj._polyline_cache_key = cache_key
+                obj._polyline_cache = (points, paths, closed, curve_bounds)
 
                 curve_data[obj_id] = {
                     "type": "curve",
@@ -1509,7 +1525,22 @@ class GraphicsBackendInterface:
     def _is_periodic_radical(self, obj) -> Tuple[bool, float, float]:
         """
         Algebraically check if the object represents a periodic radical curve.
-        Returns (is_periodic, cy_val, H_coeff).
+        Returns (is_periodic, cy_val, H_coeff). Results are cached on the base curve.
+        """
+        base = obj
+        if hasattr(obj, "base_curve"):
+            base = obj.base_curve
+
+        if hasattr(base, "_periodic_radical_cache"):
+            return base._periodic_radical_cache
+
+        result = self._compute_is_periodic_radical(obj)
+        base._periodic_radical_cache = result
+        return result
+
+    def _compute_is_periodic_radical(self, obj) -> Tuple[bool, float, float]:
+        """
+        Underlying computation for _is_periodic_radical.
         """
         # First check base curve if trimmed
         base = obj

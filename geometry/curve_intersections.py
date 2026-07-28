@@ -101,6 +101,45 @@ def find_curve_intersections(
     if _are_curves_identical_fast(curve1, curve2, tol, search_range):
         return []  # Return empty for identical curves
 
+    # Fast AABB overlap check to avoid expensive grid evaluation
+    def _get_bbox(c):
+        if hasattr(c, "bounding_box"):
+            try:
+                b = c.bounding_box()
+                if b and all(np.isfinite(v) for v in b):
+                    return b
+            except Exception:
+                pass
+        # Check explicit trimming bounds
+        if hasattr(c, "_xmin") and c._xmin is not None:
+            return (c._xmin, c._xmax, c._ymin, c._ymax)
+        if (
+            hasattr(c, "base_curve")
+            and hasattr(c.base_curve, "_xmin")
+            and c.base_curve._xmin is not None
+        ):
+            return (
+                c.base_curve._xmin,
+                c.base_curve._xmax,
+                c.base_curve._ymin,
+                c.base_curve._ymax,
+            )
+        return None
+
+    bbox1 = _get_bbox(curve1)
+    bbox2 = _get_bbox(curve2)
+    if bbox1 and bbox2:
+        x1_min, x1_max, y1_min, y1_max = bbox1
+        x2_min, x2_max, y2_min, y2_max = bbox2
+        pad = max(tol * 10, 0.5)
+        if (
+            x1_max + pad < x2_min
+            or x2_max + pad < x1_min
+            or y1_max + pad < y2_min
+            or y2_max + pad < y1_min
+        ):
+            return []
+
     # Step 1: Coarse grid search to find approximate intersections
     x_vals = np.linspace(-search_range, search_range, grid_resolution)
     y_vals = np.linspace(-search_range, search_range, grid_resolution)
