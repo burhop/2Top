@@ -3,7 +3,9 @@
  * No mocked canvas, modelContext, tool registrations, or AI/model host is injected.
  */
 import { test as base, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { readFile,writeFile } from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 import { randomUUID } from 'node:crypto';
 
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
@@ -14,6 +16,15 @@ seed.layer_order = seed.objects.map(o=>o.id);
 seed.blends = [];
 seed.objects.forEach(object => { object.keyframes = []; });
 const first = seed.objects[0];
+const execFileAsync=promisify(execFile);
+async function actualMcp(testInfo,tool,args={}) {
+  const file=testInfo.outputPath(`mcp-${randomUUID()}.json`);await writeFile(file,JSON.stringify(args));
+  const command=['-m','studio.mcp_client','--studio-url','http://127.0.0.1:8765','--tool',tool,'--arguments',file];
+  let stdout;try {stdout=(await execFileAsync(process.env.STUDIO_PYTHON||'python',command,{timeout:15000})).stdout;}
+  catch(error){if(!error.stdout)throw error;stdout=error.stdout;}
+  const result=JSON.parse(stdout);
+  await testInfo.attach('scripted-real-MCP-call',{body:JSON.stringify({tool,args,result,modelInference:false}),contentType:'application/json'});return result;
+}
 
 const test = base.extend({
   expectedHttpFailures: async ({}, use) => { await use(new Set()); },
@@ -141,7 +152,7 @@ test('loads and paints the real canvas without claiming an AI connection', async
   await page.getByRole('button', { name: /^Connect/ }).click();
   await expect(page.getByRole('dialog')).toContainText('No AI provider is configured or called by this page.');
   if (!capability.nativeRegisterToolAvailable) {
-    await expect(page.getByRole('dialog')).toContainText('Not supported in this browser');
+    await expect(page.getByRole('dialog')).toContainText('API unavailable here');
   }
   await page.getByRole('button', { name: 'Close dialog', exact: true }).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();
@@ -659,5 +670,47 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
     await edit(page,async()=> (await chooser).setFiles({name:'glasswater.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))}));
     await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();const restored=await serverScene(request);
     expect(restored.layer_order).toEqual(saved.layer_order);expect(restored.objects).toEqual(saved.objects);expect(restored.blends).toEqual(saved.blends);
+  });
+}
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test(`coauthor history shows real protocol edits and shared manual undo on ${viewport.name}`,async({page,request},testInfo)=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    await page.getByRole('button',{name:'Client setup',exact:true}).click();
+    await expect(page.locator('#stdio-settings')).toContainText('studio.mcp_server');
+    await expect(page.getByRole('dialog')).toContainText('not proof of live model inference');
+    await expect(page.getByRole('dialog')).toContainText('expected_revision');
+    await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+    const before=await serverScene(request),original=structuredClone(before.objects[0]);
+    const authored=await actualMcp(testInfo,'batch',{expected_revision:before.revision,request_id:randomUUID(),label:'<b>Verified live agent</b>',commands:[{op:'update_geometry',id:first.id,parameters:{radius:240}},{op:'set_style',id:first.id,style:{palette:'mono',opacity:.7}}]});
+    expect(authored.ok).toBe(true);const mcpRevision=authored.scene.revision;
+    await expect.poll(async()=>(await uiScene(page)).revision).toBe(mcpRevision);
+    const mcpRow=page.locator(`.coauthor-entry[data-revision="${mcpRevision}"]`);
+    await expect(mcpRow.locator('.source-badge')).toHaveText('MCP protocol');await expect(mcpRow.locator('strong')).toHaveText('Updated 1 layer');
+    await mcpRow.locator('summary').click();await expect(mcpRow).toContainText('Client note: <b>Verified live agent</b>');expect(await mcpRow.locator('b').count()).toBe(0);
+    await selectFirst(page);await page.getByRole('slider',{name:'Island scale',exact:true}).focus();
+    let scene=await edit(page,()=>page.keyboard.press('ArrowRight'));expect(scene.objects[0].parameters.radius).not.toBe(240);
+    const stale=await actualMcp(testInfo,'set_style',{id:first.id,style:{opacity:.9},expected_revision:mcpRevision});expect(stale.error.code).toBe('revision_conflict');
+    expect((await serverScene(request)).revision).toBe(scene.revision);
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect((await uiScene(page)).objects[0].parameters.radius).toBe(240);
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click()); // Undo selection.
+    scene=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(scene.objects[0]).toEqual(original);
+    const undoRow=page.locator(`.coauthor-entry[data-revision="${scene.revision}"]`);await expect(undoRow).toContainText(`undo of revision ${mcpRevision}`);await expect(undoRow.locator('.source-badge')).toHaveText('UI / HTTP');
+    const redone=await actualMcp(testInfo,'redo',{expected_revision:scene.revision});expect(redone.ok).toBe(true);await expect.poll(async()=>(await uiScene(page)).revision).toBe(redone.scene.revision);
+    expect((await uiScene(page)).objects[0].parameters.radius).toBe(240);
+    const bridge=await request.post('/api/tools/set_style',{headers:{'X-Studio-Actor':'mcp'},data:{id:first.id,style:{opacity:.55},expected_revision:redone.scene.revision}});expect(bridge.ok()).toBe(true);
+    scene=(await bridge.json()).scene;await expect.poll(async()=>(await uiScene(page)).revision).toBe(scene.revision);
+    await page.getByLabel('Coauthor activity route',{exact:true}).selectOption('tool_http');
+    const bridgeRow=page.locator(`.coauthor-entry[data-revision="${scene.revision}"]`);await expect(bridgeRow.locator('.source-badge')).toHaveText('WebMCP / HTTP bridge');await bridgeRow.locator('summary').click();await expect(bridgeRow).toContainText('Caller transport hint: mcp (unverified)');
+    await page.getByLabel('Coauthor activity route',{exact:true}).selectOption('mcp_protocol');await expect(mcpRow).toBeVisible();await expect(page.locator('.coauthor-entry[data-source="tool_http"]')).toHaveCount(0);
+    await page.getByLabel('Coauthor activity route',{exact:true}).selectOption('all');
+    await page.locator('#coauthor-panel').scrollIntoViewIfNeeded();await expect(page.locator('#coauthor-panel')).toContainText('not who sent it');
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width+1);
+    await expect(page.locator('#toast')).toBeHidden();await screenshot(page,testInfo,`coauthor-history-${viewport.name}`);
+    const saved=JSON.parse((await download(page,testInfo,'json')).toString('utf8'));expect(saved.schema_version).toBe(4);expect(saved.history).toBeUndefined();
+    await page.getByRole('button',{name:/^Recipe/}).click();const chooser=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();
+    await edit(page,async()=> (await chooser).setFiles({name:'coauthored.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))}));
+    await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();scene=await serverScene(request);expect(scene.objects).toEqual(saved.objects);expect(scene.layer_order).toEqual(saved.layer_order);
+    expect(scene.history.entries.at(-1).source.entrypoint).toBe('manual_http');await expect(page.locator('#coauthor-count')).toContainText('observed MCP commits');
   });
 }

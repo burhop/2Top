@@ -43,3 +43,12 @@ Glass veil, change its palette/opacity and use its arrow buttons to place it
 behind Gold confluence. Hide a blend to reveal its sources, or select a source
 row to edit its dashed center handle while retaining the blend. Export JSON
 to preserve edits before restarting an ephemeral demo. [Layer guide](composition_layers.md).
+
+## Coauthor in 0.7.0
+
+Use **Client setup** for actual local MCP launch settings and the guided flow.
+Discover tools, read the current revision, make a small client edit, then refine
+it manually and use shared Undo/Redo. **Coauthor activity** shows observed routes,
+server-computed changes and the target of undo/redo. Client notes are not verified
+identity or inference. [Coauthor guide](coauthoring.md). History resets when the
+server restarts; export JSON to retain artwork.

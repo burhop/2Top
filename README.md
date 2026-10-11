@@ -4,7 +4,7 @@ A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry 
 
 ## Development status
 
-Version **0.6.0** adds ordered composition layers, visibility, per-layer palette/group opacity and explicit blend/source dependencies. **Try layered study** opens Glasswater, with translucent overlapping fields. Version 0.5.0 added non-destructive static island union/smooth union and the Confluence study. Versions 0.3.0/0.4.0 introduced authored island choreography and direct motion-path editing; **Play demo** opens Orbit & bloom. The manual studio, MCP and WebMCP adapters use one validated scene and undo history. Development targets **dev**, with synchronized versions, README/changelog and passing checks before integration. Main is not the integration target for this work.
+Version **0.7.0** adds guided local client setup and a coauthor activity view with server-observed routes, actual committed differences and cross-client undo references. A real MCP protocol client supports explicit walkthrough calls without a model or automatic writes. The studio, MCP and WebMCP adapter share one validated scene. Version 0.6.0 added ordered composition layers/group opacity; 0.5.0 introduced static confluence; 0.3.0/0.4.0 added choreography and editable motion paths. Development targets **dev**, with synchronized versions, README/changelog and passing checks before integration. Main remains unchanged.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -288,3 +288,12 @@ through their selected center handles even when hidden or consumed by a blend.
 UI, MCP and WebMCP use the same reversible layer commands. See
 [composition layers](docs/composition_layers.md) for schema-4 migration, source
 semantics and compositing limits. Native WebMCP host execution is still unverified.
+
+### Coauthor workflow (0.7.0)
+
+Open **Client setup**, connect an already configured local client, discover the
+19 tools and read `get_scene` before making an edit. Coauthor activity shows
+committed routes and differences; refine a layer by hand and share Undo/Redo.
+The shipped protocol helper and acceptance scripts do not establish live model
+inference. [Coauthor guide](docs/coauthoring.md) explains setup, revision-safe
+calls, provenance and the remaining native/model-host verification gap.

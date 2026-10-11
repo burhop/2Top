@@ -151,3 +151,12 @@ Send it behind Gold confluence to change the overlap. Visibility buttons use
 Enter/Space; order arrows use Enter, and opacity supports native range keys.
 Source rows explain dependencies. Select Solstice or Edit A to move its explicit
 center handle, including when its artwork is hidden. [Layer semantics](composition_layers.md).
+
+## Coauthor in 0.7.0
+
+Use **Client setup** for actual local MCP launch settings and the guided flow.
+Discover tools, read the current revision, make a small client edit, then refine
+it manually and use shared Undo/Redo. **Coauthor activity** shows observed routes,
+server-computed changes and the target of undo/redo. Client notes are not verified
+identity or inference. [Coauthor guide](coauthoring.md). History resets when the
+server restarts; export JSON to retain artwork.

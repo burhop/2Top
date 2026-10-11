@@ -45,16 +45,24 @@ dependencies are explicit; hidden/consumed sources remain editable through their
 selected guides and handles. Schema 4 preserves older drawing order and fields.
 Glasswater demonstrates visible depth. This does not add nested/animated graphs.
 
-## Most important showcase gap - a real connected coauthor
+## 0.7.0 - guided coauthor workflow
 
-The studio has shared manual/MCP edits and protocol acceptance, but the artist
-has not yet been shown a verified natural-language agent session that changes
-this same canvas, followed by manual refinement and shared undo. Prioritize a
-short guided connection workflow and repeatable collaborative art demonstration
-using the intended actual MCP client/agent. Record the client, connection and
-visible shared-scene actions, avoiding new credentials or security changes.
-Native WebMCP separately requires an actual supported browser/model host;
-unsupported Chromium and mocked registration cannot prove that connection.
+The activity view distinguishes observed UI/MCP/HTTP bridge routes from caller
+notes and summarizes actual committed data changes. Setup uses real local launch
+settings and tool schemas. The coding-agent walkthrough uses an actual MCP
+protocol client, browser refinement and cross-client undo/redo. Protocol scripts
+and saved artwork are accurately labeled; no separate live model-client inference
+session or supported native WebMCP host was exercised.
+
+## Most important remaining showcase gap
+
+Exercise the guided workflow in the user's intended, already configured model
+client with genuine natural-language tool choice and visible shared edits. Record
+the actual client/session and manual refinement; protocol acceptance alone does
+not prove that integration. Native WebMCP separately needs an available supported
+top-level browser/model host. No extra geometry feature should substitute for
+this connection evidence, and no new credentials, permissions or paid API usage
+are implied by this roadmap.
 
 ## Subsequent geometry work
 

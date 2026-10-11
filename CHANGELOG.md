@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — guided coauthoring
+
+- Add actual local client setup and an explicit official MCP protocol helper.
+- Show committed activity by observed route, with server-computed changes and undo/redo references.
+- Treat caller actor hints and batch notes as unverified data, preserving legacy fields.
+- Keep schema 4, geometry-engine reuse, bounded commands, retries and persistence semantics.
+- Exercise real MCP edits followed by browser refinement, conflicts and shared undo/redo.
+- No included model, live natural-language host claim, native WebMCP verification, release or deployment.
+
 ## 0.6.0 — composition layers
 
 - Add complete bounded layer ordering, visible front/back controls and dependencies.

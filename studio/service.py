@@ -15,6 +15,7 @@ import threading
 import time
 import uuid
 from collections import OrderedDict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Literal, Union
 
@@ -587,6 +588,40 @@ def initial_recipe() -> dict:
     ).model_dump()
 
 
+def scene_changes(before, after):
+    """Summarize committed data differences, never client labels or identity."""
+    old = {obj["id"]: obj for obj in [*before["objects"], *before["blends"]]}
+    new = {obj["id"]: obj for obj in [*after["objects"], *after["blends"]]}
+    changes = {
+        "created_ids": [key for key in new if key not in old],
+        "removed_ids": [key for key in old if key not in new],
+        "updated_ids": [key for key in new if key in old and new[key] != old[key]],
+        **{
+            f"{key}_changed": before[key] != after[key]
+            for key in ("selection", "view", "animation", "layer_order", "title")
+        },
+    }
+    parts = []
+    for key, verb in (
+        ("created_ids", "Created"),
+        ("updated_ids", "Updated"),
+        ("removed_ids", "Removed"),
+    ):
+        if changes[key]:
+            count = len(changes[key])
+            parts.append(f"{verb} {count} layer" + ("s" if count != 1 else ""))
+    for key, label in (
+        ("selection", "Selection"),
+        ("view", "View"),
+        ("animation", "Animation"),
+        ("layer_order", "Layer order"),
+        ("title", "Title"),
+    ):
+        if changes[f"{key}_changed"]:
+            parts.append(label + " changed")
+    return changes, "; ".join(parts) or "No artwork change"
+
+
 class SceneService:
     """One locked scene, bounded history and durable atomic recipe snapshots.
 
@@ -609,6 +644,7 @@ class SceneService:
         self._past: list[dict] = []
         self._future: list[dict] = []
         self._events: list[dict] = []
+        self._session_commits = 0
         self._requests: OrderedDict = OrderedDict()
         if self._storage and self._storage.exists():
             saved = json.loads(self._storage.read_text())
@@ -644,6 +680,8 @@ class SceneService:
                     "can_undo": bool(self._past),
                     "can_redo": bool(self._future),
                     "entries": copy.deepcopy(self._events[-30:]),
+                    "session_commits": self._session_commits,
+                    "entry_limit": 30,
                 },
             }
 
@@ -769,7 +807,15 @@ class SceneService:
             "paths": paths,
         }
 
-    def invoke(self, tool: str, args: dict, actor: str = "mcp") -> dict:
+    def invoke(
+        self,
+        tool: str,
+        args: dict,
+        actor: str = "mcp",
+        *,
+        entrypoint: str | None = None,
+        caller_hint: str | None = None,
+    ) -> dict:
         if not isinstance(args, dict):
             raise SceneError("invalid_arguments", "Tool arguments must be an object")
         if tool in {"get_scene", "get_selection"}:
@@ -797,9 +843,21 @@ class SceneService:
             raise SceneError(
                 "invalid_arguments", "Do not supply op inside named tool arguments"
             )
-        return self.execute({"op": tool, **args}, actor=actor)
+        return self.execute(
+            {"op": tool, **args},
+            actor=actor,
+            entrypoint=entrypoint or "internal",
+            caller_hint=caller_hint,
+        )
 
-    def execute(self, command: dict, actor: str = "manual") -> dict:
+    def execute(
+        self,
+        command: dict,
+        actor: str = "manual",
+        *,
+        entrypoint: str = "internal",
+        caller_hint: str | None = None,
+    ) -> dict:
         try:
             parsed = COMMAND.validate_python(command)
         except ValidationError as exc:
@@ -820,6 +878,15 @@ class SceneService:
             ) from exc
         if actor not in {"manual", "mcp", "webmcp"}:
             raise SceneError("invalid_actor", "Unknown editing source")
+        if entrypoint not in {"manual_http", "mcp_protocol", "tool_http", "internal"}:
+            raise SceneError("invalid_source", "Unknown server entry point")
+        if caller_hint not in {None, "mcp", "webmcp"}:
+            raise SceneError("invalid_source", "Unknown caller transport hint")
+        source = {
+            "entrypoint": entrypoint,
+            "identity_verified": False,
+            "caller_hint": caller_hint if entrypoint == "tool_http" else None,
+        }
         normalized = parsed.model_dump(mode="json")
         fingerprint = hashlib.sha256(
             json.dumps(normalized, sort_keys=True).encode()
@@ -852,6 +919,7 @@ class SceneService:
             candidate = copy.deepcopy(before)
             label = DESCRIPTIONS[parsed.op].split(".")[0]
             affected: list[str] = []
+            related = None
             if parsed.op in {"undo", "redo"}:
                 stack = self._past if parsed.op == "undo" else self._future
                 if not stack:
@@ -859,17 +927,21 @@ class SceneService:
                         "nothing_to_" + parsed.op, f"Nothing to {parsed.op}", status=409
                     )
                 entry = stack[-1]
+                related = {
+                    "revision": entry["after"]["revision"],
+                    "transaction_id": entry["transaction_id"],
+                }
                 candidate = copy.deepcopy(
                     entry["before"] if parsed.op == "undo" else entry["after"]
                 )
                 label = parsed.op.title() + ": " + entry["label"]
-                affected = [obj["id"] for obj in candidate["objects"]]
+                affected = list(candidate["layer_order"])
             elif parsed.op == "load_recipe":
                 recipe = parsed.recipe.model_dump()
                 self._validate_ids(recipe)
                 candidate.update(recipe)
                 candidate["selection"] = []
-                affected = [obj["id"] for obj in candidate["objects"]]
+                affected = list(candidate["layer_order"])
                 label = "Load " + recipe["title"]
             elif parsed.op == "batch":
                 label = parsed.label
@@ -903,6 +975,10 @@ class SceneService:
             self._validate_ids(candidate)
             candidate["document_id"] = before["document_id"]
             candidate["revision"] = before["revision"] + 1
+            changes, summary = scene_changes(before, candidate)
+            if parsed.op in {"undo", "redo"}:
+                summary = parsed.op.title() + ": " + summary
+            transaction_id = "tx_" + uuid.uuid4().hex[:16]
             # Persistence happens before in-memory commit: IO failure is not success.
             self._persist(candidate)
             self._scene = candidate
@@ -917,15 +993,22 @@ class SceneService:
                         "before": before,
                         "after": copy.deepcopy(candidate),
                         "label": label,
+                        "transaction_id": transaction_id,
                     }
                 )
                 self._past = self._past[-100:]
                 self._future.clear()
-            transaction_id = "tx_" + uuid.uuid4().hex[:16]
+            self._session_commits += 1
             self._events.append(
                 {
                     "label": label,
                     "actor": actor,
+                    "source": source,
+                    "summary": summary,
+                    "changes": changes,
+                    "operation": parsed.op,
+                    "related": related,
+                    "committed_at": datetime.now(timezone.utc).isoformat(),
                     "revision": candidate["revision"],
                     "transaction_id": transaction_id,
                 }

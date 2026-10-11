@@ -55,6 +55,7 @@ for line in sys.stdin:
         if req['path'] == '/api/scene': result = service.snapshot()
         elif req['path'] == '/api/command': result = service.execute(req['body'], actor='manual')
         elif req['path'] == '/api/tools': result = service.tool_definitions()
+        elif req['path'] == '/api/setup': result = {'mcp_enabled':True,'mcp_url':'http://127.0.0.1:8000/mcp/','catalog_url':'/api/tools','stdio':{'command':'python','args':['-m','studio.mcp_server','--studio-url','http://127.0.0.1:8000'],'cwd':'.'}}
         else: raise ValueError('Unexpected test request path')
         response = {'status': 200, 'body': result}
     except SceneError as error:
@@ -243,7 +244,8 @@ try {
   check('invalid recipe files leave the scene untouched', () => assert.equal(window.tidalStudio.getScene().revision, revisionBeforeInvalidImport));
   $('canvas-tab').click(); frame();
   $('connect-button').click();
-  check('connect dialog is honest about browser support', () => { assert.equal($('info-dialog').open, true); assert.match($('dialog-content').textContent, /Not supported in this browser/); assert.match($('dialog-content').textContent, /--studio-url/); });
+  await waitFor(()=>$('dialog-content').querySelector('#stdio-settings'),'client setup settings');
+  check('connect dialog is honest about browser support', () => { assert.equal($('info-dialog').open, true); assert.match($('dialog-content').textContent, /API unavailable here/); assert.match($('dialog-content').textContent, /--studio-url/); });
   $('close-dialog').click();
   check('dialog close restores workspace', () => assert.equal($('info-dialog').open, false));
   for (const format of ['json', 'svg', 'png']) { $('export-button').click(); window.document.querySelector(`[data-export="${format}"]`).click(); await sleep(35); }
