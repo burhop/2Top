@@ -251,3 +251,13 @@ accepts island or blend IDs; `select` and `get_selection` cover both. Creating
 geometry appends a frontmost ID and deleting it removes that ID. Order and style
 changes are atomic and reversible; source deletion guards are unchanged. Schema
 1/2/3 migrates to islands-then-blends order. See [composition layers](composition_layers.md).
+
+## Coauthor provenance in 0.7.0
+
+History adds server-observed `source.entrypoint`, UTC commit time, actual
+`changes`/`summary`, operation and related undo/redo transaction/revision. Legacy
+`actor` and batch `label` are retained; caller hints and notes are not identity or
+authority. Direct MCP is distinguished from the named HTTP bridge used by stdio
+and WebMCP. Recipes remain schema 4 and do not import/export process history.
+The explicit `studio.mcp_client` uses the real SDK; it is not a model host.
+See the [coauthor guide](coauthoring.md) for setup and the exact evidence limits.

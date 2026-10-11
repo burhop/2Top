@@ -25,6 +25,8 @@ from mcp import types
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
+from .service import SceneService
+
 LOGGER = logging.getLogger(__name__)
 TOOL_NAMES = frozenset(
     {
@@ -112,7 +114,15 @@ def create_mcp_server(backend: StudioBackend) -> Server:
             jsonschema.Draft202012Validator(
                 catalog[params.name]["inputSchema"]
             ).validate(arguments)
-            result = await _resolve(backend.invoke(params.name, arguments, actor="mcp"))
+            # Only this real SDK dispatcher marks local service calls as MCP.
+            # Remote stdio forwarding is observed separately at its HTTP bridge.
+            if isinstance(backend, SceneService):
+                result = backend.invoke(
+                    params.name, arguments, actor="mcp", entrypoint="mcp_protocol"
+                )
+            else:
+                result = backend.invoke(params.name, arguments, actor="mcp")
+            result = await _resolve(result)
             return _tool_result(result)
         except jsonschema.ValidationError as exc:
             path = ".".join(str(part) for part in exc.absolute_path)

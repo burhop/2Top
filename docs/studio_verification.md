@@ -1,16 +1,15 @@
 # Tidal Atlas development verification
 
-Updated October 11, 2026 for version 0.6.0. Work17 executes the local application
+Updated October 11, 2026 for version 0.7.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.6.0 adds bounded complete layer order, shared visibility/palette/group
-opacity, visible dependency explanations and selected hidden-source handles.
-The Glasswater study demonstrates depth. Schema 4 preserves older drawing order,
-fields, styles and tracks. The RFunctionCurve/CurveField engine and legacy bridge
-remain in use; nested/animated blends are still rejected. See
-[composition layers](composition_layers.md) for the precise display/source contract.
+Version 0.7.0 adds guided local client setup and coauthor activity based on
+server-observed routes, committed data differences and related undo transactions.
+The explicit official MCP client makes no model calls or automatic writes.
+Recipes remain schema 4; geometry reuse and existing behavior are retained.
+See [coauthoring](coauthoring.md) for setup and evidence boundaries.
 
 The manual UI, real MCP HTTP/stdio and WebMCP adapter share 19 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
@@ -19,18 +18,18 @@ semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,228 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,232 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: 190 cases, including 15 choreography and 17 motion-edit cases for interpolation,
+- Studio subset: 194 cases, including 15 choreography and 17 motion-edit cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **130 files formatted**.
-- Actual Playwright Chromium acceptance: **18 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **132 files formatted**.
+- Actual Playwright Chromium acceptance: **20 cases passed**, with unexpected
   console, page and HTTP failures rejected.
 
 The three new real-browser cases exercise native capture/scrub/easing controls,
@@ -63,6 +62,14 @@ additional actual desktop/phone browser cases check frontmost artwork selection,
 native button/opacity keys, hidden-source pointer edits, alpha pixel values,
 SVG order/group opacity and saved JSON reopening. Raster alpha checks permit one
 8-bit rounding unit; this does not establish cross-browser pixel identity.
+
+Four additional Python cases cover provenance spoofing boundaries, actual diff
+summaries, no-op/replay/conflict history, cross-client undo references, bounded
+history, persistence/restart and real MCP protocol calls. Two more actual browser
+cases use the official MCP client alongside native manual controls, test stale
+writes, escaped caller notes, truthful bridge hints, history filtering and actual
+save/reopen on desktop and phone. These are scripted protocol acceptance, not a
+separate model inference session. Coauthor UI screenshots were visually reviewed.
 
 Glasswater front/behind desktop and phone screenshots were visually reviewed.
 Confluence separate/merged desktop and phone screenshots were visually reviewed.
@@ -99,7 +106,9 @@ passed before 0.4.0 started. [PR #6](https://github.com/burhop/2Top/pull/6) merg
 `af00fb452d1c62eb1a297d5cdb3eb77d8ecde954`; its post-merge CI passed before
 0.5.0 started on a new feature branch. [PR #7](https://github.com/burhop/2Top/pull/7)
 merged 0.5.0 at `4a07def243bcbeedbc19eb4832696d6875a0fde0`, whose post-merge CI
-passed before 0.6.0 started. Existing
+passed before 0.6.0 started. [PR #8](https://github.com/burhop/2Top/pull/8)
+merged 0.6.0 at `87c24032573a5e2fe0da17724d6fc34b63ff117e`, whose post-merge CI
+passed before 0.7.0 started. Existing
 history and unrelated work are preserved. Main, releases, deployment and
 security/credential settings are outside these development updates.
 

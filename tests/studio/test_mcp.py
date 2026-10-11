@@ -22,6 +22,7 @@ from mcp.client.streamable_http import streamable_http_client
 
 from studio.mcp_server import RemoteStudioBackend, create_mcp_server
 from studio.service import SceneService
+from studio.mcp_client import call as protocol_call
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -521,3 +522,106 @@ async def test_real_mcp_layer_order_blend_style_selection_and_manual_undo(live_s
             payload(await client.call_tool("get_scene", {}))["scene"]["layer_order"]
             == demo["layer_order"]
         )
+
+
+@pytest.mark.asyncio
+async def test_coauthor_protocol_client_catalog_cross_client_history_and_conflict(
+    live_studio,
+):
+    url, service = live_studio
+    catalog = await protocol_call(url, catalog=True)
+    assert catalog["model_inference"] is False and len(catalog["tools"]) == 19
+    original = (await protocol_call(url))["scene"]
+    edit = await protocol_call(
+        url,
+        "batch",
+        {
+            "expected_revision": 0,
+            "request_id": "protocol_coauthor",
+            "label": "A client note, not identity",
+            "commands": [
+                {
+                    "op": "set_style",
+                    "id": "island_ember",
+                    "style": {"palette": "mono", "opacity": 0.7},
+                },
+                {
+                    "op": "update_geometry",
+                    "id": "island_ember",
+                    "parameters": {"radius": 240},
+                },
+            ],
+        },
+    )
+    event = edit["scene"]["history"]["entries"][-1]
+    assert event["source"] == {
+        "entrypoint": "mcp_protocol",
+        "caller_hint": None,
+        "identity_verified": False,
+    }
+    assert event["summary"] == "Updated 1 layer"
+    async with httpx.AsyncClient(trust_env=False) as http:
+        manual = await http.post(
+            url + "/api/command",
+            json={
+                "op": "set_style",
+                "id": "island_ember",
+                "style": {"opacity": 0.35},
+                "expected_revision": 1,
+            },
+        )
+        assert manual.status_code == 200
+        assert (
+            manual.json()["scene"]["history"]["entries"][-1]["source"]["entrypoint"]
+            == "manual_http"
+        )
+        snapshot = service.snapshot()
+        conflict = await protocol_call(
+            url,
+            "set_style",
+            {"id": "island_ember", "style": {"opacity": 0.9}, "expected_revision": 1},
+        )
+        assert (
+            conflict["error"]["code"] == "revision_conflict"
+            and service.snapshot() == snapshot
+        )
+        await http.post(
+            url + "/api/command", json={"op": "undo", "expected_revision": 2}
+        )
+        assert service.recipe()["objects"][0]["style"]["opacity"] == 0.7
+        undo = await http.post(
+            url + "/api/command", json={"op": "undo", "expected_revision": 3}
+        )
+        assert (
+            undo.json()["scene"]["history"]["entries"][-1]["related"]["transaction_id"]
+            == event["transaction_id"]
+        )
+        assert service.recipe()["objects"] == original["objects"]
+        redo = await protocol_call(url, "redo", {"expected_revision": 4})
+        assert redo["scene"]["objects"][0]["parameters"]["radius"] == 240
+        assert (
+            redo["scene"]["history"]["entries"][-1]["source"]["entrypoint"]
+            == "mcp_protocol"
+        )
+    replay = await protocol_call(
+        url,
+        "batch",
+        {
+            "expected_revision": 0,
+            "request_id": "protocol_coauthor",
+            "label": "A client note, not identity",
+            "commands": [
+                {
+                    "op": "set_style",
+                    "id": "island_ember",
+                    "style": {"palette": "mono", "opacity": 0.7},
+                },
+                {
+                    "op": "update_geometry",
+                    "id": "island_ember",
+                    "parameters": {"radius": 240},
+                },
+            ],
+        },
+    )
+    assert replay["replayed"] and replay["scene"]["history"]["session_commits"] == 5

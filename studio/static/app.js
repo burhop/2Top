@@ -5,6 +5,9 @@ import { blendContours } from './static-blend.js';
 import { blendDemoRecipe } from './blend-demo.js';
 import { allLayers, orderedLayers, visibleLayers, sourceBlends, compositeLayer } from './layers.js';
 import { layeredDemoRecipe } from './layered-demo.js';
+import {sourceLabel,sourceKind,committedEntries} from './activity.js';
+let activityKey;
+let dialogGeneration=0;
 
 const $ = (id) => document.getElementById(id);
 const WORLD = { width: 1000, height: 700 };
@@ -234,7 +237,8 @@ function updateUI() {
   $('motion-label').textContent = state.animation?.playing ? 'LIVE COMPOSITION' : 'COMPOSITION / PAUSED';
   $('recipe-code').textContent = JSON.stringify(recipe(state), null, 2);
   const entries = scene.history?.entries || [];
-  $('action-list').innerHTML = entries.length ? [...entries].reverse().slice(0, 4).map((entry) => `<li class="action-item"><span class="action-icon">${/mcp|agent|ai/i.test(entry.actor || '') ? '✳' : '↳'}</span><div class="action-text"><strong>${esc(entry.label || entry.op || 'Scene updated')}</strong><span>${esc(entry.actor || 'manual')} · revision ${esc(entry.revision ?? '')}</span></div><span class="action-time">${entry.revision != null ? '#' + entry.revision : ''}</span></li>`).join('') : '<li class="empty-activity">Your edits and agent actions appear here.</li>';
+  $('action-list').innerHTML = entries.length ? [...entries].reverse().slice(0,4).map(entry=>`<li class="action-item"><span class="action-icon">${sourceKind(entry)==='mcp_protocol'?'✧':'↳'}</span><div class="action-text"><strong>${esc(entry.summary||'Committed edit')}</strong><span>${esc(sourceLabel(entry))} · revision ${esc(entry.revision)}</span></div><span class="action-time">#${entry.revision}</span></li>`).join('') : '<li class="empty-activity">Your edits and client calls appear here.</li>';
+  updateActivity();
   updateAgentStatus();
   setConnected(online);
 }
@@ -279,6 +283,7 @@ $('layer-opacity').addEventListener('change',()=>{if(gesture?.id!=='layer-opacit
 $('layer-opacity').addEventListener('pointercancel',()=>cancelGesture());
 function progress(input) { input.style.setProperty('--progress', `${(Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min)) * 100}%`); }
 function updateAgentStatus() {
+  updateActivity();
   const registered = Number(webmcpStatus?.registered) || 0;
   $('agent-hint').textContent = registered > 0 ? `${registered} browser tools registered. Agent edits appear in this same scene.` : 'Connect an MCP client or a WebMCP-enabled browser to edit this canvas.';
 }
@@ -779,15 +784,41 @@ $('export-menu').addEventListener('click', async (event) => {
 });
 document.addEventListener('click', (event) => { if (!event.target.closest('.export-wrap')) { $('export-menu').hidden = true; $('export-button').setAttribute('aria-expanded', 'false'); } });
 
-function showDialog(title, content) { $('dialog-title').textContent = title; $('dialog-content').innerHTML = content; $('info-dialog').showModal(); }
+function showDialog(title, content) { dialogGeneration++; $('dialog-title').textContent = title; $('dialog-content').innerHTML = content; $('info-dialog').showModal(); }
 $('close-dialog').addEventListener('click', () => $('info-dialog').close());
 $('info-dialog').addEventListener('click', (event) => { if (event.target === $('info-dialog')) { const box = $('info-dialog').getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) $('info-dialog').close(); } });
-$('connect-button').addEventListener('click', () => {
-  const base = location.origin;
-  showDialog('Connect to the same canvas.', `<p>Your agent and your hands edit one authoritative scene. Every change is validated, visible, and reversible.</p><div class="dialog-status"><span>Scene service</span><strong>${online ? 'Connected · revision ' + scene?.revision : 'Not connected'}</strong></div><div class="dialog-status"><span>Browser tools · WebMCP</span><strong>${webmcpStatus?.registered ? esc(webmcpStatus.registered) + ' tools registered' : webmcpStatus?.supported ? 'Available · not registered' : 'Not supported in this browser'}</strong></div><h3>Connect an MCP client</h3><p>Use the local Streamable HTTP endpoint:</p><pre>${esc(base)}/mcp/</pre><p>Or run the MCP adapter from this repository with the studio service running. The adapter uses the same document as this browser.</p><pre>python -m studio.mcp_server --studio-url ${esc(base)}</pre><h3>Use your browser agent</h3><p>Open this page in a browser that supports WebMCP. The page registers tools for reading the scene, editing islands, styling, selection, animation, and undo. No AI provider is configured or called by this page.</p><p><a href="/api/tools" target="_blank" rel="noopener">Inspect the shared tool catalog ↗</a></p>`);
-});
+async function coauthorSetup() {
+  showDialog('Coauthor the same canvas.', '<p>Loading local client settings…</p>');
+  const generation=dialogGeneration;
+  try {
+    const response=await fetch('/api/setup');if(!response.ok)throw Error('Local setup settings are unavailable.');const setup=await response.json();if(generation!==dialogGeneration||!$('info-dialog').open)return;
+    const config=JSON.stringify(setup.stdio,null,2),native=webmcpStatus?.registered?`${webmcpStatus.registered} tools registered; model session unverified`:webmcpStatus?.supported?'API available; registration incomplete and session unverified':'API unavailable here; native session unverified';
+    $('dialog-content').innerHTML=`<p>Your hands and client tools share one scene and undo history. No AI provider is configured or called by this page. This app does not include a model or verify a client's identity.</p><ol class="setup-steps"><li><strong>Save your starting point.</strong> Export a JSON recipe before a coauthoring session.</li><li><strong>Connect an already configured local MCP client.</strong> The client runs on this computer. HTTP endpoint: <code>${esc(setup.mcp_url)}</code> (${setup.mcp_enabled?'enabled':'disabled'}). Or copy these stdio launch settings into its matching fields; clients use different configuration formats.<pre id="stdio-settings">${esc(config)}</pre><button class="small-button" id="copy-client-settings">Copy launch settings</button></li><li><strong>Discover, read, then make one edit.</strong> Discover the catalog, call <code>get_scene</code>, and use its latest <code>expected_revision</code>. For a write, use a unique <code>request_id</code>. A conflict means read again and reconsider; don't silently retry. <a href="${esc(setup.catalog_url)}" target="_blank" rel="noopener">Exact tool schemas</a> · <a href="/api/docs" target="_blank" rel="noopener">Tool reference</a>.</li><li><strong>Try a small coauthor prompt.</strong><blockquote>Read get_scene. Find the selected layer and propose a palette or opacity adjustment. Use set_style or one batch with the current revision, then read the scene and explain the committed change.</blockquote>Ask your existing model client to do this. Running a JSON command or saved example is a protocol walkthrough, not proof of live model inference.</li><li><strong>Refine together.</strong> Watch Coauthor activity for the committed MCP edit. Adjust a manual control, then Undo and Redo. Export JSON to keep the result. History describes routes and committed differences; client notes don't establish identity.</li></ol><h3>Native WebMCP</h3><p>${esc(native)}. The HTTP bridge label records its server route, not proof of native browser execution. Use an already supported top-level browser/model host; verify its tools, then exercise a real shared edit. Work17's ordinary Chromium does not qualify as a supported model session.</p><p><a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noopener">Official Chrome WebMCP guidance</a> · <a href="https://webmachinelearning.github.io/webmcp/" target="_blank" rel="noopener">WebMCP API draft</a></p><h3>Read-only protocol check</h3><p>With the studio running, this discovers tools using the real MCP SDK without a model or a write:</p><pre>python -m studio.mcp_client --studio-url ${esc(location.origin)} --catalog</pre><p>Use <code>--tool get_scene</code> to inspect the current artwork. A mutation requires an explicit JSON arguments file via <code>--arguments</code>; this client never chooses a revision or retries a write for you.</p>`;
+    $('copy-client-settings').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(config);toast('Client launch settings copied.');}catch{toast('Select the launch settings text and copy it manually.',true);}});
+  } catch(error){if(generation===dialogGeneration&&$('info-dialog').open)$('dialog-content').textContent=error.message;}
+}
+$('connect-button').addEventListener('click',coauthorSetup);
+$('coauthor-setup-button').addEventListener('click',coauthorSetup);
 $('help-button').addEventListener('click', () => showDialog('Make a little room for wonder.', '<p>Choose an art direction, move an island, or play the tide. Each island is a family of nested implicit contours. Your edits and connected-agent edits share the same scene history.</p><ul class="shortcut-list"><li><span>Play / pause</span><kbd>Space</kbd></li><li><span>Undo</span><kbd>⌘ / Ctrl Z</kbd></li><li><span>Redo</span><kbd>⌘ / Ctrl Shift Z</kbd></li><li><span>Select & move</span><kbd>V</kbd></li><li><span>Place an island</span><kbd>A</kbd></li><li><span>Toggle handles</span><kbd>H</kbd></li><li><span>Cancel an edit</span><kbd>Esc</kbd></li><li><span>Remove selected island</span><kbd>Delete</kbd></li></ul><p>Drag the center or shoreline to move an island. Use Shape & field for scale, organic detail, rotation, contour density, and tide strength. Exports omit selection handles.</p>'));
-$('activity-button').addEventListener('click', () => { if (!scene) return; showDialog('One scene. Every action.', `<div class="dialog-status"><span>Document</span><strong>${esc(scene.document_id)}</strong></div><div class="dialog-status"><span>Revision</span><strong>${scene.revision}</strong></div><div class="dialog-status"><span>Geometry objects</span><strong>${scene.objects.length}</strong></div><h3>Recent transactions</h3>${(scene.history?.entries || []).slice().reverse().slice(0, 12).map((entry) => `<div class="dialog-status"><span>${esc(entry.label || 'Scene updated')}</span><strong>${esc(entry.actor || 'manual')} · ${esc(entry.revision)}</strong></div>`).join('') || '<p>No edits yet.</p>'}`); });
+$('activity-button').addEventListener('click',()=>{$('coauthor-panel').scrollIntoView({behavior:'smooth',block:'start'});$('activity-filter').focus({preventScroll:true});});
+function updateActivity() {
+  if(!scene)return;
+  const filter=$('activity-filter').value,key=`${scene.document_id}:${scene.revision}:${filter}:${webmcpStatus?.registered||0}`;
+  if(key===activityKey)return;activityKey=key;
+  const opened=new Set([...$('coauthor-activity').querySelectorAll('details[open]')].map(item=>item.dataset.tx));
+  const entries=committedEntries(scene,filter),all=scene.history.entries;
+  $('coauthor-count').textContent=`${all.filter(e=>sourceKind(e)==='mcp_protocol').length} observed MCP commits · last ${all.length} entries`;
+  $('coauthor-capability').textContent=webmcpStatus?.registered?`WebMCP: ${webmcpStatus.registered} registered tools; session unverified`:webmcpStatus?.supported?'WebMCP API available; registration incomplete':'Native WebMCP: API unavailable here';
+  $('coauthor-activity').innerHTML=entries.map(entry=>{
+    const note=entry.operation==='batch'?`<p>Client note: ${esc(entry.label)}</p>`:'';
+    const related=entry.related?` · ${entry.operation==='undo'?'undo':'redo'} of revision ${entry.related.revision}`:'';
+    const hint=entry.source?.caller_hint?`<p>Caller transport hint: ${esc(entry.source.caller_hint)} (unverified).</p>`:'';
+    return `<li class="coauthor-entry" data-source="${sourceKind(entry)}" data-revision="${entry.revision}"><div class="coauthor-entry-top"><span class="source-badge">${esc(sourceLabel(entry))}</span><span>Revision ${entry.revision}${esc(related)}</span></div><strong>${esc(entry.summary||'Committed edit')}</strong><details data-tx="${esc(entry.transaction_id)}"${opened.has(entry.transaction_id)?' open':''}><summary>Details for revision ${entry.revision}</summary><p>Observed server route: ${esc(entry.source?.entrypoint||'unknown')}. Identity and model inference are unverified.</p>${hint}${note}<p>Transaction: <code>${esc(entry.transaction_id)}</code></p><time datetime="${esc(entry.committed_at||'')}">${esc(entry.committed_at||'Time unavailable')}</time><pre>${esc(JSON.stringify(entry.changes||{},null,2))}</pre></details></li>`;
+  }).join('')||'<li class="empty-activity">No committed edits for this route in the retained history.</li>';
+  $('coauthor-history-note').textContent=`${scene.history.session_commits||0} commits this process. Showing up to ${scene.history.entry_limit||30}; history resets after a server restart and is not included in exported recipes.`;
+}
+$('activity-filter').addEventListener('change',updateActivity);
+
 document.addEventListener('keydown', (event) => {
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
   if (event.key === 'Escape') { if (dragging) endDrag(true); if (gesture) cancelGesture(); setTool('select'); $('export-menu').hidden = true; $('export-button').setAttribute('aria-expanded', 'false'); return; }

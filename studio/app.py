@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from html import escape
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -234,14 +235,37 @@ def create_app(
 
     @app.post("/api/command")
     async def command(request: Request):
-        return service.execute(await body(request), actor="manual")
+        return service.execute(
+            await body(request), actor="manual", entrypoint="manual_http"
+        )
 
     @app.post("/api/tools/{name}")
     async def tool(name: str, request: Request):
         actor = request.headers.get("x-studio-actor", "webmcp")
         if actor not in {"mcp", "webmcp"}:
             raise SceneError("invalid_actor", "Tool source must be mcp or webmcp")
-        return service.invoke(name, await body(request), actor=actor)
+        return service.invoke(
+            name,
+            await body(request),
+            actor=actor,
+            entrypoint="tool_http",
+            caller_hint=request.headers.get("x-studio-actor"),
+        )
+
+    @app.get("/api/setup")
+    async def setup(request: Request):
+        origin = str(request.base_url).rstrip("/")
+        return {
+            "mcp_enabled": enable_mcp,
+            "mcp_url": origin + "/mcp/",
+            "catalog_url": origin + "/api/tools",
+            "model_connection_verified": False,
+            "stdio": {
+                "command": sys.executable,
+                "args": ["-m", "studio.mcp_server", "--studio-url", origin],
+                "cwd": str(Path(__file__).resolve().parent.parent),
+            },
+        }
 
     @app.get("/api/health")
     async def health():
