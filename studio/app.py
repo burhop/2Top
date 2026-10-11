@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from . import __version__
 from .service import SceneError, SceneService
 
 STATIC = Path(__file__).parent / "static"
@@ -86,7 +87,11 @@ def create_app(
             yield
 
     app = FastAPI(
-        title="2Top / Tidal Atlas", lifespan=lifespan, docs_url=None, redoc_url=None
+        title="2Top / Tidal Atlas",
+        version=__version__,
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
     )
     app.state.scene_service = service
     app.add_middleware(RequestSizeLimitMiddleware)
@@ -243,6 +248,7 @@ def create_app(
         return {
             "ok": True,
             "service": "2top-tidal-atlas",
+            "version": __version__,
             "mcp": enable_mcp,
             "document_id": service.snapshot()["document_id"],
         }
@@ -266,6 +272,9 @@ def main():
     )
     parser.add_argument(
         "--ephemeral", action="store_true", help="Do not save a scene on disk"
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     args = parser.parse_args()
     service = SceneService(None if args.ephemeral else args.scene)

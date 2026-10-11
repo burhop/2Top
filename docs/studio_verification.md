@@ -39,6 +39,6 @@ Before treating this as release-ready, run `python -m studio.app` in an authoriz
 
 ## Repository handling
 
-Base: main commit 21e9b37df4e4cb72d16306b0be782ed190e8ae57. Dev was inspected (3 commits ahead, 5 behind) and was not blindly merged. Its caches have invalidation concerns for edited shapes; this slice uses bounded, fast numeric geometry instead. Legacy engine behavior was preserved except narrow new-type dispatch/level-set integration and packaging.
+The initial review used main commit 21e9b37df4e4cb72d16306b0be782ed190e8ae57. Per the subsequent development instruction, the feature commits were rebased onto dev commit 8d5eccdb86c128732d0216377a8bde708f19e026 for version 0.2.0. Existing dev performance work and branch history are retained; main-only merge commits are not imported. The new studio creates detached immutable geometry snapshots, so its renderer does not reuse stale parameter-dependent legacy caches.
 
-No commit, push, pull request, merge, deployment, or remote setting change was made.
+Local versioned feature commits exist. Publication is currently blocked: shell Git has no credentials and the connected integration returned HTTP403 Resource not accessible by integration when creating the feature ref. No remote branch or PR was created. No merge, deployment, or remote setting change occurred. A nine-case real Chromium suite and artifact-producing GitHub Actions job are ready, but cannot run remotely until publication is available.

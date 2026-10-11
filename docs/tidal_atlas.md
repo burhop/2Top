@@ -59,7 +59,7 @@ Playhead sampling is shared by the server's monotonic clock while running. Brows
 
 The service rejects extra fields, invalid IDs/references, non-finite values and over-budget scenes. Limits include 16 islands, 32 commands per batch, 64 displayed contours and a 512 KB request body. The standalone geometry sampler has its own finite grid/contour budgets. There are no executable expression or arbitrary file tools.
 
-The base branch is main at `21e9b37df4e4cb72d16306b0be782ed190e8ae57`. Dev is three commits ahead and five behind. Its performance patch was reviewed, not blindly merged: bounds/resolution-only curve caching and classification caching lack reliable parameter-revision invalidation. This first slice avoids those stale-cache risks, uses a fast vectorized field, and leaves unrelated legacy behavior unchanged.
+The feature now targets dev at `8d5eccdb86c128732d0216377a8bde708f19e026`. The original main-based implementation was rebased locally onto dev, preserving its performance changes and history without merging main or force pushing. Studio adapters construct immutable per-revision geometry snapshots; the UI does not share mutable legacy caches.
 
 ## Verification and known gap
 

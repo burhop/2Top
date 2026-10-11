@@ -6,6 +6,8 @@ point is deliberately a proxy: it never constructs a second SceneService.
 
 from __future__ import annotations
 
+from . import __version__
+
 import argparse
 import asyncio
 import inspect
@@ -133,7 +135,7 @@ def create_mcp_server(backend: StudioBackend) -> Server:
 
     return Server(
         "tidal-atlas",
-        version="0.1.0",
+        version=__version__,
         instructions=(
             "Edit the same scene displayed in Tidal Atlas. First read get_scene. "
             "For every mutation supply its expected_revision; use a unique request_id "
@@ -243,6 +245,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--studio-url", default=os.getenv("TIDAL_STUDIO_URL", "http://127.0.0.1:8000")
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING)

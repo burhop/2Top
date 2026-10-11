@@ -1,6 +1,12 @@
-# 2Top · Tidal Atlas
+# 2Top 0.2.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
+
+## Development status
+
+Version **0.2.0** adds the kinetic studio and shared MCP/WebMCP editing. Development targets **dev**; changes should carry a version bump, README/changelog update and passing checks before integration. Main is not the integration target for this work.
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
 ## Start the new studio
 
@@ -33,6 +39,9 @@ node tests/studio/webmcp_contract.mjs
 # Optional DOM/canvas behavioral checks (Node 24.15+):
 npm ci
 npm run test:ui
+# Actual Chromium acceptance (also configured in GitHub Actions):
+npx --no-install playwright install chromium
+npm run test:browser
 python -m ruff check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
 python -m ruff format --check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
 ```
