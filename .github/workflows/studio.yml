@@ -1,9 +1,9 @@
 name: Tidal Atlas studio
 on:
   push:
-    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'examples/tidal_atlas_recipe.json', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', 'playwright.config.mjs', '.github/workflows/studio.yml']
+    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/choreography.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'examples/tidal_atlas_recipe.json', 'examples/tidal_atlas_choreography.json', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', 'playwright.config.mjs', '.github/workflows/studio.yml']
   pull_request:
-    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'examples/tidal_atlas_recipe.json', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', 'playwright.config.mjs', '.github/workflows/studio.yml']
+    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/choreography.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'examples/tidal_atlas_recipe.json', 'examples/tidal_atlas_choreography.json', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', 'playwright.config.mjs', '.github/workflows/studio.yml']
   workflow_dispatch:
 
 permissions:
@@ -23,8 +23,8 @@ jobs:
           node-version: '24.19.0'
           cache: npm
       - run: python -m pip install -e '.[studio,dev]'
-      - run: python -m ruff check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
-      - run: python -m ruff format --check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+      - run: python -m ruff check studio geometry/kinetic*.py geometry/choreography.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+      - run: python -m ruff format --check studio geometry/kinetic*.py geometry/choreography.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
       - run: python -m pytest tests -v
       - run: node tests/studio/webmcp_contract.mjs
       - run: npm ci

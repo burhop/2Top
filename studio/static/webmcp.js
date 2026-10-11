@@ -8,7 +8,7 @@ const statusListeners = new Set();
 const approvedNames = new Set([
   "get_scene", "get_selection", "create_geometry", "update_geometry",
   "delete_geometry", "set_style", "set_view", "select", "batch", "undo",
-  "redo", "load_recipe",
+  "redo", "load_recipe", "set_keyframe", "delete_keyframe",
 ]);
 
 function notifyListener(listener, detail) {

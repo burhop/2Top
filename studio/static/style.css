@@ -1,3 +1,17 @@
+.choreography-panel { margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.choreography-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.choreography-top h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.choreography-top p { margin: 6px 0 12px; color: #70806c; font-size: 10px; }
+.pose-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pose-primary { background: #e8eee1; border-color: #b6c9aa; }
+.pose-easing { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #667957; }
+.pose-easing select { max-width: 105px; border: 1px solid var(--line); border-radius: 4px; padding: 5px; background: var(--panel); }
+.keyframe-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; max-height: 130px; overflow: auto; }
+.pose-key { border: 1px solid #d2dbcd; border-radius: 4px; padding: 7px 9px; font-size: 10px; }
+.pose-key span { margin-left: 5px; font-size: 8px; color: #77856e; }
+.pose-key[aria-pressed=true] { background: #dce8d2; border-color: #76936a; }
+.empty-poses, .choreography-hint { font-size: 10px; line-height: 1.5; color: #7b8874; }
+.choreography-hint { margin-bottom: 0; }
 /* A minimum block height must not enlarge the responsive canvas's inline size. */
 .canvas-stage, .recipe-view { width: 100%; }
 :root{

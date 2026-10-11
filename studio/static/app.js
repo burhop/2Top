@@ -1,4 +1,6 @@
 import { generateContours, LOOP_DURATION, PARAMETER_BOUNDS } from './geometry.js';
+import { sampleParameters, POSE_FIELDS } from './choreography.js';
+import { demoRecipe } from './demo.js';
 
 const $ = (id) => document.getElementById(id);
 const WORLD = { width: 1000, height: 700 };
@@ -10,6 +12,7 @@ const paletteColors = {
   mono: ['#d9dfcf', '#98afa6', '#edf0d9', '#6c8981'],
 };
 const presets = {
+  demo: demoRecipe,
   midnight: {
     title: 'Midnight archipelago',
     objects: [
@@ -85,7 +88,9 @@ function setConnected(connected, error = '') {
   $('save-status').lastChild.textContent = connected ? (busy ? 'Applying change…' : 'Scene synchronized') : (error || 'Connection interrupted');
   const locked = busy > 0 || !scene;
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
-  for (const id of ['radius-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
+  for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
+  $('demo-button').disabled = locked;
+  updateKeyframeControls(current(), getTime());
   $('undo-button').disabled = locked || !scene?.history?.can_undo;
   $('redo-button').disabled = locked || !scene?.history?.can_redo;
 }
@@ -169,7 +174,7 @@ function command(op, args = {}, options = {}) {
   return result;
 }
 function run(op, args = {}, options = {}) { return command(op, args, options).catch(() => null); }
-window.tidalStudio = { getScene: () => scene ? clone(scene) : null, command, refresh };
+window.tidalStudio = { getScene: () => scene ? clone(scene) : null, getPose: (id, time = getTime()) => { const object = scene?.objects.find(o => o.id === id); return object ? sampleParameters(object.parameters, object.keyframes || [], time) : null; }, command, refresh };
 window.addEventListener('tidal:scene', (event) => { if (!gesture && !dragging) acceptScene(event.detail?.scene || event.detail); });
 window.addEventListener('tidal:webmcp-status', (event) => { webmcpStatus = event.detail; updateAgentStatus(); });
 
@@ -187,17 +192,8 @@ function updateUI() {
   $('duplicate-button').disabled = !object;
   $('remove-button').disabled = !object;
   $('layer-list').innerHTML = state.objects.map((o) => `<div class="layer-row${state.selection?.includes(o.id) ? ' selected' : ''}${o.style?.visible === false ? ' hidden-layer' : ''}" data-id="${esc(o.id)}" role="button" tabindex="0" aria-label="Select ${esc(o.name)}" aria-pressed="${state.selection?.includes(o.id) ? 'true' : 'false'}"><span class="layer-swatch" style="color:${paletteColors[o.style?.palette]?.[0] || '#aabfa3'}"></span><span class="layer-name">${esc(o.name)}</span><span class="layer-kind">ISLAND</span><button class="layer-eye" data-visibility="${esc(o.id)}" aria-label="${o.style?.visible === false ? 'Show' : 'Hide'} ${esc(o.name)}" title="${o.style?.visible === false ? 'Show' : 'Hide'} island">${o.style?.visible === false ? '◌' : '◉'}</button></div>`).join('');
-  const controls = [
-    ['radius', object?.parameters.radius, (n) => `${Math.round(n)} px`],
-    ['organic', object?.parameters.warp, (n) => `${Math.round(n * 100)}%`],
-    ['rotation', object?.parameters.rotation, (n) => `${Math.round(n)}°`],
-  ];
-  for (const [key, value, format] of controls) {
-    $(key + '-input').disabled = !object;
-    if (value != null) $(key + '-input').value = value;
-    $(key + '-output').textContent = value == null ? '—' : format(value);
-    progress($(key + '-input'));
-  }
+  updatePoseControls(state, getTime(state));
+  updateKeyframes(state);
   $('contours-input').value = state.view?.contours || 24;
   $('contours-output').textContent = state.view?.contours || 24;
   $('tide-input').value = state.animation?.motion ?? .45;
@@ -228,8 +224,74 @@ function updateAgentStatus() {
   $('agent-hint').textContent = registered > 0 ? `${registered} browser tools registered. Agent edits appear in this same scene.` : 'Connect an MCP client or a WebMCP-enabled browser to edit this canvas.';
 }
 function recipe(state = scene) {
-  return { schema_version: 1, title: state.title, objects: clone(state.objects), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
+  return { schema_version: 2, title: state.title, objects: clone(state.objects), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
 }
+
+function authoredTime(state = scene) {
+  const time = getTime(state), phase = time <= DURATION ? time : time % DURATION;
+  return state.animation.playing ? Math.round(phase * 100) / 100 : phase;
+}
+function poseValues(parameters) { return Object.fromEntries(POSE_FIELDS.map(name => [name, parameters[name]])); }
+function trackObject(state) {
+  const object = selected(state);
+  // A gesture suppresses preview keys so its edited pose can be drawn directly.
+  return object ? scene.objects.find(o => o.id === object.id) : null;
+}
+function updatePoseControls(state, time) {
+  const object = selected(state);
+  const p = object ? sampleParameters(object.parameters, object.keyframes || [], time) : null;
+  for (const [id, field, format] of [
+    ['radius', 'radius', n => `${Math.round(n)} px`], ['stretch', 'elongation', n => `${n.toFixed(2)}×`],
+    ['organic', 'warp', n => `${Math.round(n * 100)}%`], ['rotation', 'rotation', n => `${Math.round(n)}°`],
+  ]) {
+    $(id + '-input').disabled = busy > 0 || !object;
+    if (p) $(id + '-input').value = p[field];
+    $(id + '-output').textContent = p ? format(p[field]) : '—';
+    progress($(id + '-input'));
+  }
+}
+function updateKeyframeControls(state, time) {
+  const object = state && scene ? trackObject(state) : null;
+  const key = object?.keyframes?.find(k => Math.abs(k.time - time) < 1e-7);
+  const locked = busy > 0 || !object || Boolean(gesture || dragging);
+  $('capture-keyframe').disabled = locked || (!key && object.keyframes.length >= 24);
+  $('delete-keyframe').disabled = locked || !key || Boolean(state?.animation.playing);
+  $('keyframe-easing').disabled = locked;
+  $('capture-keyframe').textContent = key ? 'Update pose' : 'Capture pose';
+  document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
+}
+function updateKeyframes(state) {
+  const object = trackObject(state), time = authoredTime(state);
+  const keys = object?.keyframes || [];
+  $('keyframe-summary').textContent = object ? `${object.name} · ${keys.length}/24 poses · 12s loop` : 'Select an island to capture its poses.';
+  $('keyframe-list').innerHTML = keys.length ? keys.map(key => `<button class="pose-key" data-keyframe-time="${key.time}" aria-label="Go to keyframe ${key.time.toFixed(2)} seconds" aria-pressed="false">${key.time.toFixed(2)}s <span>${key.easing === 'smooth' ? 'smooth' : 'linear'}</span></button>`).join('') : '<span class="empty-poses">No poses yet. Capture the first, then scrub to the next.</span>';
+  const key = keys.find(k => Math.abs(k.time - time) < 1e-7);
+  if (key) $('keyframe-easing').value = key.easing;
+  updateKeyframeControls(state, time);
+}
+function poseEditCommands(object, patch, time) {
+  const commands = [];
+  time = time <= DURATION ? time : time % DURATION;
+  if (scene.animation.playing || scene.animation.time !== time) commands.push({ op: 'set_view', view: {}, animation: { playing: false, time } });
+  if (object.keyframes?.length) {
+    const existing = object.keyframes.find(k => Math.abs(k.time - time) < 1e-7);
+    commands.push({ op: 'set_keyframe', id: object.id, keyframe: { time, parameters: poseValues({ ...sampleParameters(object.parameters, object.keyframes, time), ...patch }), easing: existing?.easing || $('keyframe-easing').value } });
+  } else commands.push({ op: 'update_geometry', id: object.id, parameters: patch });
+  return commands;
+}
+function capturePose() {
+  const object = selected(scene); if (!object || busy || dragging || gesture) return;
+  const time = authoredTime();
+  run('batch', { label: 'Capture island pose', commands: [
+    { op: 'set_view', view: {}, animation: { playing: false, time } },
+    { op: 'set_keyframe', id: object.id, keyframe: { time, parameters: poseValues(sampleParameters(object.parameters, object.keyframes || [], time)), easing: $('keyframe-easing').value } },
+  ] });
+}
+$('capture-keyframe').addEventListener('click', capturePose);
+$('delete-keyframe').addEventListener('click', () => { const object = selected(scene); if (object && !busy) run('delete_keyframe', { id: object.id, time: authoredTime() }); });
+$('keyframe-easing').addEventListener('change', () => { const object = selected(scene); if (object?.keyframes?.some(k => Math.abs(k.time - authoredTime()) < 1e-7)) capturePose(); });
+$('keyframe-list').addEventListener('click', event => { const button = event.target.closest('[data-keyframe-time]'); if (button && !busy) run('set_view', { view: {}, animation: { playing: false, time: Number(button.dataset.keyframeTime) } }); });
+$('demo-button').addEventListener('click', () => run('load_recipe', { recipe: { ...clone(demoRecipe), animation: { ...demoRecipe.animation, playing: true } } }));
 
 function resize() {
   const box = canvas.getBoundingClientRect();
@@ -289,7 +351,7 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
   const count = state.view?.contours || 24;
   for (const object of state.objects) {
     if (object.style?.visible === false) continue;
-    const contours = generateContours(object.parameters, time, state.animation?.motion ?? .45, count, 180);
+    const contours = generateContours(sampleParameters(object.parameters, object.keyframes || [], time), time, state.animation?.motion ?? .45, count, 180);
     target.save();
     target.globalAlpha = object.style?.opacity ?? 1;
     for (let i = 0; i < contours.length; i += 1) {
@@ -314,7 +376,7 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
     for (const object of state.objects) {
       if (object.style?.visible === false) continue;
       const active = state.selection?.includes(object.id);
-      const x = object.parameters.x; const y = object.parameters.y;
+      const { x, y } = sampleParameters(object.parameters, object.keyframes || [], time);
       target.save(); target.translate(x, y);
       target.strokeStyle = active ? '#f0eed5' : '#c1d6bd7a'; target.fillStyle = '#13362c'; target.lineWidth = 1 / trans.scale;
       target.beginPath(); target.arc(0, 0, (active ? 5 : 3) / trans.scale, 0, Math.PI * 2); target.fill(); target.stroke();
@@ -332,6 +394,7 @@ function animationFrame(now) {
   if (scene && !gesture) {
     $('time-value').textContent = time.toFixed(2).padStart(5, '0');
     $('timeline-input').value = time; progress($('timeline-input'));
+    if (scene.animation.playing && !dragging) { updatePoseControls(scene, time); updateKeyframeControls(scene, time); }
   }
   requestAnimationFrame(animationFrame);
 }
@@ -347,7 +410,8 @@ function hitObject(point) {
   let nearest = null; let distance = 22 / transform.scale;
   for (const object of [...state.objects].reverse()) {
     if (object.style?.visible === false) continue;
-    const d = Math.hypot(object.parameters.x - point.x, object.parameters.y - point.y);
+    const pose = sampleParameters(object.parameters, object.keyframes || [], getTime());
+    const d = Math.hypot(pose.x - point.x, pose.y - point.y);
     if (d < distance) { nearest = object; distance = d; }
   }
   if (nearest) return nearest;
@@ -366,9 +430,12 @@ canvas.addEventListener('pointerdown', (event) => {
   if (!object) { if (scene.selection.length) run('select', { ids: [] }); return; }
   preview = clone(scene);
   preview.selection = [object.id];
-  preview.animation.time = getTime(scene);
+  preview.animation.time = authoredTime(scene);
   preview.animation.playing = false;
-  dragging = { id: object.id, pointerId: event.pointerId, start: point, x: object.parameters.x, y: object.parameters.y, moved: false, revision: scene.revision };
+  const pose = sampleParameters(object.parameters, object.keyframes || [], preview.animation.time);
+  const previewObject = preview.objects.find(o => o.id === object.id);
+  previewObject.parameters = pose; previewObject.keyframes = [];
+  dragging = { id: object.id, pointerId: event.pointerId, start: point, x: pose.x, y: pose.y, time: preview.animation.time, moved: false, revision: scene.revision };
   canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
   $('selection-hint').textContent = 'Release to commit · Esc to cancel';
   renderDirty = true; updateUI();
@@ -393,7 +460,7 @@ async function endDrag(cancel = false) {
   if (cancel) { preview = null; renderDirty = true; updateUI(); return; }
   const commands = [];
   if (!scene.selection.includes(drag.id)) commands.push({ op: 'select', ids: [drag.id] });
-  if (drag.moved && object) commands.push({ op: 'update_geometry', id: drag.id, parameters: { x: Number(object.parameters.x.toFixed(2)), y: Number(object.parameters.y.toFixed(2)) } });
+  if (drag.moved && object) commands.push(...poseEditCommands(scene.objects.find(o => o.id === drag.id), { x: Number(object.parameters.x.toFixed(2)), y: Number(object.parameters.y.toFixed(2)) }, drag.time));
   if (!commands.length) { preview = null; renderDirty = true; updateUI(); return; }
   await run('batch', { label: drag.moved ? 'Moved island' : 'Selected island', commands }, { expectedRevision: drag.revision });
 }
@@ -420,9 +487,9 @@ $('layer-list').addEventListener('click', (event) => {
   if (row) run('select', { ids: [row.dataset.id] });
 });
 $('layer-list').addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { const row = event.target.closest('[data-id]'); if (row && event.target === row) { event.preventDefault(); row.click(); } } });
-$('duplicate-button').addEventListener('click', () => { const object = selected(scene); if (!object) return; run('create_geometry', { name: `${[...object.name].slice(0, 75).join('')} copy`, parameters: { ...object.parameters, x: clamp(object.parameters.x + 35, ...PARAMETER_BOUNDS.x), y: clamp(object.parameters.y + 35, ...PARAMETER_BOUNDS.y) }, style: { ...object.style } }); });
+$('duplicate-button').addEventListener('click', () => { const object = selected(scene); if (!object) return; const offset = p => ({ ...p, x: clamp(p.x + 35, ...PARAMETER_BOUNDS.x), y: clamp(p.y + 35, ...PARAMETER_BOUNDS.y) }); run('create_geometry', { name: `${[...object.name].slice(0, 75).join('')} copy`, parameters: offset(object.parameters), keyframes: (object.keyframes || []).map(key => ({ ...key, parameters: offset(key.parameters) })), style: { ...object.style } }); });
 $('remove-button').addEventListener('click', () => { const object = selected(scene); if (object) run('delete_geometry', { id: object.id }); });
-$('preset-select').addEventListener('change', (event) => { const chosen = presets[event.target.value]; if (chosen) run('load_recipe', { recipe: { schema_version: 1, ...clone(chosen) } }).then((result) => { if (result) toast(`${chosen.title} loaded. Undo restores your previous scene.`); }); });
+$('preset-select').addEventListener('change', (event) => { const chosen = presets[event.target.value]; if (chosen) run('load_recipe', { recipe: { schema_version: 2, ...clone(chosen) } }).then((result) => { if (result) toast(`${chosen.title} loaded. Undo restores your previous scene.`); }); });
 $('palette-options').addEventListener('click', (event) => {
   const button = event.target.closest('[data-palette]'); if (!button || !scene) return;
   const styles = { tidal: ['ember', 'lagoon', 'aurora'], ember: ['ember', 'aurora', 'ember'], glacier: ['lagoon', 'mono', 'lagoon'] }[button.dataset.palette];
@@ -434,16 +501,20 @@ function bindSlider(id, target, field, format) {
   const input = $(id + '-input');
   input.addEventListener('input', () => {
     if (!scene || busy) { updateUI(); return; }
-    if (!gesture) { gesture = { id, revision: scene.revision, objectId: selected(scene)?.id }; preview = clone(scene); preview.animation.time = getTime(scene); preview.animation.playing = false; }
+    if (!gesture) {
+      gesture = { id, revision: scene.revision, objectId: selected(scene)?.id, time: authoredTime(scene) };
+      preview = clone(scene); preview.animation.time = gesture.time; preview.animation.playing = false;
+      if (target === 'object') { const object = preview.objects.find(o => o.id === gesture.objectId); if (object) { object.parameters = sampleParameters(object.parameters, object.keyframes || [], gesture.time); object.keyframes = []; } }
+    }
     const value = Number(input.value);
     if (target === 'object') { const object = preview.objects.find((o) => o.id === gesture.objectId); if (!object) return; object.parameters[field] = value; }
     else preview[target][field] = value;
-    $(id + '-output').textContent = format(value); progress(input); renderDirty = true;
+    $(id + '-output').textContent = format(value); progress(input); updateKeyframeControls(preview, preview.animation.time); renderDirty = true;
   });
   input.addEventListener('change', () => {
     if (!gesture || gesture.id !== id) return;
     const saved = gesture; const value = Number(input.value); gesture = null;
-    if (target === 'object') run('update_geometry', { id: saved.objectId, parameters: { [field]: value } }, { expectedRevision: saved.revision });
+    if (target === 'object') run('batch', { label: 'Shape island pose', commands: poseEditCommands(scene.objects.find(o => o.id === saved.objectId), { [field]: value }, saved.time) }, { expectedRevision: saved.revision });
     else if (target === 'animation') run('set_view', { view: {}, animation: { [field]: value } }, { expectedRevision: saved.revision });
     else run('set_view', { view: { [field]: value } }, { expectedRevision: saved.revision });
   });
@@ -451,13 +522,14 @@ function bindSlider(id, target, field, format) {
 }
 function cancelGesture() { gesture = null; preview = null; renderDirty = true; updateUI(); }
 bindSlider('radius', 'object', 'radius', (n) => `${Math.round(n)} px`);
+bindSlider('stretch', 'object', 'elongation', (n) => `${n.toFixed(2)}×`);
 bindSlider('organic', 'object', 'warp', (n) => `${Math.round(n * 100)}%`);
 bindSlider('rotation', 'object', 'rotation', (n) => `${Math.round(n)}°`);
 bindSlider('contours', 'view', 'contours', (n) => String(n));
 bindSlider('tide', 'animation', 'motion', (n) => `${Math.round(n * 100)}%`);
 $('play-button').addEventListener('click', () => { if (scene) run('set_view', { view: {}, animation: { playing: !scene.animation.playing, time: getTime() } }); });
 $('speed-button').addEventListener('click', () => { if (!scene) return; const speeds = [.5, .75, 1, 1.5, 2]; const index = speeds.indexOf(scene.animation.speed); run('set_view', { view: {}, animation: { speed: speeds[(index + 1) % speeds.length], time: getTime() } }); });
-$('timeline-input').addEventListener('input', () => { if (!scene || busy) { updateUI(); return; } if (!gesture) { gesture = { id: 'timeline', revision: scene.revision }; preview = clone(scene); } preview.animation.time = Number($('timeline-input').value); preview.animation.playing = false; $('time-value').textContent = preview.animation.time.toFixed(2).padStart(5, '0'); progress($('timeline-input')); renderDirty = true; });
+$('timeline-input').addEventListener('input', () => { if (!scene || busy) { updateUI(); return; } if (!gesture) { gesture = { id: 'timeline', revision: scene.revision }; preview = clone(scene); } preview.animation.time = Number($('timeline-input').value); preview.animation.playing = false; $('time-value').textContent = preview.animation.time.toFixed(2).padStart(5, '0'); progress($('timeline-input')); updatePoseControls(preview, preview.animation.time); updateKeyframeControls(preview, preview.animation.time); renderDirty = true; });
 $('timeline-input').addEventListener('change', () => { if (!gesture || gesture.id !== 'timeline') return; const revision = gesture.revision; gesture = null; run('set_view', { view: {}, animation: { time: Number($('timeline-input').value), playing: false } }, { expectedRevision: revision }); });
 $('timeline-input').addEventListener('pointercancel', cancelGesture);
 $('undo-button').addEventListener('click', () => run('undo'));
@@ -490,7 +562,7 @@ function exportSVG() {
   body += `<g transform="translate(${trans.x} ${trans.y}) scale(${trans.scale})">`;
   for (const object of state.objects) {
     if (object.style?.visible === false) continue;
-    const contours = generateContours(object.parameters, time, state.animation.motion, state.view.contours, 240);
+    const contours = generateContours(sampleParameters(object.parameters, object.keyframes || [], time), time, state.animation.motion, state.view.contours, 240);
     body += `<g id="${esc(object.id)}" opacity="${object.style.opacity ?? 1}"><title>${esc(object.name)}</title>`;
     contours.forEach((points, i) => { const d = points.map((point, index) => `${index ? 'L' : 'M'}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(' ') + 'Z'; body += `<path d="${d}" fill="${i === contours.length - 1 ? '#102825' : ringColor(object.style.palette, i, contours.length)}" stroke="${i % 6 === 1 ? '#e6be91' : '#24463e'}" stroke-width=".55"/>`; });
     body += '</g>';

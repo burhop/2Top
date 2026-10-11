@@ -181,7 +181,7 @@ def test_snapshot_is_a_deep_copy():
 
 def test_public_schemas_are_valid_and_match_commands():
     definitions = tool_definitions()
-    assert len(definitions) == 12
+    assert len(definitions) == 14
     for definition in definitions:
         Draft202012Validator.check_schema(definition["inputSchema"])
         assert "op" not in definition["inputSchema"].get("properties", {})

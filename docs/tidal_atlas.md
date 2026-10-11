@@ -1,4 +1,4 @@
-# Tidal Atlas: first studio slice
+# Tidal Atlas 0.3.0: island choreography
 
 ## What this version does
 
@@ -27,13 +27,38 @@ By default, validated edits are atomically written to `.studio/scene.json`. `--s
 
 1. Open the default two-island composition with a small golden satellite.
 2. Select an island in the layer list or on the canvas. Drag the center or shore to move the whole island. Press Escape before releasing to discard the preview.
-3. Change Scale, Organic detail, Rotation or Contour density. Slider movement previews locally; releasing commits one revision-checked action.
+3. Change Scale, Stretch, Organic detail, Rotation or Contour density. Slider movement previews locally; releasing commits one revision-checked action.
 4. Play the tide, pause it, scrub the 12-second timeline, or change playback speed.
 5. Switch among Midnight archipelago, Coral atoll and Tidal ribbons. Preset loading is one undoable transaction.
 6. Add, duplicate, hide, remove, undo or redo. The last complete manual or agent transaction is the one that Undo reverses.
 7. Export the current frame as PNG/SVG, or export the numeric recipe as JSON. Exports omit selection handles. The Recipe view exposes the editable document data.
 
 Freeform shoreline deformation, local peninsula pinning, Boolean merging of these island layers, typography import, physical tide simulation and automatic language-model prompting are outside this first slice. The current direct edit moves a whole island. The existing broader geometry library remains available for future tools and other use cases.
+
+## Choreograph an island
+
+Choose **Play demo** to watch Orbit & bloom, then pause and select an island.
+Jump to its 0s, 3s, 6s, 9s or 12s pose chips and inspect how its position, scale,
+stretch, rotation and curl change. Loading the demo is undoable.
+
+For your own composition, pause at 0s and choose **Capture pose**. Scrub to a
+new time, then drag or adjust the island: once it has a track, these edits capture
+a complete pose at that paused time instead of changing its base shape. Editing
+during playback freezes the visible playhead. One gesture remains one undo step.
+Choose Linear or Smooth easing; the left pose controls the following segment.
+Click a key to select it; **Delete key** removes the exact current-time pose.
+There are at most 24 poses per island; time is bounded to 0..12 seconds.
+
+The sampler holds the first/last pose outside the authored interval. Playback
+loops at 12s; match the 0s and 12s poses for a seamless loop. Rotation follows the
+authored degree values rather than choosing the shortest turn. The independent
+tide effect still adds gentle procedural motion; reduce Tide strength to isolate
+the authored track. Static islands retain their existing editing behavior.
+
+JSON export includes every key. Schema-1 recipes reopen with empty tracks and
+unchanged base parameters; the next save uses schema 2. Keep the original file
+for older 0.2.x applications. Invalid imports leave the current scene untouched.
+The matching demo recipe is `examples/tidal_atlas_choreography.json`.
 
 ## Co-edit with an agent
 
@@ -49,6 +74,7 @@ Playhead sampling is shared by the server's monotonic clock while running. Brows
 
 ## Architecture and boundaries
 
+- `geometry/choreography.py` and `studio/static/choreography.js`: bounded track validation and parity-tested pose sampling
 - `geometry/kinetic.py`: reusable numeric field, contour sampler, recipe normalization
 - `studio/service.py`: authoritative schema, state, transactions, history, persistence
 - `studio/app.py`: loopback HTTP UI/API and mounted standard MCP endpoint
@@ -69,9 +95,7 @@ The browser WebMCP contract test uses an explicitly mocked browser API. It does 
 
 DOM interaction tests run the actual application JavaScript against the real Python scene service, with mocked DOM layout and canvas behavior. Optional native canvas rendering uses the same drawing code and creates an artwork preview, not a browser screenshot. Run `npm ci` then `npm run test:ui` with Node 24.15+; use `STUDIO_RENDER_PREVIEW=1` to also render the preview.
 
-Actual cloud-browser UI verification was blocked in the build environment: loopback navigation returned `ERR_BLOCKED_BY_CLIENT`, and standalone Chromium could not create Unix sockets. No tunnel or public deployment was used to bypass the restriction. DOM/canvas tests and artwork renders are useful but do not replace browser layout/accessibility/performance verification. Before calling the UI release-ready, run it in an authorized local browser and check layout, pointer behavior, export downloads, repeated/interrupted gestures, and the intended WebMCP host.
-
-A ready-to-open numeric recipe is included at `examples/tidal_atlas_recipe.json`. In the studio, choose Recipe → Load JSON. File selection cancellation or validation failure leaves the current scene unchanged.
+Real Chromium acceptance now runs locally on Work17 and in CI, including pose editing, actual saved-file reopening, malformed tracks and responsive layouts. See [verification details](studio_verification.md) for exact evidence and the separate native WebMCP host limitation. The legacy numeric recipe remains at `examples/tidal_atlas_recipe.json`.
 
 ## Reuse artwork in the existing geometry interfaces
 

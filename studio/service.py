@@ -27,6 +27,8 @@ from pydantic import (
     model_validator,
 )
 
+from geometry.choreography import sample_parameters, validate_keyframes
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False, strict=True)
@@ -129,7 +131,31 @@ Identifier = Annotated[
 Name = Annotated[str, Field(min_length=1, max_length=80)]
 
 
-class Island(StrictModel):
+class Pose(StrictModel):
+    x: float = Field(ge=-1000, le=2000)
+    y: float = Field(ge=-700, le=1400)
+    radius: float = Field(ge=80, le=400)
+    elongation: float = Field(ge=0.4, le=2.5)
+    rotation: float = Field(ge=-360, le=360)
+    warp: float = Field(ge=0, le=1)
+
+
+class Keyframe(StrictModel):
+    time: float = Field(ge=0, le=12)
+    parameters: Pose
+    easing: Literal["linear", "smooth"] = "smooth"
+
+
+class TrackModel(StrictModel):
+    keyframes: list[Keyframe] = Field(default_factory=list, max_length=24)
+
+    @model_validator(mode="after")
+    def ordered_keys(self):
+        validate_keyframes([key.model_dump() for key in self.keyframes])
+        return self
+
+
+class Island(TrackModel):
     id: Identifier
     name: Name
     type: Literal["island"] = "island"
@@ -138,14 +164,25 @@ class Island(StrictModel):
 
 
 class Recipe(StrictModel):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     title: Name = "Tidal Atlas"
     objects: list[Island] = Field(max_length=16)
     view: View = Field(default_factory=View)
     animation: Animation = Field(default_factory=Animation)
 
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_legacy(cls, values):
+        if (
+            isinstance(values, dict)
+            and type(values.get("schema_version")) is int
+            and values["schema_version"] == 1
+        ):
+            return {**values, "schema_version": 2}
+        return values
 
-class Create(StrictModel):
+
+class Create(TrackModel):
     op: Literal["create_geometry"]
     name: Name = "Untitled island"
     parameters: Parameters = Field(default_factory=Parameters)
@@ -181,8 +218,23 @@ class Select(StrictModel):
     ids: list[Identifier] = Field(max_length=16)
 
 
+class SetKeyframe(StrictModel):
+    op: Literal["set_keyframe"]
+    id: Identifier
+    keyframe: Keyframe
+
+
+class DeleteKeyframe(StrictModel):
+    op: Literal["delete_keyframe"]
+    id: Identifier
+    time: float = Field(ge=0, le=12)
+
+
 Child = Annotated[
-    Union[Create, Update, Delete, SetStyle, SetView, Select], Field(discriminator="op")
+    Union[
+        Create, Update, Delete, SetStyle, SetView, Select, SetKeyframe, DeleteKeyframe
+    ],
+    Field(discriminator="op"),
 ]
 
 
@@ -215,6 +267,14 @@ class SelectCommand(Select, Mutation):
     pass
 
 
+class KeyframeCommand(SetKeyframe, Mutation):
+    pass
+
+
+class DeleteKeyframeCommand(DeleteKeyframe, Mutation):
+    pass
+
+
 class BatchCommand(Mutation):
     op: Literal["batch"]
     label: Name = "Compose artwork"
@@ -241,6 +301,8 @@ COMMAND_MODELS = {
     "set_style": StyleCommand,
     "set_view": ViewCommand,
     "select": SelectCommand,
+    "set_keyframe": KeyframeCommand,
+    "delete_keyframe": DeleteKeyframeCommand,
     "batch": BatchCommand,
     "undo": UndoCommand,
     "redo": RedoCommand,
@@ -258,10 +320,12 @@ DESCRIPTIONS = {
     "set_style": "Change one island's palette, visibility or opacity. Requires latest revision.",
     "set_view": "Set view and/or art-directed animation parameters. This is not a physical simulation. Requires latest revision.",
     "select": "Set selected island IDs, visible in the manual inspector. Requires latest revision.",
+    "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
+    "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "batch": "Apply up to 32 enumerated edits atomically with one undo step. Failure leaves the artwork unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
-    "load_recipe": "Replace artwork with a validated version-1 declarative recipe, in one undoable transaction. No expressions or executable code.",
+    "load_recipe": "Replace artwork with a validated version-2 choreography recipe; version-1 recipes migrate with empty tracks. One undoable transaction. No expressions or executable code.",
 }
 
 
@@ -284,7 +348,8 @@ def tool_definitions() -> list[dict]:
                 "inputSchema": schema,
                 "annotations": {
                     "readOnlyHint": name.startswith("get_"),
-                    "destructiveHint": name in {"delete_geometry", "load_recipe"},
+                    "destructiveHint": name
+                    in {"delete_geometry", "delete_keyframe", "load_recipe"},
                     "idempotentHint": name.startswith("get_"),
                     "openWorldHint": False,
                 },
@@ -459,7 +524,9 @@ class SceneService:
             if not obj["style"]["visible"]:
                 continue
             field = KineticIslandField(
-                obj["parameters"], time=time_value, motion=scene["animation"]["motion"]
+                sample_parameters(obj["parameters"], obj["keyframes"], time_value),
+                time=time_value,
+                motion=scene["animation"]["motion"],
             )
             manager.add_object(
                 obj["id"],
@@ -484,7 +551,9 @@ class SceneService:
                 "object_not_found", f"Unknown island: {object_id}", status=404
             )
         return KineticIslandField(
-            obj["parameters"], time=frame_time, motion=scene["animation"]["motion"]
+            sample_parameters(obj["parameters"], obj["keyframes"], frame_time),
+            time=frame_time,
+            motion=scene["animation"]["motion"],
         )
 
     def geometry_scene(self, time_value: float | None = None):
@@ -622,6 +691,8 @@ class SceneService:
                     "set_view": "Adjust view / motion",
                     "select": "Select island",
                     "delete_geometry": "Remove island",
+                    "set_keyframe": "Capture island pose",
+                    "delete_keyframe": "Remove island pose",
                 }[parsed.op]
             candidate["document_id"] = before["document_id"]
             candidate["revision"] = before["revision"] + 1
@@ -689,6 +760,7 @@ class SceneService:
                 name=command.name,
                 parameters=command.parameters,
                 style=command.style,
+                keyframes=command.keyframes,
             ).model_dump()
             scene["objects"].append(obj)
             scene["selection"] = [obj["id"]]
@@ -718,6 +790,23 @@ class SceneService:
                 obj["name"] = command.name
         elif command.op == "set_style":
             self._patch(obj["style"], command.style)
+        elif command.op == "set_keyframe":
+            key = command.keyframe.model_dump()
+            keys = [k for k in obj["keyframes"] if k["time"] != key["time"]]
+            keys.append(key)
+            keys.sort(key=lambda k: k["time"])
+            if len(keys) > 24:
+                raise SceneError(
+                    "keyframe_limit", "An island supports at most 24 keyframes"
+                )
+            obj["keyframes"] = keys
+        elif command.op == "delete_keyframe":
+            keys = [k for k in obj["keyframes"] if k["time"] != command.time]
+            if len(keys) == len(obj["keyframes"]):
+                raise SceneError(
+                    "keyframe_not_found", "No keyframe at that exact time", status=404
+                )
+            obj["keyframes"] = keys
         elif command.op == "delete_geometry":
             scene["objects"] = [o for o in scene["objects"] if o["id"] != command.id]
             scene["selection"] = [i for i in scene["selection"] if i != command.id]

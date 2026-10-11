@@ -1,12 +1,12 @@
-# 2Top 0.2.1 · Tidal Atlas
+# 2Top 0.3.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.2.1** corrects the phone layout and extends real Chromium coverage to reopening a downloaded recipe. Version 0.2.0 introduced the kinetic studio and shared MCP/WebMCP editing. Development targets **dev**; changes should carry a version bump, README/changelog update and passing checks before integration. Main is not the integration target for this work.
+Version **0.3.0** adds authored island choreography: capture position, scale, stretch, rotation and curl poses along the 12-second timeline, edit them directly, and save/reopen the complete animation. **Play demo** opens Orbit & bloom, a looping three-island composition. Versions 0.2.x introduced the shared studio and verified its responsive browser editing. Development targets **dev**; changes should carry a version bump, README/changelog update and passing checks before integration. Main is not the integration target for this work.
 
-See [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
+See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
 ## Start the new studio
 
@@ -22,11 +22,14 @@ python -m studio.app
 
 Open **http://127.0.0.1:8000**. No AI account or API key is needed to draw, animate, undo, or export. The app stays on loopback. Local artwork is saved to `.studio/scene.json`; use `--ephemeral` for a disposable session.
 
-- Directly drag islands and adjust their scale, curl, palette and contour density
+- Capture up to 24 complete poses per island, choose linear/smooth interpolation, jump between keys, and undo/redo choreography edits
+- Directly drag islands and adjust their scale, stretch, curl, palette and contour density; animated edits create/update a pose at the paused playhead
 - Play, pause and scrub a smooth 12-second tide; save JSON recipes, SVG artwork or PNG images
 - Select, duplicate, hide, delete, undo and redo complete operations
 - Connect an MCP client to **http://127.0.0.1:8000/mcp/** or launch the stdio proxy with `python -m studio.mcp_server`
-- In a supported top-level browser, `document.modelContext` registers the same 12 tools. Unsupported browsers retain the complete manual app
+- In a supported top-level browser, `document.modelContext` registers the same 14 tools, including pose insertion/removal. Unsupported browsers retain the complete manual app
+
+Recipes now export schema 2 with per-island `keyframes`. Schema-1 recipes from 0.2.x reopen with empty tracks and unchanged base parameters; the next save uses schema 2. Keep an original copy when exchanging with an older studio.
 
 See [the studio guide](docs/tidal_atlas.md), [agent connection details and compatibility](docs/agent_protocols.md), and the app's self-contained `/api/docs` reference. The studio does not include an embedded language model or pretend that local presets are AI output.
 
@@ -42,8 +45,8 @@ npm run test:ui
 # Actual Chromium acceptance (also configured in GitHub Actions):
 npx --no-install playwright install chromium
 npm run test:browser
-python -m ruff check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
-python -m ruff format --check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+python -m ruff check studio geometry/kinetic*.py geometry/choreography.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+python -m ruff format --check studio geometry/kinetic*.py geometry/choreography.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
 ```
 
 The legacy geometry engine and diagnostic UI remain available below. The historical `MCPCommandHandler` is a legacy command dispatcher, not a standard MCP transport; the new standard server is `studio/mcp_server.py`.

@@ -1,46 +1,77 @@
 # Tidal Atlas development verification
 
-Updated October 11, 2026 for version 0.2.1. Real browser acceptance has now executed on Work17. Native WebMCP/model-host interoperability remains a separate host-specific check.
+Updated October 11, 2026 for version 0.3.0. Work17 executes the local application
+checks below; CI verifies the exact feature commit before dev integration.
 
-## Implemented
+## Current milestone
 
-- Canvas-first kinetic islands with named layers, direct movement, shape controls, palettes, three compositions and deterministic 12-second animation.
-- Selection, timeline, undo/redo, JSON save/reopen and real SVG/PNG export.
-- One authoritative command service with bounded schemas, stable IDs, revisions, atomic batches, retry keys and atomic file persistence.
-- Official MCP 2.3.0 HTTP server and stdio adapter sharing the running studio.
-- Feature-detected top-level document.modelContext tools; unsupported browsers retain the manual editor. Registration does not imply an AI connection.
-- Reusable NumPy geometry and a parity-tested JavaScript mirror, with BaseField/ImplicitCurve, SceneManager and graphics-backend interoperability.
+Island choreography adds up to 24 complete six-parameter poses per object,
+deterministic linear/smooth interpolation, a frozen playhead for direct edits,
+key selection/removal, track-aware duplication, shared undo/redo and schema-2
+JSON persistence. Orbit & bloom demonstrates three independently authored loops.
+Schema-1 recipes migrate with empty tracks and unchanged base parameters.
 
-The tools edit kinetic island recipes. The UI does not expose the entire historical geometry library. No embedded model, arbitrary expression evaluation, physical simulation or exact G1/G2 construction is claimed.
+The manual UI, real MCP HTTP/stdio transports and feature-detected WebMCP adapter
+use the same 14 validated tools and authoritative service. Revisions, atomic
+batches, retry keys, bounded input and immutable legacy-engine snapshots remain
+shared. The legacy geometry algorithms and existing 0.2.x example are preserved.
 
-## Real Chromium acceptance
+## Local verification
 
-All nine Playwright Chromium cases passed locally against an ephemeral loopback service. They exercise real canvas rendering, keyboard selection, duplicate/remove/undo, pointer drag and Escape cancellation, native range preview/commit with undo/redo, controls during a delayed real request, presets/palettes/playback, invalid import recovery and responsive layouts.
+- Full Python suite: **1,172 passed, 27 skipped**. The skips require unavailable
+  curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
+  visible rather than being suppressed.
+- Studio subset: 134 cases, including 15 new choreography cases for interpolation,
+  endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
+  malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
+  persistence, legacy migration and real MCP HTTP/stdio pose edits.
+- JavaScript DOM/service behavior: **35 checks passed**. This is distinct from
+  native browser layout testing.
+- Explicitly mocked WebMCP contract: passed, including forwarding the two new
+  keyframe tools. This does not establish native host support.
+- Repository-wide Ruff lint and formatting: passed, **126 files formatted**.
+- Actual Playwright Chromium acceptance: **12 cases passed**, with unexpected
+  console, page and HTTP failures rejected.
 
-The interchange case uses a native file chooser, validates real JSON/SVG/PNG downloads, changes the scene, reopens the actual downloaded JSON and checks restored objects after page reload. PNG signature and 2000x1400 dimensions, SVG paths and titles, and shared-service state are asserted. Uncaught JavaScript, unexpected HTTP and browser console errors fail the suite.
+The three new real-browser cases exercise native capture/scrub/easing controls,
+interpolated poses, keyed pointer movement, undo/redo, actual downloaded JSON
+reopening and reload, malformed-track rejection, schema-1 import, demo playback,
+track-aware duplication and a 390-pixel phone layout. The existing nine cases
+retain selection, cancellation, pending-request behavior, presets, responsive
+layout and actual JSON/SVG/PNG export coverage.
 
-The published 0.2.0 head passed Python/shared-scene CI but failed two Chromium cases: an ambiguous status locator and 29 pixels of horizontal canvas overflow at a 390-pixel viewport. Version 0.2.1 targets the notification precisely and gives the canvas/recipe workspace an explicit container width, preventing minimum-height/aspect-ratio sizing from enlarging it horizontally.
+The Orbit & bloom desktop screenshots at 0s and 6s and the phone screenshot were
+visually reviewed. The compositions visibly change and controls fit their
+columns; checked phone scroll width does not exceed its viewport. This does not
+establish usability at every viewport, browser engine or assistive technology.
 
-Desktop (1440x1100), phone (390x844) and tablet (820x1180) screenshots were visually inspected after the fix. The phone canvas fits its column and controls/footer remain visible; no unintended clipping or horizontal overflow was observed at these checked sizes. This does not establish usability at every viewport, assistive technology or browser engine.
-
-Run `npm run test:browser`. Screenshots, downloads, videos, traces, layout diagnostics and the HTML report are saved in `test-results/browser/` and `playwright-report/`; CI uploads the same evidence. See [PR #4](https://github.com/burhop/2Top/pull/4) for the final exact commit and current CI results.
-
-## Other required gates and historical evidence
-
-Required development checks are the full `tests/` Python suite, JavaScript DOM/service checks, the explicitly mocked WebMCP contract check, repository-wide Ruff lint/formatting and real Chromium acceptance. Existing CI gates remain enabled. Dev integration requires passing local application checks and required CI for the final head; main remains unchanged.
-
-The 0.2.0 handoff reported 1,157 Python tests passed, 27 skipped for unavailable curves.db data or opt-in visual baselines, and 41 inherited numeric/runtime warnings. These historical results do not substitute for checks on the current commit. The 119 studio tests cover geometry parity/legacy interoperability, persistence, rollback, concurrent/stale edits, retry keys, invalid data and real MCP HTTP/stdio clients. Earlier DOM/native-render counts and the mocked adapter check are distinct from real browser acceptance.
-
-The handoff also checked a built wheel outside the source checkout. Its artwork PNG/GIF were canvas renders rather than browser screenshots; current Playwright screenshots provide separate real-browser evidence.
+Run `npm run test:browser`. Raw screenshots, downloads, diagnostics, videos and
+traces are in `test-results/browser/`; the clickable report is in
+`playwright-report/`. CI uploads the same evidence for each browser run.
+The milestone PR provides the exact commit and CI links.
 
 ## Native WebMCP limitation
 
-Actual local Chromium reports `nativeRegisterToolAvailable: false`, `supported: false`, `registered: 0` and `reason: browser-unsupported`. The page retains manual editing and MCP connection instructions. No modelContext interface or AI/model host was injected into browser tests.
+Actual Work17 Chromium lacks `document.modelContext.registerTool` and correctly
+reports unsupported with zero registered tools. Manual editing remains available.
+No fake interface or model host is injected into real browser acceptance.
+Mocked registration and real MCP clients test separate adapter/transport behavior;
+neither proves native WebMCP execution or a live AI session. Validate that in the
+intended supported top-level host as the [roadmap](ROADMAP.md) describes.
 
-The separate mocked contract check validates adapter behavior only. Neither it nor the real browser's unsupported path proves native WebMCP tool execution, model-host interoperability or a live AI session. Validate those separately in the intended supported top-level host. Real MCP HTTP/stdio clients remain a separate protocol check.
+## Recovery and integration history
 
-## Repository handling
+The six prepared 0.2.0 commits were restored unchanged from the size/hash-verified
+downloaded bundle into an isolated Work17 checkout. Base:
+`8d5eccdb86c128732d0216377a8bde708f19e026`; recovered head:
+`460f6e6a367b68c561828b2d2d6238dfe98b7793`.
 
-The six prepared 0.2.0 commits were restored unchanged from a size/hash-verified downloaded bundle into an isolated Work17 checkout. Base: dev `8d5eccdb86c128732d0216377a8bde708f19e026`; recovered head: `460f6e6a367b68c561828b2d2d6238dfe98b7793`. Recovery publication and draft PR #4 preserved existing dev performance history, main/dev heads and unrelated work, without force pushing.
+[PR #4](https://github.com/burhop/2Top/pull/4) integrated the tested 0.2.1 browser
+fixes into dev at `260d853eac5070fe9d36c20b7d98dd7f39591f67`. Version 0.3.0
+starts from that dev head and publishes a separate feature branch. Existing
+history and unrelated work are preserved. Main, releases, deployment and
+security/credential settings are outside these development updates.
 
-Version 0.2.1 adds bounded browser/layout fixes and synchronized package/API/README/changelog metadata. Local environments and browser artifacts remain untracked. No deployment, release, security-setting change or credential inspection is part of this development update.
+The studio does not yet expose every historical primitive or composition command.
+Exact continuity, physical simulation and native model-host interoperability are
+not claimed. This milestone continues development rather than completing 2Top.

@@ -52,7 +52,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 12
+        assert len(actual) == 14
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -253,7 +253,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 12
+        assert len((await client.list_tools()).tools) == 14
         result = await client.call_tool(
             "set_style",
             {
@@ -266,6 +266,29 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
         async with httpx.AsyncClient(trust_env=False) as http:
             current = (await http.get(url + "/api/scene")).json()
         assert current == payload(result)["scene"] == service.snapshot()
+        pose = {
+            name: current["objects"][0]["parameters"][name]
+            for name in ("x", "y", "radius", "elongation", "rotation", "warp")
+        }
+        pose["radius"] = 235
+        keyed = await client.call_tool(
+            "set_keyframe",
+            {
+                "id": "island_ember",
+                "keyframe": {"time": 2, "parameters": pose, "easing": "linear"},
+                "expected_revision": 1,
+            },
+        )
+        assert not keyed.is_error
+        assert (
+            service.get_geometry("island_ember", time_value=2).parameters["radius"]
+            == 235
+        )
+        removed = await client.call_tool(
+            "delete_keyframe", {"id": "island_ember", "time": 2, "expected_revision": 2}
+        )
+        assert not removed.is_error
+        assert service.snapshot()["objects"][0]["keyframes"] == []
 
 
 @pytest.mark.asyncio
@@ -278,7 +301,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 12
+        assert len((await stdio.list_tools()).tools) == 14
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -294,6 +317,22 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
         conflict = await stdio.call_tool("undo", {"expected_revision": 0})
         assert conflict.is_error
         assert payload(conflict)["error"]["code"] == "revision_conflict"
+        obj = service.snapshot()["objects"][1]
+        pose = {
+            name: obj["parameters"][name]
+            for name in ("x", "y", "radius", "elongation", "rotation", "warp")
+        }
+        keyed = await stdio.call_tool(
+            "set_keyframe",
+            {
+                "id": obj["id"],
+                "keyframe": {"time": 6, "parameters": pose},
+                "expected_revision": 1,
+            },
+        )
+        assert not keyed.is_error
+        observed = payload(await http_mcp.call_tool("get_scene", {}))
+        assert observed["scene"]["objects"][1]["keyframes"][0]["time"] == 6
 
 
 def test_webmcp_registration_contract_and_unsupported_fallback():
