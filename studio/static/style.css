@@ -1,3 +1,5 @@
+/* A minimum block height must not enlarge the responsive canvas's inline size. */
+.canvas-stage, .recipe-view { width: 100%; }
 :root{
   color-scheme:light;
   --paper:#f5f3ed;

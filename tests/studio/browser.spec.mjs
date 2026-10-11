@@ -277,7 +277,8 @@ test('native file chooser imports a recipe and real JSON, SVG, PNG downloads are
   await expect(page.locator('#recipe-code')).toContainText(imported.title);
   await page.getByRole('button', { name: 'Canvas', exact: true }).click();
   await settleCanvas(page);
-  const json = JSON.parse((await download(page, testInfo, 'json')).toString());
+  const savedRecipe = await download(page, testInfo, 'json');
+  const json = JSON.parse(savedRecipe.toString());
   expect(json).toEqual(imported);
   const svg = (await download(page, testInfo, 'svg')).toString();
   expect(svg).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
@@ -290,6 +291,24 @@ test('native file chooser imports a recipe and real JSON, SVG, PNG downloads are
   expect(png.readUInt32BE(20)).toBe(1400);
   expect(png.length).toBeGreaterThan(20_000);
   expect((await serverScene(request)).revision).toBe(scene.revision);
+  // Reopen the actual downloaded recipe after a new edit, not a fresh fixture.
+  await edit(page, () => page.getByRole('button', { name: 'Select Imported island', exact: true }).click());
+  const changed = await edit(page, () => page.getByRole('slider', { name: 'Island scale', exact: true }).press('ArrowRight'));
+  expect(changed.objects[0].parameters.radius).toBe(241);
+  await page.getByRole('button', { name: /^Recipe/ }).click();
+  const reopening = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Load JSON', exact: true }).click();
+  const savedChooser = await reopening;
+  const reopened = await edit(page, () => savedChooser.setFiles({
+    name: 'saved-scene.json', mimeType: 'application/json', buffer: savedRecipe,
+  }));
+  expect(reopened.title).toBe(imported.title);
+  expect(reopened.objects).toEqual(imported.objects);
+  expect((await serverScene(request)).objects).toEqual(imported.objects);
+  await page.reload();
+  await expect(page.locator('#canvas-loading')).toBeHidden();
+  await expect(page.locator('#artwork-name')).toHaveText(imported.title);
+  expect((await uiScene(page)).objects).toEqual(imported.objects);
   await screenshot(page, testInfo, 'imported-studio');
 });
 
@@ -297,7 +316,7 @@ test('invalid file import preserves the scene and valid imports still work after
   await page.getByRole('button', { name: /^Recipe/ }).click();
   const before = await serverScene(request);
   await page.locator('#recipe-file').setInputFiles({ name: 'broken.json', mimeType: 'application/json', buffer: Buffer.from('{broken') });
-  await expect(page.getByRole('status')).toHaveText('That file is not valid JSON. Your scene was not changed.');
+  await expect(page.locator('#toast')).toHaveText('That file is not valid JSON. Your scene was not changed.');
   expect((await serverScene(request)).revision).toBe(before.revision);
   const imported = structuredClone(seed);
   imported.title = 'Recovered import';
@@ -312,10 +331,15 @@ test('mobile and tablet layouts remain usable and capture actual browser screens
     await page.setViewportSize(viewport);
     await settleCanvas(page);
     const dimensions = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, viewport: innerWidth }));
+    await screenshot(page, testInfo, `responsive-${viewport.width}`);
+    const overflow = await page.evaluate(() => [...document.querySelectorAll('body *')].filter((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.width > 0 && (bounds.right > innerWidth + 1 || bounds.left < -1);
+    }).map((element) => ({ tag: element.tagName, id: element.id, className: element.className, width: element.getBoundingClientRect().width })));
+    await testInfo.attach(`layout-${viewport.width}`, { body: JSON.stringify({ ...dimensions, overflow }, null, 2), contentType: 'application/json' });
     expect(dimensions.width, `${viewport.width}px layout must not overflow horizontally`).toBeLessThanOrEqual(dimensions.viewport + 1);
     await expect(page.locator('#art-canvas')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Export/ })).toBeVisible();
-    await screenshot(page, testInfo, `responsive-${viewport.width}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await selectFirst(page);

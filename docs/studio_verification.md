@@ -1,44 +1,46 @@
-# Tidal Atlas first-version review
+# Tidal Atlas development verification
 
-Verified October 11, 2026. This is a locally runnable first implementation, with a remaining native-browser acceptance gate.
+Updated October 11, 2026 for version 0.2.1. Real browser acceptance has now executed on Work17. Native WebMCP/model-host interoperability remains a separate host-specific check.
 
 ## Implemented
 
-- Canvas-first kinetic island artwork with named layers, direct movement, shape controls, palettes, three compositions and deterministic 12-second animation.
-- Selection, timeline, undo/redo, JSON save/reopen, and real SVG/PNG export.
-- One authoritative scene/command service: strict schemas, bounded inputs, stable IDs, monotonic revisions, atomic batches, retry keys, structured failures and atomic file persistence.
-- Official MCP SDK 2.3.0 server over Streamable HTTP, plus a stdio adapter that attaches to the same running studio.
-- Feature-detected top-level browser WebMCP using document.modelContext. Unsupported browsers retain the manual editor. Registration does not imply an AI connection.
-- Reusable NumPy numeric geometry with a parity-tested JavaScript mirror, plus real BaseField/ImplicitCurve adapters, existing SceneManager save/load and GraphicsBackendInterface paths/grids.
+- Canvas-first kinetic islands with named layers, direct movement, shape controls, palettes, three compositions and deterministic 12-second animation.
+- Selection, timeline, undo/redo, JSON save/reopen and real SVG/PNG export.
+- One authoritative command service with bounded schemas, stable IDs, revisions, atomic batches, retry keys and atomic file persistence.
+- Official MCP 2.3.0 HTTP server and stdio adapter sharing the running studio.
+- Feature-detected top-level document.modelContext tools; unsupported browsers retain the manual editor. Registration does not imply an AI connection.
+- Reusable NumPy geometry and a parity-tested JavaScript mirror, with BaseField/ImplicitCurve, SceneManager and graphics-backend interoperability.
 
-The tools currently edit kinetic island recipes. The UI does not expose the entire historical geometry library. No embedded model, arbitrary expression evaluation, freeform shoreline pinning, physical simulation or exact G1/G2 construction is claimed.
+The tools edit kinetic island recipes. The UI does not expose the entire historical geometry library. No embedded model, arbitrary expression evaluation, physical simulation or exact G1/G2 construction is claimed.
 
-## Checks run
+## Real Chromium acceptance
 
-The full repository `tests/` suite ran in a freshly installed environment using the updated uv lockfile, Python 3.12.14:
+All nine Playwright Chromium cases passed locally against an ephemeral loopback service. They exercise real canvas rendering, keyboard selection, duplicate/remove/undo, pointer drag and Escape cancellation, native range preview/commit with undo/redo, controls during a delayed real request, presets/palettes/playback, invalid import recovery and responsive layouts.
 
-- 1,157 passed
-- 27 skipped because the legacy curves.db dataset or opt-in visual baseline configuration was unavailable
-- 41 legacy numeric/runtime warnings
+The interchange case uses a native file chooser, validates real JSON/SVG/PNG downloads, changes the scene, reopens the actual downloaded JSON and checks restored objects after page reload. PNG signature and 2000x1400 dimensions, SVG paths and titles, and shared-service state are asserted. Uncaught JavaScript, unexpected HTTP and browser console errors fail the suite.
 
-The studio portion contains 119 tests. Coverage includes field/contour parity, scaled gradients, geometric roundtrip, old-interface composition, scene persistence, atomic rollback, failed disk writes, concurrent edits, stale revisions, exact request replay, invalid data and real MCP clients. Current protocol 2026-07-28 negotiated over both HTTP and stdio; legacy 2025-11-25 was also checked in-process.
+The published 0.2.0 head passed Python/shared-scene CI but failed two Chromium cases: an ambiguous status locator and 29 pixels of horizontal canvas overflow at a 390-pixel viewport. Version 0.2.1 targets the notification precisely and gives the canvas/recipe workspace an explicit container width, preventing minimum-height/aspect-ratio sizing from enlarging it horizontally.
 
-36 JavaScript DOM/service/native-render checks passed against the real Python SceneService. They cover direct drag and Escape cancellation, preview/commit sliders, pending-command races, stale-write recovery, extreme valid inspector values, duplication at bounds, recipe import, export content, and actual 2000×1400 PNG encoding. The browser API contract test passed using an explicitly mocked WebMCP implementation.
+Desktop (1440x1100), phone (390x844) and tablet (820x1180) screenshots were visually inspected after the fix. The phone canvas fits its column and controls/footer remain visible; no unintended clipping or horizontal overflow was observed at these checked sizes. This does not establish usability at every viewport, assistive technology or browser engine.
 
-Repository-wide Ruff lint and formatting both pass. A separate mechanical-formatting commit fixes ten inherited Markdown code-example files, with no production Python changes. The existing remote CI has not been rerun because no changes were pushed. The inherited workflow now installs the studio test dependencies; its repository-wide lint and formatting gates remain required. A new independent studio workflow runs scoped lint/format checks, the full test suite, WebMCP contract tests, DOM behavior tests and nine actual Chromium acceptance cases with downloadable screenshots/traces. Those Chromium cases were discovered successfully but have not yet executed.
+Run `npm run test:browser`. Screenshots, downloads, videos, traces, layout diagnostics and the HTML report are saved in `test-results/browser/` and `playwright-report/`; CI uploads the same evidence. See [PR #4](https://github.com/burhop/2Top/pull/4) for the final exact commit and current CI results.
 
-A wheel was built and extracted outside the source checkout. Its imports, static UI assets and engine-backed /api/geometry endpoint passed an installation smoke test. The packaging now includes required visual_tests subpackages used by the existing graphics backend.
+## Other required gates and historical evidence
 
-## Remaining acceptance gate
+Required development checks are the full `tests/` Python suite, JavaScript DOM/service checks, the explicitly mocked WebMCP contract check, repository-wide Ruff lint/formatting and real Chromium acceptance. Existing CI gates remain enabled. Dev integration requires passing local application checks and required CI for the final head; main remains unchanged.
 
-Actual browser layout, real pointer/accessibility behavior, browser download prompts, rendering performance and native WebMCP/model-host interoperability have not been verified. The build environment's cloud browser rejected loopback navigation with ERR_BLOCKED_BY_CLIENT, and standalone Chromium could not open required Unix sockets. No tunnel, public deployment or security bypass was used.
+The 0.2.0 handoff reported 1,157 Python tests passed, 27 skipped for unavailable curves.db data or opt-in visual baselines, and 41 inherited numeric/runtime warnings. These historical results do not substitute for checks on the current commit. The 119 studio tests cover geometry parity/legacy interoperability, persistence, rollback, concurrent/stale edits, retry keys, invalid data and real MCP HTTP/stdio clients. Earlier DOM/native-render counts and the mocked adapter check are distinct from real browser acceptance.
 
-The accompanying PNG and 12-second GIF use the app's real canvas drawing code. They are artwork renders, not screenshots of a verified browser UI and not evidence of a live AI session.
+The handoff also checked a built wheel outside the source checkout. Its artwork PNG/GIF were canvas renders rather than browser screenshots; current Playwright screenshots provide separate real-browser evidence.
 
-Before treating this as release-ready, run `python -m studio.app` in an authorized local environment and test the browser UI and intended MCP/WebMCP host. Instructions are in the main README and docs/tidal_atlas.md.
+## Native WebMCP limitation
+
+Actual local Chromium reports `nativeRegisterToolAvailable: false`, `supported: false`, `registered: 0` and `reason: browser-unsupported`. The page retains manual editing and MCP connection instructions. No modelContext interface or AI/model host was injected into browser tests.
+
+The separate mocked contract check validates adapter behavior only. Neither it nor the real browser's unsupported path proves native WebMCP tool execution, model-host interoperability or a live AI session. Validate those separately in the intended supported top-level host. Real MCP HTTP/stdio clients remain a separate protocol check.
 
 ## Repository handling
 
-The initial review used main commit 21e9b37df4e4cb72d16306b0be782ed190e8ae57. Per the subsequent development instruction, the feature commits were rebased onto dev commit 8d5eccdb86c128732d0216377a8bde708f19e026 for version 0.2.0. Existing dev performance work and branch history are retained; main-only merge commits are not imported. The new studio creates detached immutable geometry snapshots, so its renderer does not reuse stale parameter-dependent legacy caches.
+The six prepared 0.2.0 commits were restored unchanged from a size/hash-verified downloaded bundle into an isolated Work17 checkout. Base: dev `8d5eccdb86c128732d0216377a8bde708f19e026`; recovered head: `460f6e6a367b68c561828b2d2d6238dfe98b7793`. Recovery publication and draft PR #4 preserved existing dev performance history, main/dev heads and unrelated work, without force pushing.
 
-Local versioned feature commits exist. Publication is currently blocked: shell Git has no credentials and the connected integration returned HTTP403 Resource not accessible by integration when creating the feature ref. No remote branch or PR was created. No merge, deployment, or remote setting change occurred. A nine-case real Chromium suite and artifact-producing GitHub Actions job are ready, but cannot run remotely until publication is available.
+Version 0.2.1 adds bounded browser/layout fixes and synchronized package/API/README/changelog metadata. Local environments and browser artifacts remain untracked. No deployment, release, security-setting change or credential inspection is part of this development update.
