@@ -20,15 +20,15 @@ const schema = {type:'object',properties:{expected_revision:{type:'integer'}},re
 document.modelContext = { registerTool: async (tool) => registered.push(tool) };
 let sent;
 globalThis.fetch = async (path, options) => {
-  if (path === '/api/tools') return {ok:true,json:async()=>['set_view','set_keyframe','delete_keyframe'].map(name=>({name,description:name,inputSchema:schema,annotations:{readOnlyHint:false}}))};
+  if (path === '/api/tools') return {ok:true,json:async()=>['set_view','set_keyframe','delete_keyframe','edit_keyframe'].map(name=>({name,description:name,inputSchema:schema,annotations:{readOnlyHint:false}}))};
   sent = {path,options};
   if (JSON.parse(options.body).expected_revision === 0) return {ok:true,json:async()=>({ok:true,scene:{revision:1}})};
   return {ok:false,status:409,json:async()=>({ok:false,error:{code:'revision_conflict',message:'Read scene again'}})};
 };
 adapter = await load('supported');
-assert.equal((await adapter.registerWebMCP()).registered, 3);
+assert.equal((await adapter.registerWebMCP()).registered, 4);
 await adapter.registerWebMCP();
-assert.equal(registered.length, 3);
+assert.equal(registered.length, 4);
 assert.deepEqual(registered[0].inputSchema, schema);
 // Presentation callbacks must not turn a committed edit into a tool failure.
 await adapter.registerWebMCP({onScene: () => {throw Error('render failed')}, onStatus: () => {throw Error('badge failed')}});
@@ -53,7 +53,7 @@ await assert.rejects(registered[0].execute({expected_revision:1}, {signal:contro
 assert.equal(calls, 1);
 assert.equal(events.filter(e => e.type === 'tidal:scene').length, 1);
 assert.ok(warnings.length >= 2, 'Observer errors were isolated and reported');
-for (const name of ['set_keyframe','delete_keyframe']) {
+for (const name of ['set_keyframe','delete_keyframe','edit_keyframe']) {
   const argumentsValue = {expected_revision:2,id:'island_ember',time:6};
   globalThis.fetch = async (path, options) => {
     assert.equal(path, `/api/tools/${name}`);

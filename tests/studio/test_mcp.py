@@ -52,7 +52,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 14
+        assert len(actual) == 15
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -253,7 +253,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 14
+        assert len((await client.list_tools()).tools) == 15
         result = await client.call_tool(
             "set_style",
             {
@@ -301,7 +301,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 14
+        assert len((await stdio.list_tools()).tools) == 15
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -333,6 +333,63 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
         assert not keyed.is_error
         observed = payload(await http_mcp.call_tool("get_scene", {}))
         assert observed["scene"]["objects"][1]["keyframes"][0]["time"] == 6
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_authors_and_retimes_shared_motion_path(live_studio):
+    url, service = live_studio
+    recipe = json.loads((ROOT / "examples/tidal_atlas_choreography.json").read_text())
+    island = recipe["objects"][0]
+    async with (
+        http_mcp_client(url + "/mcp/") as client,
+        httpx.AsyncClient(trust_env=False) as http,
+    ):
+        loaded = await client.call_tool(
+            "load_recipe", {"recipe": recipe, "expected_revision": 0}
+        )
+        assert not loaded.is_error
+        args = {
+            "id": island["id"],
+            "time": 3,
+            "new_time": 7.5,
+            "position": {"x": 550, "y": 150},
+            "expected_revision": 1,
+            "request_id": "mcp_motion",
+        }
+        edited = payload(await client.call_tool("edit_keyframe", args))
+        observed = payload(await client.call_tool("get_scene", {}))["scene"]
+        assert (
+            observed
+            == edited["scene"]
+            == (await http.get(url + "/api/scene")).json()
+            == service.snapshot()
+        )
+        keys = observed["objects"][0]["keyframes"]
+        assert [key["time"] for key in keys] == [0, 6, 7.5, 9, 12]
+        assert keys[2]["parameters"] == {
+            **island["keyframes"][1]["parameters"],
+            "x": 550,
+            "y": 150,
+        }
+        assert service.get_geometry(island["id"], time_value=7.5).parameters["x"] == 550
+        assert (
+            payload(await client.call_tool("edit_keyframe", args))["replayed"] is True
+        )
+        collision = await client.call_tool(
+            "edit_keyframe",
+            {"id": island["id"], "time": 7.5, "new_time": 6, "expected_revision": 2},
+        )
+        assert (
+            collision.is_error
+            and payload(collision)["error"]["code"] == "keyframe_collision"
+        )
+        assert service.snapshot() == observed
+        undone = await http.post(
+            url + "/api/command", json={"op": "undo", "expected_revision": 2}
+        )
+        assert undone.status_code == 200
+        restored = payload(await client.call_tool("get_scene", {}))["scene"]
+        assert restored["objects"] == recipe["objects"]
 
 
 def test_webmcp_registration_contract_and_unsupported_fallback():

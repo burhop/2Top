@@ -39,8 +39,9 @@
           <section class="choreography-panel" aria-label="Island choreography">
             <div class="choreography-top"><div><h2>Island choreography</h2><p id="keyframe-summary">Select an island to capture its poses.</p></div><button class="small-button" id="demo-button">Play demo</button></div>
             <div class="pose-actions"><button class="small-button pose-primary" id="capture-keyframe" disabled>Capture pose</button><button class="small-button" id="delete-keyframe" disabled>Delete key</button><label class="pose-easing">Easing <select id="keyframe-easing" aria-label="Keyframe interpolation"><option value="smooth">Smooth</option><option value="linear">Linear</option></select></label></div>
+            <div class="motion-actions"><button class="small-button" id="motion-path-button" aria-pressed="false" disabled>Edit motion path</button><label class="pose-easing">Key time <input id="key-time-input" type="number" min="0" max="12" step="0.01" required aria-label="Selected key time" disabled></label><button class="small-button" id="retime-keyframe" disabled>Move key</button><span id="seam-status">Loop seam: add 0s and 12s poses</span></div>
             <div id="keyframe-list" class="keyframe-list" role="group" aria-label="Pose keyframes"></div>
-            <p class="choreography-hint">Scrub, then capture. Editing an animated island adds a pose here. Match 0s and 12s for a seamless loop.</p>
+            <p class="choreography-hint">Choose Edit motion path, then drag a labeled pose. Select a pose chip to change its time; occupied times are rejected. The path shows authored centers, before the tide effect.</p>
           </section>
           <div class="agent-bar"><div class="agent-orb" aria-hidden="true">✳</div><div class="agent-bar-copy"><strong>Co-create with your agent</strong><span id="agent-hint">Connect an MCP client or a WebMCP-enabled browser to edit this canvas.</span></div><button class="small-button" id="connect-button">Connect <span>↗</span></button></div>
         </section>

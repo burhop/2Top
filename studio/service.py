@@ -230,9 +230,36 @@ class DeleteKeyframe(StrictModel):
     time: float = Field(ge=0, le=12)
 
 
+class KeyPosition(StrictModel):
+    x: float = Field(ge=-1000, le=2000)
+    y: float = Field(ge=-700, le=1400)
+
+
+class EditKeyframe(StrictModel):
+    op: Literal["edit_keyframe"]
+    id: Identifier
+    time: float = Field(ge=0, le=12)
+    new_time: float | None = Field(None, ge=0, le=12)
+    position: KeyPosition | None = None
+
+    @model_validator(mode="after")
+    def has_edit(self):
+        if self.new_time is None and self.position is None:
+            raise ValueError("Supply new_time or a complete x/y position")
+        return self
+
+
 Child = Annotated[
     Union[
-        Create, Update, Delete, SetStyle, SetView, Select, SetKeyframe, DeleteKeyframe
+        Create,
+        Update,
+        Delete,
+        SetStyle,
+        SetView,
+        Select,
+        SetKeyframe,
+        DeleteKeyframe,
+        EditKeyframe,
     ],
     Field(discriminator="op"),
 ]
@@ -275,6 +302,10 @@ class DeleteKeyframeCommand(DeleteKeyframe, Mutation):
     pass
 
 
+class EditKeyframeCommand(EditKeyframe, Mutation):
+    pass
+
+
 class BatchCommand(Mutation):
     op: Literal["batch"]
     label: Name = "Compose artwork"
@@ -303,6 +334,7 @@ COMMAND_MODELS = {
     "select": SelectCommand,
     "set_keyframe": KeyframeCommand,
     "delete_keyframe": DeleteKeyframeCommand,
+    "edit_keyframe": EditKeyframeCommand,
     "batch": BatchCommand,
     "undo": UndoCommand,
     "redo": RedoCommand,
@@ -322,6 +354,7 @@ DESCRIPTIONS = {
     "select": "Set selected island IDs, visible in the manual inspector. Requires latest revision.",
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
+    "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
     "batch": "Apply up to 32 enumerated edits atomically with one undo step. Failure leaves the artwork unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
@@ -693,6 +726,7 @@ class SceneService:
                     "delete_geometry": "Remove island",
                     "set_keyframe": "Capture island pose",
                     "delete_keyframe": "Remove island pose",
+                    "edit_keyframe": "Edit island motion key",
                 }[parsed.op]
             candidate["document_id"] = before["document_id"]
             candidate["revision"] = before["revision"] + 1
@@ -800,6 +834,22 @@ class SceneService:
                     "keyframe_limit", "An island supports at most 24 keyframes"
                 )
             obj["keyframes"] = keys
+        elif command.op == "edit_keyframe":
+            key = next((k for k in obj["keyframes"] if k["time"] == command.time), None)
+            if key is None:
+                raise SceneError(
+                    "keyframe_not_found", "No keyframe at that exact time", status=404
+                )
+            target_time = command.time if command.new_time is None else command.new_time
+            if any(k is not key and k["time"] == target_time for k in obj["keyframes"]):
+                raise SceneError(
+                    "keyframe_collision",
+                    "That time already has a pose. Choose an unoccupied time.",
+                )
+            key["time"] = target_time
+            if command.position is not None:
+                key["parameters"].update(command.position.model_dump())
+            obj["keyframes"].sort(key=lambda k: k["time"])
         elif command.op == "delete_keyframe":
             keys = [k for k in obj["keyframes"] if k["time"] != command.time]
             if len(keys) == len(obj["keyframes"]):
