@@ -40,6 +40,8 @@ TOOL_NAMES = frozenset(
         "undo",
         "redo",
         "load_recipe",
+        "set_keyframe",
+        "delete_keyframe",
     }
 )
 

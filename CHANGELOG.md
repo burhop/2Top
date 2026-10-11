@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - 2026-10-11 (development)
+
+- Author up to 24 complete poses per island for position, scale, stretch, rotation and curl; interpolate deterministically with linear or smooth easing.
+- Capture, select, replace and delete pose keys; keyed drags/sliders freeze the playhead and commit one reversible action. Duplicate preserves and offsets choreography.
+- Share validated `set_keyframe`/`delete_keyframe` commands across manual UI, real MCP HTTP/stdio and the browser adapter; retain revision checks, atomic batches, persistence and undo/redo.
+- Add the Orbit & bloom creative demo and version-2 JSON interchange; migrate existing schema-1 recipes without changing base parameters or adding motion tracks.
+- Add interpolation/parity, malformed-input, persistence, MCP and real-browser regression coverage. Native WebMCP host verification remains pending.
+
 ## 0.2.1 — 2026-10-11 (development)
 
 - Keep the canvas and recipe workspace within their responsive column; fix the 29-pixel horizontal overflow reproduced at a 390-pixel phone viewport.

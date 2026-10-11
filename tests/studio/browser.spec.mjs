@@ -7,10 +7,15 @@ import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
+const legacySeed = structuredClone(seed);
+// Canonical expected state; schema-1 migration itself has explicit coverage below.
+seed.schema_version = 2;
+seed.objects.forEach(object => { object.keyframes = []; });
 const first = seed.objects[0];
 
 const test = base.extend({
-  page: async ({ page, request }, use, testInfo) => {
+  expectedHttpFailures: async ({}, use) => { await use(new Set()); },
+  page: async ({ page, request, expectedHttpFailures }, use, testInfo) => {
     const errors = [];
     page.on('pageerror', (error) => errors.push({ kind: 'pageerror', message: error.message }));
     page.on('console', (message) => {
@@ -18,10 +23,11 @@ const test = base.extend({
       // Chromium may ask for an optional favicon that this app does not provide.
       const url = message.location().url;
       if (url && new URL(url).pathname === '/favicon.ico' && /404/.test(message.text())) return;
+      if (url && [...expectedHttpFailures].some(entry => entry.endsWith(' ' + new URL(url).pathname) && message.text().includes(entry.split(' ')[0]))) return;
       errors.push({ kind: 'console', message: message.text(), url });
     });
     page.on('response', (response) => {
-      if (response.status() >= 400 && new URL(response.url()).pathname !== '/favicon.ico') {
+      if (response.status() >= 400 && new URL(response.url()).pathname !== '/favicon.ico' && !expectedHttpFailures.has(`${response.status()} ${new URL(response.url()).pathname}`)) {
         errors.push({ kind: 'http', status: response.status(), url: response.url() });
       }
     });
@@ -121,8 +127,8 @@ test('loads and paints the real canvas without claiming an AI connection', async
   expect(capability.status.supported).toBe(capability.nativeRegisterToolAvailable);
   expect(capability.status.error).toBeNull();
   if (capability.nativeRegisterToolAvailable) {
-    expect(capability.status.registered).toBe(12);
-    await expect(page.locator('#agent-hint')).toContainText('12 browser tools registered');
+    expect(capability.status.registered).toBe(14);
+    await expect(page.locator('#agent-hint')).toContainText('14 browser tools registered');
   } else {
     expect(capability.status.registered).toBe(0);
     expect(capability.status.reason).toBe('browser-unsupported');
@@ -350,4 +356,101 @@ test('mobile and tablet layouts remain usable and capture actual browser screens
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
+});
+// Key edits below use real buttons, keyboard range gestures and native pointers.
+test('pose keys interpolate deterministically and pointer edits remain undoable', async ({ page, request }, testInfo) => {
+  await selectFirst(page);
+  let scene = await edit(page, () => page.getByRole('button', { name: 'Capture pose', exact: true }).click());
+  expect(scene.objects[0].keyframes.map(key => key.time)).toEqual([0]);
+  const timeline = page.getByRole('slider', { name: 'Animation playhead', exact: true });
+  await edit(page, () => timeline.press('End'));
+  scene = await edit(page, () => page.getByRole('slider', { name: 'Island scale', exact: true }).press('End'));
+  expect(scene.animation.playing).toBe(false);
+  expect(scene.objects[0].keyframes.map(key => key.time)).toEqual([0, 12]);
+  expect(scene.objects[0].keyframes[1].parameters.radius).toBe(400);
+  scene = await edit(page, () => page.getByRole('button', { name: 'Undo', exact: true }).click());
+  expect(scene.objects[0].keyframes).toHaveLength(1);
+  await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
+  await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 0.00 seconds', exact: true }).click());
+  await edit(page, () => page.getByLabel('Keyframe interpolation').selectOption('linear'));
+  for (let i = 0; i < 5; i++) await edit(page, () => timeline.press('PageUp'));
+  await expect(timeline).toHaveValue('6');
+  const midpoint = await page.evaluate(id => window.tidalStudio.getPose(id, 6), first.id);
+  expect(midpoint.radius).toBe(307.5);
+  await expect(page.locator('#radius-output')).toHaveText('308 px');
+  const start = await canvasPoint(page, { parameters: midpoint });
+  await page.mouse.move(start.x, start.y); await page.mouse.down();
+  await page.mouse.move(start.x + 40, start.y - 20, { steps: 5 });
+  scene = await edit(page, () => page.mouse.up());
+  expect(scene.objects[0].keyframes.map(key => key.time)).toEqual([0, 6, 12]);
+  expect(scene.objects[0].parameters).toEqual(first.parameters);
+  expect(scene.objects[0].keyframes[1].parameters.x).toBeCloseTo(midpoint.x + 40 / start.scale, 1);
+  await edit(page, () => page.getByRole('button', { name: 'Undo', exact: true }).click());
+  expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
+  await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
+  const saved = await download(page, testInfo, 'json');
+  expect(JSON.parse(saved).schema_version).toBe(2);
+  await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
+  expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
+  await page.getByRole('button', { name: /^Recipe/ }).click();
+  const choosing = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Load JSON', exact: true }).click();
+  const chooser = await choosing;
+  scene = await edit(page, () => chooser.setFiles({ name: 'choreography.json', mimeType: 'application/json', buffer: saved }));
+  expect(scene.objects[0].keyframes).toEqual(JSON.parse(saved).objects[0].keyframes);
+  expect((await serverScene(request)).objects).toEqual(scene.objects);
+  await page.reload(); await expect(page.locator('#canvas-loading')).toBeHidden();
+  await selectFirst(page);
+  await expect(page.getByRole('button', { name: 'Go to keyframe 6.00 seconds', exact: true })).toBeVisible();
+  await screenshot(page, testInfo, 'keyframe-editor');
+});
+
+test('Orbit and bloom is reproducible, plays independent island poses and fits a phone', async ({ page, request }, testInfo) => {
+  let scene = await edit(page, () => page.getByRole('button', { name: 'Play demo', exact: true }).click());
+  expect(scene.title).toBe('Orbit & bloom');
+  expect(scene.animation.playing).toBe(true);
+  await edit(page, () => page.getByRole('button', { name: 'Pause animation', exact: true }).click());
+  expect(scene.objects.every(object => object.keyframes.length === 5)).toBe(true);
+  await selectFirst(page);
+  await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 0.00 seconds', exact: true }).click());
+  const initial = await page.locator('#art-canvas').evaluate(canvas => canvas.toDataURL());
+  const pose0 = await page.evaluate(id => window.tidalStudio.getPose(id, 0), first.id);
+  await screenshot(page, testInfo, 'choreography-desktop-0s');
+  await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 6.00 seconds', exact: true }).click());
+  await settleCanvas(page);
+  const pose6 = await page.evaluate(id => window.tidalStudio.getPose(id, 6), first.id);
+  expect(Math.abs(pose6.x - pose0.x)).toBeGreaterThan(300);
+  expect(await page.locator('#art-canvas').evaluate(canvas => canvas.toDataURL())).not.toBe(initial);
+  await screenshot(page, testInfo, 'choreography-desktop-6s');
+  await edit(page, () => page.getByRole('button', { name: 'Play animation', exact: true }).click());
+  await expect.poll(async () => (await serverScene(request)).animation.time).toBeGreaterThan(6.05);
+  scene = await edit(page, () => page.getByRole('button', { name: 'Pause animation', exact: true }).click());
+  expect(scene.animation.playing).toBe(false);
+  await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 6.00 seconds', exact: true }).click());
+  await page.setViewportSize({ width: 390, height: 844 }); await settleCanvas(page);
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(width).toBeLessThanOrEqual(391);
+  await expect(page.getByRole('button', { name: 'Update pose', exact: true })).toBeVisible();
+  await screenshot(page, testInfo, 'choreography-phone');
+  await edit(page, () => page.getByRole('button', { name: 'Duplicate', exact: true }).click());
+  const duplicate = (await uiScene(page)).objects.at(-1);
+  expect(duplicate.keyframes).toHaveLength(5);
+  expect(duplicate.keyframes[2].parameters.x).toBe(pose6.x + 35);
+});
+
+test('malformed choreography is rejected and a legacy recipe still reopens', async ({ page, request, expectedHttpFailures }) => {
+  await page.getByRole('button', { name: /^Recipe/ }).click();
+  const invalid = structuredClone(seed), before = await serverScene(request);
+  const pose = Object.fromEntries(['x','y','radius','elongation','rotation','warp'].map(name => [name, first.parameters[name]]));
+  invalid.objects[0].keyframes = [{ time: 0, parameters: pose, easing: 'smooth' }, { time: 0, parameters: pose, easing: 'smooth' }];
+  expectedHttpFailures.add('400 /api/command');
+  const rejected = page.waitForResponse(response => new URL(response.url()).pathname === '/api/command' && response.status() === 400);
+  await page.locator('#recipe-file').setInputFiles({ name: 'duplicate-keys.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(invalid)) });
+  expect((await (await rejected).json()).error.code).toBe('validation_error');
+  await expect(page.locator('#toast')).toHaveText('Command validation failed');
+  expect((await serverScene(request)).revision).toBe(before.revision);
+  const scene = await edit(page, () => page.locator('#recipe-file').setInputFiles({ name: 'legacy-0.2.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(legacySeed)) }));
+  expect(scene.schema_version).toBe(2);
+  expect(scene.objects.every(object => object.keyframes.length === 0)).toBe(true);
+  expect(scene.objects[0].parameters).toEqual(legacySeed.objects[0].parameters);
 });

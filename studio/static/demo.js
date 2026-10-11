@@ -1,0 +1,266 @@
+// Orbit & bloom: authored, deterministic choreography; no AI provider.
+export const demoRecipe = {
+  "schema_version": 2,
+  "title": "Orbit & bloom",
+  "objects": [
+    {
+      "id": "island_ember",
+      "name": "Solstice",
+      "type": "island",
+      "parameters": {
+        "x": 300,
+        "y": 360,
+        "radius": 185,
+        "elongation": 1.1,
+        "rotation": -24,
+        "lobes": 3,
+        "warp": 0.68,
+        "phase": 0.4
+      },
+      "style": {
+        "palette": "ember",
+        "opacity": 1,
+        "visible": true
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "parameters": {
+            "x": 300,
+            "y": 360,
+            "radius": 185,
+            "elongation": 1.1,
+            "rotation": -24,
+            "warp": 0.68
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 3,
+          "parameters": {
+            "x": 470,
+            "y": 225,
+            "radius": 145,
+            "elongation": 1.4,
+            "rotation": 55,
+            "warp": 0.4
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 6,
+          "parameters": {
+            "x": 670,
+            "y": 385,
+            "radius": 200,
+            "elongation": 0.95,
+            "rotation": 155,
+            "warp": 0.86
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 9,
+          "parameters": {
+            "x": 435,
+            "y": 505,
+            "radius": 165,
+            "elongation": 1.2,
+            "rotation": 55,
+            "warp": 0.4
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 12,
+          "parameters": {
+            "x": 300,
+            "y": 360,
+            "radius": 185,
+            "elongation": 1.1,
+            "rotation": -24,
+            "warp": 0.68
+          },
+          "easing": "smooth"
+        }
+      ]
+    },
+    {
+      "id": "island_lagoon",
+      "name": "Undertow",
+      "type": "island",
+      "parameters": {
+        "x": 700,
+        "y": 330,
+        "radius": 170,
+        "elongation": 0.95,
+        "rotation": 151,
+        "lobes": 3,
+        "warp": 0.72,
+        "phase": 2.2
+      },
+      "style": {
+        "palette": "lagoon",
+        "opacity": 1,
+        "visible": true
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "parameters": {
+            "x": 700,
+            "y": 330,
+            "radius": 170,
+            "elongation": 0.95,
+            "rotation": 151,
+            "warp": 0.72
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 3,
+          "parameters": {
+            "x": 590,
+            "y": 505,
+            "radius": 205,
+            "elongation": 1.3,
+            "rotation": 100,
+            "warp": 0.85
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 6,
+          "parameters": {
+            "x": 335,
+            "y": 355,
+            "radius": 150,
+            "elongation": 1.1,
+            "rotation": -35,
+            "warp": 0.45
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 9,
+          "parameters": {
+            "x": 550,
+            "y": 215,
+            "radius": 180,
+            "elongation": 1.4,
+            "rotation": 90,
+            "warp": 0.65
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 12,
+          "parameters": {
+            "x": 700,
+            "y": 330,
+            "radius": 170,
+            "elongation": 0.95,
+            "rotation": 151,
+            "warp": 0.72
+          },
+          "easing": "smooth"
+        }
+      ]
+    },
+    {
+      "id": "island_moon",
+      "name": "Drift",
+      "type": "island",
+      "parameters": {
+        "x": 770,
+        "y": 560,
+        "radius": 80,
+        "elongation": 1.1,
+        "rotation": 15,
+        "lobes": 4,
+        "warp": 0.42,
+        "phase": 4.0
+      },
+      "style": {
+        "palette": "aurora",
+        "opacity": 1,
+        "visible": true
+      },
+      "keyframes": [
+        {
+          "time": 0,
+          "parameters": {
+            "x": 770,
+            "y": 560,
+            "radius": 80,
+            "elongation": 1.1,
+            "rotation": 15,
+            "warp": 0.42
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 3,
+          "parameters": {
+            "x": 260,
+            "y": 500,
+            "radius": 90,
+            "elongation": 1.6,
+            "rotation": 90,
+            "warp": 0.7
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 6,
+          "parameters": {
+            "x": 280,
+            "y": 170,
+            "radius": 105,
+            "elongation": 0.8,
+            "rotation": 175,
+            "warp": 0.35
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 9,
+          "parameters": {
+            "x": 770,
+            "y": 220,
+            "radius": 95,
+            "elongation": 1.3,
+            "rotation": 60,
+            "warp": 0.6
+          },
+          "easing": "smooth"
+        },
+        {
+          "time": 12,
+          "parameters": {
+            "x": 770,
+            "y": 560,
+            "radius": 80,
+            "elongation": 1.1,
+            "rotation": 15,
+            "warp": 0.42
+          },
+          "easing": "smooth"
+        }
+      ]
+    }
+  ],
+  "view": {
+    "zoom": 1,
+    "pan_x": 0,
+    "pan_y": 0,
+    "grid": false,
+    "contours": 28
+  },
+  "animation": {
+    "playing": false,
+    "time": 0,
+    "speed": 1,
+    "motion": 0.12
+  }
+};
