@@ -221,3 +221,7 @@ scratch/
 review_artifacts/
 .verify-venv/
 node_modules/
+
+# Browser verification outputs
+playwright-report/
+test-results/

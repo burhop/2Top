@@ -1,12 +1,15 @@
 {
   "name": "2top-tidal-atlas-studio",
   "private": true,
-  "description": "Development-only DOM and canvas checks for the local Tidal Atlas studio.",
+  "description": "Development-only DOM, canvas, and real-browser checks for the local Tidal Atlas studio.",
   "scripts": {
-    "test:ui": "node tests/studio/frontend-smoke.mjs"
+    "test:ui": "node tests/studio/frontend-smoke.mjs",
+    "test:browser": "playwright test",
+    "test:browser:list": "playwright test --list"
   },
   "devDependencies": {
     "@napi-rs/canvas": "1.0.11",
+    "@playwright/test": "1.64.0",
     "jsdom": "30.1.2"
   },
   "type": "module",
