@@ -174,10 +174,11 @@ class Blend(StrictModel):
 
 
 class Recipe(StrictModel):
-    schema_version: Literal[3] = 3
+    schema_version: Literal[4] = 4
     title: Name = "Tidal Atlas"
     objects: list[Island] = Field(max_length=16)
     blends: list[Blend] = Field(default_factory=list, max_length=2)
+    layer_order: list[Identifier] = Field(max_length=18)
     view: View = Field(default_factory=View)
     animation: Animation = Field(default_factory=Animation)
 
@@ -186,26 +187,51 @@ class Recipe(StrictModel):
         schema = handler(core_schema)
         version = schema["properties"]["schema_version"]
         version.pop("const", None)
-        version["enum"] = [1, 2, 3]
+        version["enum"] = [1, 2, 3, 4]
+        schema["required"].remove("layer_order")
+        schema["allOf"] = [
+            {
+                "if": {
+                    "properties": {"schema_version": {"const": 4}},
+                    "required": ["schema_version"],
+                },
+                "then": {"required": ["layer_order"]},
+            }
+        ]
         return schema
 
     @model_validator(mode="before")
     @classmethod
     def migrate_legacy(cls, values):
-        if (
-            isinstance(values, dict)
-            and type(values.get("schema_version")) is int
-            and values["schema_version"] in {1, 2}
-        ):
-            return {**values, "schema_version": 3}
+        if not isinstance(values, dict):
+            return values
+        legacy = type(values.get("schema_version")) is int and values[
+            "schema_version"
+        ] in {1, 2, 3}
+        construction = "schema_version" not in values and "layer_order" not in values
+        if legacy or construction:
+            order = []
+            for field in ("objects", "blends"):
+                items = values.get(field, [])
+                if isinstance(items, list):
+                    for item in items:
+                        if isinstance(item, (Island, Blend)):
+                            order.append(item.id)
+                        elif isinstance(item, dict) and "id" in item:
+                            order.append(item["id"])
+            return {**values, "schema_version": 4, "layer_order": order}
         return values
 
     @model_validator(mode="after")
     def static_references(self):
         islands = {obj.id: obj for obj in self.objects}
         ids = [obj.id for obj in self.objects] + [blend.id for blend in self.blends]
-        if self.blends and len(ids) != len(set(ids)):
+        if len(ids) != len(set(ids)):
             raise ValueError("Island and blend IDs must be globally unique")
+        if len(self.layer_order) != len(ids) or set(self.layer_order) != set(ids):
+            raise ValueError(
+                "Layer order must contain every island and blend ID exactly once"
+            )
         for blend in self.blends:
             if blend.source_a == blend.source_b:
                 raise ValueError("Choose two distinct source islands")
@@ -246,6 +272,11 @@ class SetStyle(StrictModel):
     style: StylePatch
 
 
+class ReorderLayers(StrictModel):
+    op: Literal["reorder_layers"]
+    order: list[Identifier] = Field(max_length=18)
+
+
 class SetView(StrictModel):
     op: Literal["set_view"]
     view: ViewPatch = Field(default_factory=ViewPatch)
@@ -254,7 +285,7 @@ class SetView(StrictModel):
 
 class Select(StrictModel):
     op: Literal["select"]
-    ids: list[Identifier] = Field(max_length=16)
+    ids: list[Identifier] = Field(max_length=18)
 
 
 class SetKeyframe(StrictModel):
@@ -320,6 +351,7 @@ Child = Annotated[
         Update,
         Delete,
         SetStyle,
+        ReorderLayers,
         SetView,
         Select,
         SetKeyframe,
@@ -351,6 +383,10 @@ class DeleteCommand(Delete, Mutation):
 
 
 class StyleCommand(SetStyle, Mutation):
+    pass
+
+
+class ReorderLayersCommand(ReorderLayers, Mutation):
     pass
 
 
@@ -410,6 +446,7 @@ COMMAND_MODELS = {
     "update_geometry": UpdateCommand,
     "delete_geometry": DeleteCommand,
     "set_style": StyleCommand,
+    "reorder_layers": ReorderLayersCommand,
     "set_view": ViewCommand,
     "select": SelectCommand,
     "set_keyframe": KeyframeCommand,
@@ -435,16 +472,17 @@ DESCRIPTIONS = {
     "create_geometry": "Create a bounded declarative island field. Positive radii are world units; rotation is degrees. Requires latest revision.",
     "update_geometry": "Modify named parameters of one island, preserving all unspecified parameters. Requires latest revision.",
     "delete_geometry": "Remove one island. Reversible with undo. Requires latest revision.",
-    "set_style": "Change one island's palette, visibility or opacity. Requires latest revision.",
+    "set_style": "Change one island or blend layer's palette, visibility or opacity (0.05..1). Opacity composites the complete layer once; hiding a blend restores separate source artwork. Source visibility never removes its field from a blend. Requires latest revision.",
+    "reorder_layers": "Set every island and blend ID exactly once, back to front. Unknown, duplicate or missing IDs fail atomically. Consumed source artwork retains its position for when its blend is hidden/removed. Requires latest revision.",
     "set_view": "Set view and/or art-directed animation parameters. This is not a physical simulation. Requires latest revision.",
-    "select": "Set selected island IDs, visible in the manual inspector. Requires latest revision.",
+    "select": "Set selected island or blend layer IDs, visible in the manual inspector. Requires latest revision.",
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
     "batch": "Apply up to 32 enumerated edits atomically with one undo step. Failure leaves the artwork unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
-    "load_recipe": "Replace artwork with a validated version-3 recipe; versions 1/2 migrate with empty blends and retain existing tracks. One undoable transaction. No expressions or executable code.",
+    "load_recipe": "Replace artwork with a validated version-4 recipe; versions 1/2/3 migrate to islands-then-blends back-to-front order and retain existing tracks/styles/dependencies. One undoable transaction. No expressions or executable code.",
 }
 
 
@@ -649,7 +687,9 @@ class SceneService:
             if b["style"]["visible"]
             for source in (b["source_a"], b["source_b"])
         }
-        for obj in [*scene["objects"], *scene["blends"]]:
+        by_id = {obj["id"]: obj for obj in [*scene["objects"], *scene["blends"]]}
+        for layer_id in scene["layer_order"]:
+            obj = by_id[layer_id]
             if not obj["style"]["visible"] or obj["id"] in consumed:
                 continue
             field = SceneService._field_from_snapshot(scene, obj["id"], time_value)
@@ -746,7 +786,9 @@ class SceneService:
                 "revision": scene["revision"],
                 "selection": scene["selection"],
                 "objects": [
-                    o for o in scene["objects"] if o["id"] in scene["selection"]
+                    o
+                    for o in [*scene["objects"], *scene["blends"]]
+                    if o["id"] in scene["selection"]
                 ],
             }
         if tool not in COMMAND_MODELS:
@@ -761,6 +803,14 @@ class SceneService:
         try:
             parsed = COMMAND.validate_python(command)
         except ValidationError as exc:
+            if any(
+                error["msg"]
+                == "Value error, Island and blend IDs must be globally unique"
+                for error in exc.errors()
+            ):
+                raise SceneError(
+                    "duplicate_id", "Island and blend IDs must be globally unique"
+                ) from exc
             raise SceneError(
                 "validation_error",
                 "Command validation failed",
@@ -832,7 +882,8 @@ class SceneService:
                     "update_geometry": "Shape island",
                     "set_style": "Change palette / appearance",
                     "set_view": "Adjust view / motion",
-                    "select": "Select island",
+                    "select": "Select layer",
+                    "reorder_layers": "Reorder composition layers",
                     "delete_geometry": "Remove island",
                     "set_keyframe": "Capture island pose",
                     "delete_keyframe": "Remove island pose",
@@ -910,6 +961,22 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
+        if command.op == "reorder_layers":
+            scene["layer_order"] = list(command.order)
+            return list(command.order)
+        if command.op == "set_style":
+            layer = next(
+                (
+                    o
+                    for o in [*scene["objects"], *scene["blends"]]
+                    if o["id"] == command.id
+                ),
+                None,
+            )
+            if layer is None:
+                raise SceneError("object_not_found", "Unknown layer", status=404)
+            self._patch(layer["style"], command.style)
+            return [command.id]
         if command.op == "create_blend":
             if len(scene["blends"]) >= 2:
                 raise SceneError("blend_limit", "A scene supports at most two blends")
@@ -918,6 +985,7 @@ class SceneService:
                 **command.model_dump(exclude={"op", "expected_revision", "request_id"}),
             ).model_dump()
             scene["blends"].append(blend)
+            scene["layer_order"].append(blend["id"])
             return [blend["id"], blend["source_a"], blend["source_b"]]
         if command.op in {"update_blend", "delete_blend"}:
             blend = next((b for b in scene["blends"] if b["id"] == command.id), None)
@@ -925,6 +993,8 @@ class SceneService:
                 raise SceneError("blend_not_found", "Unknown blend", status=404)
             if command.op == "delete_blend":
                 scene["blends"].remove(blend)
+                scene["layer_order"].remove(blend["id"])
+                scene["selection"] = [i for i in scene["selection"] if i != blend["id"]]
             else:
                 values = command.model_dump(
                     exclude_unset=True,
@@ -945,6 +1015,7 @@ class SceneService:
                 keyframes=command.keyframes,
             ).model_dump()
             scene["objects"].append(obj)
+            scene["layer_order"].append(obj["id"])
             scene["selection"] = [obj["id"]]
             return [obj["id"]]
         if command.op == "set_view":
@@ -952,11 +1023,11 @@ class SceneService:
             self._patch(scene["animation"], command.animation)
             return []
         if command.op == "select":
-            existing = {o["id"] for o in scene["objects"]}
+            existing = set(scene["layer_order"])
             if any(i not in existing for i in command.ids):
                 raise SceneError(
                     "object_not_found",
-                    "Selection includes an unknown island",
+                    "Selection includes an unknown layer",
                     status=404,
                 )
             scene["selection"] = list(dict.fromkeys(command.ids))
@@ -1014,6 +1085,7 @@ class SceneService:
                     "Remove the source's blends before deleting this island",
                 )
             scene["objects"] = [o for o in scene["objects"] if o["id"] != command.id]
+            scene["layer_order"].remove(command.id)
             scene["selection"] = [i for i in scene["selection"] if i != command.id]
         return [command.id]
 

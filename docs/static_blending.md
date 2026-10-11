@@ -1,3 +1,7 @@
+> In 0.6.0, schema 4 additionally records complete layer order; the geometry and
+> reference rules below remain unchanged. See [composition layers](composition_layers.md)
+> for visibility, source editing, group opacity and migration semantics.
+
 # Static island blending in 0.5.0
 
 Confluence composes two retained island fields using the existing

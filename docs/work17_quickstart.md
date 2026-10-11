@@ -35,3 +35,11 @@ For choreography:
 The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
+
+## Try 0.6.0 layers
+
+Use **Try layered study** for Glasswater. The frontmost row appears first. Select
+Glass veil, change its palette/opacity and use its arrow buttons to place it
+behind Gold confluence. Hide a blend to reveal its sources, or select a source
+row to edit its dashed center handle while retaining the blend. Export JSON
+to preserve edits before restarting an ephemeral demo. [Layer guide](composition_layers.md).

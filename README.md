@@ -1,10 +1,10 @@
-# 2Top 0.5.0 · Tidal Atlas
+# 2Top 0.6.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.5.0** adds non-destructive static island union/smooth union, live source editing and the Confluence study demo. Version 0.4.0 added editable selected-island motion paths, direct positional-key dragging and collision-safe key retiming. Version 0.3.0 introduced authored island choreography: capture position, scale, stretch, rotation and curl poses along the 12-second timeline, edit them directly, and save/reopen the complete animation. **Play demo** opens Orbit & bloom, a looping three-island composition. Versions 0.2.x introduced the shared studio and verified its responsive browser editing. Development targets **dev**; changes should carry a version bump, README/changelog update and passing checks before integration. Main is not the integration target for this work.
+Version **0.6.0** adds ordered composition layers, visibility, per-layer palette/group opacity and explicit blend/source dependencies. **Try layered study** opens Glasswater, with translucent overlapping fields. Version 0.5.0 added non-destructive static island union/smooth union and the Confluence study. Versions 0.3.0/0.4.0 introduced authored island choreography and direct motion-path editing; **Play demo** opens Orbit & bloom. The manual studio, MCP and WebMCP adapters use one validated scene and undo history. Development targets **dev**, with synchronized versions, README/changelog and passing checks before integration. Main is not the integration target for this work.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -31,9 +31,9 @@ Open **http://127.0.0.1:8000**. No AI account or API key is needed to draw, anim
 - Play, pause and scrub a smooth 12-second tide; save JSON recipes, SVG artwork or PNG images
 - Select, duplicate, hide, delete, undo and redo complete operations
 - Connect an MCP client to **http://127.0.0.1:8000/mcp/** or launch the stdio proxy with `python -m studio.mcp_server`
-- In a supported top-level browser, `document.modelContext` registers the same 18 tools, including choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
+- In a supported top-level browser, `document.modelContext` registers the same 19 tools, including choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
 
-Recipes export schema 3 with bounded static `blends` referencing source islands. Schema-1/2 recipes reopen with empty blends and preserved base parameters/tracks; the next save uses schema 3. Older studios cannot read schema 3, so keep an original copy for exchange. See [static blending contracts and approximation limits](docs/static_blending.md).
+Recipes export schema 4 with complete back-to-front `layer_order` and bounded static blends. Schema-1/2/3 recipes reopen in their original islands-then-blends order, preserving styles, fields, tracks and dependencies. The next save uses schema 4, which older studios cannot read; keep original recipes for exchange. See [composition layers](docs/composition_layers.md) and [static blending](docs/static_blending.md) for limits.
 
 See [the studio guide](docs/tidal_atlas.md), [agent connection details and compatibility](docs/agent_protocols.md), and the app's self-contained `/api/docs` reference. The studio does not include an embedded language model or pretend that local presets are AI output.
 
@@ -278,3 +278,13 @@ This repository implements Part I (Foundational Sprints) of the agile blueprint 
 ## License
 
 See repository for licensing details.
+
+### Composition layers (0.6.0)
+
+Use **Try layered study** for Glasswater. Composition rows show front-to-back
+order, visibility and source dependencies; arrow buttons reorder artwork, and
+Layer appearance controls palette and group opacity. Sources remain editable
+through their selected center handles even when hidden or consumed by a blend.
+UI, MCP and WebMCP use the same reversible layer commands. See
+[composition layers](docs/composition_layers.md) for schema-4 migration, source
+semantics and compositing limits. Native WebMCP host execution is still unverified.

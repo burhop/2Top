@@ -1,0 +1,126 @@
+/** Glasswater depth study, mirrored by examples/tidal_atlas_layers.json. */
+export const layeredDemoRecipe = {
+  "schema_version": 4,
+  "title": "Glasswater \u00b7 a layered study",
+  "objects": [
+    {
+      "id": "island_ember",
+      "name": "Solstice",
+      "type": "island",
+      "parameters": {
+        "x": 300,
+        "y": 350,
+        "radius": 175,
+        "elongation": 1.05,
+        "rotation": -15,
+        "lobes": 3,
+        "warp": 0.25,
+        "phase": 0.4
+      },
+      "style": {
+        "palette": "ember",
+        "opacity": 1,
+        "visible": true
+      },
+      "keyframes": []
+    },
+    {
+      "id": "island_lagoon",
+      "name": "Undertow",
+      "type": "island",
+      "parameters": {
+        "x": 700,
+        "y": 350,
+        "radius": 175,
+        "elongation": 1.1,
+        "rotation": 145,
+        "lobes": 3,
+        "warp": 0.2,
+        "phase": 2.2
+      },
+      "style": {
+        "palette": "lagoon",
+        "opacity": 1,
+        "visible": true
+      },
+      "keyframes": []
+    },
+    {
+      "id": "island_lowtide",
+      "name": "Low tide",
+      "type": "island",
+      "parameters": {
+        "x": 480,
+        "y": 365,
+        "radius": 300,
+        "elongation": 1.4,
+        "rotation": 12,
+        "lobes": 3,
+        "warp": 0.3,
+        "phase": 0.4
+      },
+      "style": {
+        "palette": "lagoon",
+        "opacity": 0.55,
+        "visible": true
+      },
+      "keyframes": []
+    },
+    {
+      "id": "island_glass",
+      "name": "Glass veil",
+      "type": "island",
+      "parameters": {
+        "x": 500,
+        "y": 350,
+        "radius": 150,
+        "elongation": 0.8,
+        "rotation": 35,
+        "lobes": 3,
+        "warp": 0.35,
+        "phase": 0.4
+      },
+      "style": {
+        "palette": "mono",
+        "opacity": 0.42,
+        "visible": true
+      },
+      "keyframes": []
+    }
+  ],
+  "blends": [
+    {
+      "id": "blend_confluence",
+      "name": "Gold confluence",
+      "source_a": "island_ember",
+      "source_b": "island_lagoon",
+      "operation": "smooth_union",
+      "amount": 0.85,
+      "style": {
+        "palette": "aurora",
+        "opacity": 0.9,
+        "visible": true
+      }
+    }
+  ],
+  "view": {
+    "zoom": 1,
+    "pan_x": 0,
+    "pan_y": 0,
+    "grid": false,
+    "contours": 24
+  },
+  "animation": {
+    "playing": false,
+    "time": 0,
+    "speed": 1,
+    "motion": 0
+  },
+  "layer_order": [
+    "island_ember",
+    "island_lagoon",
+    "island_lowtide",
+    "blend_confluence",
+    "island_glass"
+  ]
+};
