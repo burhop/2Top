@@ -52,7 +52,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 18
+        assert len(actual) == 19
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -253,7 +253,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 18
+        assert len((await client.list_tools()).tools) == 19
         result = await client.call_tool(
             "set_style",
             {
@@ -301,7 +301,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 18
+        assert len((await stdio.list_tools()).tools) == 19
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -463,3 +463,61 @@ async def test_real_mcp_composes_static_fields_and_observes_manual_source_edits(
         assert removed["scene"]["objects"] == observed["objects"]
         restored = payload(await client.call_tool("undo", {"expected_revision": 4}))
         assert restored["scene"]["blends"][0]["id"] == blend["id"]
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_layer_order_blend_style_selection_and_manual_undo(live_studio):
+    url, service = live_studio
+    demo = json.loads(
+        (ROOT / "examples/tidal_atlas_layers.json").read_text(encoding="utf-8")
+    )
+    async with (
+        http_mcp_client(url + "/mcp/") as client,
+        httpx.AsyncClient(trust_env=False) as http,
+    ):
+        loaded = payload(
+            await client.call_tool(
+                "load_recipe", {"recipe": demo, "expected_revision": 0}
+            )
+        )
+        assert loaded["ok"]
+        order = list(reversed(loaded["scene"]["layer_order"]))
+        edited = payload(
+            await client.call_tool(
+                "batch",
+                {
+                    "commands": [
+                        {"op": "reorder_layers", "order": order},
+                        {
+                            "op": "set_style",
+                            "id": "blend_confluence",
+                            "style": {"opacity": 0.35, "palette": "mono"},
+                        },
+                        {"op": "select", "ids": ["blend_confluence"]},
+                    ],
+                    "expected_revision": 1,
+                    "request_id": "layers_once",
+                },
+            )
+        )
+        assert edited["scene"]["layer_order"] == order
+        selection = payload(await client.call_tool("get_selection", {}))
+        assert selection["objects"][0]["style"]["opacity"] == 0.35
+        observed = payload(await client.call_tool("get_scene", {}))["scene"]
+        assert (
+            observed
+            == (await http.get(url + "/api/scene")).json()
+            == service.snapshot()
+        )
+        invalid = await client.call_tool(
+            "reorder_layers", {"order": order[:-1], "expected_revision": 2}
+        )
+        assert invalid.is_error and service.snapshot() == observed
+        undone = await http.post(
+            url + "/api/command", json={"op": "undo", "expected_revision": 2}
+        )
+        assert undone.status_code == 200
+        assert (
+            payload(await client.call_tool("get_scene", {}))["scene"]["layer_order"]
+            == demo["layer_order"]
+        )

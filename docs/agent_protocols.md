@@ -111,7 +111,7 @@ Read tools:
 Mutation tools:
 
 - `create_geometry`, `update_geometry`, `delete_geometry`
-- `set_style`, `set_view`, `select`
+- `set_style`, `reorder_layers`, `set_view`, `select`
 - `set_keyframe`, `delete_keyframe`, `edit_keyframe`
 - `create_blend`, `update_blend`, `delete_blend`
 - `batch`, `undo`, `redo`, `load_recipe`
@@ -129,7 +129,7 @@ Example named-tool arguments, after reading revision 0:
 ```json
 {
   "id": "island_ember",
-  "parameters": {"radius": 180, "warp": 0.7},
+  "parameters": {"radius": 190, "warp": 0.7},
   "expected_revision": 0,
   "request_id": "shape_001"
 }
@@ -138,7 +138,7 @@ Example named-tool arguments, after reading revision 0:
 Call `update_geometry` with those arguments. Do not include `op` in named-tool
 arguments. The manual `POST /api/command` route instead accepts an `op` alongside
 the arguments. Batch child commands include `op`, omit revision metadata and are
-restricted to twelve small editing operations (including key insertion/removal). A batch is at most 32 commands
+restricted to thirteen small editing operations (including key insertion/removal). A batch is at most 32 commands
 and commits as one revision/undo step, or makes no change on failure.
 
 `set_keyframe` accepts `id` and `keyframe`, whose fields are `time` (0..12),
@@ -157,10 +157,12 @@ an absent source yields `keyframe_not_found`; neither changes history/revision.
 These edits can be batched with `set_view` for a shared paused playhead and one
 undo step. Retry IDs and revision rules are the same as other mutations.
 
-Version 0.5.0 exports schema 3. Schemas 1/2 migrate with empty blends and retain existing tracks; both legacy versions are accepted by MCP discovery schemas as well as the service. See [static blending](static_blending.md) for the three composition commands, static-reference rules and approximations. Schema-2 recipes contain per-island `keyframes`; schema-1 input migrates to
-schema 2 with empty tracks, retaining all base geometry and motion settings.
-Unknown versions, unsorted/duplicate times and malformed poses are rejected.
-Older 0.2.x applications cannot read schema 2; preserve original files if needed.
+Version 0.6.0 exports schema 4 with complete layer order. Schemas 1/2/3 are
+accepted by MCP schemas and migrate to islands-then-blends drawing order,
+retaining styles, fields, tracks and dependencies. Unknown versions, incomplete
+schema-4 orders, malformed poses and invalid references are rejected. Older
+studios cannot read schema 4; retain originals for exchange. See
+[composition layers](composition_layers.md) and [static blending](static_blending.md).
 
 Recipes are versioned bounded data: at most 16 islands, finite numeric parameter
 ranges, recognized palettes and explicit view/animation fields. `load_recipe`
@@ -241,3 +243,11 @@ The Node contract test deliberately mocks `document.modelContext`. It checks
 unsupported-browser fallback, one-time registration, schema passthrough, command
 routing, scene events, error propagation, cancellation and callback isolation.
 It does not claim a native browser agent has executed the tools.
+
+## Composition layer commands
+
+`reorder_layers` takes every layer ID exactly once, back to front. `set_style`
+accepts island or blend IDs; `select` and `get_selection` cover both. Creating
+geometry appends a frontmost ID and deleting it removes that ID. Order and style
+changes are atomic and reversible; source deletion guards are unchanged. Schema
+1/2/3 migrates to islands-then-blends order. See [composition layers](composition_layers.md).

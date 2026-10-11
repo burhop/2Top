@@ -1,4 +1,4 @@
-# Tidal Atlas 0.5.0: island choreography
+# Tidal Atlas 0.6.0: island choreography
 
 ## What this version does
 
@@ -143,3 +143,11 @@ Real Chromium acceptance now runs locally on Work17 and in CI, including pose ed
 This is a bounded integration seam. The current studio tool catalog edits kinetic-island recipes; it does not yet expose every legacy primitive, intersection operation, or historical SceneManager command. Browser color terraces use the parity-tested numeric mirror for responsive drawing, while Python consumers can use real geometry interfaces independently of the UI.
 
 Run `python -m examples.tidal_atlas_engine` for a browser-free example that round-trips a kinetic curve through the existing `ImplicitCurve` dispatcher, extracts its shoreline through `GraphicsBackendInterface`, and composes it through `BlendedField`.
+
+## Organize the composition
+
+Choose **Try layered study**, select Glass veil and adjust Layer appearance.
+Send it behind Gold confluence to change the overlap. Visibility buttons use
+Enter/Space; order arrows use Enter, and opacity supports native range keys.
+Source rows explain dependencies. Select Solstice or Edit A to move its explicit
+center handle, including when its artwork is hidden. [Layer semantics](composition_layers.md).

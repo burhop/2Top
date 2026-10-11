@@ -103,7 +103,13 @@ def test_demo_merges_two_outer_contours_and_bounds_are_conservative():
         "import {blendDemoRecipe} from './studio/static/blend-demo.js';console.log(JSON.stringify(blendDemoRecipe));",
         {},
     )
-    assert mirrored_demo == DEMO == Recipe.model_validate(DEMO).model_dump()
+    assert mirrored_demo == DEMO
+    assert Recipe.model_validate(DEMO).model_dump() == {
+        **DEMO,
+        "schema_version": 4,
+        "layer_order": [o["id"] for o in DEMO["objects"]]
+        + [b["id"] for b in DEMO["blends"]],
+    }
 
 
 def test_sampling_omits_open_degenerate_fragments_and_enforces_budgets():
@@ -216,7 +222,7 @@ def test_static_reference_cycles_missing_ids_batches_and_legacy_migration(tmp_pa
         migrated = Recipe.model_validate(old).model_dump()
         assert (
             old == frozen
-            and migrated["schema_version"] == 3
+            and migrated["schema_version"] == 4
             and migrated["blends"] == []
         )
         if old["schema_version"] == 2:

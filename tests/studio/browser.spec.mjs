@@ -9,7 +9,8 @@ import { randomUUID } from 'node:crypto';
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
 const legacySeed = structuredClone(seed);
 // Canonical expected state; schema-1 migration itself has explicit coverage below.
-seed.schema_version = 3;
+seed.schema_version = 4;
+seed.layer_order = seed.objects.map(o=>o.id);
 seed.blends = [];
 seed.objects.forEach(object => { object.keyframes = []; });
 const first = seed.objects[0];
@@ -390,7 +391,7 @@ test('pose keys interpolate deterministically and pointer edits remain undoable'
   expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
   await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
   const saved = await download(page, testInfo, 'json');
-  expect(JSON.parse(saved).schema_version).toBe(3);
+  expect(JSON.parse(saved).schema_version).toBe(4);
   await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
   expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
   await page.getByRole('button', { name: /^Recipe/ }).click();
@@ -451,7 +452,7 @@ test('malformed choreography is rejected and a legacy recipe still reopens', asy
   await expect(page.locator('#toast')).toHaveText('Command validation failed');
   expect((await serverScene(request)).revision).toBe(before.revision);
   const scene = await edit(page, () => page.locator('#recipe-file').setInputFiles({ name: 'legacy-0.2.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(legacySeed)) }));
-  expect(scene.schema_version).toBe(3);
+  expect(scene.schema_version).toBe(4);
   expect(scene.objects.every(object => object.keyframes.length === 0)).toBe(true);
   expect(scene.objects[0].parameters).toEqual(legacySeed.objects[0].parameters);
 });
@@ -529,7 +530,7 @@ for (const viewport of [{ name: 'desktop', width: 1440, height: 1100 }, { name: 
     await expect(page.locator('#toast')).toBeHidden();
     await screenshot(page, testInfo, `motion-path-${viewport.name}`);
     const saved = JSON.parse((await download(page, testInfo, 'json')).toString('utf8'));
-    expect(saved.schema_version).toBe(3); expect(saved.objects).toEqual(retimed);
+    expect(saved.schema_version).toBe(4); expect(saved.objects).toEqual(retimed);
     await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
     await page.getByRole('button', { name: /^Recipe/ }).click();
     const chooser = page.waitForEvent('filechooser'); await page.getByRole('button', { name: 'Load JSON', exact: true }).click();
@@ -551,7 +552,7 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
   test(`static confluence merges two sources and preserves live editing on ${viewport.name}`, async ({page,request},testInfo)=>{
     await page.setViewportSize({width:viewport.width,height:viewport.height});
     let scene = await edit(page,()=>page.getByRole('button',{name:'Try confluence',exact:true}).click());
-    expect(scene.title).toBe('Confluence study');expect(scene.schema_version).toBe(3);
+    expect(scene.title).toBe('Confluence study');expect(scene.schema_version).toBe(4);
     expect(scene.objects).toHaveLength(2);expect(scene.blends).toHaveLength(1);
     const original=structuredClone(scene.objects);
     expect(await blendPathCount(page)).toBe(1);
@@ -595,12 +596,68 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width+1);
     await screenshot(page,testInfo,`confluence-merged-${viewport.name}`);
     const saved=JSON.parse((await download(page,testInfo,'json')).toString('utf8'));
-    expect(saved.schema_version).toBe(3);expect(saved.objects).toEqual(edited);expect(saved.blends).toHaveLength(1);
+    expect(saved.schema_version).toBe(4);expect(saved.objects).toEqual(edited);expect(saved.blends).toHaveLength(1);
     const svg=(await download(page,testInfo,'svg')).toString('utf8');expect(svg).toContain(`id="${saved.blends[0].id}"`);expect(svg).toContain('fill-rule="evenodd"');
     await edit(page,()=>page.getByRole('button',{name:'Remove blend',exact:true}).click());
     await page.getByRole('button',{name:/^Recipe/}).click();const chooser=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();
     await edit(page,async()=> (await chooser).setFiles({name:'confluence.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))}));
     await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();
     const restored=await serverScene(request);expect(restored.objects).toEqual(saved.objects);expect(restored.blends).toEqual(saved.blends);
+  });
+}
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test(`layered study supports ordered selection, group alpha and hidden source edits on ${viewport.name}`,async({page,request},testInfo)=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    let scene=await edit(page,()=>page.getByRole('button',{name:'Try layered study',exact:true}).click());
+    expect(scene.schema_version).toBe(4);expect(scene.layer_order).toEqual(['island_ember','island_lagoon','island_lowtide','blend_confluence','island_glass']);
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue('blend_confluence');
+    const original=structuredClone(scene);
+    // Actual Chromium raster API confirms alpha applies once to the entire layer.
+    const pixel=await page.evaluate(async()=>{
+      const {compositeLayer}=await import('/static/layers.js'),target=document.createElement('canvas'),buffer=document.createElement('canvas');
+      target.width=buffer.width=4;target.height=buffer.height=4;const c=target.getContext('2d');c.fillStyle='blue';c.fillRect(0,0,4,4);
+      compositeLayer(c,buffer,.5,layer=>{layer.fillStyle='red';layer.fillRect(0,0,4,4);layer.fillRect(0,0,4,4);});return [...c.getImageData(2,2,1,1).data];
+    });expect(pixel[0]).toBeGreaterThanOrEqual(127);expect(pixel[0]).toBeLessThanOrEqual(129);expect(pixel[1]).toBe(0);expect(pixel[2]).toBeGreaterThanOrEqual(126);expect(pixel[2]).toBeLessThanOrEqual(128);expect(pixel[3]).toBe(255);
+    await testInfo.attach('actual-group-alpha',{body:JSON.stringify({pixel,expected:[128,0,127,255],roundingTolerance:1}),contentType:'application/json'});
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+    const center=await canvasPoint(page,scene.objects.find(o=>o.id==='island_glass'));
+    scene=await edit(page,()=>page.mouse.click(center.x,center.y));expect(scene.selection).toEqual(['island_glass']);
+    await settleCanvas(page);await screenshot(page,testInfo,`glasswater-front-${viewport.name}`);
+    await page.getByLabel('Layer palette',{exact:true}).selectOption('ember');
+    await expect.poll(async()=>(await uiScene(page)).objects.find(o=>o.id==='island_glass').style.palette).toBe('ember');
+    await page.getByRole('slider',{name:'Layer opacity',exact:true}).focus();scene=await edit(page,()=>page.keyboard.press('Home'));expect(scene.objects.at(-1).style.opacity).toBe(.05);
+    await page.getByRole('slider',{name:'Layer opacity',exact:true}).focus();scene=await edit(page,()=>page.keyboard.press('End'));expect(scene.objects.at(-1).style.opacity).toBe(1);
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());
+    await page.getByRole('button',{name:'Send Glass veil backward',exact:true}).focus();scene=await edit(page,()=>page.keyboard.press('Enter'));
+    expect(scene.layer_order.at(-1)).toBe('blend_confluence');
+    await expect(page.getByRole('button',{name:'Send Glass veil backward',exact:true})).toBeFocused();
+    // With the veil behind the blend, the same artwork point selects the front blend.
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+    const reorderedCenter=await canvasPoint(page,scene.objects.find(o=>o.id==='island_glass'));
+    scene=await edit(page,()=>page.mouse.click(reorderedCenter.x,reorderedCenter.y));expect(scene.selection).toEqual(['blend_confluence']);
+    await expect(page.getByRole('slider',{name:'Island scale',exact:true})).toBeDisabled();
+    await page.getByRole('button',{name:'Hide Gold confluence',exact:true}).focus();scene=await edit(page,()=>page.keyboard.press('Space'));
+    expect(scene.blends[0].style.visible).toBe(false);
+    scene=await edit(page,()=>page.getByRole('button',{name:'Show Gold confluence',exact:true}).click());expect(scene.blends[0].style.visible).toBe(true);
+    await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());
+    scene=await edit(page,()=>page.getByRole('button',{name:'Hide Solstice',exact:true}).click());expect(scene.objects[0].style.visible).toBe(false);
+    await expect(page.locator('#layer-status')).toContainText('Hidden artwork');await expect(page.getByRole('button',{name:'Remove',exact:true})).toBeDisabled();
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+    const sourcePoint=await canvasPoint(page,scene.objects[0]);
+    scene=await edit(page,async()=>{await page.mouse.move(sourcePoint.x,sourcePoint.y);await page.mouse.down();await page.mouse.move(sourcePoint.x+12,sourcePoint.y+6,{steps:3});await page.mouse.up();});
+    expect(scene.objects[0].parameters.x).not.toBe(original.objects[0].parameters.x);expect(scene.objects[0].style.visible).toBe(false);expect(scene.blends[0].source_a).toBe('island_ember');
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect((await uiScene(page)).objects[0].parameters).toEqual(original.objects[0].parameters);
+    await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width+1);
+    await expect(page.locator('#toast')).toBeHidden();await screenshot(page,testInfo,`glasswater-layers-${viewport.name}`);
+    const saved=JSON.parse((await download(page,testInfo,'json')).toString('utf8'));
+    const svg=(await download(page,testInfo,'svg')).toString('utf8');expect(svg.indexOf('id="island_glass"')).toBeLessThan(svg.indexOf('id="blend_confluence"'));expect(svg).toContain('opacity="0.42"');
+    await edit(page,()=>page.getByRole('button',{name:'Remove blend',exact:true}).click());expect((await uiScene(page)).objects).toEqual(saved.objects);
+    await page.getByRole('button',{name:/^Recipe/}).click();const chooser=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();
+    await edit(page,async()=> (await chooser).setFiles({name:'glasswater.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))}));
+    await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();const restored=await serverScene(request);
+    expect(restored.layer_order).toEqual(saved.layer_order);expect(restored.objects).toEqual(saved.objects);expect(restored.blends).toEqual(saved.blends);
   });
 }

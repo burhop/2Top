@@ -1,35 +1,36 @@
 # Tidal Atlas development verification
 
-Updated October 11, 2026 for version 0.5.0. Work17 executes the local application
+Updated October 11, 2026 for version 0.6.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.5.0 adds non-destructive static island union/smooth union, live source
-editing, bounded cached contour previews, source guides and the Confluence study
-demo. It reuses RFunctionCurve/CurveField plus the existing SceneManager/graphics
-backend. Source geometry is retained and nested/animated operands are rejected.
-Schema 3 migrates older recipes with empty blends and preserves existing tracks.
+Version 0.6.0 adds bounded complete layer order, shared visibility/palette/group
+opacity, visible dependency explanations and selected hidden-source handles.
+The Glasswater study demonstrates depth. Schema 4 preserves older drawing order,
+fields, styles and tracks. The RFunctionCurve/CurveField engine and legacy bridge
+remain in use; nested/animated blends are still rejected. See
+[composition layers](composition_layers.md) for the precise display/source contract.
 
-The manual UI, real MCP HTTP/stdio and WebMCP adapter share 18 validated tools,
+The manual UI, real MCP HTTP/stdio and WebMCP adapter share 19 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
 is guarded while referenced. See [static blending](static_blending.md) for field
 semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,209 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,228 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: 171 cases, including 15 choreography and 17 motion-edit cases for interpolation,
+- Studio subset: 190 cases, including 15 choreography and 17 motion-edit cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
-- JavaScript DOM/service behavior: **35 checks passed**. This is distinct from
+- JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **129 files formatted**.
-- Actual Playwright Chromium acceptance: **16 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **130 files formatted**.
+- Actual Playwright Chromium acceptance: **18 cases passed**, with unexpected
   console, page and HTTP failures rejected.
 
 The three new real-browser cases exercise native capture/scrub/easing controls,
@@ -55,6 +56,15 @@ selection and pointer editing, undo/redo, source-preserving removal, showing
 separate/merged artwork, responsive layouts, SVG export and saved JSON reopening.
 The prior choreography and motion-path cases remain enabled.
 
+Nineteen additional Python cases verify complete order, atomic rollback, style
+bounds, unchanged geometry bounds/evaluation, hidden-source dependency guards,
+undo/redo, disk/save migration and a real MCP ordering/style workflow. Two
+additional actual desktop/phone browser cases check frontmost artwork selection,
+native button/opacity keys, hidden-source pointer edits, alpha pixel values,
+SVG order/group opacity and saved JSON reopening. Raster alpha checks permit one
+8-bit rounding unit; this does not establish cross-browser pixel identity.
+
+Glasswater front/behind desktop and phone screenshots were visually reviewed.
 Confluence separate/merged desktop and phone screenshots were visually reviewed.
 Source guides, controls and checked phone width fit their layouts. This does not
 establish exact topology, distance/offset correctness, every viewport/browser or
@@ -87,7 +97,9 @@ started from that dev head. [PR #5](https://github.com/burhop/2Top/pull/5) merge
 0.3.0 at dev `21584c0ff85a7a9b838ff7e975c0ab9bd9b21e59`, whose post-merge CI
 passed before 0.4.0 started. [PR #6](https://github.com/burhop/2Top/pull/6) merged 0.4.0 at
 `af00fb452d1c62eb1a297d5cdb3eb77d8ecde954`; its post-merge CI passed before
-0.5.0 started on a new feature branch. Existing
+0.5.0 started on a new feature branch. [PR #7](https://github.com/burhop/2Top/pull/7)
+merged 0.5.0 at `4a07def243bcbeedbc19eb4832696d6875a0fde0`, whose post-merge CI
+passed before 0.6.0 started. Existing
 history and unrelated work are preserved. Main, releases, deployment and
 security/credential settings are outside these development updates.
 

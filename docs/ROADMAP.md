@@ -37,13 +37,24 @@ persistence. Python/browser field and contour parity and real browser workflows
 cover the composition. Animated/nested operands remain unsupported; numeric
 field levels are not Euclidean offsets. Native WebMCP remains a separate gap.
 
-## Recommended 0.6.0 - controlled composition structure
+## 0.6.0 - controlled composition layers
 
-Add named derived layers with explicit ordering, opacity/palette controls and
-clear source-dependency presentation. Decide and test hidden-source behavior and
-safe reference changes before adding nested or animated operations. Make the
-existing static composition easier to organize rather than adding unbounded
-geometry graphs. Native host verification still requires an actual supported host.
+The existing island/blend records gain bounded order, shared visibility and
+palette/opacity controls. Group alpha applies once to complete artwork. Source
+dependencies are explicit; hidden/consumed sources remain editable through their
+selected guides and handles. Schema 4 preserves older drawing order and fields.
+Glasswater demonstrates visible depth. This does not add nested/animated graphs.
+
+## Most important showcase gap - a real connected coauthor
+
+The studio has shared manual/MCP edits and protocol acceptance, but the artist
+has not yet been shown a verified natural-language agent session that changes
+this same canvas, followed by manual refinement and shared undo. Prioritize a
+short guided connection workflow and repeatable collaborative art demonstration
+using the intended actual MCP client/agent. Record the client, connection and
+visible shared-scene actions, avoiding new credentials or security changes.
+Native WebMCP separately requires an actual supported browser/model host;
+unsupported Chromium and mocked registration cannot prove that connection.
 
 ## Subsequent geometry work
 

@@ -3,6 +3,8 @@ import { sampleParameters, POSE_FIELDS } from './choreography.js';
 import { demoRecipe } from './demo.js';
 import { blendContours } from './static-blend.js';
 import { blendDemoRecipe } from './blend-demo.js';
+import { allLayers, orderedLayers, visibleLayers, sourceBlends, compositeLayer } from './layers.js';
+import { layeredDemoRecipe } from './layered-demo.js';
 
 const $ = (id) => document.getElementById(id);
 const WORLD = { width: 1000, height: 700 };
@@ -13,6 +15,15 @@ const paletteColors = {
   aurora: ['#d7ba75', '#ad8f55', '#e5c795', '#7e875f'],
   mono: ['#d9dfcf', '#98afa6', '#edf0d9', '#6c8981'],
 };
+const compositingBuffers = new WeakMap();
+let layerFocus;
+function layerBuffer(target) {
+  if(!compositingBuffers.has(target))compositingBuffers.set(target,document.createElement('canvas'));
+  const buffer=compositingBuffers.get(target);
+  if(buffer.width!==target.canvas.width)buffer.width=target.canvas.width;
+  if(buffer.height!==target.canvas.height)buffer.height=target.canvas.height;
+  return buffer;
+}
 const presets = {
   demo: demoRecipe,
   midnight: {
@@ -80,6 +91,7 @@ const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (s) => ({ '&': '&
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const current = () => preview || scene;
+const selectedLayer = (state = current()) => allLayers(state).find(item => state?.selection?.includes(item.id));
 const selected = (state = current()) => state?.objects.find((object) => state.selection?.includes(object.id));
 function getTime(state = current()) {
   if (!state) return 0;
@@ -96,7 +108,7 @@ function setConnected(connected, error = '') {
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
   for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
   $('demo-button').disabled = locked;
-  if (scene) setBlendingLocks(current());
+  if (scene) { setBlendingLocks(current()); setLayerLocks(current()); }
   updateKeyframeControls(current(), getTime());
   $('undo-button').disabled = locked || !scene?.history?.can_undo;
   $('redo-button').disabled = locked || !scene?.history?.can_redo;
@@ -193,13 +205,13 @@ function updateUI() {
   $('revision-label').textContent = `REV ${String(scene.revision).padStart(3, '0')}`;
   $('undo-button').disabled = !scene.history?.can_undo;
   $('redo-button').disabled = !scene.history?.can_redo;
-  $('island-count').textContent = state.objects.length;
+  $('island-count').textContent = allLayers(state).length;
   $('artwork-name').textContent = state.title || 'Untitled archipelago';
-  $('artwork-description').textContent = `${state.objects.filter((o) => o.style?.visible !== false).length} islands · ${state.view?.contours || 24} contours · one living field`;
+  $('artwork-description').textContent = `${visibleLayers(state).length} artwork layers · ${state.view?.contours || 24} contours · one living field`;
   $('selected-name').textContent = object?.name || 'Select an island';
   $('duplicate-button').disabled = !object;
-  $('remove-button').disabled = !object;
-  $('layer-list').innerHTML = state.objects.map((o) => `<div class="layer-row${state.selection?.includes(o.id) ? ' selected' : ''}${o.style?.visible === false ? ' hidden-layer' : ''}" data-id="${esc(o.id)}" role="button" tabindex="0" aria-label="Select ${esc(o.name)}" aria-pressed="${state.selection?.includes(o.id) ? 'true' : 'false'}"><span class="layer-swatch" style="color:${paletteColors[o.style?.palette]?.[0] || '#aabfa3'}"></span><span class="layer-name">${esc(o.name)}</span><span class="layer-kind">ISLAND</span><button class="layer-eye" data-visibility="${esc(o.id)}" aria-label="${o.style?.visible === false ? 'Show' : 'Hide'} ${esc(o.name)}" title="${o.style?.visible === false ? 'Show' : 'Hide'} island">${o.style?.visible === false ? '◌' : '◉'}</button></div>`).join('');
+  $('remove-button').disabled = !object || sourceBlends(state,object.id).length > 0;
+  updateLayers(state);
   updatePoseControls(state, getTime(state));
   updateKeyframes(state);
   $('contours-input').value = state.view?.contours || 24;
@@ -226,17 +238,57 @@ function updateUI() {
   updateAgentStatus();
   setConnected(online);
 }
+function setLayerLocks(state) {
+  const locked=busy>0||Boolean(dragging||gesture), layer=selectedLayer(state), object=selected(state);
+  $('layer-palette').disabled=locked||!layer;
+  $('layer-opacity').disabled=busy>0||Boolean(dragging)||Boolean(gesture&&gesture.id!=='layer-opacity')||!layer;
+  $('layer-demo-button').disabled=locked;
+  $('remove-button').disabled=locked||!object||sourceBlends(state,object.id).length>0;
+  document.querySelectorAll('[data-layer-action]').forEach(button=>{const index=state.layer_order.indexOf(button.dataset.id);button.disabled=locked||(button.dataset.layerAction==='forward'&&index===state.layer_order.length-1)||(button.dataset.layerAction==='backward'&&index===0);});
+  if(!locked&&layerFocus) {
+    const button=Array.from(document.querySelectorAll('[data-layer-action]')).find(b=>b.dataset.id===layerFocus.id&&b.dataset.layerAction===layerFocus.action);
+    if(document.activeElement===document.body&&!button?.disabled)button?.focus({preventScroll:true});
+    layerFocus=null;
+  }
+}
+function updateLayers(state) {
+  const layer=selectedLayer(state), focus=document.activeElement?.closest('[data-layer-action]');
+  const focusId=focus?.dataset.id,focusAction=focus?.dataset.layerAction;
+  $('layer-list').innerHTML=[...orderedLayers(state)].reverse().map(o=>{
+    const sources=sourceBlends(state,o.id),consumed=sources.some(b=>b.style.visible),active=state.selection.includes(o.id);
+    const note=o.parameters ? (sources.length ? `Source of ${sources.map(b=>b.name).join(', ')}${consumed?' · not drawn separately':''}`:'Island') : `Blend of ${state.objects.find(a=>a.id===o.source_a).name} + ${state.objects.find(a=>a.id===o.source_b).name}`;
+    return `<div class="layer-entry${active?' selected':''}${!o.style.visible?' hidden-layer':''}"><div class="layer-row"><button class="layer-select" data-layer-action="select" data-id="${esc(o.id)}" aria-label="Select ${esc(o.name)}" aria-pressed="${active}"><span class="layer-swatch" style="color:${paletteColors[o.style.palette][0]}"></span><span class="layer-name">${esc(o.name)}</span><span class="layer-kind">${o.parameters?'ISLAND':'BLEND'}</span></button><button class="layer-eye" data-layer-action="visibility" data-id="${esc(o.id)}" data-visibility="${esc(o.id)}" aria-label="${o.style.visible?'Hide':'Show'} ${esc(o.name)}" aria-pressed="${o.style.visible}">${o.style.visible?'◉':'◌'}</button><button class="layer-move" data-layer-action="forward" data-id="${esc(o.id)}" aria-label="Bring ${esc(o.name)} forward">↑</button><button class="layer-move" data-layer-action="backward" data-id="${esc(o.id)}" aria-label="Send ${esc(o.name)} backward">↓</button></div><p class="layer-dependency">${esc(note)}</p></div>`;
+  }).join('');
+  if(focusId)Array.from(document.querySelectorAll('[data-layer-action]')).find(b=>b.dataset.id===focusId&&b.dataset.layerAction===focusAction)?.focus({preventScroll:true});
+  $('layer-style-name').textContent=layer?.name||'Select a layer';
+  if(gesture?.id!=='layer-opacity')$('layer-opacity').value=Math.round((layer?.style.opacity??1)*100);
+  $('layer-opacity-output').textContent=`${$('layer-opacity').value}%`;progress($('layer-opacity'));
+  $('layer-palette').value=layer?.style.palette||'ember';
+  const sources=layer?.parameters?sourceBlends(state,layer.id):[];
+  $('layer-status').textContent=!layer?'Top row is frontmost. Move a layer with its arrow buttons.':!layer.parameters?'Select Edit A/B below Island confluence to edit its retained sources.':sources.length?`Source of ${sources.map(b=>b.name).join(', ')}. ${!layer.style.visible?'Hidden artwork; ':sources.some(b=>b.style.visible)?'Not drawn separately; ':''}the dashed guide and center handle let you edit this source. Remove its blends before deleting it.`:!layer.style.visible?'Hidden layer. The selected center handle lets you edit it without showing its artwork.':'Use the canvas or Shape & field to edit this island.';
+  setLayerLocks(state);
+}
+$('layer-palette').addEventListener('change',()=>{const layer=selectedLayer(scene);if(layer)run('set_style',{id:layer.id,style:{palette:$('layer-palette').value}});});
+$('layer-opacity').addEventListener('input',()=>{
+  const layer=selectedLayer(scene);if(!layer||busy||dragging||(gesture&&gesture.id!=='layer-opacity'))return;
+  if(!gesture){gesture={id:'layer-opacity',revision:scene.revision,layerId:layer.id};preview=clone(scene);}
+  allLayers(preview).find(o=>o.id===gesture.layerId).style.opacity=Number($('layer-opacity').value)/100;
+  $('layer-opacity-output').textContent=`${$('layer-opacity').value}%`;progress($('layer-opacity'));renderDirty=true;
+});
+$('layer-opacity').addEventListener('change',()=>{if(gesture?.id!=='layer-opacity')return;const saved=gesture;gesture=null;run('set_style',{id:saved.layerId,style:{opacity:Number($('layer-opacity').value)/100}},{expectedRevision:saved.revision});});
+$('layer-opacity').addEventListener('pointercancel',()=>cancelGesture());
 function progress(input) { input.style.setProperty('--progress', `${(Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min)) * 100}%`); }
 function updateAgentStatus() {
   const registered = Number(webmcpStatus?.registered) || 0;
   $('agent-hint').textContent = registered > 0 ? `${registered} browser tools registered. Agent edits appear in this same scene.` : 'Connect an MCP client or a WebMCP-enabled browser to edit this canvas.';
 }
 function recipe(state = scene) {
-  return { schema_version: 3, title: state.title, objects: clone(state.objects), blends: clone(state.blends || []), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
+  return { schema_version: 4, layer_order: clone(state.layer_order), title: state.title, objects: clone(state.objects), blends: clone(state.blends || []), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
 }
 
 function updateBlending(state) {
   const blends = state.blends || [], staticObjects = state.objects.filter(o => !o.keyframes?.length);
+  const selectedBlend=blends.find(b=>state.selection.includes(b.id));if(selectedBlend)activeBlendId=selectedBlend.id;
   if (activeBlendId === undefined || (activeBlendId && !blends.some(b => b.id === activeBlendId))) activeBlendId = blends[0]?.id || '';
   const blend = blends.find(b => b.id === activeBlendId), locked = busy > 0 || Boolean(gesture || dragging);
   $('blend-select').innerHTML = '<option value="">New pair</option>' + blends.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
@@ -302,7 +354,8 @@ function artworkLayers(state, time, previewGrid = false) {
     }
     layers.push({object,layers:blendCache.get(fingerprint)});
   }
-  return layers;
+  const byLayer = new Map(layers.map(item=>[item.object.id,item]));
+  return orderedLayers(state).filter(item=>byLayer.has(item.id)).map(item=>byLayer.get(item.id));
 }
 function pathFromLoops(loops) { const path=new Path2D();for(const points of loops){if(!points.length)continue;path.moveTo(...points[0]);for(let i=1;i<points.length;i++)path.lineTo(...points[i]);path.closePath();}return path; }
 
@@ -447,19 +500,21 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
   const count = state.view?.contours || 24;
   const consumed = linkedSources(state,true);
   for (const {object,layers} of artworkLayers(state,time,Boolean(gesture||dragging))) {
-    target.save(); target.globalAlpha=object.style.opacity ?? 1;
-    for(let i=0;i<layers.length;i++) {
-      const path=pathFromLoops(layers[i].paths);
-      if(i===0) { paths.push({id:object.id,path});target.save();target.shadowBlur=24;target.shadowColor='#021a18';target.shadowOffsetY=8;target.fillStyle='#102422';target.fill(path,'evenodd');target.restore(); }
-      target.fillStyle=i===layers.length-1?'#102825':ringColor(object.style.palette,i,layers.length);target.fill(path,'evenodd');
-      target.strokeStyle=i%6===1?'#fcdeb175':mix(paletteColors[object.style.palette]?.[1]||'#dca17d','#102722',.43);target.lineWidth=.55/trans.scale;target.stroke(path);
-    }
-    target.restore();
+    const buffer=layerBuffer(target);
+    compositeLayer(target,buffer,object.style.opacity ?? 1,layerTarget=>{
+      for(let i=0;i<layers.length;i++) {
+        const path=pathFromLoops(layers[i].paths);
+        if(i===0) { paths.push({id:object.id,path});layerTarget.save();layerTarget.shadowBlur=24;layerTarget.shadowColor='#021a18';layerTarget.shadowOffsetY=8;layerTarget.fillStyle='#102422';layerTarget.fill(path,'evenodd');layerTarget.restore(); }
+        layerTarget.fillStyle=i===layers.length-1?'#102825':ringColor(object.style.palette,i,layers.length);layerTarget.fill(path,'evenodd');
+        layerTarget.strokeStyle=i%6===1?'#fcdeb175':mix(paletteColors[object.style.palette]?.[1]||'#dca17d','#102722',.43);layerTarget.lineWidth=.55/trans.scale;layerTarget.stroke(path);
+      }
+    });
   }
-  if(handles&&sourceGuides) {
-    for(const object of state.objects.filter(o=>consumed.has(o.id))) {
-      const path=pathFromPoints(generateContours(object.parameters,0,0,2,180)[0]);
-      paths.push({id:object.id,path});target.save();target.setLineDash([4/trans.scale,5/trans.scale]);target.strokeStyle=paletteColors[object.style.palette]?.[0]||'#d7ddc5';target.lineWidth=1.2/trans.scale;target.stroke(path);target.restore();
+  if(handles) {
+    for(const object of state.objects.filter(o=>(sourceGuides&&consumed.has(o.id)) || (state.selection.includes(o.id)&&(!o.style.visible||consumed.has(o.id))))) {
+      const linked=linkedSources(state).has(object.id);
+      const path=pathFromPoints(generateContours(sampleParameters(object.parameters,object.keyframes||[],time),linked?0:time,linked?0:state.animation.motion,2,180)[0]);
+      target.save();target.setLineDash([4/trans.scale,5/trans.scale]);target.strokeStyle=paletteColors[object.style.palette]?.[0]||'#d7ddc5';target.lineWidth=1.2/trans.scale;target.stroke(path);target.restore();
     }
   }
   if (target === ctx) renderedPaths = paths;
@@ -482,8 +537,9 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
     }
   }
   if (handles) {
-    for (const object of state.objects) {
-      if (object.style?.visible === false) continue;
+    for (const object of orderedLayers(state).filter(o=>o.type==='island')) {
+      const explicit = state.selection?.includes(object.id);
+      if ((!object.style.visible || consumed.has(object.id)) && !explicit) continue;
       const active = state.selection?.includes(object.id);
       const { x, y } = sampleParameters(object.parameters, object.keyframes || [], time);
       target.save(); target.translate(x, y);
@@ -516,18 +572,16 @@ function worldPoint(event) {
 function hitObject(point) {
   const state = current();
   if (!state) return null;
-  let nearest = null; let distance = 22 / transform.scale;
-  for (const object of [...state.objects].reverse()) {
-    if (object.style?.visible === false) continue;
-    const pose = sampleParameters(object.parameters, object.keyframes || [], getTime());
-    const d = Math.hypot(pose.x - point.x, pose.y - point.y);
-    if (d < distance) { nearest = object; distance = d; }
+  const explicit=selected(state);
+  if(showHandles&&explicit&&(!explicit.style.visible||sourceBlends(state,explicit.id,true).length)) {
+    const pose=sampleParameters(explicit.parameters,explicit.keyframes||[],getTime());
+    if(Math.hypot(pose.x-point.x,pose.y-point.y)<22/transform.scale)return explicit;
   }
-  if (nearest) return nearest;
   for (const item of [...renderedPaths].reverse()) {
-    // isPointInPath uses the context transform; reset for world-space path lookup.
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const hit = ctx.isPointInPath(item.path, point.x, point.y); ctx.restore();
-    if (hit) return state.objects.find((o) => o.id === item.id);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); const hit = ctx.isPointInPath(item.path, point.x, point.y,'evenodd'); ctx.restore();
+    if (hit) return allLayers(state).find(o=>o.id===item.id);
+    const object=state.objects.find(o=>o.id===item.id);
+    if(showHandles&&object){const pose=sampleParameters(object.parameters,object.keyframes||[],getTime());if(Math.hypot(pose.x-point.x,pose.y-point.y)<22/transform.scale)return object;}
   }
   return null;
 }
@@ -552,6 +606,7 @@ canvas.addEventListener('pointerdown', (event) => {
   }
   const object = hitObject(point);
   if (!object) { if (scene.selection.length) run('select', { ids: [] }); return; }
+  if(!object.parameters) { activeBlendId=object.id;run('select',{ids:[object.id]});return; }
   preview = clone(scene);
   preview.selection = [object.id];
   preview.animation.time = authoredTime(scene);
@@ -612,14 +667,19 @@ $('add-tool').addEventListener('click', () => setTool(activeTool === 'add' ? 'se
 $('add-island-button').addEventListener('click', () => addIsland());
 $('handles-button').addEventListener('click', () => { showHandles = !showHandles; $('handles-button').setAttribute('aria-pressed', String(showHandles)); $('handles-button').classList.toggle('active', showHandles); renderDirty = true; });
 $('layer-list').addEventListener('click', (event) => {
-  const visibility = event.target.closest('[data-visibility]');
-  if (visibility) { const object = scene.objects.find((o) => o.id === visibility.dataset.visibility); if (object) run('set_style', { id: object.id, style: { visible: object.style?.visible === false } }); return; }
-  const row = event.target.closest('[data-id]');
-  if (row) run('select', { ids: [row.dataset.id] });
+  const action=event.target.closest('[data-layer-action]');if(!action||busy||gesture||dragging)return;
+  layerFocus={id:action.dataset.id,action:action.dataset.layerAction};
+  const layer=allLayers(scene).find(o=>o.id===action.dataset.id);if(!layer)return;
+  if(action.dataset.layerAction==='visibility')run('set_style',{id:layer.id,style:{visible:!layer.style.visible}});
+  else if(action.dataset.layerAction==='select') {if(!layer.parameters)activeBlendId=layer.id;run('select',{ids:[layer.id]});}
+  else {
+    const order=[...scene.layer_order],from=order.indexOf(layer.id),to=from+(action.dataset.layerAction==='forward'?1:-1);
+    if(to<0||to>=order.length)return;[order[from],order[to]]=[order[to],order[from]];run('reorder_layers',{order});
+  }
 });
-$('layer-list').addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { const row = event.target.closest('[data-id]'); if (row && event.target === row) { event.preventDefault(); row.click(); } } });
 $('duplicate-button').addEventListener('click', () => { const object = selected(scene); if (!object) return; const offset = p => ({ ...p, x: clamp(p.x + 35, ...PARAMETER_BOUNDS.x), y: clamp(p.y + 35, ...PARAMETER_BOUNDS.y) }); run('create_geometry', { name: `${[...object.name].slice(0, 75).join('')} copy`, parameters: offset(object.parameters), keyframes: (object.keyframes || []).map(key => ({ ...key, parameters: offset(key.parameters) })), style: { ...object.style } }); });
 $('remove-button').addEventListener('click', () => { const object = selected(scene); if (object) run('delete_geometry', { id: object.id }); });
+$('layer-demo-button').addEventListener('click',()=>run('load_recipe',{recipe:clone(layeredDemoRecipe)}).then(result=>{if(result){activeBlendId=result.scene.blends[0]?.id||'';updateUI();}}));
 $('preset-select').addEventListener('change', (event) => { const chosen = presets[event.target.value]; if (chosen) run('load_recipe', { recipe: { schema_version: 3, ...clone(chosen) } }).then((result) => { if (result) toast(`${chosen.title} loaded. Undo restores your previous scene.`); }); });
 $('palette-options').addEventListener('click', (event) => {
   const button = event.target.closest('[data-palette]'); if (!button || !scene) return;
@@ -733,7 +793,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') { if (dragging) endDrag(true); if (gesture) cancelGesture(); setTool('select'); $('export-menu').hidden = true; $('export-button').setAttribute('aria-expanded', 'false'); return; }
   if (typing || $('info-dialog').open || !scene) return;
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); run(event.shiftKey ? 'redo' : 'undo'); return; }
-  if (event.key === ' ') { event.preventDefault(); $('play-button').click(); }
+  if (event.key === ' ' && !document.activeElement?.closest('button,a')) { event.preventDefault(); $('play-button').click(); }
   if (event.key.toLowerCase() === 'v') setTool('select');
   if (event.key.toLowerCase() === 'a' && !event.ctrlKey && !event.metaKey) setTool('add');
   if (event.key.toLowerCase() === 'h') $('handles-button').click();

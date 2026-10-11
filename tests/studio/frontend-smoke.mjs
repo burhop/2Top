@@ -80,12 +80,15 @@ globalThis.fetch = async (url, options = {}) => {
 const canvasContext = {
   createRadialGradient: () => ({ addColorStop() {} }),
   isPointInPath: () => false,
+  getTransform:()=>({a:1,b:0,c:0,d:1,e:0,f:0}),
 };
-for (const name of ['setTransform', 'fillRect', 'translate', 'scale', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'save', 'restore', 'fill', 'arc']) canvasContext[name] = () => {};
+for (const name of ['setTransform', 'fillRect', 'clearRect', 'drawImage', 'translate', 'scale', 'beginPath', 'moveTo', 'lineTo', 'stroke', 'save', 'restore', 'fill', 'arc']) canvasContext[name] = () => {};
 window.HTMLCanvasElement.prototype.getContext = function () {
-  if (!nativeCanvas) return canvasContext;
+  if (!nativeCanvas) return {...canvasContext,canvas:this};
   if (!canvasBackings.has(this)) canvasBackings.set(this, nativeCanvas.createCanvas(this.width, this.height));
-  return canvasBackings.get(this).getContext('2d');
+  const context=canvasBackings.get(this).getContext('2d');
+  if(!context.studioDrawImage){const original=context.drawImage.bind(context);context.drawImage=(image,...args)=>original(canvasBackings.get(image)||image,...args);context.studioDrawImage=true;}
+  return context;
 };
 if (nativeCanvas) {
   for (const property of ['width', 'height']) {
@@ -138,7 +141,7 @@ try {
     console.log('Saved exact canvas render (not a browser screenshot): review_artifacts/tidal-atlas-canvas.png');
   }
   check('initial scene is authoritative and connected', () => { assert.equal(window.tidalStudio.getScene().objects.length, 3); assert.equal($('canvas-loading').hidden, true); assert.match($('connection-label').textContent, /connected/); assert.equal($('undo-button').disabled, true); });
-  let state = await revisionAfter(() => $('layer-list').querySelector('[data-id]').click());
+  let state = await revisionAfter(() => $('layer-list').querySelector(`[data-layer-action="select"][data-id="${window.tidalStudio.getScene().objects[0].id}"]`).click());
   check('layer selection enables exact object controls', () => { assert.equal(state.selection.length, 1); assert.equal($('radius-input').disabled, false); assert.equal(Number($('radius-input').value), state.objects[0].parameters.radius); });
   await window.tidalStudio.command('batch', { commands: [
     { op: 'update_geometry', id: state.objects[0].id, parameters: { rotation: 270 } },
@@ -216,7 +219,7 @@ try {
   const beforeFailure = state.revision; failNext = true;
   $('add-island-button').click(); await waitFor(() => !$('toast').hidden && /storage failure/.test($('toast').textContent), 'failed mutation message'); await sleep(40);
   check('failed mutation restores authoritative state and shows error', () => { assert.equal(window.tidalStudio.getScene().revision, beforeFailure); assert.equal($('toast').classList.contains('error'), true); });
-  state = await revisionAfter(() => $('layer-list').querySelector('[data-id]').click());
+  state = await revisionAfter(() => $('layer-list').querySelector(`[data-layer-action="select"][data-id="${window.tidalStudio.getScene().objects[0].id}"]`).click());
   const radiusBeforeConflict = state.objects[0].parameters.radius;
   input('radius-input', radiusBeforeConflict + 30);
   const externalResponse = await fetch('/api/command', { method: 'POST', body: JSON.stringify({ op: 'set_view', expected_revision: state.revision, request_id: crypto.randomUUID(), view: { grid: false } }) });
@@ -228,7 +231,7 @@ try {
   $('recipe-tab').click();
   check('recipe view shows current authoritative recipe', () => { assert.equal($('recipe-view').hidden, false); assert.equal(JSON.parse($('recipe-code').textContent).title, state.title); });
   $('copy-recipe').click(); await sleep();
-  check('copy recipe writes valid JSON to clipboard', () => assert.equal(JSON.parse(window.copiedText).schema_version, 3));
+  check('copy recipe writes valid JSON to clipboard', () => assert.equal(JSON.parse(window.copiedText).schema_version, 4));
   const importRecipe = JSON.parse(window.copiedText); importRecipe.title = 'Imported field';
   Object.defineProperty($('recipe-file'), 'files', { configurable: true, value: [{ size: 2000, text: async () => JSON.stringify(importRecipe) }] });
   state = await revisionAfter(() => change('recipe-file'));
@@ -247,7 +250,7 @@ try {
   check('all three export formats produce downloads', () => assert.deepEqual(downloads.map((d) => d.name.split('.').at(-1)), ['json', 'svg', 'png']));
   const exportedJson = JSON.parse(await resolveObjectURL(downloads[0].url).text());
   const exportedSvg = new window.DOMParser().parseFromString(await resolveObjectURL(downloads[1].url).text(), 'image/svg+xml');
-  check('exported recipe and vector artwork are parseable content', () => { assert.equal(exportedJson.schema_version, 3); assert.equal(exportedSvg.querySelector('parsererror'), null); assert.ok(exportedSvg.querySelectorAll('path').length > 50); });
+  check('exported recipe and vector artwork are parseable content', () => { assert.equal(exportedJson.schema_version, 4); assert.equal(exportedSvg.querySelector('parsererror'), null); assert.ok(exportedSvg.querySelectorAll('path').length > 50); });
   if (nativeCanvas) {
     const png = Buffer.from(await resolveObjectURL(downloads[2].url).arrayBuffer());
     check('native PNG export encodes a real 2000-by-1400 image', () => { assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a'); assert.equal(png.readUInt32BE(16), 2000); assert.equal(png.readUInt32BE(20), 1400); });

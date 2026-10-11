@@ -159,7 +159,7 @@ def test_legacy_migration_disk_roundtrip_and_duplicate(tmp_path):
     legacy = json.loads((ROOT / "examples/tidal_atlas_recipe.json").read_text())
     untouched = copy.deepcopy(legacy)
     migrated = Recipe.model_validate(legacy).model_dump()
-    assert legacy == untouched and migrated["schema_version"] == 3
+    assert legacy == untouched and migrated["schema_version"] == 4
     assert all(obj["keyframes"] == [] for obj in migrated["objects"])
     path = tmp_path / "scene.json"
     service = SceneService(path)
@@ -186,7 +186,8 @@ def test_python_javascript_parity_and_demo_reproducibility():
     demo = json.loads((ROOT / "examples/tidal_atlas_choreography.json").read_text())
     assert Recipe.model_validate(demo).model_dump() == {
         **demo,
-        "schema_version": 3,
+        "schema_version": 4,
+        "layer_order": [obj["id"] for obj in demo["objects"]],
         "blends": [],
     }
     demo_result = subprocess.run(

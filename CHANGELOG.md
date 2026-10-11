@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — composition layers
+
+- Add complete bounded layer ordering, visible front/back controls and dependencies.
+- Expose per-island/blend visibility, palette and opacity through shared commands.
+- Composite each complete layer once; preserve SVG group order/opacity and source fields.
+- Select frontmost visible artwork; explain hidden/consumed source editing with explicit handles.
+- Migrate older recipes to schema 4 without changing their original drawing order or geometry.
+- Add the Glasswater layered study, real raster checks and desktop/phone acceptance coverage.
+- Native WebMCP host execution remains unverified; no release or deployment is included.
+
 ## 0.5.0 - 2026-10-11 (development)
 
 - Add non-destructive two-source static union/smooth union using the existing RFunctionCurve/CurveField engine. Blend amount is dimensionless; no signed-distance or Euclidean-offset claim.
