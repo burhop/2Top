@@ -17,15 +17,15 @@ The tools currently edit kinetic island recipes. The UI does not expose the enti
 
 The full repository `tests/` suite ran in a freshly installed environment using the updated uv lockfile, Python 3.12.14:
 
-- 1,155 passed
+- 1,157 passed
 - 27 skipped because the legacy curves.db dataset or opt-in visual baseline configuration was unavailable
 - 41 legacy numeric/runtime warnings
 
-The studio portion contains 117 tests. Coverage includes field/contour parity, scaled gradients, geometric roundtrip, old-interface composition, scene persistence, atomic rollback, failed disk writes, concurrent edits, stale revisions, exact request replay, invalid data and real MCP clients. Current protocol 2026-07-28 negotiated over both HTTP and stdio; legacy 2025-11-25 was also checked in-process.
+The studio portion contains 119 tests. Coverage includes field/contour parity, scaled gradients, geometric roundtrip, old-interface composition, scene persistence, atomic rollback, failed disk writes, concurrent edits, stale revisions, exact request replay, invalid data and real MCP clients. Current protocol 2026-07-28 negotiated over both HTTP and stdio; legacy 2025-11-25 was also checked in-process.
 
 36 JavaScript DOM/service/native-render checks passed against the real Python SceneService. They cover direct drag and Escape cancellation, preview/commit sliders, pending-command races, stale-write recovery, extreme valid inspector values, duplication at bounds, recipe import, export content, and actual 2000×1400 PNG encoding. The browser API contract test passed using an explicitly mocked WebMCP implementation.
 
-Repository-wide Ruff lint passes. Formatting checks pass for every changed/new Python implementation file. Full-repository formatting still flags 12 inherited files (mostly Markdown examples, geometry/factories.py and tools/generate_curve_dataset.py); those unrelated files were not reformatted. The existing remote CI has not been rerun because no changes were pushed. A new independent studio workflow runs scoped lint/format checks, the full test suite, WebMCP contract tests and DOM behavior tests.
+Repository-wide Ruff lint passes. Formatting checks pass for every changed/new Python implementation file. Full-repository formatting still flags 10 inherited files (mostly Markdown examples and geometry/factories.py); those unrelated files were not reformatted. The existing remote CI has not been rerun because no changes were pushed. The inherited workflow now installs the studio test dependencies; its repository-wide lint and formatting gates remain required. A new independent studio workflow runs scoped lint/format checks, the full test suite, WebMCP contract tests, DOM behavior tests and nine actual Chromium acceptance cases with downloadable screenshots/traces. Those Chromium cases were discovered successfully but have not yet executed.
 
 A wheel was built and extracted outside the source checkout. Its imports, static UI assets and engine-backed /api/geometry endpoint passed an installation smoke test. The packaging now includes required visual_tests subpackages used by the existing graphics backend.
 
