@@ -1,4 +1,47 @@
-# 2Top: 2D Implicit Geometry Library
+# 2Top · Tidal Atlas
+
+A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
+
+## Start the new studio
+
+Python 3.11 or later:
+
+```bash
+python -m venv .venv
+# macOS/Linux: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -e ".[studio]"
+python -m studio.app
+```
+
+Open **http://127.0.0.1:8000**. No AI account or API key is needed to draw, animate, undo, or export. The app stays on loopback. Local artwork is saved to `.studio/scene.json`; use `--ephemeral` for a disposable session.
+
+- Directly drag islands and adjust their scale, curl, palette and contour density
+- Play, pause and scrub a smooth 12-second tide; save JSON recipes, SVG artwork or PNG images
+- Select, duplicate, hide, delete, undo and redo complete operations
+- Connect an MCP client to **http://127.0.0.1:8000/mcp/** or launch the stdio proxy with `python -m studio.mcp_server`
+- In a supported top-level browser, `document.modelContext` registers the same 12 tools. Unsupported browsers retain the complete manual app
+
+See [the studio guide](docs/tidal_atlas.md), [agent connection details and compatibility](docs/agent_protocols.md), and the app's self-contained `/api/docs` reference. The studio does not include an embedded language model or pretend that local presets are AI output.
+
+## Studio checks
+
+```bash
+python -m pip install -e ".[studio,dev]"
+python -m pytest tests/studio
+node tests/studio/webmcp_contract.mjs
+# Optional DOM/canvas behavioral checks (Node 24.15+):
+npm ci
+npm run test:ui
+python -m ruff check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+python -m ruff format --check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+```
+
+The legacy geometry engine and diagnostic UI remain available below. The historical `MCPCommandHandler` is a legacy command dispatcher, not a standard MCP transport; the new standard server is `studio/mcp_server.py`.
+
+---
+
+## Reusable implicit geometry library
 
 A complete, tested framework for planar implicit geometry: define curves by f(x, y) = 0, compose them via constructive operations, build piecewise boundaries and filled regions, and generate scalar fields (signed distance, occupancy).
 

@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "title": "Midnight archipelago",
+  "objects": [
+    {
+      "id": "island_ember",
+      "name": "Solstice",
+      "type": "island",
+      "parameters": {
+        "x": 320.0,
+        "y": 375.0,
+        "radius": 215.0,
+        "elongation": 0.95,
+        "rotation": -24.0,
+        "lobes": 3,
+        "warp": 0.68,
+        "phase": 0.4
+      },
+      "style": {
+        "palette": "ember",
+        "opacity": 1,
+        "visible": true
+      }
+    },
+    {
+      "id": "island_lagoon",
+      "name": "Undertow",
+      "type": "island",
+      "parameters": {
+        "x": 710.0,
+        "y": 305.0,
+        "radius": 195.0,
+        "elongation": 0.9,
+        "rotation": 151.0,
+        "lobes": 3,
+        "warp": 0.72,
+        "phase": 2.2
+      },
+      "style": {
+        "palette": "lagoon",
+        "opacity": 1,
+        "visible": true
+      }
+    },
+    {
+      "id": "island_moon",
+      "name": "Drift",
+      "type": "island",
+      "parameters": {
+        "x": 760.0,
+        "y": 580.0,
+        "radius": 80.0,
+        "elongation": 1.1,
+        "rotation": 15.0,
+        "lobes": 4,
+        "warp": 0.42,
+        "phase": 4.0
+      },
+      "style": {
+        "palette": "aurora",
+        "opacity": 1,
+        "visible": true
+      }
+    }
+  ],
+  "view": {
+    "zoom": 1,
+    "pan_x": 0,
+    "pan_y": 0,
+    "grid": false,
+    "contours": 26
+  },
+  "animation": {
+    "playing": false,
+    "time": 0,
+    "speed": 0.65,
+    "motion": 0.45
+  }
+}

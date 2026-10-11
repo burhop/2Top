@@ -193,6 +193,16 @@ class CurveField(BaseField):
         Returns:
             ImplicitCurve representing the level set
         """
+        # Kinetic curves retain their numeric recipe when their wrapped field
+        # is shifted. Keep the legacy symbolic path unchanged for other types.
+        from .kinetic_field import KineticIslandCurve
+
+        if isinstance(self.curve, KineticIslandCurve):
+            from .kinetic import _finite_number
+
+            shift = _finite_number(level, "level")
+            return self.curve.field.level_set(self.curve.level + shift)
+
         # Create a new curve with the expression shifted by the level
 
         # Get the original expression and variables
@@ -543,6 +553,10 @@ class BlendedField(BaseField):
                 fields.append(CurveField.from_dict(field_data))
             elif field_type == "BlendedField":
                 fields.append(BlendedField.from_dict(field_data))
+            elif field_type == "KineticIslandField":
+                from .kinetic_field import KineticIslandField
+
+                fields.append(KineticIslandField.from_dict(field_data))
             elif field_type == "SignedDistanceField":
                 from geometry.field_strategy import SignedDistanceField
 

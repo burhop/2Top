@@ -688,6 +688,10 @@ class SceneManager:
                                 from geometry.base_field import BlendedField
 
                                 obj = BlendedField.from_dict(obj_data)
+                            elif obj_type == "KineticIslandField":
+                                from geometry.kinetic_field import KineticIslandField
+
+                                obj = KineticIslandField.from_dict(obj_data)
                             elif obj_type == "SignedDistanceField":
                                 from geometry.field_strategy import SignedDistanceField
 

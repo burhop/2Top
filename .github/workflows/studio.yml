@@ -1,0 +1,24 @@
+name: Tidal Atlas studio
+on:
+  push:
+    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', '.github/workflows/studio.yml']
+  pull_request:
+    paths: ['studio/**', 'geometry/kinetic*.py', 'geometry/__init__.py', 'geometry/base_field.py', 'geometry/implicit_curve.py', 'scene_management/scene_manager.py', 'tests/studio/**', 'pyproject.toml', 'uv.lock', 'package.json', 'package-lock.json', '.github/workflows/studio.yml']
+jobs:
+  shared-scene-and-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install -e '.[studio,dev]'
+      - run: python -m ruff check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+      - run: python -m ruff format --check studio geometry/kinetic*.py geometry/__init__.py geometry/base_field.py geometry/implicit_curve.py scene_management/scene_manager.py tests/studio
+      - run: python -m pytest tests -v
+      - run: node tests/studio/webmcp_contract.mjs
+      - run: npm ci
+      - run: npm run test:ui

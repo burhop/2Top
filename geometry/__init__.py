@@ -25,6 +25,7 @@ from .composite_curve import create_circle_from_quarters, create_square_from_edg
 
 # Import scalar field classes
 from .base_field import BaseField, CurveField, BlendedField
+from .kinetic_field import KineticIslandField, KineticIslandCurve
 
 # Import field strategy classes
 from .field_strategy import (
@@ -63,6 +64,8 @@ __all__ = [
     "BaseField",
     "CurveField",
     "BlendedField",
+    "KineticIslandField",
+    "KineticIslandCurve",
     # Field strategy classes
     "FieldStrategy",
     "SignedDistanceStrategy",

@@ -215,3 +215,9 @@ docs/renders/
 ui/static/renders/periodic_curves/
 docs/periodic_curve_gallery.html
 scratch/
+
+# Local Tidal Atlas documents and generated review artifacts
+.studio/
+review_artifacts/
+.verify-venv/
+node_modules/
