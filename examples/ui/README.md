@@ -63,19 +63,38 @@ from typing import Dict
 # - default: initial value
 # - min/max/step: optional (numeric types only)
 
+
 def _add_my_object(self):
     schema = [
-        {"name": "id",        "label": "ID",       "type": "str",   "default": "obj1"},
-        {"name": "segments",  "label": "Segments", "type": "int",   "default": 32, "min": 3,   "max": 360, "step": 1},
-        {"name": "scale",     "label": "Scale",    "type": "float", "default": 1.0, "min": 0.1, "max": 10.0, "step": 0.1},
-        {"name": "filled",    "label": "Filled",   "type": "bool",  "default": False},
+        {"name": "id", "label": "ID", "type": "str", "default": "obj1"},
+        {
+            "name": "segments",
+            "label": "Segments",
+            "type": "int",
+            "default": 32,
+            "min": 3,
+            "max": 360,
+            "step": 1,
+        },
+        {
+            "name": "scale",
+            "label": "Scale",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.1,
+            "max": 10.0,
+            "step": 0.1,
+        },
+        {"name": "filled", "label": "Filled", "type": "bool", "default": False},
     ]
     dlg = ParameterDialog("Create MyObject", schema, self)
     if dlg.exec() == QDialog.Accepted:
         params: Dict[str, object] = dlg.values()
         obj_id = self._unique_id("myobj")
         obj = MyObjectConstructor(**params)  # Make sure names match your constructor
-        self.scene.add_object(obj_id, obj, style={"color": "#2ca02c", "linewidth": 2.0, "alpha": 1.0})
+        self.scene.add_object(
+            obj_id, obj, style={"color": "#2ca02c", "linewidth": 2.0, "alpha": 1.0}
+        )
         self._append_object_info(obj_id)
         self._render_and_display()
 ```
@@ -98,9 +117,33 @@ Example schema for a circle (already used by the app):
 
 ```python
 schema = [
-    {"name": "center_x", "label": "Center X", "type": "float", "default": 0.0, "min": -10.0, "max": 10.0, "step": 0.1},
-    {"name": "center_y", "label": "Center Y", "type": "float", "default": 0.0, "min": -10.0, "max": 10.0, "step": 0.1},
-    {"name": "radius",   "label": "Radius",   "type": "float", "default": 1.0, "min": 0.1,  "max": 10.0, "step": 0.1},
+    {
+        "name": "center_x",
+        "label": "Center X",
+        "type": "float",
+        "default": 0.0,
+        "min": -10.0,
+        "max": 10.0,
+        "step": 0.1,
+    },
+    {
+        "name": "center_y",
+        "label": "Center Y",
+        "type": "float",
+        "default": 0.0,
+        "min": -10.0,
+        "max": 10.0,
+        "step": 0.1,
+    },
+    {
+        "name": "radius",
+        "label": "Radius",
+        "type": "float",
+        "default": 1.0,
+        "min": 0.1,
+        "max": 10.0,
+        "step": 0.1,
+    },
 ]
 ```
 

@@ -330,7 +330,9 @@ class PrecisionPolicy:
 ### 2.7 Curve Intersection Engine — [curve_intersections.py](file:///d:/repos/2Top/geometry/curve_intersections.py)
 
 ```python
-find_curve_intersections(curve1, curve2, search_range, grid_resolution, tolerance, max_points, detect_overlap)
+find_curve_intersections(
+    curve1, curve2, search_range, grid_resolution, tolerance, max_points, detect_overlap
+)
 ```
 
 **Algorithm** (3-stage):
@@ -441,7 +443,9 @@ Structured command interface for external services and AI agents. Wraps `SceneMa
 
 **Command protocol**:
 ```python
-handler.handle_command("create.circle", {"center": [0, 0], "radius": 1.5, "object_id": "c1"})
+handler.handle_command(
+    "create.circle", {"center": [0, 0], "radius": 1.5, "object_id": "c1"}
+)
 # → {"success": True, "command": "create.circle", "data": {...}}
 ```
 

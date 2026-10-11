@@ -48,9 +48,10 @@ Example of a TDD cycle:
 # Step 1: Red - Write a test that will fail
 def test_conic_section_creation():
     # This test will fail initially
-    x, y = sp.symbols('x y')
+    x, y = sp.symbols("x y")
     circle = ConicSection(x**2 + y**2 - 1, (x, y))
     assert circle is not None
+
 
 # Step 2: Green - Implement the code to make the test pass
 # (The ConicSection class is already implemented in the system)

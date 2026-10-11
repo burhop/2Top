@@ -149,23 +149,23 @@ The system follows a clear layered approach:
 ```python
 # As shown in sequence diagram
 square = create_square_from_edges((0, 0), (4, 4))  # CompositeCurve
-region = AreaRegion(square)                         # AreaRegion with validation
+region = AreaRegion(square)  # AreaRegion with validation
 ```
 
 ### Field Generation Strategy Pattern
 ```python
 # As shown in class hierarchy
-strategy = SignedDistanceStrategy(resolution=0.1)   # Concrete strategy
-field = region.get_field(strategy)                  # Strategy pattern in action
-result = field.evaluate(1.0, 1.0)                  # Field evaluation
+strategy = SignedDistanceStrategy(resolution=0.1)  # Concrete strategy
+field = region.get_field(strategy)  # Strategy pattern in action
+result = field.evaluate(1.0, 1.0)  # Field evaluation
 ```
 
 ### Curve Composition
 ```python
 # As shown in component relationships
 base_curve = PolynomialCurve(expression, variables)  # Base curve
-trimmed = TrimmedImplicitCurve(base_curve, mask)     # Apply mask
-composite = CompositeCurve([trimmed1, trimmed2])     # Combine segments
+trimmed = TrimmedImplicitCurve(base_curve, mask)  # Apply mask
+composite = CompositeCurve([trimmed1, trimmed2])  # Combine segments
 ```
 
 ## Visualizer Studio & Test Automation Component Layout

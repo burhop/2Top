@@ -122,46 +122,48 @@ The simplest approach is a helper class:
 ```python
 class TestDashboard:
     """Manages the live status dashboard markdown file."""
-    
+
     STATUS_PATH = r"d:\repos\2Top\docs\periodic_curve_test_status.md"
-    
+
     def __init__(self):
         self.tests = {}  # test_id -> {name, status, time, details, tier}
         self._init_all_tests()
-    
+
     def _init_all_tests(self):
         """Register all 155+ tests with ❌ status."""
         ...
-    
+
     def mark_running(self, test_id: str):
         """Set test to 🟡 and write file."""
         self.tests[test_id]["status"] = "🟡"
         self.tests[test_id]["details"] = "Running..."
         self._write()
-    
+
     def mark_passed(self, test_id: str, time_s: float, found: int, expected: int):
         """Set test to ✅ or ⚠️ and write file."""
         if time_s > 0.5:
             self.tests[test_id]["status"] = "⚠️"
-            self.tests[test_id]["details"] = f"{found}/{expected} pts found (SLOW: {time_s:.3f}s > 0.5s target)"
+            self.tests[test_id]["details"] = (
+                f"{found}/{expected} pts found (SLOW: {time_s:.3f}s > 0.5s target)"
+            )
         else:
             self.tests[test_id]["status"] = "✅"
             self.tests[test_id]["details"] = f"{found}/{expected} pts found"
         self.tests[test_id]["time"] = f"{time_s:.3f}s"
         self._write()
-    
+
     def mark_failed(self, test_id: str, found: int, expected: int, error: str = None):
         """Set test to ❌ with failure details and write file."""
         ...
         self._write()
-    
+
     def _write(self):
         """Rewrite the entire markdown file and flush."""
         lines = self._render_markdown()
-        with open(self.STATUS_PATH, 'w', encoding='utf-8') as f:
+        with open(self.STATUS_PATH, "w", encoding="utf-8") as f:
             f.write(lines)
             f.flush()
-    
+
     def _render_markdown(self) -> str:
         """Generate the full markdown content from current state."""
         ...

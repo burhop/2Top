@@ -46,13 +46,13 @@ Example of a test case:
 def test_conic_section_creation():
     # Test case for conic section creation
     # This is a unit test
-    x, y = sp.symbols('x y')
+    x, y = sp.symbols("x y")
     circle = ConicSection(x**2 + y**2 - 1, (x, y))
-    
+
     # Check that the circle is created properly
     assert circle is not None
     assert circle.variables == (x, y)
-    
+
     # Test that the circle evaluates correctly
     result = circle.evaluate(0, 0)
     assert result < 0  # Inside the circle
