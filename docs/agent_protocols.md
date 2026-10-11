@@ -112,7 +112,7 @@ Mutation tools:
 
 - `create_geometry`, `update_geometry`, `delete_geometry`
 - `set_style`, `set_view`, `select`
-- `set_keyframe`, `delete_keyframe`
+- `set_keyframe`, `delete_keyframe`, `edit_keyframe`
 - `batch`, `undo`, `redo`, `load_recipe`
 
 Every mutation requires `expected_revision`, a nonnegative integer. An optional
@@ -137,7 +137,7 @@ Example named-tool arguments, after reading revision 0:
 Call `update_geometry` with those arguments. Do not include `op` in named-tool
 arguments. The manual `POST /api/command` route instead accepts an `op` alongside
 the arguments. Batch child commands include `op`, omit revision metadata and are
-restricted to eight small editing operations (including key insertion/removal). A batch is at most 32 commands
+restricted to nine small editing operations (including key insertion/removal). A batch is at most 32 commands
 and commits as one revision/undo step, or makes no change on failure.
 
 `set_keyframe` accepts `id` and `keyframe`, whose fields are `time` (0..12),
@@ -148,7 +148,15 @@ the track is sorted and limited to 24 keys. `delete_keyframe` accepts `id` and
 easing. Rotation interpolates authored degrees, allowing deliberate long turns.
 The server's geometry snapshots and browser rendering sample the same tracks.
 
-Schema-2 recipes contain per-island `keyframes`; schema-1 input migrates to
+`edit_keyframe` identifies an existing island key by `id` and exact source
+`time`. Supply `new_time` (0..12), `position` (complete bounded x/y), or both.
+All other pose values and easing remain unchanged. Retiming can cross neighbors;
+tracks are sorted afterward. An occupied destination yields `keyframe_collision`,
+an absent source yields `keyframe_not_found`; neither changes history/revision.
+These edits can be batched with `set_view` for a shared paused playhead and one
+undo step. Retry IDs and revision rules are the same as other mutations.
+
+Version 0.4.0 retains schema 2; 0.3.x tracks load unchanged. Schema-2 recipes contain per-island `keyframes`; schema-1 input migrates to
 schema 2 with empty tracks, retaining all base geometry and motion settings.
 Unknown versions, unsorted/duplicate times and malformed poses are rejected.
 Older 0.2.x applications cannot read schema 2; preserve original files if needed.

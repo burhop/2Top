@@ -55,6 +55,7 @@ let preview = null;
 let dragging = null;
 let gesture = null;
 let showHandles = true;
+let editMotionPath = false;
 let activeTool = 'select';
 let busy = 0;
 let online = false;
@@ -257,6 +258,11 @@ function updateKeyframeControls(state, time) {
   $('capture-keyframe').disabled = locked || (!key && object.keyframes.length >= 24);
   $('delete-keyframe').disabled = locked || !key || Boolean(state?.animation.playing);
   $('keyframe-easing').disabled = locked;
+  $('motion-path-button').disabled = locked || !object?.keyframes?.length;
+  $('motion-path-button').setAttribute('aria-pressed', String(editMotionPath));
+  $('key-time-input').disabled = locked || !key || Boolean(state?.animation.playing);
+  $('retime-keyframe').disabled = $('key-time-input').disabled;
+  if (document.activeElement !== $('key-time-input')) $('key-time-input').value = key ? key.time : '';
   $('capture-keyframe').textContent = key ? 'Update pose' : 'Capture pose';
   document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
 }
@@ -267,6 +273,8 @@ function updateKeyframes(state) {
   $('keyframe-list').innerHTML = keys.length ? keys.map(key => `<button class="pose-key" data-keyframe-time="${key.time}" aria-label="Go to keyframe ${key.time.toFixed(2)} seconds" aria-pressed="false">${key.time.toFixed(2)}s <span>${key.easing === 'smooth' ? 'smooth' : 'linear'}</span></button>`).join('') : '<span class="empty-poses">No poses yet. Capture the first, then scrub to the next.</span>';
   const key = keys.find(k => Math.abs(k.time - time) < 1e-7);
   if (key) $('keyframe-easing').value = key.easing;
+  const start = keys.find(k => k.time === 0), end = keys.find(k => k.time === DURATION);
+  $('seam-status').textContent = !start || !end ? 'Loop seam: add 0s and 12s poses' : POSE_FIELDS.every(name => Math.abs(start.parameters[name] - end.parameters[name]) < 1e-7) ? 'Loop seam: matched' : 'Loop seam: pose jump';
   updateKeyframeControls(state, time);
 }
 function poseEditCommands(object, patch, time) {
@@ -291,6 +299,16 @@ $('capture-keyframe').addEventListener('click', capturePose);
 $('delete-keyframe').addEventListener('click', () => { const object = selected(scene); if (object && !busy) run('delete_keyframe', { id: object.id, time: authoredTime() }); });
 $('keyframe-easing').addEventListener('change', () => { const object = selected(scene); if (object?.keyframes?.some(k => Math.abs(k.time - authoredTime()) < 1e-7)) capturePose(); });
 $('keyframe-list').addEventListener('click', event => { const button = event.target.closest('[data-keyframe-time]'); if (button && !busy) run('set_view', { view: {}, animation: { playing: false, time: Number(button.dataset.keyframeTime) } }); });
+$('motion-path-button').addEventListener('click', () => { editMotionPath = !editMotionPath; showHandles = true; $('handles-button').setAttribute('aria-pressed', 'true'); $('handles-button').classList.add('active'); updateUI(); renderDirty = true; });
+$('retime-keyframe').addEventListener('click', () => {
+  const object = selected(scene), input = $('key-time-input');
+  if (!object || busy || !input.reportValidity() || input.value === '') return;
+  const time = authoredTime(), new_time = Number(input.value);
+  run('batch', { label: 'Retime island pose', commands: [
+    { op: 'edit_keyframe', id: object.id, time, new_time },
+    { op: 'set_view', view: {}, animation: { playing: false, time: new_time } },
+  ] });
+});
 $('demo-button').addEventListener('click', () => run('load_recipe', { recipe: { ...clone(demoRecipe), animation: { ...demoRecipe.animation, playing: true } } }));
 
 function resize() {
@@ -372,6 +390,24 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
     target.restore();
   }
   if (target === ctx) renderedPaths = paths;
+  if (handles && editMotionPath) {
+    const object = selected(state);
+    const keys = object?.style?.visible !== false ? object?.keyframes || [] : [];
+    if (keys.length) {
+      target.save(); target.lineWidth = 1.4 / trans.scale; target.strokeStyle = '#f4e9c6b8'; target.setLineDash([5 / trans.scale, 5 / trans.scale]);
+      target.beginPath(); keys.forEach((key, i) => { const p = key.parameters; if (i) target.lineTo(p.x, p.y); else target.moveTo(p.x, p.y); }); target.stroke(); target.setLineDash([]);
+      for (const key of keys) {
+        const active = Math.abs(key.time - time) < 1e-7, p = key.parameters;
+        target.fillStyle = active ? '#f4e9c6' : '#183d36'; target.strokeStyle = key.time === DURATION ? '#e9bc81' : '#e6eed7';
+        target.beginPath(); target.arc(p.x, p.y, (key.time === DURATION ? 10 : 7) / trans.scale, 0, Math.PI * 2); target.fill(); target.stroke();
+        target.font = `${11 / trans.scale}px Arial`; target.textAlign = 'left'; target.textBaseline = 'middle';
+        const label = `${key.time.toFixed(2)}s`, lx = p.x + 14 / trans.scale, ly = p.y + (key.time === DURATION ? 16 : -16) / trans.scale;
+        target.fillStyle = '#102725ed'; target.fillRect(lx - 3 / trans.scale, ly - 9 / trans.scale, target.measureText(label).width + 6 / trans.scale, 18 / trans.scale);
+        target.fillStyle = '#f4e9c6'; target.fillText(label, lx, ly);
+      }
+      target.restore();
+    }
+  }
   if (handles) {
     for (const object of state.objects) {
       if (object.style?.visible === false) continue;
@@ -422,10 +458,25 @@ function hitObject(point) {
   }
   return null;
 }
+function hitMotionKey(point) {
+  if (!editMotionPath || !showHandles) return null;
+  const object = selected(scene);
+  if (!object || object.style?.visible === false) return null;
+  return (object.keyframes || []).filter(key => Math.hypot(key.parameters.x - point.x, key.parameters.y - point.y) <= 18 / transform.scale)
+    .sort((a, b) => Math.abs(a.time - authoredTime()) - Math.abs(b.time - authoredTime()))[0] || null;
+}
 canvas.addEventListener('pointerdown', (event) => {
   if (!scene || busy || event.button !== 0) return;
   const point = worldPoint(event);
   if (activeTool === 'add') { addIsland(point); setTool('select'); return; }
+  const motionKey = hitMotionKey(point);
+  if (motionKey) {
+    const object = selected(scene);
+    preview = clone(scene); preview.animation.time = motionKey.time; preview.animation.playing = false;
+    dragging = { id: object.id, pointerId: event.pointerId, start: point, x: motionKey.parameters.x, y: motionKey.parameters.y, time: motionKey.time, pathKey: true, moved: false, revision: scene.revision };
+    canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
+    $('selection-hint').textContent = 'Move this pose only · Esc to cancel'; renderDirty = true; updateUI(); return;
+  }
   const object = hitObject(point);
   if (!object) { if (scene.selection.length) run('select', { ids: [] }); return; }
   preview = clone(scene);
@@ -444,11 +495,12 @@ canvas.addEventListener('pointermove', (event) => {
   if (!scene) return;
   const point = worldPoint(event);
   $('coordinate-label').textContent = `X ${String(Math.round(point.x)).padStart(3, '0')} / Y ${String(Math.round(point.y)).padStart(3, '0')}`;
-  if (!dragging) { canvas.style.cursor = activeTool === 'add' ? 'crosshair' : hitObject(point) ? 'grab' : 'default'; return; }
+  if (!dragging) { canvas.style.cursor = activeTool === 'add' ? 'crosshair' : hitMotionKey(point) || hitObject(point) ? 'grab' : 'default'; return; }
   const dx = point.x - dragging.start.x, dy = point.y - dragging.start.y;
   if (Math.abs(dx) + Math.abs(dy) > 2) dragging.moved = true;
   const object = preview.objects.find((o) => o.id === dragging.id);
-  object.parameters.x = clamp(dragging.x + dx, -500, 1500); object.parameters.y = clamp(dragging.y + dy, -350, 1050);
+  const pose = dragging.pathKey ? object.keyframes.find(key => key.time === dragging.time).parameters : object.parameters;
+  pose.x = clamp(dragging.x + dx, ...(dragging.pathKey ? PARAMETER_BOUNDS.x : [-500, 1500])); pose.y = clamp(dragging.y + dy, ...(dragging.pathKey ? PARAMETER_BOUNDS.y : [-350, 1050]));
   renderDirty = true;
 });
 async function endDrag(cancel = false) {
@@ -460,9 +512,15 @@ async function endDrag(cancel = false) {
   if (cancel) { preview = null; renderDirty = true; updateUI(); return; }
   const commands = [];
   if (!scene.selection.includes(drag.id)) commands.push({ op: 'select', ids: [drag.id] });
-  if (drag.moved && object) commands.push(...poseEditCommands(scene.objects.find(o => o.id === drag.id), { x: Number(object.parameters.x.toFixed(2)), y: Number(object.parameters.y.toFixed(2)) }, drag.time));
+  if (drag.pathKey) {
+    commands.push({ op: 'set_view', view: {}, animation: { playing: false, time: drag.time } });
+    if (drag.moved && object) {
+      const pose = object.keyframes.find(key => key.time === drag.time).parameters;
+      commands.push({ op: 'edit_keyframe', id: drag.id, time: drag.time, position: { x: Number(pose.x.toFixed(2)), y: Number(pose.y.toFixed(2)) } });
+    }
+  } else if (drag.moved && object) commands.push(...poseEditCommands(scene.objects.find(o => o.id === drag.id), { x: Number(object.parameters.x.toFixed(2)), y: Number(object.parameters.y.toFixed(2)) }, drag.time));
   if (!commands.length) { preview = null; renderDirty = true; updateUI(); return; }
-  await run('batch', { label: drag.moved ? 'Moved island' : 'Selected island', commands }, { expectedRevision: drag.revision });
+  await run('batch', { label: drag.pathKey ? 'Edit motion path pose' : drag.moved ? 'Moved island' : 'Selected island', commands }, { expectedRevision: drag.revision });
 }
 canvas.addEventListener('pointerup', () => endDrag());
 canvas.addEventListener('pointercancel', () => endDrag(true));

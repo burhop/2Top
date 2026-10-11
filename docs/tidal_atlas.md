@@ -1,4 +1,4 @@
-# Tidal Atlas 0.3.0: island choreography
+# Tidal Atlas 0.4.0: island choreography
 
 ## What this version does
 
@@ -59,6 +59,29 @@ JSON export includes every key. Schema-1 recipes reopen with empty tracks and
 unchanged base parameters; the next save uses schema 2. Keep the original file
 for older 0.2.x applications. Invalid imports leave the current scene untouched.
 The matching demo recipe is `examples/tidal_atlas_choreography.json`.
+
+## Edit motion paths and timing
+
+Pause Orbit & bloom, select Solstice, and choose **Edit motion path**. Labeled
+handles show its authored centers; drag one to move that pose only. The path is
+the positional track before the procedural tide effect, not the shoreline.
+Handle drags preview locally and freeze at the chosen key; release commits one
+revision and undo step. Escape or pointer cancellation discards the preview.
+Handles are editing guides and are omitted from PNG/SVG exports.
+
+Click a pose chip, enter an unoccupied **Key time** between 0 and 12 seconds,
+then choose **Move key**. Crossing neighbors is allowed; keys are sorted and
+retain their complete pose and easing. An occupied time rejects the entire edit,
+including the playhead change, leaving the scene untouched. Undo/redo restores
+both key and paused playhead. Loop endpoints are distinct: when 0s/12s handles
+overlap, choose that endpoint's chip first to target it precisely. The seam status
+shows matched poses, a pose jump, or missing endpoint keys.
+
+Schema 2 stays unchanged in 0.4.0; 0.3.x artwork reopens without migration.
+The established schema-1 migration still preserves 0.2.x base poses with empty
+tracks. No custom path curves or tangent/velocity tools are introduced.
+
+See [Work17 quickstart](work17_quickstart.md) for the current-dev demo commands.
 
 ## Co-edit with an agent
 

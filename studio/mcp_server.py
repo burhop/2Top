@@ -42,6 +42,7 @@ TOOL_NAMES = frozenset(
         "load_recipe",
         "set_keyframe",
         "delete_keyframe",
+        "edit_keyframe",
     }
 )
 

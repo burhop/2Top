@@ -19,12 +19,24 @@ mocked adapter contracts and real MCP clients cannot establish this capability.
 Record host/version and real shared-scene edits without changing security flags
 or pretending the unsupported browser is connected.
 
-## Recommended 0.4.0 — editable motion paths
+## 0.4.0 - editable motion paths
 
-Show selected-island center paths and pose handles on the canvas. Allow moving
-and retiming selected keys through the same revision-checked commands, with
-clear seam indicators, undo/redo and JSON round trips. Test crossing/duplicate
-times and phone interactions before adding more track types.
+This milestone shows labeled selected-island center paths. Positional handles
+and key retiming use the same validated edit_keyframe command through UI/MCP/
+WebMCP. Crossing keys are sorted; occupied times fail atomically. Seam indicators,
+undo/redo, schema-2 persistence and desktop/phone pointer coverage remain shared.
+0.3.x tracks reopen unchanged and 0.2.x retains its empty-track migration.
+The path is an authored center guide; curved paths and tangent tools are future
+work. See [Work17 quickstart](work17_quickstart.md) to try the demo.
+
+## Recommended 0.5.0 - bounded geometry blending
+
+Bring one reusable legacy operation into the artwork editor: blending two static
+island fields, with a clear preview and a reversible persisted operation.
+Specify the scene contract and old-recipe migration first; retain immutable
+engine snapshots and test Python/browser field parity. Defer animated operands
+until their track semantics are explicitly defined. Native WebMCP host
+verification remains a separate gap rather than a simulated feature.
 
 ## Subsequent geometry work
 

@@ -127,8 +127,8 @@ test('loads and paints the real canvas without claiming an AI connection', async
   expect(capability.status.supported).toBe(capability.nativeRegisterToolAvailable);
   expect(capability.status.error).toBeNull();
   if (capability.nativeRegisterToolAvailable) {
-    expect(capability.status.registered).toBe(14);
-    await expect(page.locator('#agent-hint')).toContainText('14 browser tools registered');
+    expect(capability.status.registered).toBe(15);
+    await expect(page.locator('#agent-hint')).toContainText('15 browser tools registered');
   } else {
     expect(capability.status.registered).toBe(0);
     expect(capability.status.reason).toBe('browser-unsupported');
@@ -334,7 +334,7 @@ test('invalid file import preserves the scene and valid imports still work after
 
 test('mobile and tablet layouts remain usable and capture actual browser screenshots', async ({ page }, testInfo) => {
   for (const viewport of [{ width: 390, height: 844 }, { width: 820, height: 1180 }]) {
-    await page.setViewportSize(viewport);
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await settleCanvas(page);
     const dimensions = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, viewport: innerWidth }));
     await screenshot(page, testInfo, `responsive-${viewport.width}`);
@@ -454,3 +454,86 @@ test('malformed choreography is rejected and a legacy recipe still reopens', asy
   expect(scene.objects.every(object => object.keyframes.length === 0)).toBe(true);
   expect(scene.objects[0].parameters).toEqual(legacySeed.objects[0].parameters);
 });
+
+for (const viewport of [{ name: 'desktop', width: 1440, height: 1100 }, { name: 'phone', width: 390, height: 844 }]) {
+  test(`motion path handles, retiming and saved poses work on ${viewport.name}`, async ({ page, request, expectedHttpFailures }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await edit(page, () => page.getByRole('button', { name: 'Play demo', exact: true }).click());
+    await edit(page, () => page.getByRole('button', { name: 'Pause animation', exact: true }).click());
+    await selectFirst(page);
+    await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 6.00 seconds', exact: true }).click());
+    await page.getByRole('button', { name: 'Edit motion path', exact: true }).click();
+    await settleCanvas(page);
+    await expect(page.locator('#seam-status')).toHaveText('Loop seam: matched');
+    const before = (await uiScene(page)).objects[0], key = before.keyframes[1];
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded(); await settleCanvas(page);
+    const point = await canvasPoint(page, { parameters: key.parameters });
+    let scene = await edit(page, async () => {
+      await page.mouse.move(point.x, point.y); await page.mouse.down();
+      await page.mouse.move(point.x + 28, point.y + 14, { steps: 5 }); await page.mouse.up();
+    });
+    let moved = scene.objects[0].keyframes[1];
+    expect(moved.time).toBe(3); expect(moved.parameters.x).toBeCloseTo(key.parameters.x + 28 / point.scale, 1);
+    expect(moved.parameters.radius).toBe(key.parameters.radius); expect(moved.easing).toBe(key.easing);
+    expect(scene.objects[0].keyframes.filter(k => k.time !== 3)).toEqual(before.keyframes.filter(k => k.time !== 3));
+    await edit(page, () => page.getByRole('button', { name: 'Undo', exact: true }).click());
+    expect((await uiScene(page)).objects[0]).toEqual(before);
+    await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
+    expect((await uiScene(page)).objects[0].keyframes[1]).toEqual(moved);
+    // Escape discards an actual captured-pointer preview without a transaction.
+    const cancelPoint = await canvasPoint(page, { parameters: moved.parameters });
+    const revision = (await uiScene(page)).revision;
+    await page.mouse.move(cancelPoint.x, cancelPoint.y); await page.mouse.down();
+    await page.mouse.move(cancelPoint.x + 20, cancelPoint.y + 15); await page.keyboard.press('Escape'); await page.mouse.up();
+    expect((await serverScene(request)).revision).toBe(revision);
+    await page.getByLabel('Selected key time').fill('7.5');
+    scene = await edit(page, () => page.getByRole('button', { name: 'Move key', exact: true }).click());
+    expect(scene.objects[0].keyframes.map(k => k.time)).toEqual([0, 6, 7.5, 9, 12]);
+    expect(scene.objects[0].keyframes[2]).toEqual({ ...moved, time: 7.5 });
+    expect(await page.evaluate(id => window.tidalStudio.getPose(id, 6.75).radius, first.id)).toBe(172.5);
+    const retimed = structuredClone(scene.objects);
+    await edit(page, () => page.getByRole('button', { name: 'Undo', exact: true }).click());
+    expect((await uiScene(page)).objects[0].keyframes[1]).toEqual(moved);
+    await expect(page.getByLabel('Selected key time')).toHaveValue('3');
+    await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
+    expect((await uiScene(page)).objects).toEqual(retimed);
+    await expect(page.getByLabel('Selected key time')).toHaveValue('7.5');
+    expectedHttpFailures.add('400 /api/command');
+    await page.getByLabel('Selected key time').fill('6');
+    await page.getByRole('button', { name: 'Move key', exact: true }).click();
+    await expect(page.locator('#toast')).toContainText('already has a pose');
+    expect((await serverScene(request)).objects).toEqual(retimed);
+    // Range errors are rejected by the real number control before submission.
+    await page.getByLabel('Selected key time').fill('12.01');
+    await page.getByRole('button', { name: 'Move key', exact: true }).click();
+    expect(await page.getByLabel('Selected key time').evaluate(input => input.validity.rangeOverflow)).toBe(true);
+    expect((await serverScene(request)).objects).toEqual(retimed);
+    await page.getByLabel('Selected key time').fill('7.5');
+    await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 12.00 seconds', exact: true }).click());
+    const endpoint = (await uiScene(page)).objects[0].keyframes.at(-1);
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded(); await settleCanvas(page);
+    const endPoint = await canvasPoint(page, { parameters: endpoint.parameters });
+    scene = await edit(page, async () => {
+      await page.mouse.move(endPoint.x, endPoint.y); await page.mouse.down();
+      await page.mouse.move(endPoint.x - 22, endPoint.y - 15, { steps: 4 }); await page.mouse.up();
+    });
+    expect(scene.objects[0].keyframes[0]).toEqual(before.keyframes[0]);
+    expect(scene.objects[0].keyframes.at(-1).parameters.x).not.toBe(endpoint.parameters.x);
+    await expect(page.locator('#seam-status')).toHaveText('Loop seam: pose jump');
+    await edit(page, () => page.getByRole('button', { name: 'Undo', exact: true }).click());
+    await expect(page.locator('#seam-status')).toHaveText('Loop seam: matched');
+    await edit(page, () => page.getByRole('button', { name: 'Go to keyframe 7.50 seconds', exact: true }).click());
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded(); await settleCanvas(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width + 1);
+    await expect(page.locator('#toast')).toBeHidden();
+    await screenshot(page, testInfo, `motion-path-${viewport.name}`);
+    const saved = JSON.parse((await download(page, testInfo, 'json')).toString('utf8'));
+    expect(saved.schema_version).toBe(2); expect(saved.objects).toEqual(retimed);
+    await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
+    await page.getByRole('button', { name: /^Recipe/ }).click();
+    const chooser = page.waitForEvent('filechooser'); await page.getByRole('button', { name: 'Load JSON', exact: true }).click();
+    await edit(page, async () => (await chooser).setFiles({ name: 'motion-path.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(saved)) }));
+    await page.reload(); await expect(page.locator('#canvas-loading')).toBeHidden();
+    expect((await serverScene(request)).objects).toEqual(retimed);
+  });
+}

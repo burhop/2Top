@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 - 2026-10-11 (development)
+
+- Display the selected island's authored center path with labeled pose handles; drag one position without replacing its other shape values or easing.
+- Retime a selected key across neighbors with sorted tracks; reject occupied times and out-of-range values without committing. Show matched/jumping/missing loop endpoints.
+- Expose the same position/retiming operation as validated `edit_keyframe` through UI, MCP HTTP/stdio and the WebMCP adapter; preserve batches, revisions, retries, persistence and undo/redo.
+- Retain schema 2 for unchanged 0.3.x recipe compatibility and the existing 0.2.x migration. Keep legacy geometry and authored sample files intact.
+- Add edge-case, interpolation/parity, real MCP-client and desktop/phone pointer workflow coverage; document current-dev startup on Work17. Native WebMCP host execution remains unverified.
+
 ## 0.3.0 - 2026-10-11 (development)
 
 - Author up to 24 complete poses per island for position, scale, stretch, rotation and curl; interpolate deterministically with linear or smooth easing.

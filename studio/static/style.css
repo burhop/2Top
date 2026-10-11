@@ -1,3 +1,7 @@
+.motion-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.motion-actions input { width: 66px; min-width: 0; padding: 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.motion-actions button[aria-pressed=true] { background: #dce8d2; border-color: #76936a; }
+#seam-status { font-size: 10px; color: #667957; }
 .choreography-panel { margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 .choreography-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .choreography-top h2 { margin: 0; font-size: 13px; font-weight: 600; }
