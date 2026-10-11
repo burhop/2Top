@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e ".[studio,dev]"
           pip install pytest pytest-benchmark ruff
           pip install -r requirements.txt
 

@@ -456,6 +456,10 @@ class ImplicitCurve:
             from .procedural_curve import ProceduralCurve
 
             return ProceduralCurve.from_dict(data)
+        elif curve_type == "KineticIslandCurve":
+            from .kinetic_field import KineticIslandCurve
+
+            return KineticIslandCurve.from_dict(data)
         elif curve_type == "RFunctionCurve":
             from .rfunction_curve import RFunctionCurve
 

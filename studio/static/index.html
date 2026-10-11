@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f2ec">
+  <title>Tidal Atlas · 2Top Studio</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="2Top Studio home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><strong>2Top</strong><span class="brand-caption">STUDIO</span></a>
+      <div class="workspace-label"><span class="workspace-dot"></span>A playground for living geometry</div>
+      <div class="top-actions"><a class="text-link" href="/api/docs" target="_blank" rel="noopener" title="Open the scene API documentation">API <span>↗</span></a><button class="icon-button" id="help-button" aria-label="Help and keyboard shortcuts" title="Help and keyboard shortcuts">?</button><span class="avatar" aria-label="Local workspace">TA</span></div>
+    </header>
+
+    <main>
+      <section class="project-bar" aria-label="Project">
+        <div class="project-heading"><div class="eyebrow">EXPERIMENT 001 <span>/</span> IMPLICIT LANDSCAPES</div><div class="title-row"><h1>Tidal Atlas<span class="title-period">.</span></h1><span class="project-type">KINETIC STUDY</span></div></div>
+        <div class="project-actions"><span class="save-status" id="save-status"><span class="status-light"></span>Connecting to scene</span><div class="history-buttons"><button class="icon-button" id="undo-button" aria-label="Undo" title="Undo (⌘ / Ctrl Z)" disabled>↶</button><button class="icon-button" id="redo-button" aria-label="Redo" title="Redo (⌘ / Ctrl Shift Z)" disabled>↷</button></div><div class="export-wrap"><button class="button button-dark" id="export-button" aria-expanded="false" aria-controls="export-menu">Export <span class="down-arrow">⌄</span></button><div class="dropdown" id="export-menu" hidden><button data-export="png">Image <span>PNG · 2×</span></button><button data-export="svg">Vector artwork <span>SVG</span></button><button data-export="json">Scene recipe <span>JSON</span></button></div></div></div>
+      </section>
+
+      <div class="studio-layout">
+        <section class="canvas-column" aria-label="Art workspace">
+          <div class="workspace-toolbar"><div class="view-tabs" role="group" aria-label="Workspace view"><button class="view-tab active" id="canvas-tab">Canvas</button><button class="view-tab" id="recipe-tab">Recipe <span class="code-glyph">{ }</span></button></div><div class="canvas-toolbar-actions"><span class="canvas-size">LIVE FIELD <span class="subtle">/</span> <span id="canvas-dimensions">1200 × 800</span></span><button class="icon-button mini" id="fit-button" title="Fit artwork to viewport" aria-label="Fit artwork to viewport"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4m0 6v4h-4m-6 0H3v-4"/></svg></button></div></div>
+          <div class="canvas-stage" id="canvas-stage">
+            <canvas id="art-canvas" aria-label="Interactive tidal atlas. Select an island in the layer list or drag its center on the canvas." role="img" tabindex="0"></canvas>
+            <div class="canvas-topline"><span><i class="live-dot"></i> <span id="motion-label">LIVE COMPOSITION</span></span><span class="coordinates" id="coordinate-label">FIELD / 01</span></div>
+            <div class="canvas-tools" role="group" aria-label="Canvas tools"><button class="canvas-tool active" id="select-tool" aria-label="Select and move islands" title="Select & move (V)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 3 11 8-6 1-3 5z"/></svg></button><button class="canvas-tool" id="add-tool" aria-label="Add an island" title="Add island (A)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg></button><span class="tool-divider"></span><button class="canvas-tool" id="handles-button" aria-label="Toggle island handles" aria-pressed="true" title="Show / hide handles (H)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5h10v10H5z"/><path d="M3 3h4v4H3zm10 0h4v4h-4zm0 10h4v4h-4zM3 13h4v4H3z" class="filled"/></svg></button></div>
+            <div class="artwork-caption"><span class="artwork-index">01—</span><div><strong id="artwork-name">Midnight archipelago</strong><span id="artwork-description">A study in proximity, contour & current</span></div></div>
+            <div class="canvas-bottomright"><span id="zoom-label">FIT</span><span class="axis-symbol" aria-hidden="true">⌁</span></div>
+            <div class="canvas-loading" id="canvas-loading"><span class="loading-orbit"></span><span>Opening the atlas…</span></div>
+            <div class="canvas-error" id="canvas-error" hidden><strong>The scene service is unavailable.</strong><p id="canvas-error-message">Start the local service to open this atlas.</p><button class="button" id="retry-button">Try again</button></div>
+            <div class="selection-hint" id="selection-hint">Drag an island to change the tide.</div>
+          </div>
+          <div class="recipe-view" id="recipe-view" hidden><div class="recipe-heading"><span>AUTHORITATIVE SCENE</span><div class="recipe-actions"><button class="small-button" id="import-recipe">Load JSON</button><button class="small-button" id="copy-recipe">Copy JSON</button></div><input type="file" id="recipe-file" accept=".json,application/json" hidden aria-label="Load a scene recipe"></div><pre id="recipe-code"></pre></div>
+          <div class="transport"><button class="play-button" id="play-button" aria-label="Play animation" title="Play / pause (Space)"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6 3.5 14 9l-8 5.5z"/></svg></button><div class="time-readout"><span id="time-value">00.00</span><span class="time-total"> / <span id="duration-value">12.00</span></span></div><div class="timeline"><input id="timeline-input" type="range" min="0" max="12" step="0.01" value="0" aria-label="Animation playhead"><div class="timeline-ticks" aria-hidden="true"><span>0s</span><span>3s</span><span>6s</span><span>9s</span><span>12s</span></div></div><span class="loop-badge" title="The animation repeats continuously">↻ <span>LOOP</span></span><button class="small-button speed-button" id="speed-button" title="Change playback speed">1×</button></div>
+          <div class="agent-bar"><div class="agent-orb" aria-hidden="true">✳</div><div class="agent-bar-copy"><strong>Co-create with your agent</strong><span id="agent-hint">Connect an MCP client or a WebMCP-enabled browser to edit this canvas.</span></div><button class="small-button" id="connect-button">Connect <span>↗</span></button></div>
+        </section>
+
+        <aside class="inspector" aria-label="Scene controls">
+          <section class="inspector-section direction-section"><div class="section-heading"><h2>Art direction</h2><span class="section-number">01</span></div><label class="control-label" for="preset-select">Starting point</label><div class="select-wrap"><select id="preset-select"><option value="midnight">Midnight archipelago</option><option value="atoll">Coral atoll</option><option value="ribbons">Tidal ribbons</option></select><span>⌄</span></div><div class="palette-row"><span class="control-label">Palette</span><div class="palette-options" id="palette-options" role="group" aria-label="Color palette"><button class="palette-option selected" data-palette="tidal" aria-label="Tidal palette" title="Tidal"><i style="--swatch:#ee836e"></i><i style="--swatch:#76c8bf"></i><i style="--swatch:#d6b473"></i></button><button class="palette-option" data-palette="ember" aria-label="Ember palette" title="Ember"><i style="--swatch:#f77c65"></i><i style="--swatch:#eeb575"></i><i style="--swatch:#b45151"></i></button><button class="palette-option" data-palette="glacier" aria-label="Glacier palette" title="Glacier"><i style="--swatch:#83d0d0"></i><i style="--swatch:#648ba7"></i><i style="--swatch:#dde0bd"></i></button></div></div></section>
+
+          <section class="inspector-section layers-section"><div class="section-heading"><h2>Islands <span class="count" id="island-count">0</span></h2><button class="icon-button mini" id="add-island-button" aria-label="Add island" title="Add an island">+</button></div><div class="layer-list" id="layer-list" aria-label="Islands"></div><div class="layer-actions"><button class="text-action" id="duplicate-button" disabled>Duplicate</button><button class="text-action danger" id="remove-button" disabled>Remove</button></div></section>
+
+          <section class="inspector-section shape-section"><div class="section-heading"><h2>Shape & field</h2><span class="selection-tag" id="selected-name">Scene</span></div><div class="sliders" id="shape-controls"><label class="slider-control"><span>Scale <output id="radius-output">—</output></span><input type="range" id="radius-input" min="0.1" max="1.5" step="0.01" value="0.55" aria-label="Island scale"></label><label class="slider-control"><span>Organic detail <output id="organic-output">—</output></span><input type="range" id="organic-input" min="0" max="1" step="0.01" value="0.5" aria-label="Organic detail"></label><label class="slider-control"><span>Rotation <output id="rotation-output">—</output></span><input type="range" id="rotation-input" min="-360" max="360" step="1" value="0" aria-label="Island rotation"></label></div><div class="inspector-divider"></div><label class="slider-control"><span>Contour density <output id="contours-output">24</output></span><input type="range" id="contours-input" min="8" max="64" step="1" value="24" aria-label="Contour density"></label><label class="slider-control"><span>Tide strength <output id="tide-output">0.35</output></span><input type="range" id="tide-input" min="0" max="1" step="0.01" value="0.35" aria-label="Tide strength"></label></section>
+
+          <section class="inspector-section activity-section"><div class="section-heading"><h2>Recent actions</h2><span class="activity-live" title="Shared scene changes are synchronized">LIVE</span></div><ol class="action-list" id="action-list"><li class="empty-activity">Your edits and agent actions appear here.</li></ol><button class="text-action all-actions" id="activity-button">View scene details <span>↗</span></button></section>
+          <div class="inspector-footer"><span class="connection-dot" id="connection-dot"></span><span id="connection-label">Connecting</span><span class="revision-label" id="revision-label">REV —</span></div>
+        </aside>
+      </div>
+      <footer class="page-footer"><span>Made of math. Moved by you.</span><span>2TOP GEOMETRY ENGINE <span class="footer-plus">+</span> HUMAN / AGENT COLLABORATION</span></footer>
+    </main>
+  </div>
+
+  <dialog id="info-dialog" aria-labelledby="dialog-title"><div class="dialog-heading"><span class="eyebrow">2TOP STUDIO</span><button class="icon-button" id="close-dialog" aria-label="Close dialog">×</button></div><h2 id="dialog-title">Connect to the same canvas.</h2><div id="dialog-content"></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/static/app.js"></script>
+  <script type="module" src="/static/webmcp.js"></script>
+</body>
+</html>

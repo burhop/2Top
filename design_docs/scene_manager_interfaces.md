@@ -144,6 +144,7 @@ Creates a deep copy of the object for frame caching purposes.
 ### Python `.scene.py` Format
 ```python
 from sketchlib import Circle, Field, SceneManager
+
 scene = SceneManager()
 scene.add_object("circle1", Circle(0, 0, 2), style={"color": "#0ff"})
 scene.save("scene.json")

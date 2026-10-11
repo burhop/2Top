@@ -78,16 +78,14 @@ cross = create_cross_pattern()  # 2 segments, validation disabled
 
 ### Manual Construction with Continuity
 ```python
-x, y = sp.symbols('x y')
+x, y = sp.symbols("x y")
 
 # Create connected segments
 line1 = PolynomialCurve(y, (x, y))
 line2 = PolynomialCurve(x - 1, (x, y))
 
-seg1 = TrimmedImplicitCurve(line1, lambda x, y: 0 <= x <= 1, 
-                           endpoints=[(0, 0), (1, 0)])
-seg2 = TrimmedImplicitCurve(line2, lambda x, y: 0 <= y <= 1,
-                           endpoints=[(1, 0), (1, 1)])
+seg1 = TrimmedImplicitCurve(line1, lambda x, y: 0 <= x <= 1, endpoints=[(0, 0), (1, 0)])
+seg2 = TrimmedImplicitCurve(line2, lambda x, y: 0 <= y <= 1, endpoints=[(1, 0), (1, 1)])
 
 # Enable continuity validation
 composite = CompositeCurve([seg1, seg2], validate_continuity=True)
@@ -107,7 +105,7 @@ containment = composite.contains(X, Y, region_containment=True)
 # Plotting
 fig, ax = plt.subplots()
 composite.plot(ax=ax)
-ax.set_aspect('equal')
+ax.set_aspect("equal")
 ```
 
 ## 🎉 BENEFITS ACHIEVED

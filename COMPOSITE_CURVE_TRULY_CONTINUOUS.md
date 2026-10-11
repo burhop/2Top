@@ -88,9 +88,11 @@ Each segment must have explicit endpoints that connect:
 ```python
 # Correct: Connected segments
 seg1 = TrimmedImplicitCurve(line1, mask1, endpoints=[(0, 0), (1, 0)])
-seg2 = TrimmedImplicitCurve(line2, mask2, endpoints=[(1, 0), (1, 1)])  # Connects at (1,0)
+seg2 = TrimmedImplicitCurve(
+    line2, mask2, endpoints=[(1, 0), (1, 1)]
+)  # Connects at (1,0)
 
-# Wrong: Disconnected segments  
+# Wrong: Disconnected segments
 seg1 = TrimmedImplicitCurve(line1, mask1, endpoints=[(0, 0), (1, 0)])
 seg2 = TrimmedImplicitCurve(line2, mask2, endpoints=[(2, 1), (3, 1)])  # Gap!
 ```
