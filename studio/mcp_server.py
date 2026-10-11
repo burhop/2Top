@@ -43,6 +43,9 @@ TOOL_NAMES = frozenset(
         "set_keyframe",
         "delete_keyframe",
         "edit_keyframe",
+        "create_blend",
+        "update_blend",
+        "delete_blend",
     }
 )
 

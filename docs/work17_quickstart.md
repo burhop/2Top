@@ -14,6 +14,14 @@ Open **http://127.0.0.1:8000/** on Work17. The ephemeral session leaves existing
 saved artwork untouched; export JSON to keep your edits. Stop the foreground
 server with Ctrl+C. For normal local persistence, omit `--ephemeral`.
 
+For static blending, choose **Try confluence**, then switch Operation between
+Union and Smooth union and choose Apply blend. Adjust Blend amount; choose Edit
+A/B to move a source. Remove blend restores both separate islands. Blends ignore
+timeline/tide and accept static source islands only. Export JSON to keep the
+composition. The current version exports schema 3 and reopens older recipes.
+
+For choreography:
+
 1. Choose **Play demo**, pause, and select **Solstice** in the Islands list.
 2. Choose **Edit motion path**. Drag the labeled 3s handle to reshape its orbit.
 3. Choose the 3s pose chip, enter **7.5** in Key time, then choose **Move key**.

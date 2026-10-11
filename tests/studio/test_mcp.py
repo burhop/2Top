@@ -52,7 +52,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 15
+        assert len(actual) == 18
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -253,7 +253,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 15
+        assert len((await client.list_tools()).tools) == 18
         result = await client.call_tool(
             "set_style",
             {
@@ -301,7 +301,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 15
+        assert len((await stdio.list_tools()).tools) == 18
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -405,3 +405,61 @@ def test_webmcp_registration_contract_and_unsupported_fallback():
         timeout=20,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_composes_static_fields_and_observes_manual_source_edits(
+    live_studio,
+):
+    url, service = live_studio
+    async with (
+        http_mcp_client(url + "/mcp/") as client,
+        httpx.AsyncClient(trust_env=False) as http,
+    ):
+        created = payload(
+            await client.call_tool(
+                "create_blend",
+                {
+                    "source_a": "island_ember",
+                    "source_b": "island_lagoon",
+                    "amount": 0.8,
+                    "expected_revision": 0,
+                    "request_id": "blend_once",
+                },
+            )
+        )
+        blend = created["scene"]["blends"][0]
+        changed = await http.post(
+            url + "/api/command",
+            json={
+                "op": "update_geometry",
+                "id": "island_ember",
+                "parameters": {"x": 250},
+                "expected_revision": 1,
+            },
+        )
+        assert changed.status_code == 200
+        observed = payload(await client.call_tool("get_scene", {}))["scene"]
+        assert (
+            observed
+            == (await http.get(url + "/api/scene")).json()
+            == service.snapshot()
+        )
+        assert observed["objects"][0]["parameters"]["x"] == 250
+        assert observed["blends"][0]["source_a"] == "island_ember"
+        updated = payload(
+            await client.call_tool(
+                "update_blend",
+                {"id": blend["id"], "operation": "union", "expected_revision": 2},
+            )
+        )
+        assert updated["scene"]["blends"][0]["operation"] == "union"
+        removed = payload(
+            await client.call_tool(
+                "delete_blend", {"id": blend["id"], "expected_revision": 3}
+            )
+        )
+        assert removed["scene"]["blends"] == []
+        assert removed["scene"]["objects"] == observed["objects"]
+        restored = payload(await client.call_tool("undo", {"expected_revision": 4}))
+        assert restored["scene"]["blends"][0]["id"] == blend["id"]

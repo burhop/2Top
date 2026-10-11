@@ -29,14 +29,21 @@ undo/redo, schema-2 persistence and desktop/phone pointer coverage remain shared
 The path is an authored center guide; curved paths and tangent tools are future
 work. See [Work17 quickstart](work17_quickstart.md) to try the demo.
 
-## Recommended 0.5.0 - bounded geometry blending
+## 0.5.0 - bounded geometry blending
 
-Bring one reusable legacy operation into the artwork editor: blending two static
-island fields, with a clear preview and a reversible persisted operation.
-Specify the scene contract and old-recipe migration first; retain immutable
-engine snapshots and test Python/browser field parity. Defer animated operands
-until their track semantics are explicitly defined. Native WebMCP host
-verification remains a separate gap rather than a simulated feature.
+This milestone exposes legacy union/smooth union for two static island sources,
+bounded sampled previews, source-preserving editing, shared commands and schema-3
+persistence. Python/browser field and contour parity and real browser workflows
+cover the composition. Animated/nested operands remain unsupported; numeric
+field levels are not Euclidean offsets. Native WebMCP remains a separate gap.
+
+## Recommended 0.6.0 - controlled composition structure
+
+Add named derived layers with explicit ordering, opacity/palette controls and
+clear source-dependency presentation. Decide and test hidden-source behavior and
+safe reference changes before adding nested or animated operations. Make the
+existing static composition easier to organize rather than adding unbounded
+geometry graphs. Native host verification still requires an actual supported host.
 
 ## Subsequent geometry work
 
