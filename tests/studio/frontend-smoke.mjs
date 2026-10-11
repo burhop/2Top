@@ -228,7 +228,7 @@ try {
   $('recipe-tab').click();
   check('recipe view shows current authoritative recipe', () => { assert.equal($('recipe-view').hidden, false); assert.equal(JSON.parse($('recipe-code').textContent).title, state.title); });
   $('copy-recipe').click(); await sleep();
-  check('copy recipe writes valid JSON to clipboard', () => assert.equal(JSON.parse(window.copiedText).schema_version, 2));
+  check('copy recipe writes valid JSON to clipboard', () => assert.equal(JSON.parse(window.copiedText).schema_version, 3));
   const importRecipe = JSON.parse(window.copiedText); importRecipe.title = 'Imported field';
   Object.defineProperty($('recipe-file'), 'files', { configurable: true, value: [{ size: 2000, text: async () => JSON.stringify(importRecipe) }] });
   state = await revisionAfter(() => change('recipe-file'));
@@ -247,7 +247,7 @@ try {
   check('all three export formats produce downloads', () => assert.deepEqual(downloads.map((d) => d.name.split('.').at(-1)), ['json', 'svg', 'png']));
   const exportedJson = JSON.parse(await resolveObjectURL(downloads[0].url).text());
   const exportedSvg = new window.DOMParser().parseFromString(await resolveObjectURL(downloads[1].url).text(), 'image/svg+xml');
-  check('exported recipe and vector artwork are parseable content', () => { assert.equal(exportedJson.schema_version, 2); assert.equal(exportedSvg.querySelector('parsererror'), null); assert.ok(exportedSvg.querySelectorAll('path').length > 50); });
+  check('exported recipe and vector artwork are parseable content', () => { assert.equal(exportedJson.schema_version, 3); assert.equal(exportedSvg.querySelector('parsererror'), null); assert.ok(exportedSvg.querySelectorAll('path').length > 50); });
   if (nativeCanvas) {
     const png = Buffer.from(await resolveObjectURL(downloads[2].url).arrayBuffer());
     check('native PNG export encodes a real 2000-by-1400 image', () => { assert.equal(png.subarray(0, 8).toString('hex'), '89504e470d0a1a0a'); assert.equal(png.readUInt32BE(16), 2000); assert.equal(png.readUInt32BE(20), 1400); });

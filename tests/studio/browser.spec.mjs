@@ -9,7 +9,8 @@ import { randomUUID } from 'node:crypto';
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
 const legacySeed = structuredClone(seed);
 // Canonical expected state; schema-1 migration itself has explicit coverage below.
-seed.schema_version = 2;
+seed.schema_version = 3;
+seed.blends = [];
 seed.objects.forEach(object => { object.keyframes = []; });
 const first = seed.objects[0];
 
@@ -127,8 +128,8 @@ test('loads and paints the real canvas without claiming an AI connection', async
   expect(capability.status.supported).toBe(capability.nativeRegisterToolAvailable);
   expect(capability.status.error).toBeNull();
   if (capability.nativeRegisterToolAvailable) {
-    expect(capability.status.registered).toBe(15);
-    await expect(page.locator('#agent-hint')).toContainText('15 browser tools registered');
+    expect(capability.status.registered).toBe(18);
+    await expect(page.locator('#agent-hint')).toContainText('18 browser tools registered');
   } else {
     expect(capability.status.registered).toBe(0);
     expect(capability.status.reason).toBe('browser-unsupported');
@@ -389,7 +390,7 @@ test('pose keys interpolate deterministically and pointer edits remain undoable'
   expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
   await edit(page, () => page.getByRole('button', { name: 'Redo', exact: true }).click());
   const saved = await download(page, testInfo, 'json');
-  expect(JSON.parse(saved).schema_version).toBe(2);
+  expect(JSON.parse(saved).schema_version).toBe(3);
   await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
   expect((await uiScene(page)).objects[0].keyframes).toHaveLength(2);
   await page.getByRole('button', { name: /^Recipe/ }).click();
@@ -450,7 +451,7 @@ test('malformed choreography is rejected and a legacy recipe still reopens', asy
   await expect(page.locator('#toast')).toHaveText('Command validation failed');
   expect((await serverScene(request)).revision).toBe(before.revision);
   const scene = await edit(page, () => page.locator('#recipe-file').setInputFiles({ name: 'legacy-0.2.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(legacySeed)) }));
-  expect(scene.schema_version).toBe(2);
+  expect(scene.schema_version).toBe(3);
   expect(scene.objects.every(object => object.keyframes.length === 0)).toBe(true);
   expect(scene.objects[0].parameters).toEqual(legacySeed.objects[0].parameters);
 });
@@ -528,12 +529,78 @@ for (const viewport of [{ name: 'desktop', width: 1440, height: 1100 }, { name: 
     await expect(page.locator('#toast')).toBeHidden();
     await screenshot(page, testInfo, `motion-path-${viewport.name}`);
     const saved = JSON.parse((await download(page, testInfo, 'json')).toString('utf8'));
-    expect(saved.schema_version).toBe(2); expect(saved.objects).toEqual(retimed);
+    expect(saved.schema_version).toBe(3); expect(saved.objects).toEqual(retimed);
     await edit(page, () => page.getByRole('button', { name: 'Delete key', exact: true }).click());
     await page.getByRole('button', { name: /^Recipe/ }).click();
     const chooser = page.waitForEvent('filechooser'); await page.getByRole('button', { name: 'Load JSON', exact: true }).click();
     await edit(page, async () => (await chooser).setFiles({ name: 'motion-path.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(saved)) }));
     await page.reload(); await expect(page.locator('#canvas-loading')).toBeHidden();
     expect((await serverScene(request)).objects).toEqual(retimed);
+  });
+}
+
+async function blendPathCount(page) {
+  return page.evaluate(async () => {
+    const {blendContours} = await import('/static/static-blend.js');
+    const state=window.tidalStudio.getScene(),blend=state.blends[0];
+    const first=state.objects.find(o=>o.id===blend.source_a),second=state.objects.find(o=>o.id===blend.source_b);
+    return blendContours(first.parameters,second.parameters,blend.operation,blend.amount,2,128)[0].paths.length;
+  });
+}
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test(`static confluence merges two sources and preserves live editing on ${viewport.name}`, async ({page,request},testInfo)=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    let scene = await edit(page,()=>page.getByRole('button',{name:'Try confluence',exact:true}).click());
+    expect(scene.title).toBe('Confluence study');expect(scene.schema_version).toBe(3);
+    expect(scene.objects).toHaveLength(2);expect(scene.blends).toHaveLength(1);
+    const original=structuredClone(scene.objects);
+    expect(await blendPathCount(page)).toBe(1);
+    await edit(page,()=>page.getByRole('button',{name:'Remove blend',exact:true}).click());
+    expect((await uiScene(page)).objects).toEqual(original);
+    await page.getByLabel('Blend operation').selectOption('union');
+    scene = await edit(page,()=>page.getByRole('button',{name:'Create blend',exact:true}).click());
+    expect(await blendPathCount(page)).toBe(2);expect(scene.objects).toEqual(original);
+    await expect(page.getByRole('slider',{name:'Blend amount',exact:true})).toBeDisabled();
+    await page.getByLabel('Blend operation').selectOption('smooth_union');
+    await edit(page,()=>page.getByRole('button',{name:'Apply blend',exact:true}).click());
+    expect(await blendPathCount(page)).toBe(1);
+    await page.getByLabel('Blend source A').selectOption(original[1].id);
+    await expect(page.getByRole('button',{name:'Apply blend',exact:true})).toBeDisabled();
+    await page.getByLabel('Blend source A').selectOption(original[0].id);
+    await page.getByRole('slider',{name:'Blend amount',exact:true}).focus();
+    await edit(page,()=>page.keyboard.press('Home'));
+    expect((await uiScene(page)).blends[0].amount).toBe(0);expect(await blendPathCount(page)).toBe(2);
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());
+    expect(await blendPathCount(page)).toBe(1);
+    await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());
+    expect(await blendPathCount(page)).toBe(2);
+    await page.getByRole('slider',{name:'Blend amount',exact:true}).focus();
+    await edit(page,()=>page.keyboard.press('End'));
+    expect((await uiScene(page)).blends[0].amount).toBe(1);
+    await edit(page,()=>page.getByRole('button',{name:'Edit A',exact:true}).click());
+    await expect(page.getByRole('button',{name:'Capture pose',exact:true})).toBeDisabled();
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+    const point=await canvasPoint(page,original[0]);
+    scene=await edit(page,async()=>{await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+16,point.y+8,{steps:4});await page.mouse.up();});
+    expect(scene.objects[0].parameters.x).not.toBe(original[0].parameters.x);
+    expect(scene.objects[0].keyframes).toEqual([]);expect(scene.blends[0].source_a).toBe(original[0].id);
+    const edited=structuredClone(scene.objects);
+    await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect((await uiScene(page)).objects).toEqual(original);
+    await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect((await uiScene(page)).objects).toEqual(edited);
+    await edit(page,()=>page.getByLabel('Show blend',{exact:true}).uncheck());
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);await expect(page.locator('#toast')).toBeHidden();
+    await screenshot(page,testInfo,`confluence-separate-${viewport.name}`);
+    await edit(page,()=>page.getByLabel('Show blend',{exact:true}).check());
+    await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width+1);
+    await screenshot(page,testInfo,`confluence-merged-${viewport.name}`);
+    const saved=JSON.parse((await download(page,testInfo,'json')).toString('utf8'));
+    expect(saved.schema_version).toBe(3);expect(saved.objects).toEqual(edited);expect(saved.blends).toHaveLength(1);
+    const svg=(await download(page,testInfo,'svg')).toString('utf8');expect(svg).toContain(`id="${saved.blends[0].id}"`);expect(svg).toContain('fill-rule="evenodd"');
+    await edit(page,()=>page.getByRole('button',{name:'Remove blend',exact:true}).click());
+    await page.getByRole('button',{name:/^Recipe/}).click();const chooser=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();
+    await edit(page,async()=> (await chooser).setFiles({name:'confluence.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))}));
+    await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();
+    const restored=await serverScene(request);expect(restored.objects).toEqual(saved.objects);expect(restored.blends).toEqual(saved.blends);
   });
 }

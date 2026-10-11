@@ -1,6 +1,8 @@
 import { generateContours, LOOP_DURATION, PARAMETER_BOUNDS } from './geometry.js';
 import { sampleParameters, POSE_FIELDS } from './choreography.js';
 import { demoRecipe } from './demo.js';
+import { blendContours } from './static-blend.js';
+import { blendDemoRecipe } from './blend-demo.js';
 
 const $ = (id) => document.getElementById(id);
 const WORLD = { width: 1000, height: 700 };
@@ -56,6 +58,9 @@ let dragging = null;
 let gesture = null;
 let showHandles = true;
 let editMotionPath = false;
+let activeBlendId;
+let sourceGuides = true;
+const blendCache = new Map();
 let activeTool = 'select';
 let busy = 0;
 let online = false;
@@ -91,6 +96,7 @@ function setConnected(connected, error = '') {
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
   for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
   $('demo-button').disabled = locked;
+  if (scene) setBlendingLocks(current());
   updateKeyframeControls(current(), getTime());
   $('undo-button').disabled = locked || !scene?.history?.can_undo;
   $('redo-button').disabled = locked || !scene?.history?.can_redo;
@@ -183,6 +189,7 @@ function updateUI() {
   if (!scene) return;
   const state = current();
   const object = selected(state);
+  updateBlending(state);
   $('revision-label').textContent = `REV ${String(scene.revision).padStart(3, '0')}`;
   $('undo-button').disabled = !scene.history?.can_undo;
   $('redo-button').disabled = !scene.history?.can_redo;
@@ -225,8 +232,79 @@ function updateAgentStatus() {
   $('agent-hint').textContent = registered > 0 ? `${registered} browser tools registered. Agent edits appear in this same scene.` : 'Connect an MCP client or a WebMCP-enabled browser to edit this canvas.';
 }
 function recipe(state = scene) {
-  return { schema_version: 2, title: state.title, objects: clone(state.objects), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
+  return { schema_version: 3, title: state.title, objects: clone(state.objects), blends: clone(state.blends || []), view: clone(state.view), animation: { ...state.animation, time: getTime(state), playing: false } };
 }
+
+function updateBlending(state) {
+  const blends = state.blends || [], staticObjects = state.objects.filter(o => !o.keyframes?.length);
+  if (activeBlendId === undefined || (activeBlendId && !blends.some(b => b.id === activeBlendId))) activeBlendId = blends[0]?.id || '';
+  const blend = blends.find(b => b.id === activeBlendId), locked = busy > 0 || Boolean(gesture || dragging);
+  $('blend-select').innerHTML = '<option value="">New pair</option>' + blends.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+  $('blend-select').value = activeBlendId;
+  for (const [id, field, fallback] of [['blend-source-a','source_a',0],['blend-source-b','source_b',1]]) {
+    const previous = $(id).value;
+    $(id).innerHTML = staticObjects.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('');
+    $(id).value = blend?.[field] || (staticObjects.some(o=>o.id===previous) ? previous : staticObjects[fallback]?.id || '');
+    $(id).disabled = locked;
+  }
+  if (blend && gesture?.id !== 'blend-amount') { $('blend-operation').value = blend.operation; $('blend-amount-input').value = blend.amount; }
+  $('blend-amount-output').textContent = Number($('blend-amount-input').value).toFixed(2);
+  $('apply-blend').textContent = blend ? 'Apply blend' : 'Create blend';
+  $('apply-blend').disabled = locked || staticObjects.length < 2 || (!blend && blends.length >= 2) || $('blend-source-a').value === $('blend-source-b').value;
+  $('delete-blend').disabled = locked || !blend;
+  $('show-blend').checked = blend?.style.visible ?? true; $('show-blend').disabled = locked || !blend;
+  for (const id of ['blend-select','blend-operation','blend-amount-input','edit-source-a','edit-source-b']) $(id).disabled = locked || staticObjects.length < 2;
+  $('blend-amount-input').disabled ||= $('blend-operation').value === 'union';
+}
+function setBlendingLocks(state) {
+  const blends=state.blends||[],blend=blends.find(b=>b.id===activeBlendId),count=state.objects.filter(o=>!o.keyframes?.length).length;
+  const locked=busy>0||Boolean(gesture||dragging),a=$('blend-source-a').value,b=$('blend-source-b').value;
+  for(const id of ['blend-select','blend-source-a','blend-source-b','blend-operation','edit-source-a','edit-source-b'])$(id).disabled=locked||count<2;
+  $('blend-amount-input').disabled=busy>0||Boolean(dragging)||Boolean(gesture&&gesture.id!=='blend-amount')||count<2||$('blend-operation').value==='union';
+  $('apply-blend').disabled=locked||!a||!b||a===b||(!blend&&blends.length>=2);
+  $('delete-blend').disabled=locked||!blend;$('show-blend').disabled=locked||!blend;
+  $('blend-demo-button').disabled=locked;
+}
+function blendArgs() { return { source_a: $('blend-source-a').value, source_b: $('blend-source-b').value, operation: $('blend-operation').value, amount: Number($('blend-amount-input').value) }; }
+$('blend-select').addEventListener('change', event => { activeBlendId = event.target.value; updateUI(); });
+for (const id of ['blend-source-a','blend-source-b','blend-operation']) $(id).addEventListener('change', () => { $('apply-blend').disabled = busy > 0 || $('blend-source-a').value === $('blend-source-b').value || (!activeBlendId && (scene.blends || []).length >= 2); $('blend-amount-input').disabled = $('blend-operation').value === 'union'; });
+$('apply-blend').addEventListener('click', () => {
+  if (!scene || busy) return;
+  const args = blendArgs();
+  const target = activeBlendId;
+  run(target ? 'update_blend' : 'create_blend', target ? {id:target,...args} : args).then(result=>{if(result){activeBlendId=target || result.scene.blends.at(-1).id;updateUI();}});
+});
+$('delete-blend').addEventListener('click', () => { if(activeBlendId)run('delete_blend',{id:activeBlendId}); });
+$('show-blend').addEventListener('change', () => { if(activeBlendId)run('update_blend',{id:activeBlendId,style:{visible:$('show-blend').checked}}); });
+$('source-guides').addEventListener('change', () => { sourceGuides=$('source-guides').checked;renderDirty=true; });
+for(const [button,input] of [['edit-source-a','blend-source-a'],['edit-source-b','blend-source-b']]) $(button).addEventListener('click',()=>{if($(input).value)run('select',{ids:[$(input).value]});});
+$('blend-amount-input').addEventListener('input', () => {
+  $('blend-amount-output').textContent = Number($('blend-amount-input').value).toFixed(2);
+  if (!activeBlendId || busy || dragging) return;
+  if (!gesture) { gesture = {id:'blend-amount',revision:scene.revision,blendId:activeBlendId};preview=clone(scene); }
+  preview.blends.find(b=>b.id===gesture.blendId).amount=Number($('blend-amount-input').value);renderDirty=true;
+});
+$('blend-amount-input').addEventListener('change',()=>{if(!gesture||gesture.id!=='blend-amount')return;const saved=gesture;gesture=null;run('update_blend',{id:saved.blendId,amount:Number($('blend-amount-input').value)},{expectedRevision:saved.revision});});
+$('blend-amount-input').addEventListener('pointercancel',()=>cancelGesture());
+$('blend-demo-button').addEventListener('click',()=>run('load_recipe',{recipe:clone(blendDemoRecipe)}).then(result=>{if(result){activeBlendId=result.scene.blends[0]?.id||'';updateUI();}}));
+
+function linkedSources(state, visibleOnly = false) { return new Set((state.blends || []).filter(b=>!visibleOnly||b.style.visible).flatMap(b=>[b.source_a,b.source_b])); }
+function artworkLayers(state, time, previewGrid = false) {
+  const linked = linkedSources(state), consumed = linkedSources(state,true), byId = new Map(state.objects.map(o=>[o.id,o]));
+  const layers = state.objects.filter(o=>o.style.visible!==false&&!consumed.has(o.id)).map(object=>({object,layers:generateContours(sampleParameters(object.parameters,object.keyframes||[],time),linked.has(object.id)?0:time,linked.has(object.id)?0:state.animation.motion,state.view.contours,180).map((path,i)=>({paths:[path],omitted:0,level:i}))}));
+  for(const object of state.blends || []) {
+    if(!object.style.visible)continue;
+    const first=byId.get(object.source_a),second=byId.get(object.source_b),grid=previewGrid?64:128;
+    const fingerprint=JSON.stringify([first.parameters,second.parameters,object.operation,object.amount,state.view.contours,grid]);
+    if(!blendCache.has(fingerprint)) {
+      if(blendCache.size>=6)blendCache.delete(blendCache.keys().next().value);
+      blendCache.set(fingerprint,blendContours(first.parameters,second.parameters,object.operation,object.amount,state.view.contours,grid));
+    }
+    layers.push({object,layers:blendCache.get(fingerprint)});
+  }
+  return layers;
+}
+function pathFromLoops(loops) { const path=new Path2D();for(const points of loops){if(!points.length)continue;path.moveTo(...points[0]);for(let i=1;i<points.length;i++)path.lineTo(...points[i]);path.closePath();}return path; }
 
 function authoredTime(state = scene) {
   const time = getTime(state), phase = time <= DURATION ? time : time % DURATION;
@@ -255,7 +333,7 @@ function updateKeyframeControls(state, time) {
   const object = state && scene ? trackObject(state) : null;
   const key = object?.keyframes?.find(k => Math.abs(k.time - time) < 1e-7);
   const locked = busy > 0 || !object || Boolean(gesture || dragging);
-  $('capture-keyframe').disabled = locked || (!key && object.keyframes.length >= 24);
+  $('capture-keyframe').disabled = locked || linkedSources(scene).has(object?.id) || (!key && object.keyframes.length >= 24);
   $('delete-keyframe').disabled = locked || !key || Boolean(state?.animation.playing);
   $('keyframe-easing').disabled = locked;
   $('motion-path-button').disabled = locked || !object?.keyframes?.length;
@@ -367,27 +445,22 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
   }
   const paths = [];
   const count = state.view?.contours || 24;
-  for (const object of state.objects) {
-    if (object.style?.visible === false) continue;
-    const contours = generateContours(sampleParameters(object.parameters, object.keyframes || [], time), time, state.animation?.motion ?? .45, count, 180);
-    target.save();
-    target.globalAlpha = object.style?.opacity ?? 1;
-    for (let i = 0; i < contours.length; i += 1) {
-      const path = pathFromPoints(contours[i]);
-      if (i === 0) {
-        paths.push({ id: object.id, path, contours });
-        target.save(); target.shadowBlur = 28; target.shadowColor = '#021a18'; target.shadowOffsetY = 9; target.fillStyle = '#102422'; target.fill(path); target.restore();
-      }
-      target.fillStyle = ringColor(object.style?.palette, i, contours.length);
-      target.fill(path);
-      target.strokeStyle = i % 6 === 1 ? '#fcdeb175' : mix(paletteColors[object.style?.palette]?.[1] || '#dca17d', '#102722', .43);
-      target.lineWidth = .55 / trans.scale;
-      target.stroke(path);
-      if (i === contours.length - 1) {
-        target.fillStyle = '#102825'; target.fill(path); target.strokeStyle = mix(paletteColors[object.style?.palette]?.[0] || '#dfa379', '#102b26', .65); target.lineWidth = .9; target.stroke(path);
-      }
+  const consumed = linkedSources(state,true);
+  for (const {object,layers} of artworkLayers(state,time,Boolean(gesture||dragging))) {
+    target.save(); target.globalAlpha=object.style.opacity ?? 1;
+    for(let i=0;i<layers.length;i++) {
+      const path=pathFromLoops(layers[i].paths);
+      if(i===0) { paths.push({id:object.id,path});target.save();target.shadowBlur=24;target.shadowColor='#021a18';target.shadowOffsetY=8;target.fillStyle='#102422';target.fill(path,'evenodd');target.restore(); }
+      target.fillStyle=i===layers.length-1?'#102825':ringColor(object.style.palette,i,layers.length);target.fill(path,'evenodd');
+      target.strokeStyle=i%6===1?'#fcdeb175':mix(paletteColors[object.style.palette]?.[1]||'#dca17d','#102722',.43);target.lineWidth=.55/trans.scale;target.stroke(path);
     }
     target.restore();
+  }
+  if(handles&&sourceGuides) {
+    for(const object of state.objects.filter(o=>consumed.has(o.id))) {
+      const path=pathFromPoints(generateContours(object.parameters,0,0,2,180)[0]);
+      paths.push({id:object.id,path});target.save();target.setLineDash([4/trans.scale,5/trans.scale]);target.strokeStyle=paletteColors[object.style.palette]?.[0]||'#d7ddc5';target.lineWidth=1.2/trans.scale;target.stroke(path);target.restore();
+    }
   }
   if (target === ctx) renderedPaths = paths;
   if (handles && editMotionPath) {
@@ -547,7 +620,7 @@ $('layer-list').addEventListener('click', (event) => {
 $('layer-list').addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { const row = event.target.closest('[data-id]'); if (row && event.target === row) { event.preventDefault(); row.click(); } } });
 $('duplicate-button').addEventListener('click', () => { const object = selected(scene); if (!object) return; const offset = p => ({ ...p, x: clamp(p.x + 35, ...PARAMETER_BOUNDS.x), y: clamp(p.y + 35, ...PARAMETER_BOUNDS.y) }); run('create_geometry', { name: `${[...object.name].slice(0, 75).join('')} copy`, parameters: offset(object.parameters), keyframes: (object.keyframes || []).map(key => ({ ...key, parameters: offset(key.parameters) })), style: { ...object.style } }); });
 $('remove-button').addEventListener('click', () => { const object = selected(scene); if (object) run('delete_geometry', { id: object.id }); });
-$('preset-select').addEventListener('change', (event) => { const chosen = presets[event.target.value]; if (chosen) run('load_recipe', { recipe: { schema_version: 2, ...clone(chosen) } }).then((result) => { if (result) toast(`${chosen.title} loaded. Undo restores your previous scene.`); }); });
+$('preset-select').addEventListener('change', (event) => { const chosen = presets[event.target.value]; if (chosen) run('load_recipe', { recipe: { schema_version: 3, ...clone(chosen) } }).then((result) => { if (result) toast(`${chosen.title} loaded. Undo restores your previous scene.`); }); });
 $('palette-options').addEventListener('click', (event) => {
   const button = event.target.closest('[data-palette]'); if (!button || !scene) return;
   const styles = { tidal: ['ember', 'lagoon', 'aurora'], ember: ['ember', 'aurora', 'ember'], glacier: ['lagoon', 'mono', 'lagoon'] }[button.dataset.palette];
@@ -618,12 +691,10 @@ function exportSVG() {
   let body = '<defs><radialGradient id="field"><stop stop-color="#173734"/><stop offset="1" stop-color="#0b1e1e"/></radialGradient></defs><rect width="1000" height="700" fill="url(#field)"/>';
   const trans = computeTransform(1000, 700, state);
   body += `<g transform="translate(${trans.x} ${trans.y}) scale(${trans.scale})">`;
-  for (const object of state.objects) {
-    if (object.style?.visible === false) continue;
-    const contours = generateContours(sampleParameters(object.parameters, object.keyframes || [], time), time, state.animation.motion, state.view.contours, 240);
+  for(const {object,layers} of artworkLayers(state,time)) {
     body += `<g id="${esc(object.id)}" opacity="${object.style.opacity ?? 1}"><title>${esc(object.name)}</title>`;
-    contours.forEach((points, i) => { const d = points.map((point, index) => `${index ? 'L' : 'M'}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(' ') + 'Z'; body += `<path d="${d}" fill="${i === contours.length - 1 ? '#102825' : ringColor(object.style.palette, i, contours.length)}" stroke="${i % 6 === 1 ? '#e6be91' : '#24463e'}" stroke-width=".55"/>`; });
-    body += '</g>';
+    layers.forEach((layer,i)=>{ const d=layer.paths.map(points=>points.map((point,index)=>`${index?'L':'M'}${point[0].toFixed(2)},${point[1].toFixed(2)}`).join(' ')+'Z').join(' '); body+=`<path d="${d}" fill-rule="evenodd" fill="${i===layers.length-1?'#102825':ringColor(object.style.palette,i,layers.length)}" stroke="${i%6===1?'#e6be91':'#24463e'}" stroke-width=".55"/>`; });
+    body+='</g>';
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700"><title>${esc(state.title)}</title><desc>Created with 2Top Tidal Atlas. Scene revision ${state.revision}. Frame ${time.toFixed(2)} seconds.</desc>${body}</g></svg>`;
 }

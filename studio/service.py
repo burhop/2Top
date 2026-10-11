@@ -163,12 +163,31 @@ class Island(TrackModel):
     style: Style = Field(default_factory=Style)
 
 
+class Blend(StrictModel):
+    id: Identifier
+    name: Name = "Island confluence"
+    source_a: Identifier
+    source_b: Identifier
+    operation: Literal["union", "smooth_union"] = "smooth_union"
+    amount: float = Field(0.6, ge=0, le=1)
+    style: Style = Field(default_factory=lambda: Style(palette="aurora"))
+
+
 class Recipe(StrictModel):
-    schema_version: Literal[2] = 2
+    schema_version: Literal[3] = 3
     title: Name = "Tidal Atlas"
     objects: list[Island] = Field(max_length=16)
+    blends: list[Blend] = Field(default_factory=list, max_length=2)
     view: View = Field(default_factory=View)
     animation: Animation = Field(default_factory=Animation)
+
+    @classmethod
+    def __get_pydantic_json_schema__(cls, core_schema, handler):
+        schema = handler(core_schema)
+        version = schema["properties"]["schema_version"]
+        version.pop("const", None)
+        version["enum"] = [1, 2, 3]
+        return schema
 
     @model_validator(mode="before")
     @classmethod
@@ -176,10 +195,30 @@ class Recipe(StrictModel):
         if (
             isinstance(values, dict)
             and type(values.get("schema_version")) is int
-            and values["schema_version"] == 1
+            and values["schema_version"] in {1, 2}
         ):
-            return {**values, "schema_version": 2}
+            return {**values, "schema_version": 3}
         return values
+
+    @model_validator(mode="after")
+    def static_references(self):
+        islands = {obj.id: obj for obj in self.objects}
+        ids = [obj.id for obj in self.objects] + [blend.id for blend in self.blends]
+        if self.blends and len(ids) != len(set(ids)):
+            raise ValueError("Island and blend IDs must be globally unique")
+        for blend in self.blends:
+            if blend.source_a == blend.source_b:
+                raise ValueError("Choose two distinct source islands")
+            for source in (blend.source_a, blend.source_b):
+                if source not in islands:
+                    raise ValueError(
+                        "Blend operands must reference islands; nested blends/cycles are not supported"
+                    )
+                if islands[source].keyframes:
+                    raise ValueError(
+                        "Blending supports static islands only; remove their pose tracks or remove the blend first"
+                    )
+        return self
 
 
 class Create(TrackModel):
@@ -249,6 +288,32 @@ class EditKeyframe(StrictModel):
         return self
 
 
+class CreateBlend(StrictModel):
+    op: Literal["create_blend"]
+    name: Name = "Island confluence"
+    source_a: Identifier
+    source_b: Identifier
+    operation: Literal["union", "smooth_union"] = "smooth_union"
+    amount: float = Field(0.6, ge=0, le=1)
+    style: Style = Field(default_factory=lambda: Style(palette="aurora"))
+
+
+class UpdateBlend(PatchModel):
+    op: Literal["update_blend"]
+    id: Identifier
+    name: Name | None = None
+    source_a: Identifier | None = None
+    source_b: Identifier | None = None
+    operation: Literal["union", "smooth_union"] | None = None
+    amount: float | None = Field(None, ge=0, le=1)
+    style: StylePatch | None = None
+
+
+class DeleteBlend(StrictModel):
+    op: Literal["delete_blend"]
+    id: Identifier
+
+
 Child = Annotated[
     Union[
         Create,
@@ -260,6 +325,9 @@ Child = Annotated[
         SetKeyframe,
         DeleteKeyframe,
         EditKeyframe,
+        CreateBlend,
+        UpdateBlend,
+        DeleteBlend,
     ],
     Field(discriminator="op"),
 ]
@@ -306,6 +374,18 @@ class EditKeyframeCommand(EditKeyframe, Mutation):
     pass
 
 
+class CreateBlendCommand(CreateBlend, Mutation):
+    pass
+
+
+class UpdateBlendCommand(UpdateBlend, Mutation):
+    pass
+
+
+class DeleteBlendCommand(DeleteBlend, Mutation):
+    pass
+
+
 class BatchCommand(Mutation):
     op: Literal["batch"]
     label: Name = "Compose artwork"
@@ -335,6 +415,9 @@ COMMAND_MODELS = {
     "set_keyframe": KeyframeCommand,
     "delete_keyframe": DeleteKeyframeCommand,
     "edit_keyframe": EditKeyframeCommand,
+    "create_blend": CreateBlendCommand,
+    "update_blend": UpdateBlendCommand,
+    "delete_blend": DeleteBlendCommand,
     "batch": BatchCommand,
     "undo": UndoCommand,
     "redo": RedoCommand,
@@ -344,6 +427,9 @@ COMMAND = TypeAdapter(
     Annotated[Union[tuple(COMMAND_MODELS.values())], Field(discriminator="op")]
 )
 DESCRIPTIONS = {
+    "create_blend": "Create a non-destructive union/smooth_union of two distinct static island IDs. No tracks or nested operands. Amount 0..1 is dimensionless legacy smooth-min alpha, not a Euclidean distance. Sources stay editable. At most two blends.",
+    "update_blend": "Edit a blend's source IDs, operation, amount, name or style. Preserve source objects. Only static island operands; no nested/cyclic references. Requires latest revision.",
+    "delete_blend": "Remove only a blend record, restoring its separate source artwork. Does not delete or alter source islands. Undoable; requires latest revision.",
     "get_scene": "Read authoritative artwork, object IDs, current revision, selection and undo history. Read before editing.",
     "get_selection": "Read selected object IDs, complete selected objects, document ID and current revision.",
     "create_geometry": "Create a bounded declarative island field. Positive radii are world units; rotation is degrees. Requires latest revision.",
@@ -358,7 +444,7 @@ DESCRIPTIONS = {
     "batch": "Apply up to 32 enumerated edits atomically with one undo step. Failure leaves the artwork unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
-    "load_recipe": "Replace artwork with a validated version-2 choreography recipe; version-1 recipes migrate with empty tracks. One undoable transaction. No expressions or executable code.",
+    "load_recipe": "Replace artwork with a validated version-3 recipe; versions 1/2 migrate with empty blends and retain existing tracks. One undoable transaction. No expressions or executable code.",
 }
 
 
@@ -382,7 +468,12 @@ def tool_definitions() -> list[dict]:
                 "annotations": {
                     "readOnlyHint": name.startswith("get_"),
                     "destructiveHint": name
-                    in {"delete_geometry", "delete_keyframe", "load_recipe"},
+                    in {
+                        "delete_geometry",
+                        "delete_keyframe",
+                        "delete_blend",
+                        "load_recipe",
+                    },
                     "idempotentHint": name.startswith("get_"),
                     "openWorldHint": False,
                 },
@@ -484,7 +575,7 @@ class SceneService:
         if self._storage and self._storage.exists():
             saved = json.loads(self._storage.read_text())
             recipe = Recipe.model_validate(
-                {key: saved[key] for key in Recipe.model_fields}
+                {key: saved[key] for key in Recipe.model_fields if key in saved}
             ).model_dump()
             self._validate_ids(recipe)
             document_id = TypeAdapter(Identifier).validate_python(saved["document_id"])
@@ -543,7 +634,6 @@ class SceneService:
     def _geometry_scene_from_snapshot(scene: dict, time_value: float):
         # A derived snapshot, never a second editable source of truth. Existing
         # engine consumers receive real ImplicitCurve objects under stable IDs.
-        from geometry import KineticIslandField
         from scene_management.scene_manager import SceneManager
 
         manager = SceneManager()
@@ -553,14 +643,16 @@ class SceneService:
             "aurora": "#d7ba75",
             "mono": "#d9dfcf",
         }
-        for obj in scene["objects"]:
-            if not obj["style"]["visible"]:
+        consumed = {
+            source
+            for b in scene["blends"]
+            if b["style"]["visible"]
+            for source in (b["source_a"], b["source_b"])
+        }
+        for obj in [*scene["objects"], *scene["blends"]]:
+            if not obj["style"]["visible"] or obj["id"] in consumed:
                 continue
-            field = KineticIslandField(
-                sample_parameters(obj["parameters"], obj["keyframes"], time_value),
-                time=time_value,
-                motion=scene["animation"]["motion"],
-            )
+            field = SceneService._field_from_snapshot(scene, obj["id"], time_value)
             manager.add_object(
                 obj["id"],
                 field.level_set(0),
@@ -574,19 +666,37 @@ class SceneService:
 
     def get_geometry(self, object_id: str, time_value: float | None = None):
         """Return a detached existing-BaseField-compatible numeric field."""
-        from geometry import KineticIslandField
 
         scene = self.snapshot()
         frame_time = self._frame_time(scene, time_value)
-        obj = next((obj for obj in scene["objects"] if obj["id"] == object_id), None)
+        return self._field_from_snapshot(scene, object_id, frame_time)
+
+    @staticmethod
+    def _field_from_snapshot(scene, object_id, frame_time):
+        from geometry import KineticIslandField
+        from geometry.static_blend import StaticBlendField
+
+        by_id = {obj["id"]: obj for obj in scene["objects"]}
+        blend = next((b for b in scene["blends"] if b["id"] == object_id), None)
+        if blend:
+            return StaticBlendField(
+                by_id[blend["source_a"]]["parameters"],
+                by_id[blend["source_b"]]["parameters"],
+                blend["operation"],
+                blend["amount"],
+            )
+        obj = by_id.get(object_id)
         if obj is None:
             raise SceneError(
-                "object_not_found", f"Unknown island: {object_id}", status=404
+                "object_not_found", f"Unknown geometry: {object_id}", status=404
             )
+        linked = any(
+            object_id in {b["source_a"], b["source_b"]} for b in scene["blends"]
+        )
         return KineticIslandField(
             sample_parameters(obj["parameters"], obj["keyframes"], frame_time),
-            time=frame_time,
-            motion=scene["animation"]["motion"],
+            time=0 if linked else frame_time,
+            motion=0 if linked else scene["animation"]["motion"],
         )
 
     def geometry_scene(self, time_value: float | None = None):
@@ -727,7 +837,19 @@ class SceneService:
                     "set_keyframe": "Capture island pose",
                     "delete_keyframe": "Remove island pose",
                     "edit_keyframe": "Edit island motion key",
+                    "create_blend": "Create static confluence",
+                    "update_blend": "Shape static confluence",
+                    "delete_blend": "Remove confluence, retain sources",
                 }[parsed.op]
+            try:
+                Recipe.model_validate(
+                    {key: candidate[key] for key in Recipe.model_fields}
+                )
+            except ValidationError as exc:
+                raise SceneError(
+                    "validation_error", exc.errors(include_input=False)[0]["msg"]
+                ) from exc
+            self._validate_ids(candidate)
             candidate["document_id"] = before["document_id"]
             candidate["revision"] = before["revision"] + 1
             # Persistence happens before in-memory commit: IO failure is not success.
@@ -773,7 +895,9 @@ class SceneService:
 
     @staticmethod
     def _validate_ids(recipe: dict):
-        ids = [obj["id"] for obj in recipe["objects"]]
+        ids = [obj["id"] for obj in recipe["objects"]] + [
+            b["id"] for b in recipe.get("blends", [])
+        ]
         if len(ids) != len(set(ids)):
             raise SceneError("duplicate_id", "Recipe object IDs must be unique")
 
@@ -786,6 +910,30 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
+        if command.op == "create_blend":
+            if len(scene["blends"]) >= 2:
+                raise SceneError("blend_limit", "A scene supports at most two blends")
+            blend = Blend(
+                id="blend_" + uuid.uuid4().hex[:12],
+                **command.model_dump(exclude={"op", "expected_revision", "request_id"}),
+            ).model_dump()
+            scene["blends"].append(blend)
+            return [blend["id"], blend["source_a"], blend["source_b"]]
+        if command.op in {"update_blend", "delete_blend"}:
+            blend = next((b for b in scene["blends"] if b["id"] == command.id), None)
+            if blend is None:
+                raise SceneError("blend_not_found", "Unknown blend", status=404)
+            if command.op == "delete_blend":
+                scene["blends"].remove(blend)
+            else:
+                values = command.model_dump(
+                    exclude_unset=True,
+                    exclude={"op", "id", "style", "expected_revision", "request_id"},
+                )
+                blend.update(values)
+                if command.style is not None:
+                    self._patch(blend["style"], command.style)
+            return [command.id, blend["source_a"], blend["source_b"]]
         if command.op == "create_geometry":
             if len(scene["objects"]) >= 16:
                 raise SceneError("object_limit", "A scene supports at most 16 islands")
@@ -858,6 +1006,13 @@ class SceneService:
                 )
             obj["keyframes"] = keys
         elif command.op == "delete_geometry":
+            if any(
+                command.id in {b["source_a"], b["source_b"]} for b in scene["blends"]
+            ):
+                raise SceneError(
+                    "source_in_use",
+                    "Remove the source's blends before deleting this island",
+                )
             scene["objects"] = [o for o in scene["objects"] if o["id"] != command.id]
             scene["selection"] = [i for i in scene["selection"] if i != command.id]
         return [command.id]

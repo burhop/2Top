@@ -132,17 +132,25 @@ export function evaluate(x, y, parameters = {}, time = 0, motion = 0.45) {
   if (Math.abs(x) > MAX_COORDINATE || Math.abs(y) > MAX_COORDINATE) {
     throw new RangeError('coordinates must be finite and within ±1e9');
   }
+  return createEvaluator(parameters, time, motion)(x, y);
+}
+
+/** Reuse normalized parameters/motion state for bounded grid evaluation. */
+export function createEvaluator(parameters = {}, time = 0, motion = 0.45) {
   parameters = normalizeParameters(parameters);
   const state = motionState(parameters, time, motion);
+  const cosine = Math.cos(state.rotation), sine = Math.sin(state.rotation);
+  return (x, y) => {
+  finiteNumber(x, 'x'); finiteNumber(y, 'y');
+  if (Math.abs(x) > MAX_COORDINATE || Math.abs(y) > MAX_COORDINATE) throw new RangeError('Coordinates exceed the finite grid bounds');
   const dx = x - state.x;
   const dy = y - state.y;
-  const cosine = Math.cos(state.rotation);
-  const sine = Math.sin(state.rotation);
   const localX = (dx * cosine + dy * sine) / state.scale / state.stretch;
   const localY = (-dx * sine + dy * cosine) / state.scale * state.stretch;
   const rho = Math.hypot(localX, localY);
   const theta = Math.atan2(localY, localX) - twist(rho, parameters, state);
   return rho / profile(theta, parameters, state) - 1;
+  };
 }
 
 export function toRecipe(parameters = {}) {

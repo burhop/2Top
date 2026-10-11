@@ -43,6 +43,13 @@
             <div id="keyframe-list" class="keyframe-list" role="group" aria-label="Pose keyframes"></div>
             <p class="choreography-hint">Choose Edit motion path, then drag a labeled pose. Select a pose chip to change its time; occupied times are rejected. The path shows authored centers, before the tide effect.</p>
           </section>
+          <section class="blending-panel" aria-label="Static island blending">
+            <div class="choreography-top"><div><h2>Island confluence</h2><p>Two static fields, one sculpted shoreline</p></div><button class="small-button" id="blend-demo-button">Try confluence</button></div>
+            <div class="blend-controls"><label>Composition<select id="blend-select" aria-label="Blend composition"></select></label><label>Source A<select id="blend-source-a" aria-label="Blend source A"></select></label><button class="small-button" id="edit-source-a">Edit A</button><label>Source B<select id="blend-source-b" aria-label="Blend source B"></select></label><button class="small-button" id="edit-source-b">Edit B</button><label>Operation<select id="blend-operation" aria-label="Blend operation"><option value="smooth_union">Smooth union</option><option value="union">Union</option></select></label></div>
+            <div class="blend-amount"><label for="blend-amount-input">Blend amount <output id="blend-amount-output">0.60</output></label><input id="blend-amount-input" type="range" min="0" max="1" step="0.01" value="0.6" aria-label="Blend amount"></div>
+            <div class="pose-actions"><button class="small-button pose-primary" id="apply-blend">Create blend</button><button class="small-button" id="delete-blend" disabled>Remove blend</button><label class="pose-easing"><input type="checkbox" id="show-blend" checked aria-label="Show blend">Show blend</label><label class="pose-easing"><input type="checkbox" id="source-guides" checked>Source guides</label></div>
+            <p class="choreography-hint" id="blend-hint">Static island sources only; base shapes stay editable. Blends ignore timeline and tide. Amount is dimensionless, not a distance. Sampled preview: up to 16 layers, 128-cell grid.</p>
+          </section>
           <div class="agent-bar"><div class="agent-orb" aria-hidden="true">✳</div><div class="agent-bar-copy"><strong>Co-create with your agent</strong><span id="agent-hint">Connect an MCP client or a WebMCP-enabled browser to edit this canvas.</span></div><button class="small-button" id="connect-button">Connect <span>↗</span></button></div>
         </section>
 

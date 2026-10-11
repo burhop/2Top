@@ -1,4 +1,4 @@
-# Tidal Atlas 0.4.0: island choreography
+# Tidal Atlas 0.5.0: island choreography
 
 ## What this version does
 
@@ -82,6 +82,20 @@ The established schema-1 migration still preserves 0.2.x base poses with empty
 tracks. No custom path curves or tangent/velocity tools are introduced.
 
 See [Work17 quickstart](work17_quickstart.md) for the current-dev demo commands.
+
+## Merge static islands
+
+Choose **Try confluence**. Source guides outline the two retained islands.
+Switch Operation to Union and choose Apply blend to see two separate contours;
+switch back to Smooth union or adjust Blend amount to grow a connecting neck.
+Choose Edit A/B, then drag or change that source's base shape. Remove blend
+restores separate source artwork. Show blend toggles the derived result without
+altering sources. Recipes save the references and complete source objects.
+
+Blends ignore timeline/tide motion and reject pose tracks or nested operands.
+The amount is dimensionless implicit-field alpha, not a physical distance.
+See [static blending](static_blending.md) for sampling limits, degenerate cases,
+interchange and shared command details.
 
 ## Co-edit with an agent
 

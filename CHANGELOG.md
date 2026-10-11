@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 - 2026-10-11 (development)
+
+- Add non-destructive two-source static union/smooth union using the existing RFunctionCurve/CurveField engine. Blend amount is dimensionless; no signed-distance or Euclidean-offset claim.
+- Add a bounded deterministic contour sampler and matching browser evaluation/contours, cached committed previews and coarser gesture previews. Handle multiple components and omit open/degenerate fragments explicitly.
+- Add source selectors, amount/operation controls, source guides and the Confluence study artistic demo; live base-shape edits update the result, and removing a blend retains its sources.
+- Add shared create_blend/update_blend/delete_blend commands with revisions, atomic batches, persistence and undo/redo. Reject animated/nested/cyclic operands and unsafe source deletion.
+- Export schema 3; migrate schema 1/2 with empty blends and preserve existing geometry/tracks. Keep legacy algorithms and older authored sample files intact.
+- Add field/contour parity, geometry bridge, input/budget/migration, real MCP-client and actual desktop/phone browser workflows. Native WebMCP remains unverified.
+
 ## 0.4.0 - 2026-10-11 (development)
 
 - Display the selected island's authored center path with labeled pose handles; drag one position without replacing its other shape values or easing.

@@ -1,3 +1,10 @@
+.blending-panel { margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.blend-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; }
+.blend-controls label { display: flex; flex-direction: column; gap: 5px; font-size: 10px; color: #667957; flex: 1 1 120px; min-width: 0; }
+.blend-controls select { width: 100%; min-width: 0; max-width: 260px; padding: 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.blend-amount { margin: 14px 0; }
+.blend-amount label { display: flex; justify-content: space-between; font-size: 11px; }
+.blend-amount input { width: 100%; }
 .motion-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .motion-actions input { width: 66px; min-width: 0; padding: 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
 .motion-actions button[aria-pressed=true] { background: #dce8d2; border-color: #76936a; }
