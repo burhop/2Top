@@ -1,12 +1,15 @@
-# 2Top 0.7.2 · Tidal Atlas
+# 2Top 0.8.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.7.2** fixes measured keyboard-focus loss after slider saves and transient zero-size canvas rendering. Clean editable/wheel installation uses only declared studio dependencies. A [reproducible browser benchmark and complexity guide](docs/studio_performance.md) covers authored motion, eight layered islands and two static blends at 48 contours. Geometry accuracy, quality, validation, 19 tools, schema 4 and shared undo remain in place. Development targets **dev** with tested updates; main and the live user demo are preserved.
+Version **0.8.0** adds [multi-selection and whole-path arrangement](docs/group_authoring.md): move, uniformly scale and rotate islands/blends together through one atomic shared command. Retained sources transform once; every authored key follows its island without changing timing or easing. Desktop shortcuts and touch controls share undo/redo and bounds validation. Geometry accuracy, existing single-pose editing, schema 4 and recipe compatibility remain. The catalog now contains 20 tools. Development targets **dev** with tested updates; main and the live user demo are preserved.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
+
+The [performance and supported-complexity guide](docs/studio_performance.md)
+retains the measured 0.7.2 baseline and a reproducible current-browser benchmark.
 
 ## Start the new studio
 
@@ -37,6 +40,7 @@ If another studio is already using port 8000, leave its session intact and start
 with `--ephemeral --port 8768`, then open **http://127.0.0.1:8768/**. Read the
 terminal error if startup fails; first startup can take several seconds.
 
+- Shift/Ctrl/⌘-click layers or use **Select multiple** on touch; nudge, scale, rotate or drag the selection while preserving its complete motion paths
 - Choose **Try confluence** to merge two static islands; edit either source, switch union/smooth union, adjust amount, undo or remove the composition while retaining sources
 - Show a selected island’s labeled motion path, drag individual positional keys and retime them across neighbors; occupied times are rejected atomically
 - Capture up to 24 complete poses per island, choose linear/smooth interpolation, jump between keys, and undo/redo choreography edits
@@ -44,7 +48,7 @@ terminal error if startup fails; first startup can take several seconds.
 - Play, pause and scrub a smooth 12-second tide; save JSON recipes, SVG artwork or PNG images
 - Select, duplicate, hide, delete, undo and redo complete operations
 - Connect an MCP client to **http://127.0.0.1:8000/mcp/** or launch the stdio proxy with `python -m studio.mcp_server`
-- In a supported top-level browser, `document.modelContext` registers the same 19 tools, including choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
+- In a supported top-level browser, `document.modelContext` registers the same 20 tools, including whole-path arrangement, choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
 
 Recipes export schema 4 with complete back-to-front `layer_order` and bounded static blends. Schema-1/2/3 recipes reopen in their original islands-then-blends order, preserving styles, fields, tracks and dependencies. The next save uses schema 4, which older studios cannot read; keep original recipes for exchange. See [composition layers](docs/composition_layers.md) and [static blending](docs/static_blending.md) for limits.
 
@@ -305,7 +309,7 @@ semantics and compositing limits. Native WebMCP host execution is still unverifi
 ### Coauthor workflow (0.7.0)
 
 Open **Client setup**, connect an already configured local client, discover the
-19 tools and read `get_scene` before making an edit. Coauthor activity shows
+20 tools and read `get_scene` before making an edit. Coauthor activity shows
 committed routes and differences; refine a layer by hand and share Undo/Redo.
 The shipped protocol helper and acceptance scripts do not establish live model
 inference. [Coauthor guide](docs/coauthoring.md) explains setup, revision-safe

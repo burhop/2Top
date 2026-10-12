@@ -37,6 +37,7 @@ TOOL_NAMES = frozenset(
         "delete_geometry",
         "set_style",
         "reorder_layers",
+        "transform_layers",
         "set_view",
         "select",
         "batch",

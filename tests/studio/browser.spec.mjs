@@ -218,6 +218,7 @@ test('native pointer drag commits once and Escape cancels the next drag', async 
 test('a native range gesture previews, commits, and supports undo and redo', async ({ page, request }) => {
   await selectFirst(page);
   const slider = page.getByRole('slider', { name: 'Island scale', exact: true });
+  await slider.scrollIntoViewIfNeeded();
   const before = await uiScene(page);
   const box = await slider.boundingBox();
   const fraction = (first.parameters.radius - 80) / (400 - 80);
@@ -819,4 +820,104 @@ test('zero-size layout recovers when the canvas becomes visible', async ({page},
   await expect.poll(()=>page.locator('#art-canvas').evaluate(c=>c.width)).toBeGreaterThan(0);
   await settleCanvas(page);expect((await uiScene(page)).revision).toBe(oldRevision);
   await screenshot(page,testInfo,'recovered-canvas-layout');
+});
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test.describe(`group authoring ${viewport.name}`,()=>{
+    test.use({viewport});
+    test('multi-selection moves, scales, rotates, drags and exports one coherent group',async({page},testInfo)=>{
+      const original=await uiScene(page),ids=original.objects.slice(0,2).map(o=>o.id);
+      if(viewport.name==='desktop') {
+        await edit(page,()=>page.getByRole('button',{name:`Select ${original.objects[0].name}`,exact:true}).click());
+        await edit(page,()=>page.getByRole('button',{name:`Select ${original.objects[1].name}`,exact:true}).click({modifiers:['Shift']}));
+      } else {
+        await page.getByRole('button',{name:'Select multiple',exact:true}).click();
+        for(const object of original.objects.slice(0,2))await edit(page,()=>page.getByRole('button',{name:`Select ${object.name}`,exact:true}).click());
+        await page.getByRole('button',{name:'Done selecting',exact:true}).click();
+      }
+      await expect(page.locator('#selection-count')).toHaveText('2');
+      await expect(page.getByRole('slider',{name:'Island scale',exact:true})).toBeDisabled();
+      await expect(page.getByLabel('Layer palette',{exact:true})).toBeDisabled();
+      const before=await uiScene(page);
+      let scene=await edit(page,()=>page.getByRole('button',{name:'Move selection right',exact:true}).click());
+      for(const id of ids)expect(scene.objects.find(o=>o.id===id).parameters.x).toBe(before.objects.find(o=>o.id===id).parameters.x+10);
+      await expect(page.getByRole('button',{name:'Move selection right',exact:true})).toBeFocused();
+      scene=await edit(page,()=>page.keyboard.press('Space'));
+      for(const id of ids)expect(scene.objects.find(o=>o.id===id).parameters.x).toBe(before.objects.find(o=>o.id===id).parameters.x+20);
+      expect(scene.objects[2]).toEqual(before.objects[2]);
+      const moved=structuredClone(scene);
+      await page.getByLabel('Group scale factor',{exact:true}).fill('1.10');
+      scene=await edit(page,()=>page.getByRole('button',{name:'Scale selection',exact:true}).click());
+      for(const id of ids)expect(scene.objects.find(o=>o.id===id).parameters.radius).toBeCloseTo(moved.objects.find(o=>o.id===id).parameters.radius*1.1,8);
+      const scaled=structuredClone(scene);
+      await page.getByLabel('Group rotation',{exact:true}).fill('15');
+      scene=await edit(page,()=>page.getByRole('button',{name:'Rotate selection',exact:true}).click());
+      for(const id of ids)expect(scene.objects.find(o=>o.id===id).parameters.rotation).toBeCloseTo(scaled.objects.find(o=>o.id===id).parameters.rotation+15,8);
+      expect(scene.selection).toEqual(ids);
+      await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+      const beforeDrag=structuredClone(scene),point=await canvasPoint(page,scene.objects[0]);
+      await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+24,point.y+12,{steps:5});
+      scene=await edit(page,()=>page.mouse.up());
+      for(const id of ids){const a=beforeDrag.objects.find(o=>o.id===id).parameters,b=scene.objects.find(o=>o.id===id).parameters;expect(b.x-a.x).toBeCloseTo(24/point.scale,6);expect(b.y-a.y).toBeCloseTo(12/point.scale,6);}
+      expect(scene.objects[2]).toEqual(before.objects[2]);
+      const afterDrag=structuredClone(scene),cancelPoint=await canvasPoint(page,scene.objects[0]);
+      await page.mouse.move(cancelPoint.x,cancelPoint.y);await page.mouse.down();await page.mouse.move(cancelPoint.x+20,cancelPoint.y+10,{steps:3});await page.keyboard.press('Escape');await page.mouse.up();
+      expect((await uiScene(page)).revision).toBe(afterDrag.revision);expect((await uiScene(page)).objects).toEqual(afterDrag.objects);
+      scene=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(scene.objects).toEqual(beforeDrag.objects);expect(scene.selection).toEqual(ids);
+      scene=await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect(scene.objects).toEqual(afterDrag.objects);
+      await page.getByLabel('Group scale factor',{exact:true}).fill('4');
+      await page.getByRole('button',{name:'Scale selection',exact:true}).click();await expect(page.locator('#toast')).toContainText('use a smaller change');
+      expect((await uiScene(page)).revision).toBe(scene.revision);expect((await uiScene(page)).objects).toEqual(scene.objects);
+      await page.getByLabel('Group scale factor',{exact:true}).fill('1.10');
+      const saved=await download(page,testInfo,'json');const recipe=JSON.parse(saved.toString('utf8'));expect(recipe.schema_version).toBe(4);expect(recipe.objects).toEqual(scene.objects);
+      await settleCanvas(page);await screenshot(page,testInfo,`arranged-group-${viewport.name}`);
+      await page.locator('.group-section').screenshot({path:testInfo.outputPath(`arrange-controls-${viewport.name}.png`)});
+    });
+  });
+}
+
+test('group arrangement moves every authored key without adding poses',async({page},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Play demo',exact:true}).click());
+  await edit(page,()=>page.getByRole('button',{name:'Pause animation',exact:true}).click());
+  const starting=await uiScene(page),names=starting.objects.slice(0,2).map(o=>o.name);
+  await page.getByRole('button',{name:'Select multiple',exact:true}).click();
+  for(const name of names)await edit(page,()=>page.getByRole('button',{name:`Select ${name}`,exact:true}).click());
+  await page.getByRole('button',{name:'Done selecting',exact:true}).click();
+  const before=await uiScene(page);
+  const after=await edit(page,()=>page.getByRole('button',{name:'Move selection right',exact:true}).click());
+  for(let i=0;i<2;i++){expect(after.objects[i].keyframes).toHaveLength(before.objects[i].keyframes.length);for(let k=0;k<before.objects[i].keyframes.length;k++){expect(after.objects[i].keyframes[k].parameters.x).toBe(before.objects[i].keyframes[k].parameters.x+10);expect(after.objects[i].keyframes[k].time).toBe(before.objects[i].keyframes[k].time);expect(after.objects[i].keyframes[k].easing).toBe(before.objects[i].keyframes[k].easing);}}
+  expect(after.objects[2]).toEqual(before.objects[2]);
+  expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(before.objects);
+  await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());await settleCanvas(page);
+  await screenshot(page,testInfo,'whole-path-arrangement');
+});
+
+test('selected blend and its source move retained operands only once',async({page},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Try layered study',exact:true}).click());
+  await page.getByRole('button',{name:'Select multiple',exact:true}).click();
+  // Loading the study selects nothing. Blend plus its operand must deduplicate sources.
+  for(const id of ['blend_confluence','island_ember','island_glass'])await edit(page,()=>page.locator(`[data-layer-action="select"][data-id="${id}"]`).click());
+  await page.getByRole('button',{name:'Done selecting',exact:true}).click();
+  const before=await uiScene(page);
+  await expect(page.locator('#selection-summary')).toContainText('3 islands');
+  const after=await edit(page,()=>page.getByRole('button',{name:'Move selection right',exact:true}).click());
+  for(const id of ['island_ember','island_lagoon','island_glass'])expect(after.objects.find(o=>o.id===id).parameters.x).toBe(before.objects.find(o=>o.id===id).parameters.x+10);
+  expect(after.objects.find(o=>o.id==='island_lowtide')).toEqual(before.objects.find(o=>o.id==='island_lowtide'));
+  expect(after.blends).toEqual(before.blends);expect(after.layer_order).toEqual(before.layer_order);
+  await settleCanvas(page);await screenshot(page,testInfo,'retained-source-group');
+});
+
+test('invalid and stale group drags cannot partially commit',async({page,expectedHttpFailures},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Select visible',exact:true}).click());
+  const before=await uiScene(page);await page.locator('#art-canvas').scrollIntoViewIfNeeded();await settleCanvas(page);
+  let point=await canvasPoint(page,before.objects[0]);
+  await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+3000*point.scale,point.y,{steps:3});await page.mouse.up();
+  await expect(page.locator('#toast')).toContainText('Nothing was saved');expect((await uiScene(page)).objects).toEqual(before.objects);expect((await uiScene(page)).revision).toBe(before.revision);
+  point=await canvasPoint(page,before.objects[0]);await page.mouse.move(point.x,point.y);await page.mouse.down();await page.mouse.move(point.x+24,point.y+10,{steps:3});
+  const changed=await actualMcp(testInfo,'transform_layers',{ids:before.selection,dx:-5,expected_revision:before.revision,request_id:`group-${randomUUID()}`});
+  expect(changed.ok).toBeTruthy();expectedHttpFailures.add('409 /api/command');await page.mouse.up();
+  await expect(page.locator('#toast')).toContainText('changed elsewhere');
+  await expect.poll(async()=>(await uiScene(page)).revision).toBe(changed.scene.revision);
+  expect((await uiScene(page)).objects).toEqual(changed.scene.objects);
+  expect((await uiScene(page)).selection).toEqual(before.selection);
 });

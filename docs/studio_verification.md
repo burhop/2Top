@@ -1,42 +1,51 @@
 # Tidal Atlas development verification
 
-Updated October 12, 2026 for version 0.7.2. Work17 executes the local application
+Updated October 12, 2026 for version 0.8.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.7.2 fixes measured range-control keyboard focus loss after save and
-zero-size canvas layout errors. Real-browser profiles cover authored motion,
-eight layered islands and two static blends at 48 contours. Clean editable/wheel
-startup uses only declared studio dependencies; a new clean-wheel CI gate checks
-packaged assets and real read-only MCP. [Measurements and limits](studio_performance.md).
-Existing reliability, geometry/parity, quality, 19 tools and schema 4 are retained.
+Version 0.8.0 adds multi-selection and atomic whole-path arrangement. Desktop
+shortcuts/touch controls move, uniformly scale and rotate selected layers while
+preserving complete tracks and retained blend sources. Every resulting base/key
+pose is validated; stale/out-of-bounds edits cannot partially commit. The new
+command is exposed through all adapters; the catalog contains 20 tools and
+recipes remain schema 4. [Authoring contract](group_authoring.md).
+Existing geometry/parity, quality and clean-wheel checks remain. The
+[0.7.2 performance baseline and reproduction guide](studio_performance.md) remain available.
 
-The manual UI, real MCP HTTP/stdio and WebMCP adapter share 19 validated tools,
+The manual UI, real MCP HTTP/stdio and WebMCP adapter share 20 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
 is guarded while referenced. See [static blending](static_blending.md) for field
 semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,256 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,283 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: 218 cases, including 15 choreography and 17 motion-edit cases for interpolation,
+- Studio subset: **245 cases**, including choreography, motion-edit and whole-path group cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **133 files formatted**.
-- Actual Playwright Chromium acceptance: **26 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **135 files already formatted**.
+- Actual Playwright Chromium acceptance: **31 cases passed**, with unexpected
   console, page and HTTP failures rejected.
 
 0.7.2 adds desktop/phone native keyboard continuity (including focus deliberately
 moved during a delayed save) and zero-size layout recovery. Measured baseline
 failures are reproduced before the fixes. No tight shared-CI timing gate or
 unmeasured quality reduction is introduced.
+
+0.8.0 adds five actual browser workflows for desktop/phone grouping, complete
+track transforms, shared retained sources and stale/out-of-bounds drag rejection.
+Direct/service, HTTP, official HTTP/stdio MCP and Python/JavaScript parity cases
+verify atomicity, exact static contour transforms, 18-layer support, persistence,
+retry/conflict semantics and cross-client undo/redo. WebMCP registration and
+forwarding coverage remains explicitly mocked; native hosting is unverified.
 
 The three new real-browser cases exercise native capture/scrub/easing controls,
 interpolated poses, keyed pointer movement, undo/redo, actual downloaded JSON

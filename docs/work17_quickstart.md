@@ -38,6 +38,15 @@ The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
 
+## Arrange layers in 0.8.0
+
+On the separate current-dev session at port 8768, choose **Select multiple**,
+tap two layer rows, then **Done selecting**. Nudge right, set Group scale factor
+to 1.10 and choose **Scale selection**, then rotate 15 degrees. Drag either
+selected layer, cancel with Escape, or commit and Undo/Redo. Complete authored
+paths move together. Select a blend plus a retained source to see sources move
+once. [Authoring guide](group_authoring.md). Keep the existing port 8000 demo intact.
+
 ## Try 0.6.0 layers
 
 Use **Try layered study** for Glasswater. The frontmost row appears first. Select

@@ -6,6 +6,7 @@ import { blendDemoRecipe } from './blend-demo.js';
 import { allLayers, orderedLayers, visibleLayers, sourceBlends, compositeLayer } from './layers.js';
 import { layeredDemoRecipe } from './layered-demo.js';
 import {sourceLabel,sourceKind,committedEntries} from './activity.js';
+import { resolveIslands, transformedIslands } from './transforms.js';
 let activityKey;
 let dialogGeneration=0;
 const retiredSessions=new Set();
@@ -77,6 +78,7 @@ let activeBlendId;
 let sourceGuides = true;
 const blendCache = new Map();
 let activeTool = 'select';
+let multiSelection = false;
 let busy = 0;
 let online = false;
 let destroyed = false;
@@ -90,18 +92,18 @@ let webmcpStatus = window.tidalWebMCPStatus || { supported: false, registered: 0
 let size = { width: 1, height: 1, dpr: 1 };
 let transform = { scale: 1, x: 0, y: 0 };
 let commandQueue = Promise.resolve();
-let pendingRangeFocus = null;
-// A save temporarily disables sliders. Restore keyboard focus only if the user
+let pendingEditFocus = null;
+// A save temporarily disables editing controls. Restore focus only if the user
 // has not moved elsewhere while the command was pending.
-document.addEventListener('pointerdown', () => { pendingRangeFocus = null; }, true);
-document.addEventListener('focusin', event => { if (pendingRangeFocus && event.target !== pendingRangeFocus) pendingRangeFocus = null; });
+document.addEventListener('pointerdown', () => { pendingEditFocus = null; }, true);
+document.addEventListener('focusin', event => { if (pendingEditFocus && event.target !== pendingEditFocus) pendingEditFocus = null; });
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 const current = () => preview || scene;
-const selectedLayer = (state = current()) => allLayers(state).find(item => state?.selection?.includes(item.id));
-const selected = (state = current()) => state?.objects.find((object) => state.selection?.includes(object.id));
+const selectedLayer = (state = current()) => state?.selection?.length === 1 ? allLayers(state).find(item => state.selection.includes(item.id)) : null;
+const selected = (state = current()) => state?.selection?.length === 1 ? state.objects.find(object => state.selection.includes(object.id)) : null;
 function getTime(state = current()) {
   if (!state) return 0;
   if (!state.animation?.playing || state === preview) return state.animation?.time || 0;
@@ -114,16 +116,17 @@ function setConnected(connected, error = '') {
   $('save-status').className = `save-status ${connected ? 'ok' : 'error'}`;
   $('save-status').lastChild.textContent = connected ? (busy ? 'Applying change…' : 'Scene synchronized') : (error || 'Connection interrupted');
   const locked = busy > 0 || !scene;
-  if (locked && document.activeElement?.matches('input[type="range"]')) pendingRangeFocus = document.activeElement;
+  if (locked && document.activeElement?.matches('input[type="range"],[data-group-nudge],#scale-selection-button,#rotate-selection-button,#select-visible-button,#clear-selection-button')) pendingEditFocus = document.activeElement;
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
   for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
   $('demo-button').disabled = locked;
   if (scene) { setBlendingLocks(current()); setLayerLocks(current()); }
   updateKeyframeControls(current(), getTime());
+  updateGrouping(current());
   $('undo-button').disabled = locked || !scene?.history?.can_undo;
   $('redo-button').disabled = locked || !scene?.history?.can_redo;
-  if (!locked && pendingRangeFocus) {
-    const target = pendingRangeFocus; pendingRangeFocus = null;
+  if (!locked && pendingEditFocus) {
+    const target = pendingEditFocus; pendingEditFocus = null;
     if (target.isConnected && !target.disabled && document.activeElement === document.body) target.focus({ preventScroll: true });
   }
 }
@@ -229,7 +232,7 @@ function updateUI() {
   $('island-count').textContent = allLayers(state).length;
   $('artwork-name').textContent = state.title || 'Untitled archipelago';
   $('artwork-description').textContent = `${visibleLayers(state).length} artwork layers · ${state.view?.contours || 24} contours · one living field`;
-  $('selected-name').textContent = object?.name || 'Select an island';
+  $('selected-name').textContent = state.selection.length > 1 ? `${state.selection.length} layers selected` : object?.name || 'Select an island';
   $('duplicate-button').disabled = !object;
   $('remove-button').disabled = !object || sourceBlends(state,object.id).length > 0;
   updateLayers(state);
@@ -288,6 +291,7 @@ function updateLayers(state) {
   $('layer-palette').value=layer?.style.palette||'ember';
   const sources=layer?.parameters?sourceBlends(state,layer.id):[];
   $('layer-status').textContent=!layer?'Top row is frontmost. Move a layer with its arrow buttons.':!layer.parameters?'Select Edit A/B below Island confluence to edit its retained sources.':sources.length?`Source of ${sources.map(b=>b.name).join(', ')}. ${!layer.style.visible?'Hidden artwork; ':sources.some(b=>b.style.visible)?'Not drawn separately; ':''}the dashed guide and center handle let you edit this source. Remove its blends before deleting it.`:!layer.style.visible?'Hidden layer. The selected center handle lets you edit it without showing its artwork.':'Use the canvas or Shape & field to edit this island.';
+  if(state.selection.length>1)$('layer-status').textContent='Arrange selection moves all selected layers and their complete paths. Choose one layer to edit appearance or its current pose.';
   setLayerLocks(state);
 }
 $('layer-palette').addEventListener('change',()=>{const layer=selectedLayer(scene);if(layer)run('set_style',{id:layer.id,style:{palette:$('layer-palette').value}});});
@@ -299,6 +303,50 @@ $('layer-opacity').addEventListener('input',()=>{
 });
 $('layer-opacity').addEventListener('change',()=>{if(gesture?.id!=='layer-opacity')return;const saved=gesture;gesture=null;run('set_style',{id:saved.layerId,style:{opacity:Number($('layer-opacity').value)/100}},{expectedRevision:saved.revision});});
 $('layer-opacity').addEventListener('pointercancel',()=>cancelGesture());
+
+function selectionIslands(state = current()) { return state?.selection?.length ? resolveIslands(state,state.selection) : []; }
+function groupPivot(state = current(),time = getTime(state)) {
+  const objects=selectionIslands(state),poses=objects.map(object=>sampleParameters(object.parameters,object.keyframes,time));
+  return Object.fromEntries(['x','y'].map(name=>[name,poses.reduce((sum,pose)=>sum+pose[name],0)/poses.length]));
+}
+function updateGrouping(state) {
+  if(!state)return;
+  const count=state.selection.length,objects=selectionIslands(state),locked=busy>0||Boolean(gesture||dragging);
+  $('selection-count').textContent=count;
+  $('multi-select-button').textContent=multiSelection?'Done selecting':'Select multiple';
+  $('multi-select-button').setAttribute('aria-pressed',String(multiSelection));
+  $('multi-select-button').disabled=locked;$('select-visible-button').disabled=locked||!visibleLayers(state).length;
+  $('clear-selection-button').disabled=locked||!count;
+  document.querySelectorAll('[data-group-nudge],#group-step,#group-scale,#group-rotation,#scale-selection-button,#rotate-selection-button').forEach(control=>control.disabled=locked||!count);
+  $('selection-summary').textContent=count?`${count} ${count===1?'layer':'layers'} · ${objects.length} ${objects.length===1?'island':'islands'} · whole paths`:multiSelection?'Tap layers or artwork to add/remove them. Choose Done selecting to drag.':'Shift/Ctrl/⌘-click layers, or use Select multiple on touch.';
+  const linked=objects.some(object=>sourceBlends(state,object.id).length);
+  $('group-note').textContent=(linked?'Blends move their retained sources once; shared sources also affect other blends. ':'')+'Scale/rotate around the selected centers. All authored poses move together; limits reject the whole edit.';
+  if(multiSelection)$('selection-hint').textContent='Tap layers to add/remove · Done selecting to move';
+  else if(!dragging)$('selection-hint').textContent=count>1?'Drag any selected layer to move their complete paths.':'Drag an island to change the tide.';
+}
+function chooseLayer(id,event={}) {
+  const additive=multiSelection||event.shiftKey||event.ctrlKey||event.metaKey;
+  const ids=additive?(scene.selection.includes(id)?scene.selection.filter(key=>key!==id):[...scene.selection,id]):[id];
+  run('select',{ids});
+}
+function arrangeSelection(options) {
+  if(!scene||busy||gesture||dragging||!scene.selection.length)return;
+  const args={ids:[...scene.selection],pivot:groupPivot(scene,authoredTime()),...options};
+  try { transformedIslands(selectionIslands(scene),args); }
+  catch(error){toast(error.message,true);return;}
+  run('transform_layers',args);
+}
+$('multi-select-button').addEventListener('click',()=>{multiSelection=!multiSelection;updateGrouping(current());});
+$('select-visible-button').addEventListener('click',()=>{multiSelection=false;run('select',{ids:visibleLayers(scene).map(layer=>layer.id)});});
+$('clear-selection-button').addEventListener('click',()=>{multiSelection=false;run('select',{ids:[]});});
+document.querySelectorAll('[data-group-nudge]').forEach(button=>button.addEventListener('click',()=>{
+  if(!$('group-step').reportValidity())return;
+  const [x,y]=button.dataset.groupNudge.split(',').map(Number),step=Number($('group-step').value);
+  arrangeSelection({dx:x*step,dy:y*step});
+}));
+$('scale-selection-button').addEventListener('click',()=>{if($('group-scale').reportValidity())arrangeSelection({scale:Number($('group-scale').value)});});
+$('rotate-selection-button').addEventListener('click',()=>{if($('group-rotation').reportValidity())arrangeSelection({rotation:Number($('group-rotation').value)});});
+
 function progress(input) { input.style.setProperty('--progress', `${(Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min)) * 100}%`); }
 function updateAgentStatus() {
   updateActivity();
@@ -562,10 +610,17 @@ function render(target = ctx, width = size.width, height = size.height, dpr = si
     }
   }
   if (handles) {
+    const group=selectionIslands(state),groupIds=new Set(group.map(object=>object.id));
+    if(group.length>1){
+      const poses=group.map(object=>sampleParameters(object.parameters,object.keyframes,time));
+      const xs=poses.map(p=>p.x),ys=poses.map(p=>p.y),pad=24/trans.scale;
+      const left=Math.min(...xs)-pad,right=Math.max(...xs)+pad,top=Math.min(...ys)-pad,bottom=Math.max(...ys)+pad;
+      target.save();target.strokeStyle='#f0eed5b0';target.lineWidth=1/trans.scale;target.setLineDash([5/trans.scale,5/trans.scale]);target.beginPath();target.moveTo(left,top);target.lineTo(right,top);target.lineTo(right,bottom);target.lineTo(left,bottom);target.closePath();target.stroke();target.restore();
+    }
     for (const object of orderedLayers(state).filter(o=>o.type==='island')) {
-      const explicit = state.selection?.includes(object.id);
+      const explicit = state.selection?.includes(object.id)||groupIds.has(object.id);
       if ((!object.style.visible || consumed.has(object.id)) && !explicit) continue;
-      const active = state.selection?.includes(object.id);
+      const active = state.selection?.includes(object.id)||groupIds.has(object.id);
       const { x, y } = sampleParameters(object.parameters, object.keyframes || [], time);
       target.save(); target.translate(x, y);
       target.strokeStyle = active ? '#f0eed5' : '#c1d6bd7a'; target.fillStyle = '#13362c'; target.lineWidth = 1 / trans.scale;
@@ -597,8 +652,8 @@ function worldPoint(event) {
 function hitObject(point) {
   const state = current();
   if (!state) return null;
-  const explicit=selected(state);
-  if(showHandles&&explicit&&(!explicit.style.visible||sourceBlends(state,explicit.id,true).length)) {
+  if(showHandles)for(const explicit of [...selectionIslands(state)].reverse()) {
+    if(explicit.style.visible&&!sourceBlends(state,explicit.id,true).length)continue;
     const pose=sampleParameters(explicit.parameters,explicit.keyframes||[],getTime());
     if(Math.hypot(pose.x-point.x,pose.y-point.y)<22/transform.scale)return explicit;
   }
@@ -621,6 +676,14 @@ canvas.addEventListener('pointerdown', (event) => {
   if (!scene || busy || event.button !== 0) return;
   const point = worldPoint(event);
   if (activeTool === 'add') { addIsland(point); setTool('select'); return; }
+  const clickedLayer=hitObject(point);
+  if(multiSelection||event.shiftKey||event.ctrlKey||event.metaKey){if(clickedLayer)chooseLayer(clickedLayer.id,event);return;}
+  const group=selectionIslands(scene);
+  if(clickedLayer&&group.length>1&&(scene.selection.includes(clickedLayer.id)||group.some(object=>object.id===clickedLayer.id))) {
+    const time=authoredTime(scene);preview=clone(scene);preview.animation.time=time;preview.animation.playing=false;
+    dragging={group:true,ids:[...scene.selection],base:clone(scene),pointerId:event.pointerId,start:point,time,moved:false,invalid:false,dx:0,dy:0,revision:scene.revision};
+    canvas.setPointerCapture(event.pointerId);canvas.classList.add('dragging');renderDirty=true;updateUI();return;
+  }
   const motionKey = hitMotionKey(point);
   if (motionKey) {
     const object = selected(scene);
@@ -651,6 +714,16 @@ canvas.addEventListener('pointermove', (event) => {
   if (!dragging) { canvas.style.cursor = activeTool === 'add' ? 'crosshair' : hitMotionKey(point) || hitObject(point) ? 'grab' : 'default'; return; }
   const dx = point.x - dragging.start.x, dy = point.y - dragging.start.y;
   if (Math.abs(dx) + Math.abs(dy) > 2) dragging.moved = true;
+  if(dragging.group){
+    const dx=point.x-dragging.start.x,dy=point.y-dragging.start.y;
+    try {
+      const changed=transformedIslands(resolveIslands(dragging.base,dragging.ids),{dx,dy});
+      const byId=new Map(changed.map(object=>[object.id,object]));preview.objects=dragging.base.objects.map(object=>byId.get(object.id)||object);
+      dragging.dx=dx;dragging.dy=dy;dragging.moved=Math.abs(dx)+Math.abs(dy)>2;dragging.invalid=false;
+      $('selection-hint').textContent='Move whole paths · Release to commit · Esc to cancel';
+    }catch(error){dragging.invalid=true;$('selection-hint').textContent=error.message;}
+    renderDirty=true;return;
+  }
   const object = preview.objects.find((o) => o.id === dragging.id);
   const pose = dragging.pathKey ? object.keyframes.find(key => key.time === dragging.time).parameters : object.parameters;
   pose.x = clamp(dragging.x + dx, ...(dragging.pathKey ? PARAMETER_BOUNDS.x : [-500, 1500])); pose.y = clamp(dragging.y + dy, ...(dragging.pathKey ? PARAMETER_BOUNDS.y : [-350, 1050]));
@@ -663,6 +736,12 @@ async function endDrag(cancel = false) {
   if (canvas.hasPointerCapture(drag.pointerId)) canvas.releasePointerCapture(drag.pointerId);
   $('selection-hint').textContent = 'Drag an island to change the tide.';
   if (cancel) { preview = null; renderDirty = true; updateUI(); return; }
+  if(drag.group){
+    if(drag.invalid||!drag.moved){preview=null;renderDirty=true;updateUI();if(drag.invalid)toast('Whole-path move exceeded a pose limit. Nothing was saved.',true);return;}
+    const commands=[];if(scene.animation.playing)commands.push({op:'set_view',view:{},animation:{playing:false,time:drag.time}});
+    commands.push({op:'transform_layers',ids:drag.ids,dx:drag.dx,dy:drag.dy});
+    await run('batch',{label:'Move selected layers and whole paths',commands},{expectedRevision:drag.revision});return;
+  }
   const commands = [];
   if (!scene.selection.includes(drag.id)) commands.push({ op: 'select', ids: [drag.id] });
   if (drag.pathKey) {
@@ -696,7 +775,7 @@ $('layer-list').addEventListener('click', (event) => {
   layerFocus={id:action.dataset.id,action:action.dataset.layerAction};
   const layer=allLayers(scene).find(o=>o.id===action.dataset.id);if(!layer)return;
   if(action.dataset.layerAction==='visibility')run('set_style',{id:layer.id,style:{visible:!layer.style.visible}});
-  else if(action.dataset.layerAction==='select') {if(!layer.parameters)activeBlendId=layer.id;run('select',{ids:[layer.id]});}
+  else if(action.dataset.layerAction==='select') {if(!layer.parameters)activeBlendId=layer.id;chooseLayer(layer.id,event);}
   else {
     const order=[...scene.layer_order],from=order.indexOf(layer.id),to=from+(action.dataset.layerAction==='forward'?1:-1);
     if(to<0||to>=order.length)return;[order[from],order[to]]=[order[to],order[from]];run('reorder_layers',{order});

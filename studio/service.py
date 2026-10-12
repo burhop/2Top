@@ -29,6 +29,7 @@ from pydantic import (
 )
 
 from geometry.choreography import sample_parameters, validate_keyframes
+from studio.transforms import resolve_islands, transformed_islands
 
 
 class StrictModel(BaseModel):
@@ -306,6 +307,24 @@ class KeyPosition(StrictModel):
     y: float = Field(ge=-700, le=1400)
 
 
+class TransformLayers(StrictModel):
+    op: Literal["transform_layers"]
+    ids: list[Identifier] = Field(
+        min_length=1, max_length=18, json_schema_extra={"uniqueItems": True}
+    )
+    dx: float = Field(0, ge=-3000, le=3000)
+    dy: float = Field(0, ge=-2100, le=2100)
+    scale: float = Field(1, ge=0.1, le=4)
+    rotation: float = Field(0, ge=-360, le=360)
+    pivot: KeyPosition | None = None
+
+    @model_validator(mode="after")
+    def unique_layers(self):
+        if len(self.ids) != len(set(self.ids)):
+            raise ValueError("Transform IDs must be unique")
+        return self
+
+
 class EditKeyframe(StrictModel):
     op: Literal["edit_keyframe"]
     id: Identifier
@@ -355,6 +374,7 @@ Child = Annotated[
         ReorderLayers,
         SetView,
         Select,
+        TransformLayers,
         SetKeyframe,
         DeleteKeyframe,
         EditKeyframe,
@@ -396,6 +416,10 @@ class ViewCommand(SetView, Mutation):
 
 
 class SelectCommand(Select, Mutation):
+    pass
+
+
+class TransformLayersCommand(TransformLayers, Mutation):
     pass
 
 
@@ -450,6 +474,7 @@ COMMAND_MODELS = {
     "reorder_layers": ReorderLayersCommand,
     "set_view": ViewCommand,
     "select": SelectCommand,
+    "transform_layers": TransformLayersCommand,
     "set_keyframe": KeyframeCommand,
     "delete_keyframe": DeleteKeyframeCommand,
     "edit_keyframe": EditKeyframeCommand,
@@ -477,6 +502,7 @@ DESCRIPTIONS = {
     "reorder_layers": "Set back-to-front layer order. Standalone calls require every current island/blend ID exactly once. Batches may order their final remaining layers before deletion; final missing/duplicate/unknown IDs fail atomically. Requires latest revision.",
     "set_view": "Set view and/or art-directed animation parameters. This is not a physical simulation. Requires latest revision.",
     "select": "Set selected island or blend layer IDs, visible in the manual inspector. Requires latest revision.",
+    "transform_layers": "Atomically translate, uniformly scale, and rotate explicit island/blend IDs and every authored pose. Expand blends to retained sources, moving shared sources once; dependent blends may also change. Scale then rotate about supplied pivot (default unique base-center mean), then translate. Preserve times/easing, authored degrees, style, selection, order and playback; reject any out-of-bounds base/key pose without clamping. Existing procedural tide remains unchanged. Requires latest revision.",
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
@@ -957,6 +983,7 @@ class SceneService:
                     "set_style": "Change palette / appearance",
                     "set_view": "Adjust view / motion",
                     "select": "Select layer",
+                    "transform_layers": "Arrange layers and whole motion paths",
                     "reorder_layers": "Reorder composition layers",
                     "delete_geometry": "Remove island",
                     "set_keyframe": "Capture island pose",
@@ -1050,6 +1077,26 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
+        if command.op == "transform_layers":
+            try:
+                targets = resolve_islands(scene, command.ids)
+                changed = transformed_islands(
+                    targets,
+                    **command.model_dump(
+                        exclude={"op", "ids", "expected_revision", "request_id"}
+                    ),
+                )
+            except KeyError as exc:
+                raise SceneError(
+                    "object_not_found", f"Unknown layer: {exc.args[0]}", status=404
+                ) from exc
+            except ValueError as exc:
+                raise SceneError("validation_error", str(exc)) from exc
+            replacements = {island["id"]: island for island in changed}
+            scene["objects"] = [
+                replacements.get(island["id"], island) for island in scene["objects"]
+            ]
+            return list(replacements)
         if command.op == "reorder_layers":
             scene["layer_order"] = list(command.order)
             return list(command.order)
