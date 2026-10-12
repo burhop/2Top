@@ -90,6 +90,11 @@ let webmcpStatus = window.tidalWebMCPStatus || { supported: false, registered: 0
 let size = { width: 1, height: 1, dpr: 1 };
 let transform = { scale: 1, x: 0, y: 0 };
 let commandQueue = Promise.resolve();
+let pendingRangeFocus = null;
+// A save temporarily disables sliders. Restore keyboard focus only if the user
+// has not moved elsewhere while the command was pending.
+document.addEventListener('pointerdown', () => { pendingRangeFocus = null; }, true);
+document.addEventListener('focusin', event => { if (pendingRangeFocus && event.target !== pendingRangeFocus) pendingRangeFocus = null; });
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -109,6 +114,7 @@ function setConnected(connected, error = '') {
   $('save-status').className = `save-status ${connected ? 'ok' : 'error'}`;
   $('save-status').lastChild.textContent = connected ? (busy ? 'Applying change…' : 'Scene synchronized') : (error || 'Connection interrupted');
   const locked = busy > 0 || !scene;
+  if (locked && document.activeElement?.matches('input[type="range"]')) pendingRangeFocus = document.activeElement;
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
   for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
   $('demo-button').disabled = locked;
@@ -116,6 +122,10 @@ function setConnected(connected, error = '') {
   updateKeyframeControls(current(), getTime());
   $('undo-button').disabled = locked || !scene?.history?.can_undo;
   $('redo-button').disabled = locked || !scene?.history?.can_redo;
+  if (!locked && pendingRangeFocus) {
+    const target = pendingRangeFocus; pendingRangeFocus = null;
+    if (target.isConnected && !target.disabled && document.activeElement === document.body) target.focus({ preventScroll: true });
+  }
 }
 function toast(message, error = false) {
   $('toast').textContent = message;
@@ -488,6 +498,9 @@ function pathFromPoints(points) {
   return path;
 }
 function render(target = ctx, width = size.width, height = size.height, dpr = size.dpr, state = current(), time = getTime(), handles = showHandles) {
+  // Layout can briefly collapse the canvas during startup or panel transitions.
+  // ResizeObserver marks it dirty again when valid dimensions return.
+  if (!target.canvas.width || !target.canvas.height || width <= 0 || height <= 0) return;
   target.setTransform(dpr, 0, 0, dpr, 0, 0);
   const background = target.createRadialGradient(width * .49, height * .42, 1, width * .5, height * .5, width * .8);
   background.addColorStop(0, '#173734'); background.addColorStop(.7, '#102725'); background.addColorStop(1, '#0b1e1e');

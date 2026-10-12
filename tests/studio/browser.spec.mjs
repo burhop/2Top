@@ -8,6 +8,7 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import { randomUUID } from 'node:crypto';
 
+
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
 const legacySeed = structuredClone(seed);
 // Canonical expected state; schema-1 migration itself has explicit coverage below.
@@ -780,4 +781,42 @@ test('same-revision service restart refreshes history without cancelling gesture
   delivered=before;await page.evaluate(()=>window.tidalStudio.refresh());
   expect((await uiScene(page)).session_id).toBe(restarted.session_id);await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
   await testInfo.attach('restart-snapshot-evidence',{body:JSON.stringify({before,restarted,delivery:'simulated HTTP delivery of actual restarted service snapshot'}),contentType:'application/json'});
+});
+
+for (const [name, viewport] of [['desktop', {width:1440,height:1100}], ['phone', {width:390,height:844}]]) {
+  test.describe(`keyboard continuity ${name}`, () => {
+    test.use({viewport});
+    test('slider retains focus across committed keyboard edits', async ({page}) => {
+      const slider=page.getByRole('slider',{name:'Animation playhead',exact:true});
+      await slider.focus();
+      const before=Number(await slider.inputValue());
+      await edit(page,()=>page.keyboard.press('ArrowRight'));
+      await expect(slider).toBeFocused();
+      await edit(page,()=>page.keyboard.press('ArrowRight'));
+      await expect(slider).toBeFocused();
+      expect(Number(await slider.inputValue())).toBeCloseTo(before+.02,2);
+      await selectFirst(page);
+      const shape=page.getByRole('slider',{name:'Island scale',exact:true});
+      await shape.focus();await edit(page,()=>page.keyboard.press('ArrowRight'));
+      await expect(shape).toBeFocused();await edit(page,()=>page.keyboard.press('ArrowRight'));
+      // Moving focus during a slower save must take precedence over restoration.
+      await page.route('**/api/command',async route=>{await new Promise(resolve=>setTimeout(resolve,200));await route.continue();});
+      await shape.focus();await page.keyboard.press('ArrowRight');await expect(shape).toBeDisabled();
+      await page.locator('#canvas-tab').focus();
+      await expect(page.locator('#save-status')).toHaveText('Scene synchronized');
+      await expect(page.locator('#canvas-tab')).toBeFocused();await page.unroute('**/api/command');
+    });
+  });
+}
+
+test('zero-size layout recovers when the canvas becomes visible', async ({page},testInfo) => {
+  const oldRevision=(await uiScene(page)).revision;
+  await page.addStyleTag({content:'#canvas-stage { width:0!important; height:0!important; min-width:0!important; min-height:0!important; overflow:hidden!important; } #art-canvas { width:0!important; height:0!important; }'});
+  await expect.poll(()=>page.locator('#art-canvas').evaluate(c=>c.width)).toBe(0);
+  await page.evaluate(()=>window.tidalStudio.refresh({force:true}));
+  await settleCanvas(page);
+  await page.locator('style').last().evaluate(s=>s.remove());
+  await expect.poll(()=>page.locator('#art-canvas').evaluate(c=>c.width)).toBeGreaterThan(0);
+  await settleCanvas(page);expect((await uiScene(page)).revision).toBe(oldRevision);
+  await screenshot(page,testInfo,'recovered-canvas-layout');
 });

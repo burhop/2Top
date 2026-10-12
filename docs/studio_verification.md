@@ -1,14 +1,16 @@
 # Tidal Atlas development verification
 
-Updated October 12, 2026 for version 0.7.1. Work17 executes the local application
+Updated October 12, 2026 for version 0.7.2. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.7.1 fixes reviewed final-candidate order/deletion errors, stale
-same-revision restart history and blend-editor selection precedence. Process
-session metadata refreshes both snapshot acceptance and activity cache. Normal
-gestures/playback, 19 tools, schema 4 and geometry-engine reuse are retained.
+Version 0.7.2 fixes measured range-control keyboard focus loss after save and
+zero-size canvas layout errors. Real-browser profiles cover authored motion,
+eight layered islands and two static blends at 48 contours. Clean editable/wheel
+startup uses only declared studio dependencies; a new clean-wheel CI gate checks
+packaged assets and real read-only MCP. [Measurements and limits](studio_performance.md).
+Existing reliability, geometry/parity, quality, 19 tools and schema 4 are retained.
 
 The manual UI, real MCP HTTP/stdio and WebMCP adapter share 19 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
@@ -28,8 +30,13 @@ semantics, reference rules, sampling budgets and degenerate-case behavior.
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
 - Repository-wide Ruff lint and formatting: passed, **133 files formatted**.
-- Actual Playwright Chromium acceptance: **23 cases passed**, with unexpected
+- Actual Playwright Chromium acceptance: **26 cases passed**, with unexpected
   console, page and HTTP failures rejected.
+
+0.7.2 adds desktop/phone native keyboard continuity (including focus deliberately
+moved during a delayed save) and zero-size layout recovery. Measured baseline
+failures are reproduced before the fixes. No tight shared-CI timing gate or
+unmeasured quality reduction is introduced.
 
 The three new real-browser cases exercise native capture/scrub/easing controls,
 interpolated poses, keyed pointer movement, undo/redo, actual downloaded JSON
