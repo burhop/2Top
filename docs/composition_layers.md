@@ -61,3 +61,16 @@ rendering is not a pixel-identical substitute for the studio's artistic terraces
 The finite-grid, dimensionless-field and non-exact-topology limits in
 [static blending](static_blending.md) continue to apply. Native WebMCP host
 execution remains a separate unverified capability.
+
+## Reliability semantics in 0.7.1
+
+A batch can set the order for its final surviving layers before deleting an
+omitted island/blend. Final recipe invariants must still hold; malformed survivors
+are rejected atomically. Each operation's normal preconditions remain in force.
+Standalone order edits require the complete current layer list.
+
+Blend composition is an explicit local editor choice: New pair or another blend
+does not change canvas selection. A new canvas/shared selection of a blend
+synchronizes the editor, but an existing unchanged selection does not overwrite
+the user's dropdown choice. Creation selects the newly created editor record;
+normal layer/canvas selection behavior remains shared and reversible.

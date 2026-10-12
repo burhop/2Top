@@ -4,7 +4,7 @@ A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry 
 
 ## Development status
 
-Version **0.7.0** adds guided local client setup and a coauthor activity view with server-observed routes, actual committed differences and cross-client undo references. A real MCP protocol client supports explicit walkthrough calls without a model or automatic writes. The studio, MCP and WebMCP adapter share one validated scene. Version 0.6.0 added ordered composition layers/group opacity; 0.5.0 introduced static confluence; 0.3.0/0.4.0 added choreography and editable motion paths. Development targets **dev**, with synchronized versions, README/changelog and passing checks before integration. Main remains unchanged.
+Version **0.7.1** fixes reviewed batch-order/deletion, process-restart history and blend-editor selection issues. Batches validate their final scene atomically; process session metadata refreshes same-revision history; explicit editor choices stay usable. Version 0.7.0 introduced guided local client setup and truthful coauthor activity. Existing 19 tools, schema 4, geometry reuse and shared undo remain in place. Development targets **dev** with tested updates; main and the live user demo are preserved.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 

@@ -8,6 +8,7 @@ import { layeredDemoRecipe } from './layered-demo.js';
 import {sourceLabel,sourceKind,committedEntries} from './activity.js';
 let activityKey;
 let dialogGeneration=0;
+const retiredSessions=new Set();
 
 const $ = (id) => document.getElementById(id);
 const WORLD = { width: 1000, height: 700 };
@@ -125,9 +126,16 @@ function toast(message, error = false) {
 }
 function acceptScene(next, force = false) {
   if (!next || !Array.isArray(next.objects)) throw new Error('The scene service returned an invalid scene.');
-  if (scene && next.document_id === scene.document_id && next.revision < scene.revision) return;
-  const changed = !scene || next.document_id !== scene.document_id || next.revision !== scene.revision;
-  if (!changed && !force) return;
+  if(next.session_id&&retiredSessions.has(next.session_id))return;
+  const newSession=Boolean(scene&&next.session_id&&next.session_id!==scene.session_id);
+  if(scene&&next.document_id===scene.document_id&&!newSession&&next.revision<scene.revision)return;
+  const changed=!scene||newSession||next.document_id!==scene.document_id||next.revision!==scene.revision;
+  if(!changed&&!force)return;
+  if(newSession&&scene.session_id){retiredSessions.add(scene.session_id);if(retiredSessions.size>8)retiredSessions.delete(retiredSessions.values().next().value);}
+  const selectedBlend=(next.blends||[]).find(blend=>next.selection?.includes(blend.id));
+  const selectionChanged=!scene||JSON.stringify(next.selection)!==JSON.stringify(scene.selection);
+  const selectedAgain=next.revision!==scene?.revision&&next.history?.entries?.at(-1)?.operation==='select';
+  if(!gesture&&!dragging&&selectedBlend&&(selectionChanged||selectedAgain))activeBlendId=selectedBlend.id;
   scene = next;
   lastSceneClock = performance.now();
   if (!gesture && !dragging) preview = null;
@@ -293,7 +301,6 @@ function recipe(state = scene) {
 
 function updateBlending(state) {
   const blends = state.blends || [], staticObjects = state.objects.filter(o => !o.keyframes?.length);
-  const selectedBlend=blends.find(b=>state.selection.includes(b.id));if(selectedBlend)activeBlendId=selectedBlend.id;
   if (activeBlendId === undefined || (activeBlendId && !blends.some(b => b.id === activeBlendId))) activeBlendId = blends[0]?.id || '';
   const blend = blends.find(b => b.id === activeBlendId), locked = busy > 0 || Boolean(gesture || dragging);
   $('blend-select').innerHTML = '<option value="">New pair</option>' + blends.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
@@ -803,7 +810,7 @@ $('help-button').addEventListener('click', () => showDialog('Make a little room 
 $('activity-button').addEventListener('click',()=>{$('coauthor-panel').scrollIntoView({behavior:'smooth',block:'start'});$('activity-filter').focus({preventScroll:true});});
 function updateActivity() {
   if(!scene)return;
-  const filter=$('activity-filter').value,key=`${scene.document_id}:${scene.revision}:${filter}:${webmcpStatus?.registered||0}`;
+  const filter=$('activity-filter').value,key=`${scene.session_id||"legacy"}:${scene.document_id}:${scene.revision}:${filter}:${webmcpStatus?.registered||0}`;
   if(key===activityKey)return;activityKey=key;
   const opened=new Set([...$('coauthor-activity').querySelectorAll('details[open]')].map(item=>item.dataset.tx));
   const entries=committedEntries(scene,filter),all=scene.history.entries;

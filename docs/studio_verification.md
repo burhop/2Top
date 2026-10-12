@@ -1,15 +1,14 @@
 # Tidal Atlas development verification
 
-Updated October 11, 2026 for version 0.7.0. Work17 executes the local application
+Updated October 12, 2026 for version 0.7.1. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.7.0 adds guided local client setup and coauthor activity based on
-server-observed routes, committed data differences and related undo transactions.
-The explicit official MCP client makes no model calls or automatic writes.
-Recipes remain schema 4; geometry reuse and existing behavior are retained.
-See [coauthoring](coauthoring.md) for setup and evidence boundaries.
+Version 0.7.1 fixes reviewed final-candidate order/deletion errors, stale
+same-revision restart history and blend-editor selection precedence. Process
+session metadata refreshes both snapshot acceptance and activity cache. Normal
+gestures/playback, 19 tools, schema 4 and geometry-engine reuse are retained.
 
 The manual UI, real MCP HTTP/stdio and WebMCP adapter share 19 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
@@ -18,18 +17,18 @@ semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,232 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,256 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: 194 cases, including 15 choreography and 17 motion-edit cases for interpolation,
+- Studio subset: 218 cases, including 15 choreography and 17 motion-edit cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **132 files formatted**.
-- Actual Playwright Chromium acceptance: **20 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **133 files formatted**.
+- Actual Playwright Chromium acceptance: **23 cases passed**, with unexpected
   console, page and HTTP failures rejected.
 
 The three new real-browser cases exercise native capture/scrub/easing controls,
@@ -82,6 +81,23 @@ traces are in `test-results/browser/`; the clickable report is in
 `playwright-report/`. CI uploads the same evidence for each browser run.
 The milestone PR provides the exact commit and CI links.
 
+## Reviewed reliability regressions
+
+Twenty-four added Python cases cover geometry/blend reorder-deletion batches,
+structured malformed-final-state rejection, disk/history/revision/retry-key
+rollback, undo/redo, actual-record selection, persisted restart identity and
+Unicode safety across direct, HTTP and real MCP boundaries. Pydantic already
+rejects lone high/low surrogates; the SDK may reject them before sending. Valid
+supplementary Unicode round-trips without extra sanitization.
+
+Three added Chromium cases cover desktop/phone New pair/second-blend choices and
+ordinary polling after a same-revision restart. The restart test delivers a
+genuine newly initialized SceneService snapshot through a simulated HTTP route;
+the actual user demo is never restarted. Active preview and playback are preserved,
+Undo/Redo/activity reset, and a late retired-session snapshot is ignored. Native
+supported-branch tool counts/names derive from the actual catalog; unsupported
+Chromium does not establish native-host support.
+
 ## Native WebMCP limitation
 
 Actual Work17 Chromium lacks `document.modelContext.registerTool` and correctly
@@ -108,7 +124,9 @@ passed before 0.4.0 started. [PR #6](https://github.com/burhop/2Top/pull/6) merg
 merged 0.5.0 at `4a07def243bcbeedbc19eb4832696d6875a0fde0`, whose post-merge CI
 passed before 0.6.0 started. [PR #8](https://github.com/burhop/2Top/pull/8)
 merged 0.6.0 at `87c24032573a5e2fe0da17724d6fc34b63ff117e`, whose post-merge CI
-passed before 0.7.0 started. Existing
+passed before 0.7.0 started. [PR #9](https://github.com/burhop/2Top/pull/9)
+merged 0.7.0 at `bd8a0269991c72171af81ed77f2cb5849fd82ca8`, whose post-merge CI
+passed before 0.7.1 started. Existing
 history and unrelated work are preserved. Main, releases, deployment and
 security/credential settings are outside these development updates.
 

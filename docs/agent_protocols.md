@@ -261,3 +261,21 @@ authority. Direct MCP is distinguished from the named HTTP bridge used by stdio
 and WebMCP. Recipes remain schema 4 and do not import/export process history.
 The explicit `studio.mcp_client` uses the real SDK; it is not a model host.
 See the [coauthor guide](coauthoring.md) for setup and the exact evidence limits.
+
+## Batch and session contract clarified in 0.7.1
+
+Every child must satisfy its command schema and operation preconditions (for
+example, referenced objects must exist and dependent blends must be removed
+before deleting a source). Cross-record recipe invariants are checked on the
+complete final candidate, before persistence. Thus a batch may reorder to the
+final remaining IDs before deleting an omitted layer; standalone reorder still
+requires every live ID exactly once. Deletion removes all references to its ID
+from order. Unknown/duplicate/missing surviving IDs fail with structured validation,
+leaving state, disk, history, revision and retry keys unchanged. Selection checks
+actual records, never an unvalidated intermediate order list.
+
+Snapshots include `session_id`, a process identity rather than authentication.
+It changes on service initialization while document/revision/artwork may stay
+the same. It is not a recipe field or persisted authority. The UI refreshes
+history/undo on a new session, defers snapshot application during an active
+gesture, and continues playback. Late snapshots from retired sessions are ignored.

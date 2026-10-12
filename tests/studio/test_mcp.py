@@ -625,3 +625,110 @@ async def test_coauthor_protocol_client_catalog_cross_client_history_and_conflic
         },
     )
     assert replay["replayed"] and replay["scene"]["history"]["session_commits"] == 5
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["geometry", "blend"])
+async def test_real_mcp_reorder_delete_final_candidate_and_atomic_rejection(
+    live_studio, kind
+):
+    url, service = live_studio
+    async with http_mcp_client(url + "/mcp/") as client:
+        target = "island_ember"
+        if kind == "blend":
+            created = payload(
+                await client.call_tool(
+                    "create_blend",
+                    {
+                        "source_a": "island_ember",
+                        "source_b": "island_lagoon",
+                        "expected_revision": 0,
+                    },
+                )
+            )
+            target = created["scene"]["blends"][0]["id"]
+        before = service.snapshot()
+        remaining = [key for key in before["layer_order"] if key != target]
+        delete = "delete_blend" if kind == "blend" else "delete_geometry"
+        failed = await client.call_tool(
+            "batch",
+            {
+                "expected_revision": before["revision"],
+                "commands": [
+                    {"op": "reorder_layers", "order": remaining[:-1] + ["missing"]},
+                    {"op": delete, "id": target},
+                ],
+            },
+        )
+        assert (
+            failed.is_error and payload(failed)["error"]["code"] == "validation_error"
+        )
+        assert payload(await client.call_tool("get_scene", {}))["scene"] == before
+        completed = payload(
+            await client.call_tool(
+                "batch",
+                {
+                    "expected_revision": before["revision"],
+                    "commands": [
+                        {"op": "reorder_layers", "order": remaining},
+                        {"op": "select", "ids": [target]},
+                        {"op": delete, "id": target},
+                    ],
+                },
+            )
+        )
+        assert completed["ok"] and completed["scene"]["layer_order"] == remaining
+        assert completed["scene"]["revision"] == before["revision"] + 1
+        undone = payload(
+            await client.call_tool(
+                "undo", {"expected_revision": completed["scene"]["revision"]}
+            )
+        )
+        for key in ["objects", "blends", "layer_order", "selection"]:
+            assert undone["scene"][key] == before[key]
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_unicode_boundary_rejects_surrogates_and_preserves_emoji(
+    live_studio,
+):
+    url, service = live_studio
+    for char in ["\ud800", "\udfff"]:
+        before = service.snapshot()
+        try:
+            async with http_mcp_client(url + "/mcp/") as client:
+                result = await client.call_tool(
+                    "create_geometry",
+                    {"expected_revision": before["revision"], "name": char},
+                )
+                assert result.is_error and payload(result)["error"]["code"] in {
+                    "validation_error",
+                    "invalid_arguments",
+                }
+        except Exception as exc:
+            # Some SDK serializers reject invalid Unicode before sending it.
+            def unicode_error(error):
+                return isinstance(error, UnicodeError) or (
+                    isinstance(error, BaseExceptionGroup)
+                    and any(unicode_error(child) for child in error.exceptions)
+                )
+
+            assert unicode_error(exc), repr(exc)
+        assert service.snapshot() == before
+    async with http_mcp_client(url + "/mcp/") as client:
+        valid = payload(
+            await client.call_tool(
+                "create_geometry",
+                {
+                    "expected_revision": service.snapshot()["revision"],
+                    "name": "\U0001f30a",
+                },
+            )
+        )
+        assert valid["ok"] and valid["scene"]["objects"][-1]["name"] == "\U0001f30a"
+        assert (
+            payload(await client.call_tool("get_scene", {}))["scene"]["objects"][-1][
+                "name"
+            ]
+            == "\U0001f30a"
+        )

@@ -54,6 +54,13 @@ protocol client, browser refinement and cross-client undo/redo. Protocol scripts
 and saved artwork are accurately labeled; no separate live model-client inference
 session or supported native WebMCP host was exercised.
 
+## 0.7.1 - focused reliability review
+
+Fix batch ordering/deletion completion and rollback, same-revision restart
+history reconciliation, explicit blend-editor precedence and stale native tool
+test expectations. Unicode rejection is regression-covered, not redundantly
+sanitized. Preserve the live demo and LAN settings during this patch pass.
+
 ## Most important remaining showcase gap
 
 Exercise the guided workflow in the user's intended, already configured model
