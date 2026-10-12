@@ -1,6 +1,6 @@
 [project]
 name = "twotop"
-version = "0.7.1"
+version = "0.7.2"
 description = "2Top Implicit Geometry Engine and Tidal Atlas studio"
 requires-python = ">=3.11"
 dependencies = [

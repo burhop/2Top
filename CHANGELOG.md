@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2 — measured first-run and interaction reliability
+
+- Preserve slider keyboard focus after asynchronous saves, without stealing focus after another interaction.
+- Skip drawing into a transient zero-size canvas and recover when layout supplies valid dimensions.
+- Add real-browser profiling for authored motion, eight layered islands and two static blends at 48 contours; document measured complexity without reducing quality or changing geometry.
+- Verify clean editable and packaged-wheel startup outside the checkout using only declared studio dependencies; add a clean-wheel CI gate.
+- Correct quickstart version/schema guidance and use explicit virtual-environment Python commands; protect the existing Work17 demo with a separate test port.
+
 ## 0.7.1 — reviewed reliability fixes
 
 - Complete reorder/delete batches against final-state invariants instead of raising list-removal errors; reject malformed final states atomically.

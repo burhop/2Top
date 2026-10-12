@@ -1,28 +1,41 @@
-# 2Top 0.6.0 · Tidal Atlas
+# 2Top 0.7.2 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.7.1** fixes reviewed batch-order/deletion, process-restart history and blend-editor selection issues. Batches validate their final scene atomically; process session metadata refreshes same-revision history; explicit editor choices stay usable. Version 0.7.0 introduced guided local client setup and truthful coauthor activity. Existing 19 tools, schema 4, geometry reuse and shared undo remain in place. Development targets **dev** with tested updates; main and the live user demo are preserved.
+Version **0.7.2** fixes measured keyboard-focus loss after slider saves and transient zero-size canvas rendering. Clean editable/wheel installation uses only declared studio dependencies. A [reproducible browser benchmark and complexity guide](docs/studio_performance.md) covers authored motion, eight layered islands and two static blends at 48 contours. Geometry accuracy, quality, validation, 19 tools, schema 4 and shared undo remain in place. Development targets **dev** with tested updates; main and the live user demo are preserved.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
 ## Start the new studio
 
-Python 3.11 or later:
+Use Python 3.11 or later in a checkout of the **dev** branch. The studio does not
+require Node, Qt, development tools, an AI account or an API key.
+
+Windows PowerShell (no activation or execution-policy change needed):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[studio]"
+.\.venv\Scripts\python.exe -m studio.app
+```
+
+macOS/Linux:
 
 ```bash
 python -m venv .venv
-# macOS/Linux: source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install -e ".[studio]"
-python -m studio.app
+.venv/bin/python -m pip install -e ".[studio]"
+.venv/bin/python -m studio.app
 ```
 
 For the existing Work17 checkout, see [current-dev startup and demo steps](docs/work17_quickstart.md).
 
 Open **http://127.0.0.1:8000**. No AI account or API key is needed to draw, animate, undo, or export. The app stays on loopback. Local artwork is saved to `.studio/scene.json`; use `--ephemeral` for a disposable session.
+
+If another studio is already using port 8000, leave its session intact and start
+with `--ephemeral --port 8768`, then open **http://127.0.0.1:8768/**. Read the
+terminal error if startup fails; first startup can take several seconds.
 
 - Choose **Try confluence** to merge two static islands; edit either source, switch union/smooth union, adjust amount, undo or remove the composition while retaining sources
 - Show a selected island’s labeled motion path, drag individual positional keys and retime them across neighbors; occupied times are rejected atomically

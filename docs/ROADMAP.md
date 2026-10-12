@@ -61,6 +61,15 @@ history reconciliation, explicit blend-editor precedence and stale native tool
 test expectations. Unicode rejection is regression-covered, not redundantly
 sanitized. Preserve the live demo and LAN settings during this patch pass.
 
+## 0.7.2 - evidence-led performance and first-run usability
+
+Profile actual authored motion, eight layered islands and two static blends at
+48 contours. Keep existing accuracy and sampling quality: cached interactions
+are satisfactory on Work17, so document complexity and reproducible measurements.
+Fix reproduced keyboard focus loss and zero-size canvas layout errors. Verify
+clean editable/wheel startup outside the checkout without development packages,
+and keep a packaging CI gate. Preserve the live user demo and pending LAN settings.
+
 ## Most important remaining showcase gap
 
 Exercise the guided workflow in the user's intended, already configured model

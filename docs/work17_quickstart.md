@@ -7,10 +7,12 @@ Set-Location 'C:\Users\markb\Documents\Codex\2026-10-11\task\2Top-recovery-0.2.0
 git fetch origin dev
 git switch dev
 git merge --ff-only origin/dev
-.\.venv\Scripts\python.exe -m studio.app --ephemeral --port 8000
+.\.venv\Scripts\python.exe -m studio.app --ephemeral --port 8768
 ```
 
-Open **http://127.0.0.1:8000/** on Work17. The ephemeral session leaves existing
+Open **http://127.0.0.1:8768/** on Work17. The current user demo stays on port
+8000 in its fixed 0.7.0 worktree; leave it running to retain its session history.
+This separate ephemeral session leaves existing
 saved artwork untouched; export JSON to keep your edits. Stop the foreground
 server with Ctrl+C. For normal local persistence, omit `--ephemeral`.
 
@@ -18,7 +20,7 @@ For static blending, choose **Try confluence**, then switch Operation between
 Union and Smooth union and choose Apply blend. Adjust Blend amount; choose Edit
 A/B to move a source. Remove blend restores both separate islands. Blends ignore
 timeline/tide and accept static source islands only. Export JSON to keep the
-composition. The current version exports schema 3 and reopens older recipes.
+composition. The current version exports schema 4 and reopens older recipes.
 
 For choreography:
 
