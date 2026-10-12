@@ -70,6 +70,21 @@ Fix reproduced keyboard focus loss and zero-size canvas layout errors. Verify
 clean editable/wheel startup outside the checkout without development packages,
 and keep a packaging CI gate. Preserve the live user demo and pending LAN settings.
 
+## 0.8.0 - multi-selection and whole-path arrangement
+
+Compose multiple existing layers together: additive/touch selection, coherent
+dragging, nudge, uniform scale and rotation. The shared command moves whole
+authored paths and resolves retained blend sources once. Bounds, revisions,
+undo/redo and schema-4 compatibility stay authoritative; no new group graph or
+engine formula is introduced. [Authoring contract and walkthrough](group_authoring.md).
+
+## Next independent authoring work
+
+Add alignment and even spacing for selected islands. First define placement
+anchors for whole motion paths and explicit treatment of shared blend operands,
+then use atomic transform commands with desktop/touch previews and undo/redo.
+This independent product work can continue while host verification is pending.
+
 ## Most important remaining showcase gap
 
 Exercise the guided workflow in the user's intended, already configured model

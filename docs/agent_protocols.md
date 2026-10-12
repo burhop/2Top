@@ -112,6 +112,7 @@ Mutation tools:
 
 - `create_geometry`, `update_geometry`, `delete_geometry`
 - `set_style`, `reorder_layers`, `set_view`, `select`
+- `transform_layers`: atomic move/uniform-scale/rotate of explicit layers and all authored poses; [complete contract](group_authoring.md)
 - `set_keyframe`, `delete_keyframe`, `edit_keyframe`
 - `create_blend`, `update_blend`, `delete_blend`
 - `batch`, `undo`, `redo`, `load_recipe`

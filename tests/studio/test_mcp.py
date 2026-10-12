@@ -27,6 +27,79 @@ from studio.mcp_client import call as protocol_call
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("transport", ["http", "stdio"])
+async def test_real_mcp_transforms_whole_paths_and_shares_manual_undo(
+    live_studio, transport
+):
+    url, service = live_studio
+    recipe = json.loads((ROOT / "examples/tidal_atlas_choreography.json").read_text())
+    service.execute({"op": "load_recipe", "recipe": recipe, "expected_revision": 0})
+    before = service.snapshot()
+    ids = [island["id"] for island in before["objects"][:2]]
+    connection = (
+        http_mcp_client(url + "/mcp/")
+        if transport == "http"
+        else Client(
+            StdioServerParameters(
+                command=sys.executable,
+                args=["-m", "studio.mcp_server", "--studio-url", url],
+                cwd=ROOT,
+            )
+        )
+    )
+    async with connection as client:
+        args = {
+            "ids": ids,
+            "dx": 20,
+            "dy": -10,
+            "expected_revision": before["revision"],
+            "request_id": "group-protocol",
+        }
+        changed = payload(await client.call_tool("transform_layers", args))
+        assert changed["ok"]
+        after = changed["scene"]
+        assert after == payload(await client.call_tool("get_scene", {}))["scene"]
+        for old, new in zip(before["objects"][:2], after["objects"][:2]):
+            assert new["parameters"]["x"] == old["parameters"]["x"] + 20
+            for old_key, new_key in zip(old["keyframes"], new["keyframes"]):
+                assert new_key["parameters"]["x"] == old_key["parameters"]["x"] + 20
+                assert new_key["time"] == old_key["time"]
+        replay = payload(await client.call_tool("transform_layers", args))
+        assert (
+            replay["replayed"] and service.snapshot()["revision"] == after["revision"]
+        )
+        rejected = await client.call_tool(
+            "transform_layers",
+            {
+                **args,
+                "scale": 4,
+                "expected_revision": after["revision"],
+                "request_id": "bad-group",
+            },
+        )
+        assert (
+            rejected.is_error
+            and payload(rejected)["error"]["code"] == "validation_error"
+        )
+        assert service.snapshot() == after
+        async with httpx.AsyncClient(trust_env=False) as manual:
+            undo = await manual.post(
+                url + "/api/command",
+                json={"op": "undo", "expected_revision": after["revision"]},
+            )
+        assert (
+            undo.status_code == 200
+            and undo.json()["scene"]["objects"] == before["objects"]
+        )
+        restored = payload(
+            await client.call_tool(
+                "redo", {"expected_revision": undo.json()["scene"]["revision"]}
+            )
+        )
+        assert restored["scene"]["objects"] == after["objects"]
+
+
 @asynccontextmanager
 async def http_mcp_client(url):
     # Loopback integration must not inherit a machine's outbound SOCKS proxy.
@@ -53,7 +126,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 19
+        assert len(actual) == 20
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -254,7 +327,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 19
+        assert len((await client.list_tools()).tools) == 20
         result = await client.call_tool(
             "set_style",
             {
@@ -302,7 +375,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 19
+        assert len((await stdio.list_tools()).tools) == 20
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -530,7 +603,7 @@ async def test_coauthor_protocol_client_catalog_cross_client_history_and_conflic
 ):
     url, service = live_studio
     catalog = await protocol_call(url, catalog=True)
-    assert catalog["model_inference"] is False and len(catalog["tools"]) == 19
+    assert catalog["model_inference"] is False and len(catalog["tools"]) == 20
     original = (await protocol_call(url))["scene"]
     edit = await protocol_call(
         url,

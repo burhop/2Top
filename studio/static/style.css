@@ -1257,3 +1257,17 @@
 .coauthor-entry pre{max-width:100%;overflow:auto;background:#f1f3eb;padding:10px;font-size:10px}.coauthor-entry code{overflow-wrap:anywhere}
 .setup-steps{padding-left:22px}.setup-steps li{margin:18px 0;line-height:1.6}.setup-steps pre{max-width:100%;overflow:auto}.setup-steps blockquote{margin:10px 0;padding:12px;border-left:3px solid #97b083;background:#edf1e7}
 @media(max-width:600px){.coauthor-panel{padding:16px}.coauthor-entry{font-size:11px}.coauthor-status{font-size:10px}.setup-steps{padding-left:18px}}
+
+/* Whole-path arrangement stays usable as a touch control as well as a shortcut. */
+.group-section .selection-buttons{display:flex;flex-wrap:wrap;gap:6px}
+.group-section .small-button{min-height:36px}
+.group-section .small-button[aria-pressed="true"]{background:#dce8cf;border-color:#8ca277}
+.group-summary,.group-note{font-size:11px;line-height:1.6;color:#697961;margin:10px 0}
+.group-number{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.group-section input[type="number"]{box-sizing:border-box;width:82px;padding:8px;border:1px solid #dce1d3;border-radius:4px;background:#fcfbf7;color:#263b2d;font:inherit}
+.group-nudges{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 12px}
+.group-nudges button{font-size:17px;min-width:44px}
+.group-adjust{display:grid;grid-template-columns:82px 1fr;gap:7px;margin:10px 0}
+.group-adjust label{grid-column:1/-1;margin:0}
+.group-adjust button{min-width:0}
+@media(max-width:700px){.group-section{grid-column:1/-1}.group-section .small-button{min-height:44px}.group-section input[type="number"]{font-size:16px}}

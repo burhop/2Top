@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — multi-selection and whole-path arrangement
+
+- Add desktop additive selection and touch-friendly Select multiple/Select visible controls, with shared selection and clear group feedback.
+- Move, uniformly scale and rotate selected islands/blends through atomic `transform_layers`; expand retained operands and transform shared sources once.
+- Transform base poses and every authored key together, preserving times/easing, styles, layer order, selection and recipe schema 4; reject any out-of-bounds result without clamping or wrapping.
+- Preview coherent group drags with Escape/cancellation and stale-revision rejection; retain existing single-island current-pose editing.
+- Expose the validated command through real MCP HTTP/stdio and the WebMCP adapter, bringing the catalog to 20 tools. Native/model-host verification remains separate.
+- Add numeric/source parity, persistence/rollback/protocol and actual desktop/phone browser coverage; document the next independent alignment/spacing step.
+
 ## 0.7.2 — measured first-run and interaction reliability
 
 - Preserve slider keyboard focus after asynchronous saves, without stealing focus after another interaction.
