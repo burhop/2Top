@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.1 — reviewed reliability fixes
+
+- Complete reorder/delete batches against final-state invariants instead of raising list-removal errors; reject malformed final states atomically.
+- Validate selection against actual layer records rather than transient order entries.
+- Add process session metadata so same-revision service restarts refresh both undo controls and coauthor history; preserve active gestures and playback.
+- Preserve explicit blend-editor choices until a new canvas/shared selection, including New pair and a second blend.
+- Derive native browser tool expectations from the actual catalog; native-host support remains unverified.
+- Add direct, HTTP, real MCP and browser regressions. Lone-surrogate Unicode was already safely rejected; preserve valid supplementary text without extra sanitization.
+
 ## 0.7.0 — guided coauthoring
 
 - Add actual local client setup and an explicit official MCP protocol helper.

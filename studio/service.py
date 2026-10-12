@@ -474,13 +474,13 @@ DESCRIPTIONS = {
     "update_geometry": "Modify named parameters of one island, preserving all unspecified parameters. Requires latest revision.",
     "delete_geometry": "Remove one island. Reversible with undo. Requires latest revision.",
     "set_style": "Change one island or blend layer's palette, visibility or opacity (0.05..1). Opacity composites the complete layer once; hiding a blend restores separate source artwork. Source visibility never removes its field from a blend. Requires latest revision.",
-    "reorder_layers": "Set every island and blend ID exactly once, back to front. Unknown, duplicate or missing IDs fail atomically. Consumed source artwork retains its position for when its blend is hidden/removed. Requires latest revision.",
+    "reorder_layers": "Set back-to-front layer order. Standalone calls require every current island/blend ID exactly once. Batches may order their final remaining layers before deletion; final missing/duplicate/unknown IDs fail atomically. Requires latest revision.",
     "set_view": "Set view and/or art-directed animation parameters. This is not a physical simulation. Requires latest revision.",
     "select": "Set selected island or blend layer IDs, visible in the manual inspector. Requires latest revision.",
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
-    "batch": "Apply up to 32 enumerated edits atomically with one undo step. Failure leaves the artwork unchanged. Child commands cannot include revision metadata.",
+    "batch": "Apply up to 32 edits atomically with one undo step. Child schemas and operation preconditions apply; cross-record scene invariants are checked on the final candidate before persistence. Failure leaves artwork/history/revision unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
     "load_recipe": "Replace artwork with a validated version-4 recipe; versions 1/2/3 migrate to islands-then-blends back-to-front order and retain existing tracks/styles/dependencies. One undoable transaction. No expressions or executable code.",
@@ -645,6 +645,7 @@ class SceneService:
         self._future: list[dict] = []
         self._events: list[dict] = []
         self._session_commits = 0
+        self._session_id = "session_" + uuid.uuid4().hex
         self._requests: OrderedDict = OrderedDict()
         if self._storage and self._storage.exists():
             saved = json.loads(self._storage.read_text())
@@ -676,6 +677,7 @@ class SceneService:
         with self._lock:
             return {
                 **self._live_scene(),
+                "session_id": self._session_id,
                 "history": {
                     "can_undo": bool(self._past),
                     "can_redo": bool(self._future),
@@ -1034,6 +1036,10 @@ class SceneService:
         ]
         if len(ids) != len(set(ids)):
             raise SceneError("duplicate_id", "Recipe object IDs must be unique")
+        if any(key not in set(ids) for key in recipe.get("selection", [])):
+            raise SceneError(
+                "validation_error", "Selection must reference existing layers"
+            )
 
     @staticmethod
     def _patch(target: dict, patch: BaseModel):
@@ -1076,7 +1082,9 @@ class SceneService:
                 raise SceneError("blend_not_found", "Unknown blend", status=404)
             if command.op == "delete_blend":
                 scene["blends"].remove(blend)
-                scene["layer_order"].remove(blend["id"])
+                scene["layer_order"] = [
+                    key for key in scene["layer_order"] if key != blend["id"]
+                ]
                 scene["selection"] = [i for i in scene["selection"] if i != blend["id"]]
             else:
                 values = command.model_dump(
@@ -1106,7 +1114,7 @@ class SceneService:
             self._patch(scene["animation"], command.animation)
             return []
         if command.op == "select":
-            existing = set(scene["layer_order"])
+            existing = {obj["id"] for obj in [*scene["objects"], *scene["blends"]]}
             if any(i not in existing for i in command.ids):
                 raise SceneError(
                     "object_not_found",
@@ -1168,7 +1176,9 @@ class SceneService:
                     "Remove the source's blends before deleting this island",
                 )
             scene["objects"] = [o for o in scene["objects"] if o["id"] != command.id]
-            scene["layer_order"].remove(command.id)
+            scene["layer_order"] = [
+                key for key in scene["layer_order"] if key != command.id
+            ]
             scene["selection"] = [i for i in scene["selection"] if i != command.id]
         return [command.id]
 

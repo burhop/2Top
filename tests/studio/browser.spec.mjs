@@ -140,8 +140,13 @@ test('loads and paints the real canvas without claiming an AI connection', async
   expect(capability.status.supported).toBe(capability.nativeRegisterToolAvailable);
   expect(capability.status.error).toBeNull();
   if (capability.nativeRegisterToolAvailable) {
-    expect(capability.status.registered).toBe(18);
-    await expect(page.locator('#agent-hint')).toContainText('18 browser tools registered');
+    const catalog=await (await page.request.get('/api/tools')).json();
+    expect(capability.status.registered).toBe(catalog.length);
+    await expect(page.locator('#agent-hint')).toContainText(`${catalog.length} browser tools registered`);
+    if(await page.evaluate(()=>typeof document.modelContext.getTools==='function')) {
+      const names=await page.evaluate(async()=> (await document.modelContext.getTools()).map(tool=>tool.name).sort());
+      expect(names).toEqual(catalog.map(tool=>tool.name).sort());
+    }
   } else {
     expect(capability.status.registered).toBe(0);
     expect(capability.status.reason).toBe('browser-unsupported');
@@ -714,3 +719,65 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
     expect(scene.history.entries.at(-1).source.entrypoint).toBe('manual_http');await expect(page.locator('#coauthor-count')).toContainText('observed MCP commits');
   });
 }
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test(`blend editor choice survives existing canvas selection on ${viewport.name}`,async({page,request})=>{
+    await page.setViewportSize({width:viewport.width,height:viewport.height});
+    let scene=await edit(page,()=>page.getByRole('button',{name:'Try confluence',exact:true}).click());
+    const originalBlend=scene.blends[0];
+    await edit(page,()=>page.locator(`[data-layer-action="select"][data-id="${originalBlend.id}"]`).click());
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(originalBlend.id);
+    await page.getByLabel('Blend composition',{exact:true}).selectOption('');
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue('');
+    await expect(page.getByRole('button',{name:'Create blend',exact:true})).toBeEnabled();
+    scene=await edit(page,()=>page.getByRole('button',{name:'Create blend',exact:true}).click());
+    const second=scene.blends[1];expect(scene.selection).toEqual([originalBlend.id]);
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(second.id);
+    await page.getByLabel('Blend composition',{exact:true}).selectOption(originalBlend.id);
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(originalBlend.id);
+    await page.getByLabel('Blend composition',{exact:true}).selectOption(second.id);
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(second.id);
+    await page.evaluate(()=>window.tidalStudio.refresh({initial:true})); // Forced same snapshot must retain editor choice.
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(second.id);
+    await edit(page,()=>page.locator(`[data-layer-action="select"][data-id="${originalBlend.id}"]`).click());
+    await expect(page.getByLabel('Blend composition',{exact:true})).toHaveValue(originalBlend.id);
+    const observed=await serverScene(request);expect(observed.blends).toHaveLength(2);expect(observed.selection).toEqual([originalBlend.id]);
+  });
+}
+
+test('same-revision service restart refreshes history without cancelling gesture or playback',async({page,request},testInfo)=>{
+  await selectFirst(page);
+  await edit(page,()=>page.getByRole('button',{name:'Play animation',exact:true}).click());
+  const before=await serverScene(request);
+  expect(before.history.can_undo).toBe(true);
+  const storage=testInfo.outputPath('restart-scene.json');
+  const persisted=Object.fromEntries(['schema_version','title','objects','blends','layer_order','view','animation','document_id','revision','selection'].map(key=>[key,before[key]]));
+  await writeFile(storage,JSON.stringify(persisted));
+  const program='import json,sys; from studio.service import SceneService; print(json.dumps(SceneService(sys.argv[1]).snapshot()))';
+  const restarted=JSON.parse((await execFileAsync(process.env.STUDIO_PYTHON||'python',['-c',program,storage],{timeout:15000})).stdout);
+  expect(restarted.session_id).not.toBe(before.session_id);expect(restarted.document_id).toBe(before.document_id);expect(restarted.revision).toBe(before.revision);expect(restarted.objects).toEqual(before.objects);
+  const slider=page.getByRole('slider',{name:'Layer opacity',exact:true});await slider.scrollIntoViewIfNeeded();const box=await slider.boundingBox();
+  await page.mouse.move(box.x+box.width-4,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width*.6,box.y+box.height/2,{steps:3});
+  const preview=await slider.inputValue();expect(preview).not.toBe('100');
+  let delivered=restarted;
+  // Simulated network restart delivers a genuine new SceneService snapshot;
+  // the owned Playwright server/user demo is never restarted by this test.
+  await page.route('**/api/scene',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(delivered)}));
+  await page.evaluate(()=>window.tidalStudio.refresh());
+  await expect(slider).toHaveValue(preview);await expect(slider).toBeEnabled();
+  expect((await uiScene(page)).session_id).toBe(before.session_id); // Active gesture defers snapshot acceptance.
+  await expect(page.getByRole('button',{name:'Pause animation',exact:true})).toBeVisible();
+  await page.keyboard.press('Escape');await page.mouse.up();
+  // Ordinary idle polling, without a forced update, reconciles the new session.
+  await expect.poll(async()=>(await uiScene(page)).session_id).toBe(restarted.session_id);
+  await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
+  await expect(page.locator('#coauthor-count')).toContainText('0 observed MCP commits');
+  await expect(page.locator('#coauthor-history-note')).toContainText('0 commits this process');await expect(page.locator('.coauthor-entry')).toHaveCount(0);
+  expect((await uiScene(page)).session_id).toBe(restarted.session_id);expect((await uiScene(page)).objects).toEqual(before.objects);
+  await expect(page.getByRole('button',{name:'Pause animation',exact:true})).toBeVisible();
+  expect((await uiScene(page)).revision).toBe(before.revision);expect((await uiScene(page)).animation.playing).toBe(true);
+  await screenshot(page,testInfo,'restart-history-reset');
+  delivered=before;await page.evaluate(()=>window.tidalStudio.refresh());
+  expect((await uiScene(page)).session_id).toBe(restarted.session_id);await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();
+  await testInfo.attach('restart-snapshot-evidence',{body:JSON.stringify({before,restarted,delivery:'simulated HTTP delivery of actual restarted service snapshot'}),contentType:'application/json'});
+});

@@ -100,3 +100,12 @@ for the intended host's current requirements. The [WebMCP API draft](https://web
 documents `document.modelContext`. This milestone keeps the existing progressive
 adapter and its unsupported-browser fallback; it does not enable experimental
 browser settings or claim an untested natural-language session.
+
+## Restart behavior in 0.7.1
+
+Process session metadata invalidates snapshot and activity caches even if the
+saved document ID and revision are unchanged. Ordinary idle polling clears old
+history and disables unavailable Undo/Redo after a restart. Active gestures keep
+their preview until they finish/cancel, then polling reconciles the new session.
+Playback is not implicitly paused. This metadata does not authenticate a caller
+or establish a model connection; recipes still exclude process history.
