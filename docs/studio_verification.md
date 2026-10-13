@@ -38,7 +38,7 @@ semantics, reference rules, sampling budgets and degenerate-case behavior.
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
-- JavaScript: **35 DOM/service, 10 real-raster/layer-policy and 10 authoring-state checks passed**. This is distinct from
+- JavaScript: **35 DOM/service, 10 real-raster/layer-policy, 10 authoring-state and four owned-process lifecycle checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
 - Repository-wide Ruff lint and formatting: passed, **141 files already formatted**.
@@ -68,6 +68,15 @@ UI-only fixes; final DOM/raster/state checks and the rebuilt wheel cover that fi
 UI source. The patch's 25-action walkthrough completed with empty diagnostics.
 The integrated reliability pass has a bounded stopping point; hands-on creator
 feedback and native WebMCP/model-host verification remain separate work.
+
+The first exact-feature Linux CI run passed 55 browser cases but timed out in
+both real restart cases. The test helper mistook a signal-terminated child with
+null exitCode for a running process, then waited for an exit event already emitted.
+Its exit listener is now bound before termination, signalCode also establishes
+completion and repeated stops share one promise. A deterministic signal-exit
+reproduction, four lifecycle checks (including a real owned child through the
+POSIX path) and both unchanged restart assertions verify the correction. Browser
+assertions and timeouts remain unchanged; final Linux CI is required before merge.
 
 0.11.0 adds 38 scaling cases and two real HTTP/stdio MCP cases covering anchors,
 compression/stretch, exact identities, simultaneous vacancy, multi-track atomicity,
