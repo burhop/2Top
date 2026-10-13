@@ -8,6 +8,9 @@ import { layeredDemoRecipe } from './layered-demo.js';
 import {sourceLabel,sourceKind,committedEntries} from './activity.js';
 import { resolveIslands, transformedIslands } from './transforms.js';
 import { layoutPlan, laidOutIslands } from './layout.js';
+import { retimedIslands } from './retiming.js';
+let selectingPoseKeys=false;
+let retimeSelection={context:'',signature:'',times:[]};
 let activityKey;
 let dialogGeneration=0;
 const retiredSessions=new Set();
@@ -119,7 +122,8 @@ function setConnected(connected, error = '') {
   const locked = busy > 0 || !scene;
   if (locked && document.activeElement?.matches('input[type="range"],[data-group-nudge],#scale-selection-button,#rotate-selection-button,#select-visible-button,#clear-selection-button')) pendingEditFocus = document.activeElement;
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
-  for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected();
+  if(gesture?.id==='retime-keys'){$('play-button').disabled=true;$('timeline-input').disabled=true;}
+  for (const id of ['radius-input', 'stretch-input', 'organic-input', 'rotation-input', 'duplicate-button', 'remove-button']) $(id).disabled = locked || !selected() || gesture?.id==='retime-keys';
   $('demo-button').disabled = locked;
   if (scene) { setBlendingLocks(current()); setLayerLocks(current()); }
   updateKeyframeControls(current(), getTime());
@@ -473,6 +477,7 @@ function authoredTime(state = scene) {
 function poseValues(parameters) { return Object.fromEntries(POSE_FIELDS.map(name => [name, parameters[name]])); }
 function trackObject(state) {
   const object = selected(state);
+  if(gesture?.id==='retime-keys')return object;
   // A gesture suppresses preview keys so its edited pose can be drawn directly.
   return object ? scene.objects.find(o => o.id === object.id) : null;
 }
@@ -483,7 +488,7 @@ function updatePoseControls(state, time) {
     ['radius', 'radius', n => `${Math.round(n)} px`], ['stretch', 'elongation', n => `${n.toFixed(2)}×`],
     ['organic', 'warp', n => `${Math.round(n * 100)}%`], ['rotation', 'rotation', n => `${Math.round(n)}°`],
   ]) {
-    $(id + '-input').disabled = busy > 0 || !object;
+    $(id + '-input').disabled = busy > 0 || !object || gesture?.id==='retime-keys';
     if (p) $(id + '-input').value = p[field];
     $(id + '-output').textContent = p ? format(p[field]) : '—';
     progress($(id + '-input'));
@@ -502,13 +507,15 @@ function updateKeyframeControls(state, time) {
   $('retime-keyframe').disabled = $('key-time-input').disabled;
   if (document.activeElement !== $('key-time-input')) $('key-time-input').value = key ? key.time : '';
   $('capture-keyframe').textContent = key ? 'Update pose' : 'Capture pose';
-  document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
+  document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(selectingPoseKeys?displayRetimeTimes().includes(Number(button.dataset.keyframeTime)):Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
+  updateRetimeControls();
 }
 function updateKeyframes(state) {
   const object = trackObject(state), time = authoredTime(state);
+  syncRetimeSelection(selected(scene));
   const keys = object?.keyframes || [];
   $('keyframe-summary').textContent = object ? `${object.name} · ${keys.length}/24 poses · 12s loop` : 'Select an island to capture its poses.';
-  $('keyframe-list').innerHTML = keys.length ? keys.map(key => `<button class="pose-key" data-keyframe-time="${key.time}" aria-label="Go to keyframe ${key.time.toFixed(2)} seconds" aria-pressed="false">${key.time.toFixed(2)}s <span>${key.easing === 'smooth' ? 'smooth' : 'linear'}</span></button>`).join('') : '<span class="empty-poses">No poses yet. Capture the first, then scrub to the next.</span>';
+  $('keyframe-list').innerHTML = keys.length ? keys.map(key => `<button class="pose-key${displayRetimeTimes().includes(key.time)?' selected-for-retime':''}" data-keyframe-time="${key.time}" aria-label="${selectingPoseKeys?'Select':'Go to'} keyframe ${key.time.toFixed(2)} seconds" aria-pressed="false">${key.time.toFixed(2)}s <span>${key.easing === 'smooth' ? 'smooth' : 'linear'}</span></button>`).join('') : '<span class="empty-poses">No poses yet. Capture the first, then scrub to the next.</span>';
   const key = keys.find(k => Math.abs(k.time - time) < 1e-7);
   if (key) $('keyframe-easing').value = key.easing;
   const start = keys.find(k => k.time === 0), end = keys.find(k => k.time === DURATION);
@@ -536,7 +543,50 @@ function capturePose() {
 $('capture-keyframe').addEventListener('click', capturePose);
 $('delete-keyframe').addEventListener('click', () => { const object = selected(scene); if (object && !busy) run('delete_keyframe', { id: object.id, time: authoredTime() }); });
 $('keyframe-easing').addEventListener('change', () => { const object = selected(scene); if (object?.keyframes?.some(k => Math.abs(k.time - authoredTime()) < 1e-7)) capturePose(); });
-$('keyframe-list').addEventListener('click', event => { const button = event.target.closest('[data-keyframe-time]'); if (button && !busy) run('set_view', { view: {}, animation: { playing: false, time: Number(button.dataset.keyframeTime) } }); });
+$('keyframe-list').addEventListener('click', event => {
+  const button=event.target.closest('[data-keyframe-time]');if(!button||busy||gesture||dragging)return;
+  const time=Number(button.dataset.keyframeTime);
+  if(selectingPoseKeys||event.shiftKey||event.ctrlKey||event.metaKey){
+    selectingPoseKeys=true;retimeSelection.times=retimeSelection.times.includes(time)?retimeSelection.times.filter(t=>t!==time):[...retimeSelection.times,time];
+    updateKeyframes(current());document.querySelector(`[data-keyframe-time="${time}"]`)?.focus({preventScroll:true});
+  }else run('set_view',{view:{},animation:{playing:false,time}});
+});
+
+function syncRetimeSelection(object) {
+  const context=`${scene?.session_id}/${scene?.document_id}/${object?.id}`,signature=JSON.stringify(object?.keyframes||[]);
+  if(retimeSelection.context!==context||retimeSelection.signature!==signature){retimeSelection={context,signature,times:[]};selectingPoseKeys=false;}
+}
+function displayRetimeTimes(){return gesture?.id==='retime-keys'?gesture.args.targets[0].times.map(t=>t+gesture.args.delta):retimeSelection.times;}
+function updateRetimeControls(){
+  const object=selected(scene),held=gesture?.id==='retime-keys',locked=busy>0||Boolean(gesture||dragging),available=Boolean(object?.keyframes.length);
+  for(const id of ['select-poses-button','select-all-poses','clear-poses'])$(id).disabled=locked||!available;
+  $('select-poses-button').textContent=selectingPoseKeys?'Done selecting poses':'Select poses';$('select-poses-button').setAttribute('aria-pressed',String(selectingPoseKeys));
+  $('retime-shift').disabled=locked||!available;$('preview-retime').disabled=locked||!retimeSelection.times.length;
+  $('retime-preview-actions').hidden=!held;$('apply-retime').disabled=busy>0||!held;$('cancel-retime').disabled=busy>0||!held;
+  $('retime-status').textContent=held?`${gesture.args.targets[0].times.length} poses preview ${gesture.args.delta>=0?'+':''}${gesture.args.delta}s at ${gesture.time.toFixed(2)}s. Apply saves one edit; Cancel keeps the original.`:retimeSelection.times.length?`${retimeSelection.times.length} poses selected. Shift together within 0–12s; unselected keys stay fixed.`:'Select poses and choose chips, or Select all poses. Shift preserves each pose and easing.';
+}
+$('select-poses-button').addEventListener('click',()=>{selectingPoseKeys=!selectingPoseKeys;updateKeyframes(current());});
+$('select-all-poses').addEventListener('click',()=>{const object=selected(scene);if(!object)return;selectingPoseKeys=true;retimeSelection.times=object.keyframes.map(k=>k.time);updateKeyframes(current());});
+$('clear-poses').addEventListener('click',()=>{retimeSelection.times=[];updateKeyframes(current());});
+$('preview-retime').addEventListener('click',()=>{
+  const object=selected(scene),input=$('retime-shift');if(!object||busy||gesture||dragging||!retimeSelection.times.length||input.value===''||!input.reportValidity())return;
+  const args={targets:[{id:object.id,times:[...retimeSelection.times].sort((a,b)=>a-b)}],delta:Number(input.value)};
+  if(args.delta===0){toast('Zero shift keeps the original. Nothing to apply.');return;}
+  try{
+    const changed=retimedIslands(scene,args.targets,args.delta),replacements=new Map(changed.map(o=>[o.id,o])),time=authoredTime(scene);
+    preview=clone(scene);preview.objects=preview.objects.map(o=>replacements.get(o.id)||o);preview.animation={...preview.animation,playing:false,time};
+    gesture={id:'retime-keys',revision:scene.revision,args,time,pausePlayback:scene.animation.playing};
+    $('time-value').textContent=time.toFixed(2).padStart(5,'0');$('timeline-input').value=time;progress($('timeline-input'));
+    renderDirty=true;updateUI();$('apply-retime').focus({preventScroll:true});
+  }catch(error){toast(error.message,true);}
+});
+$('cancel-retime').addEventListener('click',cancelGesture);
+$('apply-retime').addEventListener('click',()=>{
+  if(gesture?.id!=='retime-keys'||busy)return;
+  const saved=gesture;gesture=null;
+  const promise=saved.pausePlayback?run('batch',{label:'Shift selected motion keys',commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.time}},{op:'retime_keyframes',...saved.args}]},{expectedRevision:saved.revision}):run('retime_keyframes',saved.args,{expectedRevision:saved.revision});
+  promise.then(result=>{if(result&&selected(scene)?.id===saved.args.targets[0].id){retimeSelection.times=saved.args.targets[0].times.map(t=>t+saved.args.delta);selectingPoseKeys=true;updateKeyframes(current());if(document.activeElement===document.body)$('preview-retime').focus({preventScroll:true});}});
+});
 $('motion-path-button').addEventListener('click', () => { editMotionPath = !editMotionPath; showHandles = true; $('handles-button').setAttribute('aria-pressed', 'true'); $('handles-button').classList.add('active'); updateUI(); renderDirty = true; });
 $('retime-keyframe').addEventListener('click', () => {
   const object = selected(scene), input = $('key-time-input');

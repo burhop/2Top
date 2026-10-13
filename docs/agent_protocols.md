@@ -114,6 +114,7 @@ Mutation tools:
 - `set_style`, `reorder_layers`, `set_view`, `select`
 - `transform_layers`: atomic move/uniform-scale/rotate of explicit layers and all authored poses; [complete contract](group_authoring.md)
 - `layout_islands`: center alignment/even spacing at an explicit authored time, translating complete island paths atomically; [complete contract](center_layout.md)
+- `retime_keyframes`: one shared delta for explicit keys across multiple tracks, vacating selected times together and rejecting all targets on any collision/range failure; [complete contract](multi_key_retiming.md)
 - `set_keyframe`, `delete_keyframe`, `edit_keyframe`
 - `create_blend`, `update_blend`, `delete_blend`
 - `batch`, `undo`, `redo`, `load_recipe`

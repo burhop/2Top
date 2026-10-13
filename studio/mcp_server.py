@@ -39,6 +39,7 @@ TOOL_NAMES = frozenset(
         "reorder_layers",
         "transform_layers",
         "layout_islands",
+        "retime_keyframes",
         "set_view",
         "select",
         "batch",

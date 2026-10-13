@@ -31,6 +31,7 @@ from pydantic import (
 from geometry.choreography import sample_parameters, validate_keyframes
 from studio.transforms import resolve_islands, transformed_islands
 from studio.layout import laid_out_islands
+from studio.retiming import RetimeError, retimed_islands
 
 
 class StrictModel(BaseModel):
@@ -343,6 +344,32 @@ class LayoutIslands(StrictModel):
         return self
 
 
+class RetimeTarget(StrictModel):
+    id: Identifier
+    times: list[Annotated[float, Field(ge=0, le=12)]] = Field(
+        min_length=1, max_length=24, json_schema_extra={"uniqueItems": True}
+    )
+
+    @model_validator(mode="after")
+    def unique_times(self):
+        if len(self.times) != len(set(self.times)):
+            raise ValueError("Source times must be unique")
+        return self
+
+
+class RetimeKeyframes(StrictModel):
+    op: Literal["retime_keyframes"]
+    targets: list[RetimeTarget] = Field(min_length=1, max_length=16)
+    delta: float = Field(ge=-12, le=12)
+
+    @model_validator(mode="after")
+    def unique_tracks(self):
+        ids = [target.id for target in self.targets]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Target island IDs must be unique")
+        return self
+
+
 class EditKeyframe(StrictModel):
     op: Literal["edit_keyframe"]
     id: Identifier
@@ -397,6 +424,7 @@ Child = Annotated[
         SetKeyframe,
         DeleteKeyframe,
         EditKeyframe,
+        RetimeKeyframes,
         CreateBlend,
         UpdateBlend,
         DeleteBlend,
@@ -458,6 +486,10 @@ class EditKeyframeCommand(EditKeyframe, Mutation):
     pass
 
 
+class RetimeKeyframesCommand(RetimeKeyframes, Mutation):
+    pass
+
+
 class CreateBlendCommand(CreateBlend, Mutation):
     pass
 
@@ -502,6 +534,7 @@ COMMAND_MODELS = {
     "set_keyframe": KeyframeCommand,
     "delete_keyframe": DeleteKeyframeCommand,
     "edit_keyframe": EditKeyframeCommand,
+    "retime_keyframes": RetimeKeyframesCommand,
     "create_blend": CreateBlendCommand,
     "update_blend": UpdateBlendCommand,
     "delete_blend": DeleteBlendCommand,
@@ -531,6 +564,7 @@ DESCRIPTIONS = {
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
+    "retime_keyframes": "Shift explicit existing keys together by delta seconds across 1..16 unique island tracks. Supply targets [{id,times}] with 1..24 unique exact source times each and finite delta -12..12. Vacate selected times simultaneously, preserve each pose/easing and sort afterward. Crossing unselected keys is allowed when final times are free. Reject the entire edit for missing keys, destinations outside 0..12 or exact occupied/duplicate destinations; never round, clamp or wrap. Preserve base geometry, styles, selection, order and playback. Blend record IDs are unsupported. Requires latest revision; shared undo/redo and atomic batch apply.",
     "batch": "Apply up to 32 edits atomically with one undo step. Child schemas and operation preconditions apply; cross-record scene invariants are checked on the final candidate before persistence. Failure leaves artwork/history/revision unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
@@ -1015,6 +1049,7 @@ class SceneService:
                     "set_keyframe": "Capture island pose",
                     "delete_keyframe": "Remove island pose",
                     "edit_keyframe": "Edit island motion key",
+                    "retime_keyframes": "Shift selected motion keys",
                     "create_blend": "Create static confluence",
                     "update_blend": "Shape static confluence",
                     "delete_blend": "Remove confluence, retain sources",
@@ -1103,6 +1138,20 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
+        if command.op == "retime_keyframes":
+            try:
+                changed = retimed_islands(
+                    scene,
+                    [target.model_dump() for target in command.targets],
+                    command.delta,
+                )
+            except RetimeError as exc:
+                raise SceneError(exc.code, str(exc), status=exc.status) from exc
+            replacements = {island["id"]: island for island in changed}
+            scene["objects"] = [
+                replacements.get(island["id"], island) for island in scene["objects"]
+            ]
+            return list(replacements)
         if command.op == "layout_islands":
             try:
                 changed = laid_out_islands(

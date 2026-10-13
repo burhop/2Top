@@ -94,10 +94,17 @@ does not guarantee equal edge gaps or collision avoidance.
 
 ## Next independent motion-authoring work
 
-Add multi-keyframe retiming with a preview of one shared time shift, bounded
-end times and atomic collision rejection. Use existing edit-key/batch contracts,
-preserving relative timing/easing and shared undo. This product work can continue
-independently while external host verification is pending.
+Version 0.10.0 completes multi-keyframe retiming with transient desktop/touch key
+selection, a frozen preview and one shared time shift. The 22nd tool supports
+multiple explicit island tracks atomically, rejecting any occupied/out-of-range
+destination. Poses/easing remain attached; selected times vacate together.
+[Retiming contract](multi_key_retiming.md).
+
+## Next independent choreography work
+
+Scale selected key times around an explicit anchor with Preview/Apply/Cancel and
+the same atomic collision/range guards. This stretches or compresses a phrase's
+rhythm while preserving poses/easing, independently of external host verification.
 
 ## Most important remaining showcase gap
 

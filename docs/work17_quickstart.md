@@ -38,6 +38,17 @@ The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
 
+## Preview multi-key retiming in 0.10.0
+
+On the separate current-dev session, choose **Play demo**, pause and select an
+island. Choose **Select poses**, tap the 3s and 6s chips, then enter a **Time shift
+(seconds)** of 1.5. **Preview shift** shows the candidate; **Cancel shift** or
+Escape restores the original. **Apply shift** moves both keys in one edit;
+Undo/Redo restores them together. Try 3 seconds to see a collision with the
+unselected 9s key. **Select all poses** includes endpoints, so a nonzero shift
+needs room at both ends. Desktop modifier-click also selects keys. Export JSON
+to keep your work. [Retiming guide](multi_key_retiming.md).
+
 ## Preview center layout in 0.9.0
 
 Choose **Select visible** or select three island rows using **Select multiple**.

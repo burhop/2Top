@@ -21,6 +21,13 @@
 .pose-key { border: 1px solid #d2dbcd; border-radius: 4px; padding: 7px 9px; font-size: 10px; }
 .pose-key span { margin-left: 5px; font-size: 8px; color: #77856e; }
 .pose-key[aria-pressed=true] { background: #dce8d2; border-color: #76936a; }
+.pose-key { min-height: 44px; }
+.pose-key.selected-for-retime { box-shadow: inset 0 0 0 1px #76936a; }
+.retime-controls { border-top: 1px solid #e1e5d8; margin-top: 12px; padding-top: 12px; }
+.pose-selection, .retime-shift-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.retime-controls button { min-height: 44px; }
+.retime-shift-row input { width: 80px; min-height: 44px; }
+#retime-preview-actions[hidden] { display: none; }
 .empty-poses, .choreography-hint { font-size: 10px; line-height: 1.5; color: #7b8874; }
 .choreography-hint { margin-bottom: 0; }
 /* A minimum block height must not enlarge the responsive canvas's inline size. */

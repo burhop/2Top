@@ -83,6 +83,6 @@ desktop/phone Chromium covers preview/cancel/apply, undo/redo, exports, retained
 sources, frozen playback and a real client edit conflicting with a held preview.
 WebMCP forwarding remains explicitly mocked; native hosting is unverified.
 
-Next independent authoring step: **multi-keyframe retiming**, previewing a shared
-time shift with atomic collision/end-time rejection. It can use the existing
-motion-key/transaction contracts without waiting for external host verification.
+Version 0.10.0 completes [multi-keyframe retiming](multi_key_retiming.md), previewing
+a shared time shift with atomic collision/end-time rejection. Next is time
+scaling around an explicit anchor, independent of external host verification.
