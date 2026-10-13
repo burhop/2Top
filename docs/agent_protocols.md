@@ -97,6 +97,11 @@ must enter the returned lifespan factory, as `studio.app.create_app` does.
 
 ## Shared tools and schemas
 
+Version 0.11.1 mutations additionally accept optional `expected_document_id` and
+`expected_session_id` from `get_scene`. Include them to reject cached writes across
+document changes/restarts, even when revisions happen to match. Context conflicts
+return 409 before retry replay or mutation. Revision-only calls remain compatible.
+
 `GET /api/tools` returns schemas generated from the exact Pydantic command models
 used by `SceneService`. Both protocols consume these definitions rather than
 maintaining separate copies. Additional properties are rejected. The MCP adapter

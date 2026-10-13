@@ -29,6 +29,44 @@ ROOT = Path(__file__).resolve().parents[2]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("transport", ["http", "stdio"])
+async def test_real_mcp_context_guards_reject_old_session_and_preserve_retry(
+    live_studio, transport
+):
+    url, service = live_studio
+    connection = (
+        http_mcp_client(url + "/mcp/")
+        if transport == "http"
+        else Client(
+            StdioServerParameters(
+                command=sys.executable,
+                args=["-m", "studio.mcp_server", "--studio-url", url],
+                cwd=ROOT,
+            )
+        )
+    )
+    async with connection as client:
+        before = payload(await client.call_tool("get_scene", {}))["scene"]
+        args = {
+            "view": {"contours": 30},
+            "expected_revision": before["revision"],
+            "expected_document_id": before["document_id"],
+            "expected_session_id": "session_retired",
+            "request_id": "context-mcp",
+        }
+        rejected = await client.call_tool("set_view", args)
+        assert (
+            rejected.is_error
+            and payload(rejected)["error"]["code"] == "session_conflict"
+            and service.snapshot() == before
+        )
+        args["expected_session_id"] = before["session_id"]
+        changed = payload(await client.call_tool("set_view", args))
+        assert changed["ok"]
+        assert payload(await client.call_tool("set_view", args))["replayed"] is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("transport", ["http", "stdio"])
 async def test_real_mcp_anchor_scaling_is_atomic_and_shares_manual_undo(
     live_studio, transport
 ):

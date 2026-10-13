@@ -1,3 +1,3 @@
 """Tidal Atlas: shared, declarative editing service for 2Top."""
 
-__version__ = "0.11.0"
+__version__ = "0.11.1"

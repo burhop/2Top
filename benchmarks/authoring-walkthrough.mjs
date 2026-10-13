@@ -8,12 +8,12 @@ import {fileURLToPath} from 'node:url';
 
 const repository=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const timestamp=new Date().toISOString().replaceAll(':','-').replaceAll('.','-');
-const root=resolve(process.argv[2]||join(repository,'..','artifacts','ui-walkthrough','combined-authoring-0.11.0',timestamp));
+const root=resolve(process.argv[2]||join(repository,'..','artifacts','ui-walkthrough','combined-authoring-0.11.1',timestamp));
 const origin='http://127.0.0.1:8769';
 const python=process.env.STUDIO_PYTHON;if(!python)throw new Error('Set STUDIO_PYTHON to the project interpreter.');
 for(const directory of ['playwright','screenshots/raw','screenshots/annotated','trace'])await mkdir(join(root,directory),{recursive:true});
 await copyFile(fileURLToPath(import.meta.url),join(root,'playwright','authoring-walkthrough.mjs'));
-await writeFile(join(root,'progress.md'),`# Combined authoring review — 0.11.0\n\nStarted ${new Date().toISOString()} (UTC). Work17 artist; disposable port 8769.\nNo browser action has run. The live port 8000 demo is excluded.\n`);
+await writeFile(join(root,'progress.md'),`# Combined authoring review — 0.11.1\n\nStarted ${new Date().toISOString()} (UTC). Work17 artist; disposable port 8769.\nNo browser action has run. The live port 8000 demo is excluded.\n`);
 const diagnostics=[];let browser,context,page,server;
 const scene=()=>page.evaluate(()=>window.tidalStudio.getScene());
 const same=(a,b)=>expect(a).toEqual(b);
@@ -42,11 +42,11 @@ const plans=[
   ['Undo shift','Click Undo.', 'The compressed phrase returns in one undo.',async()=>{await page.getByRole('button',{name:'Undo',exact:true}).click();await expect.poll(async()=>(await scene()).objects).toEqual(compressed);},'#undo-button'],
   ['Undo compression','Click Undo again.', 'The arranged original five-key track returns.',async()=>{await page.getByRole('button',{name:'Undo',exact:true}).click();await expect.poll(async()=>(await scene()).objects).toEqual(arranged);},'#undo-button'],
   ['Redo compression','Click Redo.', 'The compressed phrase is restored.',async()=>{await page.getByRole('button',{name:'Redo',exact:true}).click();await expect.poll(async()=>(await scene()).objects).toEqual(compressed);},'#redo-button'],
-  ['Redo shift','Click Redo again.', 'The shifted compressed phrase returns; key selection resets on track changes.',async()=>{await page.getByRole('button',{name:'Redo',exact:true}).click();await expect.poll(async()=>(await scene()).objects).toEqual(shifted);await expect(page.locator('#retime-status')).toContainText('Select poses');},'#redo-button'],
+  ['Redo shift','Click Redo again.', 'The shifted compressed phrase and its selected poses return.',async()=>{await page.getByRole('button',{name:'Redo',exact:true}).click();await expect.poll(async()=>(await scene()).objects).toEqual(shifted);await expect(page.locator('#retime-status')).toContainText('2 poses selected');},'#redo-button'],
   ['Open export','Click Export.', 'JSON export is available.',async()=>{await page.getByRole('button',{name:/^Export/}).click();await expect(page.locator('[data-export="json"]')).toBeVisible();},'#export-button'],
   ['Save JSON','Click Scene recipe (JSON).', 'A schema-4 recipe downloads with the final artwork and tracks.',async()=>{const pending=page.waitForEvent('download');await page.locator('[data-export="json"]').click();const download=await pending;const file=join(root,'trace','authored-rhythm.json');await download.saveAs(file);const {readFile}=await import('node:fs/promises');const recipe=JSON.parse(await readFile(file,'utf8'));expect(recipe.schema_version).toBe(4);same(recipe.objects,shifted);},'[data-export="json"]'],
 ];
-const status={title:'Combined authoring review — 0.11.0',summary:'Move and align complete paths, compress a phrase, shift it, undo/redo and save it.',overall:'pending',updated:new Date().toISOString(),manualSteps:plans.map(p=>({label:p[0],instruction:p[1]})),steps:plans.map((p,i)=>({id:String(i+1),state:'pending',label:p[0],summary:'Not reached.',purpose:p[2],action:p[1],controls:[],expected:p[2],actual:'Not reached.'}))};
+const status={title:'Combined authoring review — 0.11.1',summary:'Move and align complete paths, compress a phrase, shift it, undo/redo and save it.',overall:'pending',updated:new Date().toISOString(),manualSteps:plans.map(p=>({label:p[0],instruction:p[1]})),steps:plans.map((p,i)=>({id:String(i+1),state:'pending',label:p[0],summary:'Not reached.',purpose:p[2],action:p[1],controls:[],expected:p[2],actual:'Not reached.'}))};
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
 async function report(){
   status.updated=new Date().toISOString();await writeFile(join(root,'status.json'),JSON.stringify(status,null,2));
@@ -77,9 +77,9 @@ try{
   server=spawn(python,['-m','studio.app','--ephemeral','--port','8769'],{cwd:repository,windowsHide:true});server.stdout.pipe(log);server.stderr.pipe(log);
   let health;
   for(let i=0;i<80;i++){try{const response=await fetch(origin+'/api/health');if(response.ok){health=await response.json();break;}}catch{}await new Promise(r=>setTimeout(r,150));}
-  if(health?.version!=='0.11.0')throw new Error('The isolated 0.11.0 service did not become available.');
+  if(health?.version!=='0.11.1')throw new Error('The isolated 0.11.1 service did not become available.');
   const branch=execFileSync('git',['branch','--show-current'],{cwd:repository,encoding:'utf8'}).trim();
-  if(!['feat/anchored-time-scale-0.11.0','dev'].includes(branch))throw new Error('Unexpected review branch');
+  if(!['feat/authoring-reliability-0.11.1','dev'].includes(branch))throw new Error('Unexpected review branch');
   await appendFile(join(root,'progress.md'),`\nEnvironment confirmed: ${branch}, application ${health.version}, newly owned ephemeral PID ${server.pid}, ${origin}.\n`);
   browser=await chromium.launch({headless:true});context=await browser.newContext({viewport:{width:1440,height:1100},acceptDownloads:true});await context.tracing.start({screenshots:true,snapshots:true,sources:true});page=await context.newPage();
   page.on('console',message=>{if(message.type()==='error'&&!/favicon/.test(message.location().url||''))diagnostics.push({kind:'console',message:message.text()});});page.on('pageerror',error=>diagnostics.push({kind:'pageerror',message:error.message}));page.on('response',response=>{if(response.status()>=400&&!response.url().endsWith('/favicon.ico'))diagnostics.push({kind:'http',status:response.status(),url:response.url()});});

@@ -1,9 +1,16 @@
 # Tidal Atlas development verification
 
-Updated October 13, 2026 for version 0.11.0. Work17 executes the local application
+Updated October 13, 2026 for version 0.11.1. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.11.1 is the bounded integrated reliability patch: phone section jumps,
+known pose-selection restoration, guarded document/session edits and explicit
+reconnect/save-confirmation behavior. Authoritative Recipe JSON remains confirmed
+data during previews, and the phone export menu stays above sticky navigation.
+[Reliability contract](authoring_reliability.md). No new art operation or schema
+change is added; existing authoring capabilities below remain.
 
 Version 0.11.0 adds anchored timing stretch/compression with first/last selected
 pose, visible-playhead and custom anchors. Scaling and shifting share selection,
@@ -24,22 +31,52 @@ semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,388 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,400 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: **350 cases**, including anchored scaling, multi-key retiming, center layout, choreography, motion-edit and whole-path group cases for interpolation,
+- Studio subset: **362 cases**, including context guards, anchored scaling, multi-key retiming, center layout, choreography, motion-edit and whole-path group cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
-- JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
+- JavaScript: **35 DOM/service, 10 real-raster/layer-policy, 10 authoring-state and four owned-process lifecycle checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **140 files already formatted**.
-- Actual Playwright Chromium acceptance: **48 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **141 files already formatted**.
+- Actual Playwright Chromium acceptance: **57 cases passed**, with unexpected
   console, page and HTTP failures rejected.
-- Installed 0.11.0 wheel: outside-checkout startup, all packaged assets including
-  `retiming.js` and the real read-only 23-tool MCP catalog passed. Only declared
+- Installed 0.11.1 wheel: outside-checkout startup, all packaged assets including
+  `pose-selection.js` and the real read-only 23-tool MCP catalog passed. Only declared
   dependencies are installed; pytest/PySide6 are absent.
+
+0.11.1 adds document/session guards, direct HTTP and official MCP coverage,
+ten bounded selection-memory checks and nine actual browser workflows. Desktop
+and phone cases exercise selection after geometry edits, known undo/redo, import
+reset, section navigation, authoritative Recipe JSON during previews and native
+focus. Newly owned loopback services exercise real persistence/restarts and stale
+same-revision writes; browser routes/offline simulation exercise controlled stalls
+and lost replies without claiming physical-device or deployed-network coverage.
+
+The first full 57-case run exposed the phone navigation covering export choices
+and an obsolete restart-preview expectation; it also exceeded the unchanged
+12-minute suite limit while other verification competed for the machine. The
+export stacking was fixed, restart assertions now require clearing stale gestures
+without writing, and download waits are joined with their clicks. A separate
+Recipe reproduction showed preview data in the authoritative pane; it now reads
+the confirmed scene. Four affected workflows passed, followed by all 57 cases in
+6.9 minutes with the original timeouts. Full Python checks passed before the last
+UI-only fixes; final DOM/raster/state checks and the rebuilt wheel cover that final
+UI source. The patch's 25-action walkthrough completed with empty diagnostics.
+The integrated reliability pass has a bounded stopping point; hands-on creator
+feedback and native WebMCP/model-host verification remain separate work.
+
+The first exact-feature Linux CI run passed 55 browser cases but timed out in
+both real restart cases. The test helper mistook a signal-terminated child with
+null exitCode for a running process, then waited for an exit event already emitted.
+Its exit listener is now bound before termination, signalCode also establishes
+completion and repeated stops share one promise. A deterministic signal-exit
+reproduction, four lifecycle checks (including a real owned child through the
+POSIX path) and both unchanged restart assertions verify the correction. Browser
+assertions and timeouts remain unchanged; final Linux CI is required before merge.
 
 0.11.0 adds 38 scaling cases and two real HTTP/stdio MCP cases covering anchors,
 compression/stretch, exact identities, simultaneous vacancy, multi-track atomicity,
@@ -52,8 +89,8 @@ produces raw/annotated screenshots, a live HTML report, a trace and empty browse
 diagnostics on a newly owned ephemeral service. Its stopped driver-lookup evidence
 is preserved; the corrected named-combobox rerun completed, and both report
 structures validated. This is scripted, human-repeatable evidence rather than
-a creator study. Next is integrated authoring usability/reliability review and
-polish, with phone navigation and selection continuity prioritized.
+a creator study. Its prioritized integrated reliability review is covered by
+0.11.1 above.
 
 0.10.0 adds 33 retiming cases and two real HTTP/stdio MCP cases: simultaneous
 vacated-time movement, multi-track rollback, bounds/collisions, destination float

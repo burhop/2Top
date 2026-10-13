@@ -3,7 +3,7 @@
   "private": true,
   "description": "Development-only DOM, canvas, and real-browser checks for the local Tidal Atlas studio.",
   "scripts": {
-    "test:ui": "node tests/studio/frontend-smoke.mjs && node tests/studio/layers-render.mjs",
+    "test:ui": "node tests/studio/frontend-smoke.mjs && node tests/studio/layers-render.mjs && node tests/studio/authoring-state.mjs && node tests/studio/disposable-process.mjs",
     "test:browser": "playwright test",
     "test:browser:list": "playwright test --list",
     "benchmark:studio": "node benchmarks/studio-browser.mjs"
@@ -17,5 +17,5 @@
   "engines": {
     "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
-  "version": "0.11.0"
+  "version": "0.11.1"
 }

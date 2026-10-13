@@ -1,10 +1,10 @@
-# 2Top 0.11.0 · Tidal Atlas
+# 2Top 0.11.1 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.11.0** adds [anchored timing stretch/compression](docs/anchored_time_scaling.md). Choose first/last selected pose, visible playhead or custom-time anchor; preview source/destination times before one undoable edit. Scaling and [shifting](docs/multi_key_retiming.md) share selection, previews and atomic collision/range guards. Poses/easing, geometry and schema 4 remain compatible. The shared catalog contains 23 tools. Desktop/touch combined authoring acceptance and a human-repeatable walkthrough cover move, align, compress, shift and undo/redo. Next is integrated usability/reliability review and polish. Development targets **dev**; main and the live user demo are preserved.
+Version **0.11.1** completes a bounded [authoring usability/reliability pass](docs/authoring_reliability.md): phone Canvas/Layers/Timing jumps, pose-selection continuity through geometry edits and known Undo/Redo, and explicit disconnect/reconnect recovery. Document/session guards reject cached previews across equal-revision restarts; save failures reconcile without automatic replay. Existing [anchored timing](docs/anchored_time_scaling.md), shifting, layout and geometry remain compatible, with schema 4 and 23 tools. The independent authoring flow now has a coherent tested stopping point. Development targets **dev**; main and the live user demo are preserved. Responsive/browser fault tests are distinguished from actual phone/network testing.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 

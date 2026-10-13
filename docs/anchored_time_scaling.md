@@ -25,8 +25,8 @@ one global undo history. A source → destination list makes each preview explic
    at the captured time in the same transaction. Cancel leaves playback running;
    direct protocol scaling preserves playback. Successful edits retain mapped
    key selection, so **Preview shift** can adjust the scaled phrase next.
-6. Undo/Redo restores complete edits. Track changes clear transient key selection;
-   select keys again for further editing. Export/reopen JSON retains all poses,
+6. Undo/Redo restores complete edits. Version 0.11.1 restores known timing selections; import/context changes or
+   unknown structural edits clear them safely. Export/reopen JSON retains all poses,
    times and easing. Recipe schema 4 and old migrations remain compatible.
 
 Example: selecting keys at 3s and 6s with first-pose anchor 3s and factor 0.5
@@ -98,3 +98,6 @@ next step is **combined authoring usability/reliability review and polish**,
 including phone navigation, key-selection continuity, long sessions and reconnects,
 rather than another standalone feature. Automated success does not replace a
 creator's hands-on assessment or establish all-browser/device accessibility.
+
+Version 0.11.1 completes the bounded [integrated reliability pass](authoring_reliability.md).
+It defines the current navigation, selection, reconnect and save-confirmation behavior.
