@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0
+
+- Anchored timing stretch/compression with first/last selected pose, visible
+  playhead and custom-time anchors. Scaling shares selection and the timing
+  preview/Apply/Cancel path, including source/destination lists and focus return.
+- The 23rd tool `scale_keyframes` scales explicit tracks around a required anchor,
+  with exact identity/fixed-anchor behavior and atomic collision/range rejection.
+  Poses, easing, base geometry, schema 4 and dependencies remain compatible.
+- Desktop/touch combined authoring acceptance and an evidence-producing walkthrough
+  cover move, align, compress, shift, undo/redo and export. The next step is
+  integrated usability/reliability review and polish rather than more features.
+
 ## 0.10.0
 
 - Multi-keyframe retiming with desktop/touch key selection, a shared time shift,

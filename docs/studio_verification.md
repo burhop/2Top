@@ -1,44 +1,59 @@
 # Tidal Atlas development verification
 
-Updated October 13, 2026 for version 0.10.0. Work17 executes the local application
+Updated October 13, 2026 for version 0.11.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.10.0 adds multi-keyframe retiming with desktop/touch selection and a
-frozen Preview/Apply/Cancel flow. The shared command shifts explicit keys across
-1..16 island tracks atomically, vacating selected times together and rejecting
-any missing key, occupied destination or 0..12s range violation. Poses/easing stay
-attached, sorted keys can cross unselected keys, and geometry remains unchanged.
-The catalog contains 22 tools; recipes remain schema 4. The manual selector edits
-one island's track. [Retiming contract](multi_key_retiming.md),
+Version 0.11.0 adds anchored timing stretch/compression with first/last selected
+pose, visible-playhead and custom anchors. Scaling and shifting share selection,
+Preview/Apply/Cancel, source/destination lists and atomic destination validation.
+One invalid track rejects all targets. Factor 1 and anchored keys stay exact;
+complete poses/easing, base geometry and recipe schema 4 remain compatible.
+The catalog contains 23 tools. The manual selector edits one island's track;
+commands can target multiple explicit tracks. [Scaling contract](anchored_time_scaling.md),
+[retiming](multi_key_retiming.md),
 [center layout](center_layout.md) and [group transforms](group_authoring.md).
 Existing geometry/parity, quality and clean-wheel checks remain. The
 [0.7.2 performance baseline and reproduction guide](studio_performance.md) remain available.
 
-The manual UI, real MCP HTTP/stdio and WebMCP adapter share 22 validated tools,
+The manual UI, real MCP HTTP/stdio and WebMCP adapter share 23 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
 is guarded while referenced. See [static blending](static_blending.md) for field
 semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,348 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,388 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: **310 cases**, including multi-key retiming, center layout, choreography, motion-edit and whole-path group cases for interpolation,
+- Studio subset: **350 cases**, including anchored scaling, multi-key retiming, center layout, choreography, motion-edit and whole-path group cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **139 files already formatted**.
-- Actual Playwright Chromium acceptance: **41 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **140 files already formatted**.
+- Actual Playwright Chromium acceptance: **48 cases passed**, with unexpected
   console, page and HTTP failures rejected.
-- Installed 0.10.0 wheel: outside-checkout startup, all packaged assets including
-  `retiming.js` and the real read-only 22-tool MCP catalog passed. Only declared
+- Installed 0.11.0 wheel: outside-checkout startup, all packaged assets including
+  `retiming.js` and the real read-only 23-tool MCP catalog passed. Only declared
   dependencies are installed; pytest/PySide6 are absent.
+
+0.11.0 adds 38 scaling cases and two real HTTP/stdio MCP cases covering anchors,
+compression/stretch, exact identities, simultaneous vacancy, multi-track atomicity,
+factor/time limits, floating-point destination collapse, hidden tracks, persistence,
+retry/conflict/batch rollback, direct playback preservation and numeric JS parity.
+Seven additional desktop/touch browser workflows check all four anchors,
+preview/cancellation/focus, Apply/undo/redo/JSON reopening, stale actual-MCP edits,
+and the combined move/align/compress/shift workflow. A separate 25-action review
+produces raw/annotated screenshots, a live HTML report, a trace and empty browser
+diagnostics on a newly owned ephemeral service. Its stopped driver-lookup evidence
+is preserved; the corrected named-combobox rerun completed, and both report
+structures validated. This is scripted, human-repeatable evidence rather than
+a creator study. Next is integrated authoring usability/reliability review and
+polish, with phone navigation and selection continuity prioritized.
 
 0.10.0 adds 33 retiming cases and two real HTTP/stdio MCP cases: simultaneous
 vacated-time movement, multi-track rollback, bounds/collisions, destination float

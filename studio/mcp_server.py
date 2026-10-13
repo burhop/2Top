@@ -40,6 +40,7 @@ TOOL_NAMES = frozenset(
         "transform_layers",
         "layout_islands",
         "retime_keyframes",
+        "scale_keyframes",
         "set_view",
         "select",
         "batch",

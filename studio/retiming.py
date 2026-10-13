@@ -1,4 +1,4 @@
-"""Atomic time translation of explicit motion keys; geometry is unchanged."""
+"""Atomic translation/scaling of explicit motion times; geometry is unchanged."""
 
 import copy
 
@@ -12,6 +12,21 @@ class RetimeError(ValueError):
 
 
 def retimed_islands(scene, targets, delta):
+    return _retimed_islands(scene, targets, lambda time: time + delta)
+
+
+def scaled_time(time, anchor, factor):
+    """Keep identity and anchored keys exact, including fractional source times."""
+    return time if factor == 1 or time == anchor else anchor + (time - anchor) * factor
+
+
+def scaled_islands(scene, targets, anchor, factor):
+    return _retimed_islands(
+        scene, targets, lambda time: scaled_time(time, anchor, factor)
+    )
+
+
+def _retimed_islands(scene, targets, map_time):
     """Resolve exact source times, vacate them together, then check all destinations."""
     islands = {island["id"]: island for island in scene["objects"]}
     changed = []
@@ -30,22 +45,23 @@ def retimed_islands(scene, targets, delta):
                 404,
             )
         untouched = existing - source_times
-        destinations = [time + delta for time in source_times]
+        mapping = {time: map_time(time) for time in source_times}
+        destinations = list(mapping.values())
         if any(not 0 <= time <= 12 for time in destinations):
             raise RetimeError(
-                "keyframe_range", "Every shifted key must stay within 0..12 seconds"
+                "keyframe_range", "Every retimed key must stay within 0..12 seconds"
             )
         if len(set(destinations)) != len(destinations) or any(
             time in untouched for time in destinations
         ):
             raise RetimeError(
                 "keyframe_collision",
-                "Shifted keys collide with another destination or an unselected pose",
+                "Retimed keys collide with another destination or an unselected pose",
             )
         result = copy.deepcopy(island)
         for key in result["keyframes"]:
             if key["time"] in source_times:
-                key["time"] += delta
+                key["time"] = mapping[key["time"]]
         result["keyframes"].sort(key=lambda key: key["time"])
         validate_keyframes(result["keyframes"])
         changed.append(result)

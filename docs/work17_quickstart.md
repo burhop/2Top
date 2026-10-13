@@ -38,6 +38,17 @@ The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
 
+## Stretch/compress selected timing in 0.11.0
+
+In the separate current-dev session, choose **Play demo**, pause and select one
+island. **Select poses** at 3s and 6s. Keep **Timing anchor** at **First selected
+pose**, enter **Time scale factor** 0.5 and choose **Preview timing scale**. The
+list shows 3s stays at 3s and 6s moves to 4.5s. Cancel/Escape or Apply, then
+Undo/Redo. Try the last selected pose, visible playhead or a custom anchor.
+Factor 2 stretches intervals and can collide with an unselected key; invalid
+destinations reject all selected keys. Preview shift reuses the mapped selection.
+Export JSON to retain your work. [Scaling guide](anchored_time_scaling.md).
+
 ## Preview multi-key retiming in 0.10.0
 
 On the separate current-dev session, choose **Play demo**, pause and select an

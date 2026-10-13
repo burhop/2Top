@@ -1095,3 +1095,80 @@ test('stale multi-key preview cannot overwrite a real MCP retime and shares undo
   const undo=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undo.objects).toEqual(before.objects);
   await screenshot(page,testInfo,'retime-client-conflict');
 });
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test.describe(`anchored scaling ${viewport.name}`,()=>{
+    test.use({viewport:{width:viewport.width,height:viewport.height},hasTouch:viewport.name==='phone'});
+    test('compresses selected poses with preview cancellation undo and JSON reopening',async({page,request},testInfo)=>{
+      const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6],{modifiers:viewport.name==='desktop',touch:viewport.name==='phone'});
+      await expect(page.locator('#scale-status')).toContainText('Anchor: 3s');
+      await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();
+      await expect(page.locator('#retime-status')).toContainText('0.5× around anchor 3s');
+      await expect(page.locator('#timing-preview-list')).toContainText('6s → 4.5s');
+      await expect(page.getByRole('combobox',{name:'Timing anchor',exact:true})).toBeDisabled();
+      await expect(page.getByRole('button',{name:'Select keyframe 4.50 seconds',exact:true})).toBeDisabled();
+      expect((await serverScene(request)).revision).toBe(before.revision);expect((await uiScene(page)).objects).toEqual(before.objects);
+      await screenshot(page,testInfo,`timing-scale-preview-${viewport.name}`);
+      await page.getByRole('button',{name:'Cancel timing scale',exact:true}).click();await expect(page.getByRole('button',{name:'Preview timing scale',exact:true})).toBeFocused();
+      await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Preview timing scale',exact:true})).toBeFocused();
+      await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();
+      const after=await edit(page,()=>viewport.name==='phone'?page.getByRole('button',{name:'Apply timing scale',exact:true}).tap():page.getByRole('button',{name:'Apply timing scale',exact:true}).press('Enter'));
+      expect(after.revision).toBe(before.revision+1);expect(after.objects[0].keyframes.map(k=>k.time)).toEqual([0,3,4.5,9,12]);
+      expect(after.objects[0].keyframes.find(k=>k.time===4.5)).toEqual({...before.objects[0].keyframes.find(k=>k.time===6),time:4.5});expect(after.objects[0].parameters).toEqual(before.objects[0].parameters);expect(after.objects.slice(1)).toEqual(before.objects.slice(1));
+      await expect(page.locator('#retime-status')).toContainText('2 poses selected');
+      const undone=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undone.objects).toEqual(before.objects);
+      const redone=await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect(redone.objects).toEqual(after.objects);
+      const saved=await download(page,testInfo,'json');expect(JSON.parse(saved).schema_version).toBe(4);
+      await page.getByRole('button',{name:/^Recipe/}).click();const choosing=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();const chooser=await choosing;
+      const reopened=await edit(page,()=>chooser.setFiles({name:'scaled-rhythm.json',mimeType:'application/json',buffer:saved}));expect(reopened.objects).toEqual(after.objects);
+      if(viewport.name==='phone'){expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);expect((await page.getByRole('combobox',{name:'Timing anchor',exact:true}).boundingBox()).height).toBeGreaterThanOrEqual(44);}
+    });
+    test('combined authoring scopes move align compress shift and shared undo coherently',async({page,request},testInfo)=>{
+      const before=await retimeStudy(page,request);
+      await edit(page,()=>page.getByRole('button',{name:'Select visible',exact:true}).click());await expect(page.locator('#retime-status')).toContainText('Select one island');
+      await edit(page,()=>page.getByRole('button',{name:'Move selection right',exact:true}).click());
+      await page.getByRole('button',{name:'Align horizontal',exact:true}).click();await page.getByRole('button',{name:'Cancel preview',exact:true}).click();
+      await page.getByRole('button',{name:'Align horizontal',exact:true}).click();const arranged=await edit(page,()=>page.getByRole('button',{name:'Apply layout',exact:true}).click());
+      await edit(page,()=>page.getByRole('button',{name:`Select ${before.objects[0].name}`,exact:true}).click());
+      await page.getByRole('button',{name:'Edit motion path',exact:true}).click();await choosePoseKeys(page,[3,6],{touch:viewport.name==='phone'});
+      await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const compressed=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());
+      expect(compressed.objects[0].parameters).toEqual(arranged.objects[0].parameters);expect(compressed.objects.slice(1)).toEqual(arranged.objects.slice(1));
+      await page.getByRole('button',{name:'Preview shift',exact:true}).click();const shifted=await edit(page,()=>page.getByRole('button',{name:'Apply shift',exact:true}).click());
+      expect(shifted.objects[0].keyframes.map(k=>k.time)).toEqual([0,4.5,6,9,12]);
+      expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(compressed.objects);
+      expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(arranged.objects);
+      await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect((await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click())).objects).toEqual(shifted.objects);
+      await expect(page.locator('#retime-status')).toContainText('Select poses');
+      if(viewport.name==='phone')expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+      await settleCanvas(page);await screenshot(page,testInfo,`combined-authoring-${viewport.name}`);
+    });
+  });
+}
+test('anchored scaling offers all anchors and rejects collisions ranges and invalid input',async({page,request},testInfo)=>{
+  const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);
+  await page.getByLabel('Time scale factor',{exact:true}).fill('2');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('unselected pose');
+  expect((await serverScene(request)).revision).toBe(before.revision);
+  await page.getByLabel('Time scale factor',{exact:true}).fill('1');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('already match');
+  await page.getByRole('combobox',{name:'Timing anchor',exact:true}).selectOption('last');await page.getByLabel('Time scale factor',{exact:true}).fill('0.5');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#timing-preview-list')).toContainText('3s → 4.5s');await page.getByRole('button',{name:'Cancel timing scale',exact:true}).click();
+  await page.getByRole('combobox',{name:'Timing anchor',exact:true}).selectOption('playhead');await page.getByLabel('Time scale factor',{exact:true}).fill('2');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#timing-preview-list')).toContainText('6s → 8s');await page.keyboard.press('Escape');
+  await page.getByRole('combobox',{name:'Timing anchor',exact:true}).selectOption('custom');await page.getByLabel('Anchor time (seconds)',{exact:true}).fill('0');await page.getByLabel('Time scale factor',{exact:true}).fill('0.5');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();
+  const after=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());expect(after.objects[0].keyframes.map(k=>k.time)).toEqual([0,1.5,3,9,12]);
+  await page.getByLabel('Anchor time (seconds)',{exact:true}).fill('12');await page.getByLabel('Time scale factor',{exact:true}).fill('2');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('0..12');
+  await page.getByLabel('Time scale factor',{exact:true}).fill('0');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();expect(await page.getByLabel('Time scale factor',{exact:true}).evaluate(input=>input.validity.valid)).toBe(false);expect((await uiScene(page)).revision).toBe(after.revision);
+  await retimeStudy(page,request);await page.getByRole('button',{name:'Select all poses',exact:true}).click();await page.getByRole('combobox',{name:'Timing anchor',exact:true}).selectOption('custom');await page.getByLabel('Anchor time (seconds)',{exact:true}).fill('6');await page.getByLabel('Time scale factor',{exact:true}).fill('2');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('0..12');
+  await page.getByLabel('Time scale factor',{exact:true}).fill('0.5');await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const endpoints=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());expect(endpoints.objects[0].keyframes.map(k=>k.time)).toEqual([3,4.5,6,7.5,9]);await expect(page.locator('#seam-status')).toContainText('add 0s and 12s');await screenshot(page,testInfo,'scaling-anchor-boundaries');
+});
+test('anchored scaling freezes a visible-playhead anchor and pauses only on apply',async({page,request},testInfo)=>{
+  const before=await retimeStudy(page,request,{playing:true});await choosePoseKeys(page,[3,6]);await page.getByRole('combobox',{name:'Timing anchor',exact:true}).selectOption('playhead');
+  await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const held=Number(await page.locator('#time-value').textContent());await expect(page.locator('#scale-status')).toContainText(`Captured anchor: ${held}s`);expect((await uiScene(page)).animation.playing).toBe(true);
+  await page.getByRole('button',{name:'Cancel timing scale',exact:true}).click();expect((await uiScene(page)).animation.playing).toBe(true);
+  await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const anchor=Number(await page.locator('#time-value').textContent());const after=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());expect(after.animation.time).toBe(anchor);expect(after.animation.playing).toBe(false);expect(after.revision).toBe(before.revision+1);
+  for(const time of [3,6]){const expected=anchor+(time-anchor)*.5;expect(after.objects[0].keyframes.find(k=>Math.abs(k.time-expected)<1e-9).parameters).toEqual(before.objects[0].keyframes.find(k=>k.time===time).parameters);}
+  const undo=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undo.objects).toEqual(before.objects);expect(undo.animation.playing).toBe(true);await screenshot(page,testInfo,'scaling-playhead-anchor');
+});
+test('stale anchored scaling cannot overwrite a real MCP scaling edit',async({page,request,expectedHttpFailures},testInfo)=>{
+  const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();
+  const peer=await actualMcp(testInfo,'scale_keyframes',{targets:[{id:before.objects[1].id,times:[3,6]},{id:before.objects[2].id,times:[3,6]}],anchor:3,factor:.5,expected_revision:before.revision,request_id:`scale-peer-${randomUUID()}`});expect(peer.ok).toBe(true);
+  expectedHttpFailures.add('409 /api/command');await page.getByRole('button',{name:'Apply timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('scene changed elsewhere');await expect.poll(async()=>(await uiScene(page)).revision).toBe(peer.scene.revision);expect((await uiScene(page)).objects).toEqual(peer.scene.objects);
+  expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(before.objects);await screenshot(page,testInfo,'scaling-client-conflict');
+});

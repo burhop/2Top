@@ -36,7 +36,7 @@ Suggested prompt for your existing model client:
 > Read the scene again and explain the committed change. Preserve other layers.
 
 The schema catalog at `/api/tools` and the tool reference at `/api/docs` are
-generated from the same validated command models. Version 0.10.0 has 22 tools,
+generated from the same validated command models. Version 0.11.0 has 23 tools,
 including atomic whole-path `transform_layers`; see [group authoring](group_authoring.md).
 No geometry or recipe-schema changes are required for this milestone.
 
