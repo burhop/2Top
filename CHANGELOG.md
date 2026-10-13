@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0 — center alignment and even spacing
+
+- Add desktop/touch center-layout Preview, Apply and Cancel, preserving one atomic undo step.
+- Align authored centers on either axis; space three or more evenly with fixed outer centers and stable ID tie-breaking.
+- Translate complete base/pose tracks without changing shape, timing/easing, styles, selection or schema 4; preserve retained blend references and reject blend-record layout selections explicitly.
+- Freeze the displayed preview playhead, pause only on UI apply when needed, and reject stale/out-of-bounds layouts without partial commits.
+- Expose `layout_islands` through all validated adapters, bringing the catalog to 21 tools. Native/model-host verification remains separate.
+- Cover numeric parity, selection edges, real protocol/manual undo, desktop/phone acceptance and clean packaging. Next independent coding step: multi-keyframe retiming.
+
 ## 0.8.0 — multi-selection and whole-path arrangement
 
 - Add desktop additive selection and touch-friendly Select multiple/Select visible controls, with shared selection and clear group feedback.

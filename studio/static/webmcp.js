@@ -7,7 +7,7 @@ const sceneListeners = new Set();
 const statusListeners = new Set();
 const approvedNames = new Set([
   "get_scene", "get_selection", "create_geometry", "update_geometry",
-  "delete_geometry", "set_style", "reorder_layers", "transform_layers", "set_view", "select", "batch", "undo",
+  "delete_geometry", "set_style", "reorder_layers", "transform_layers", "layout_islands", "set_view", "select", "batch", "undo",
   "redo", "load_recipe", "set_keyframe", "delete_keyframe", "edit_keyframe", "create_blend", "update_blend", "delete_blend",
 ]);
 

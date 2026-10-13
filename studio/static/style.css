@@ -1271,3 +1271,10 @@
 .group-adjust label{grid-column:1/-1;margin:0}
 .group-adjust button{min-width:0}
 @media(max-width:700px){.group-section{grid-column:1/-1}.group-section .small-button{min-height:44px}.group-section input[type="number"]{font-size:16px}}
+
+.layout-controls{border-top:1px solid #dce2d4;margin-top:15px;padding-top:14px}
+.layout-controls h3{font-size:12px;margin:0 0 10px;color:#30492e}
+.layout-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.layout-buttons .small-button{min-height:44px;padding:7px;white-space:normal}
+#layout-preview-actions[hidden]{display:none}
+#layout-apply{background:#dfeacd;border-color:#9eb287;color:#304c2c}

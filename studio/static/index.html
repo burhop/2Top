@@ -67,6 +67,12 @@
   <div class="group-nudges" role="group" aria-label="Move selection"><button class="small-button" data-group-nudge="-1,0" aria-label="Move selection left">←</button><button class="small-button" data-group-nudge="0,-1" aria-label="Move selection up">↑</button><button class="small-button" data-group-nudge="0,1" aria-label="Move selection down">↓</button><button class="small-button" data-group-nudge="1,0" aria-label="Move selection right">→</button></div>
   <div class="group-adjust"><label class="control-label" for="group-scale">Group scale factor</label><input id="group-scale" type="number" min="0.1" max="4" step="0.05" value="1.10" required><button class="small-button" id="scale-selection-button">Scale selection</button></div>
   <div class="group-adjust"><label class="control-label" for="group-rotation">Group rotation</label><input id="group-rotation" type="number" min="-360" max="360" step="1" value="15" required><button class="small-button" id="rotate-selection-button">Rotate selection</button></div>
+  <div class="layout-controls" role="group" aria-label="Center layout">
+    <h3>Center layout</h3>
+    <div class="layout-buttons"><button class="small-button" data-layout-mode="align_x">Align vertical</button><button class="small-button" data-layout-mode="align_y">Align horizontal</button><button class="small-button" data-layout-mode="space_x">Space horizontally</button><button class="small-button" data-layout-mode="space_y">Space vertically</button></div>
+    <p id="layout-status" class="group-summary" aria-live="polite">Select two islands to align, three to space.</p>
+    <div id="layout-preview-actions" class="selection-buttons" hidden><button class="small-button" id="layout-apply">Apply layout</button><button class="small-button" id="layout-cancel">Cancel preview</button></div>
+  </div>
   <p class="group-note" id="group-note">Moves and transforms the complete paths. Single-island Shape &amp; field still edits the current pose.</p>
 </section>
 

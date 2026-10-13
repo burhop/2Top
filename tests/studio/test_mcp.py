@@ -29,6 +29,73 @@ ROOT = Path(__file__).resolve().parents[2]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("transport", ["http", "stdio"])
+async def test_real_mcp_center_layout_observes_manual_undo_and_rejects_bad_selection(
+    live_studio, transport
+):
+    url, service = live_studio
+    before = service.snapshot()
+    ids = [island["id"] for island in before["objects"]]
+    connection = (
+        http_mcp_client(url + "/mcp/")
+        if transport == "http"
+        else Client(
+            StdioServerParameters(
+                command=sys.executable,
+                args=["-m", "studio.mcp_server", "--studio-url", url],
+                cwd=ROOT,
+            )
+        )
+    )
+    async with connection as client:
+        args = {
+            "ids": ids,
+            "mode": "space_x",
+            "time": 0,
+            "expected_revision": before["revision"],
+            "request_id": "layout-protocol",
+        }
+        changed = payload(await client.call_tool("layout_islands", args))
+        assert changed["ok"]
+        after = changed["scene"]
+        xs = sorted(island["parameters"]["x"] for island in after["objects"])
+        assert xs[1] - xs[0] == pytest.approx(xs[2] - xs[1])
+        assert after == payload(await client.call_tool("get_scene", {}))["scene"]
+        assert (
+            payload(await client.call_tool("layout_islands", args))["replayed"] is True
+        )
+        rejected = await client.call_tool(
+            "layout_islands",
+            {
+                **args,
+                "ids": ids[:2],
+                "expected_revision": after["revision"],
+                "request_id": "invalid-layout",
+            },
+        )
+        assert (
+            rejected.is_error
+            and payload(rejected)["error"]["code"] == "validation_error"
+        )
+        assert service.snapshot() == after
+        async with httpx.AsyncClient(trust_env=False) as manual:
+            undo = await manual.post(
+                url + "/api/command",
+                json={"op": "undo", "expected_revision": after["revision"]},
+            )
+        assert (
+            undo.status_code == 200
+            and undo.json()["scene"]["objects"] == before["objects"]
+        )
+        redo = payload(
+            await client.call_tool(
+                "redo", {"expected_revision": undo.json()["scene"]["revision"]}
+            )
+        )
+        assert redo["scene"]["objects"] == after["objects"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("transport", ["http", "stdio"])
 async def test_real_mcp_transforms_whole_paths_and_shares_manual_undo(
     live_studio, transport
 ):
@@ -126,7 +193,7 @@ async def test_official_client_discovers_exact_service_schemas_and_protocol():
             tool["name"]: tool["inputSchema"] for tool in service.tool_definitions()
         }
         assert actual == expected
-        assert len(actual) == 20
+        assert len(actual) == 21
         assert not ({"exec", "eval", "expression", "run_code"} & actual.keys())
         for name, schema in actual.items():
             assert schema["additionalProperties"] is False
@@ -327,7 +394,7 @@ async def test_streamable_http_official_client_uses_running_web_scene(live_studi
     url, service = live_studio
     async with http_mcp_client(url + "/mcp/") as client:
         assert client.protocol_version == "2026-07-28"
-        assert len((await client.list_tools()).tools) == 20
+        assert len((await client.list_tools()).tools) == 21
         result = await client.call_tool(
             "set_style",
             {
@@ -375,7 +442,7 @@ async def test_stdio_official_client_proxies_same_http_app(live_studio):
     )
     async with Client(params) as stdio, http_mcp_client(url + "/mcp/") as http_mcp:
         assert stdio.protocol_version == "2026-07-28"
-        assert len((await stdio.list_tools()).tools) == 20
+        assert len((await stdio.list_tools()).tools) == 21
         args = {
             "id": "island_lagoon",
             "parameters": {"radius": 155},
@@ -603,7 +670,7 @@ async def test_coauthor_protocol_client_catalog_cross_client_history_and_conflic
 ):
     url, service = live_studio
     catalog = await protocol_call(url, catalog=True)
-    assert catalog["model_inference"] is False and len(catalog["tools"]) == 20
+    assert catalog["model_inference"] is False and len(catalog["tools"]) == 21
     original = (await protocol_call(url))["scene"]
     edit = await protocol_call(
         url,
