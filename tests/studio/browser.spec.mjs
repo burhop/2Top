@@ -7,6 +7,7 @@ import { readFile,writeFile } from 'node:fs/promises';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import { randomUUID } from 'node:crypto';
+import {startDisposableStudio,disposableScene} from './disposable-studio.mjs';
 
 
 const seed = JSON.parse(await readFile(new URL('../../examples/tidal_atlas_recipe.json', import.meta.url), 'utf8'));
@@ -105,9 +106,10 @@ async function screenshot(page, testInfo, name) {
 }
 async function download(page, testInfo, type) {
   await page.getByRole('button', { name: /^Export/ }).click();
-  const pending = page.waitForEvent('download');
-  await page.locator(`[data-export="${type}"]`).click();
-  const item = await pending;
+  const [item] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator(`[data-export="${type}"]`).click(),
+  ]);
   expect(await item.failure()).toBeNull();
   expect(item.suggestedFilename()).toMatch(new RegExp(`\\.${type}$`));
   const path = testInfo.outputPath(item.suggestedFilename());
@@ -747,7 +749,7 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
   });
 }
 
-test('same-revision service restart refreshes history without cancelling gesture or playback',async({page,request},testInfo)=>{
+test('same-revision restarted snapshot clears a gesture and refreshes history without stopping playback',async({page,request},testInfo)=>{
   await selectFirst(page);
   await edit(page,()=>page.getByRole('button',{name:'Play animation',exact:true}).click());
   const before=await serverScene(request);
@@ -766,11 +768,14 @@ test('same-revision service restart refreshes history without cancelling gesture
   // the owned Playwright server/user demo is never restarted by this test.
   await page.route('**/api/scene',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(delivered)}));
   await page.evaluate(()=>window.tidalStudio.refresh());
-  await expect(slider).toHaveValue(preview);await expect(slider).toBeEnabled();
-  expect((await uiScene(page)).session_id).toBe(before.session_id); // Active gesture defers snapshot acceptance.
+  await expect(slider).toHaveValue('100');await expect(slider).toBeDisabled();
+  expect((await uiScene(page)).session_id).toBe(restarted.session_id);
+  await expect(page.locator('#toast')).toContainText('session changed');
+  expect((await serverScene(request)).objects).toEqual(before.objects);
+  expect((await serverScene(request)).revision).toBe(before.revision);
   await expect(page.getByRole('button',{name:'Pause animation',exact:true})).toBeVisible();
   await page.keyboard.press('Escape');await page.mouse.up();
-  // Ordinary idle polling, without a forced update, reconciles the new session.
+  // Playback and persisted artwork remain; process-local history is refreshed.
   await expect.poll(async()=>(await uiScene(page)).session_id).toBe(restarted.session_id);
   await expect(page.getByRole('button',{name:'Undo',exact:true})).toBeDisabled();await expect(page.getByRole('button',{name:'Redo',exact:true})).toBeDisabled();
   await expect(page.locator('#coauthor-count')).toContainText('0 observed MCP commits');
@@ -1138,7 +1143,7 @@ for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',wid
       expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(compressed.objects);
       expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(arranged.objects);
       await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect((await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click())).objects).toEqual(shifted.objects);
-      await expect(page.locator('#retime-status')).toContainText('Select poses');
+      await expect(page.locator('#retime-status')).toContainText('2 poses selected');
       if(viewport.name==='phone')expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
       await settleCanvas(page);await screenshot(page,testInfo,`combined-authoring-${viewport.name}`);
     });
@@ -1171,4 +1176,114 @@ test('stale anchored scaling cannot overwrite a real MCP scaling edit',async({pa
   const peer=await actualMcp(testInfo,'scale_keyframes',{targets:[{id:before.objects[1].id,times:[3,6]},{id:before.objects[2].id,times:[3,6]}],anchor:3,factor:.5,expected_revision:before.revision,request_id:`scale-peer-${randomUUID()}`});expect(peer.ok).toBe(true);
   expectedHttpFailures.add('409 /api/command');await page.getByRole('button',{name:'Apply timing scale',exact:true}).click();await expect(page.locator('#toast')).toContainText('scene changed elsewhere');await expect.poll(async()=>(await uiScene(page)).revision).toBe(peer.scene.revision);expect((await uiScene(page)).objects).toEqual(peer.scene.objects);
   expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(before.objects);await screenshot(page,testInfo,'scaling-client-conflict');
+});
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]){
+  test.describe(`authoring reliability ${viewport.name}`,()=>{
+    test.use({viewport:{width:viewport.width,height:viewport.height},hasTouch:viewport.name==='phone'});
+    test('pose selection survives geometry edits timing undo redo and clears on import',async({page,request},testInfo)=>{
+      await retimeStudy(page,request);await choosePoseKeys(page,[3,6],{touch:viewport.name==='phone'});
+      await edit(page,()=>page.getByRole('button',{name:'Move selection right',exact:true}).click());
+      await expect(page.locator('#retime-status')).toContainText('2 poses selected');
+      await expect(page.getByRole('button',{name:'Select keyframe 3.00 seconds',exact:true})).toHaveAttribute('aria-pressed','true');
+      await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const scaled=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());
+      await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());await expect(page.getByRole('button',{name:'Select keyframe 6.00 seconds',exact:true})).toHaveAttribute('aria-pressed','true');
+      await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());await expect(page.getByRole('button',{name:'Select keyframe 4.50 seconds',exact:true})).toHaveAttribute('aria-pressed','true');
+      const saved=await download(page,testInfo,'json');
+      await page.getByRole('button',{name:/^Recipe/}).click();const choosing=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Load JSON',exact:true}).click();const chooser=await choosing;
+      await edit(page,()=>chooser.setFiles({name:'reliability-import.json',mimeType:'application/json',buffer:saved}));
+      expect((await uiScene(page)).objects).toEqual(scaled.objects);
+      await edit(page,()=>page.getByRole('button',{name:`Select ${scaled.objects[0].name}`,exact:true}).click());await expect(page.getByRole('button',{name:'Preview timing scale',exact:true})).toBeDisabled();
+      await screenshot(page,testInfo,`pose-continuity-${viewport.name}`);
+    });
+  });
+}
+test('phone authoring shortcuts keep a held preview while moving between canvas layers and timing',async({page,request},testInfo)=>{
+  await page.setViewportSize({width:390,height:844});const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);
+  await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();
+  const navigation=page.getByRole('navigation',{name:'Authoring sections',exact:true});await expect(navigation).toBeVisible();
+  await page.getByRole('button',{name:/^Recipe/}).click();await expect(page.locator('#canvas-stage')).toBeHidden();
+  expect(JSON.parse(await page.locator('#recipe-code').textContent()).objects).toEqual(before.objects);
+  for(const label of ['Canvas','Layers','Timing']){
+    const link=navigation.getByRole('link',{name:label,exact:true});await link.click();expect((await link.boundingBox()).height).toBeGreaterThanOrEqual(44);
+    if(label==='Canvas')await expect(page.locator('#canvas-stage')).toBeVisible();
+    await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeVisible();expect((await serverScene(request)).revision).toBe(before.revision);
+  }
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);await screenshot(page,testInfo,'phone-navigation-preview');
+});
+test('restart with the same document and revision rejects an old timing preview',async({page,expectedHttpFailures},testInfo)=>{
+  test.setTimeout(60000);
+  let owned=await startDisposableStudio(testInfo,{storage:testInfo.outputPath('restart-scene.json')}),staleMetadata=true;
+  try{
+    await page.goto(owned.origin);await expect(page.locator('#canvas-loading')).toBeHidden();
+    await edit(page,()=>page.getByRole('button',{name:'Play demo',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Pause animation',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());
+    await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const old=await uiScene(page);
+    // Replay the actual captured GET response to hold a stale view during a real restart.
+    // POSTs are unmodified and reach the new owned process.
+    const handler=route=>staleMetadata?route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(old)}):route.continue();await page.route('**/api/scene',handler);
+    await owned.stop();owned=await startDisposableStudio(testInfo,{storage:testInfo.outputPath('restart-scene.json')});
+    const fresh=await disposableScene(owned.origin);expect(fresh.document_id).toBe(old.document_id);expect(fresh.revision).toBe(old.revision);expect(fresh.session_id).not.toBe(old.session_id);
+    expectedHttpFailures.add('409 /api/command');
+    const response=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/command'&&response.request().method()==='POST');await page.getByRole('button',{name:'Apply timing scale',exact:true}).click();const rejected=await response;
+    expect(rejected.status()).toBe(409);expect((await rejected.json()).error.code).toBe('session_conflict');
+    staleMetadata=false;await page.unroute('**/api/scene',handler);await expect.poll(async()=>(await uiScene(page)).session_id).toBe(fresh.session_id);
+    expect((await disposableScene(owned.origin)).objects).toEqual(fresh.objects);expect((await disposableScene(owned.origin)).revision).toBe(fresh.revision);
+    await expect(page.locator('#toast')).toContainText('session changed');await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeHidden();
+    await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const recovered=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());expect(recovered.objects[0].keyframes.map(k=>k.time)).toEqual([0,3,4.5,9,12]);
+    await screenshot(page,testInfo,'restart-recovery');
+  }finally{expectedHttpFailures.add('net::ERR_CONNECTION_REFUSED /api/scene');await owned.stop();}
+});
+
+test('real loopback outage reconnects and clears a held preview when the session changes',async({page,expectedHttpFailures},testInfo)=>{
+  test.setTimeout(60000);let owned=await startDisposableStudio(testInfo,{storage:testInfo.outputPath('outage-scene.json')});
+  expectedHttpFailures.add('net::ERR_CONNECTION_REFUSED /api/scene');
+  try{
+    await page.goto(owned.origin);await expect(page.locator('#canvas-loading')).toBeHidden();
+    await edit(page,()=>page.getByRole('button',{name:'Play demo',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Pause animation',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());
+    await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();const before=await uiScene(page);
+    await owned.stop();await expect(page.locator('#connection-notice')).toBeVisible();await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeDisabled();expect((await uiScene(page)).objects).toEqual(before.objects);
+    owned=await startDisposableStudio(testInfo,{storage:testInfo.outputPath('outage-scene.json')});const fresh=await disposableScene(owned.origin);
+    await expect.poll(async()=>(await uiScene(page)).session_id).toBe(fresh.session_id);await expect(page.locator('#connection-notice')).toBeHidden();await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeHidden();await expect(page.locator('#toast')).toContainText('session changed');
+    expect((await uiScene(page)).objects).toEqual(before.objects);expect((await uiScene(page)).history.entries).toHaveLength(0);expect(fresh.revision).toBe(before.revision);
+    await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());
+    await screenshot(page,testInfo,'loopback-outage-recovered');
+  }finally{await owned.stop();}
+});
+test('simulated browser offline retains a phone preview and resumes only after reconnection',async({page,request,expectedHttpFailures},testInfo)=>{
+  await page.setViewportSize({width:390,height:844});const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview timing scale',exact:true}).click();let posts=0;
+  page.on('request',request=>{if(request.method()==='POST'&&new URL(request.url()).pathname==='/api/command')posts++;});expectedHttpFailures.add('net::ERR_INTERNET_DISCONNECTED /api/scene');
+  try{
+    await page.context().setOffline(true);await expect(page.locator('#connection-notice')).toBeVisible();await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeDisabled();await expect(page.locator('#mobile-reconnect')).toBeVisible();
+    await page.getByRole('navigation',{name:'Authoring sections',exact:true}).getByRole('link',{name:'Canvas',exact:true}).click();expect((await serverScene(request)).revision).toBe(before.revision);expect(posts).toBe(0);
+    await page.context().setOffline(false);await expect(page.locator('#connection-notice')).toBeHidden();await expect(page.getByRole('button',{name:'Apply timing scale',exact:true})).toBeEnabled();expect(posts).toBe(0);
+    await page.getByRole('navigation',{name:'Authoring sections',exact:true}).getByRole('link',{name:'Timing',exact:true}).click();await screenshot(page,testInfo,'phone-connected-preview');await page.screenshot({path:testInfo.outputPath('phone-authoring-preview-viewport.png'),fullPage:false});
+    const after=await edit(page,()=>page.getByRole('button',{name:'Apply timing scale',exact:true}).click());expect(after.revision).toBe(before.revision+1);expect(posts).toBe(1);
+  }finally{await page.context().setOffline(false);}
+});
+test('a timed out save releases editing without automatically replaying the request',async({page,request,expectedHttpFailures},testInfo)=>{
+  await selectFirst(page);const before=await uiScene(page);let release,held=false;
+  const gate=new Promise(resolve=>release=resolve);const handler=async route=>{held=true;await gate;try{await route.abort('failed');}catch(error){if(!/already handled/i.test(error.message))throw error;}};
+  expectedHttpFailures.add('net::ERR_ABORTED /api/command');expectedHttpFailures.add('net::ERR_FAILED /api/command');await page.route('**/api/command',handler);
+  try{
+    await page.getByRole('slider',{name:'Island scale',exact:true}).press('ArrowRight');await expect.poll(()=>held).toBe(true);await expect(page.locator('#save-status')).toHaveText('Applying change…');
+    await expect(page.locator('#toast')).toContainText('Save confirmation timed out',{timeout:16000});await expect(page.getByRole('slider',{name:'Island scale',exact:true})).toBeEnabled();expect((await serverScene(request)).revision).toBe(before.revision);
+  }finally{release();await page.unroute('**/api/command',handler);}
+  const recovered=await edit(page,()=>page.getByRole('slider',{name:'Island scale',exact:true}).press('ArrowRight'));expect(recovered.revision).toBe(before.revision+1);await screenshot(page,testInfo,'timed-save-recovered');
+});
+test('a lost save reply refreshes the committed scene once and does not duplicate the edit',async({page,request,expectedHttpFailures},testInfo)=>{
+  await selectFirst(page);const before=await uiScene(page);let forwarded=0;
+  const handler=async route=>{forwarded++;const response=await route.fetch();expect(response.ok()).toBe(true);await route.abort('failed');};expectedHttpFailures.add('net::ERR_FAILED /api/command');await page.route('**/api/command',handler);
+  try{
+    await page.getByRole('slider',{name:'Island scale',exact:true}).press('ArrowRight');await expect(page.locator('#toast')).toContainText('scene was refreshed');await expect.poll(async()=>(await uiScene(page)).revision).toBe(before.revision+1);
+    expect((await serverScene(request)).objects[0].parameters.radius).toBe(before.objects[0].parameters.radius+1);expect(forwarded).toBe(1);await expect(page.locator('#connection-notice')).toBeHidden();await expect(page.getByRole('slider',{name:'Island scale',exact:true})).toBeEnabled();
+    await page.waitForTimeout(1500);expect(forwarded).toBe(1);expect((await serverScene(request)).revision).toBe(before.revision+1);
+  }finally{await page.unroute('**/api/command',handler);}
+  await screenshot(page,testInfo,'lost-reply-confirmed-scene');
+});
+test('native pose chip focus survives saves and respects an intervening focus choice',async({page},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Play demo',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Pause animation',exact:true}).click());await edit(page,()=>page.getByRole('button',{name:'Select Solstice',exact:true}).click());
+  await edit(page,()=>page.getByRole('button',{name:'Go to keyframe 6.00 seconds',exact:true}).press('Enter'));await expect(page.getByRole('button',{name:'Go to keyframe 6.00 seconds',exact:true})).toBeFocused();
+  let release,held=false;const gate=new Promise(resolve=>release=resolve);const handler=async route=>{held=true;await gate;await route.continue();};await page.route('**/api/command',handler);
+  try{await page.getByRole('button',{name:'Go to keyframe 3.00 seconds',exact:true}).press('Enter');await expect.poll(()=>held).toBe(true);await page.getByRole('button',{name:'Client setup',exact:true}).focus();}finally{release();}
+  await expect(page.locator('#save-status')).toHaveText('Scene synchronized');await expect(page.getByRole('button',{name:'Client setup',exact:true})).toBeFocused();await page.unroute('**/api/command',handler);await screenshot(page,testInfo,'pose-keyboard-continuity');
 });

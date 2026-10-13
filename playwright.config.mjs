@@ -12,7 +12,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   timeout: 45_000,
-  // One shared scene requires serial acceptance; 48 workflows include SDK subprocesses.
+  // One shared scene requires serial acceptance; 57 workflows include SDK subprocesses.
   globalTimeout: 12 * 60_000,
   expect: { timeout: 10_000 },
   outputDir: 'test-results/browser',

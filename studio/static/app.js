@@ -9,8 +9,10 @@ import {sourceLabel,sourceKind,committedEntries} from './activity.js';
 import { resolveIslands, transformedIslands } from './transforms.js';
 import { layoutPlan, laidOutIslands } from './layout.js';
 import { retimedIslands, scaledIslands, scaledTime } from './retiming.js';
+import { PoseSelectionMemory } from './pose-selection.js';
+const poseMemory=new PoseSelectionMemory();
 let selectingPoseKeys=false;
-let retimeSelection={context:'',signature:'',times:[]};
+let retimeSelection={context:'',signature:'',timeSignature:'',times:[]};
 let activityKey;
 let dialogGeneration=0;
 const retiredSessions=new Set();
@@ -97,10 +99,11 @@ let size = { width: 1, height: 1, dpr: 1 };
 let transform = { scale: 1, x: 0, y: 0 };
 let commandQueue = Promise.resolve();
 let pendingEditFocus = null;
+let pendingPoseFocus=null;
 // A save temporarily disables editing controls. Restore focus only if the user
 // has not moved elsewhere while the command was pending.
-document.addEventListener('pointerdown', () => { pendingEditFocus = null; }, true);
-document.addEventListener('focusin', event => { if (pendingEditFocus && event.target !== pendingEditFocus) pendingEditFocus = null; });
+document.addEventListener('pointerdown', () => { pendingEditFocus = null;pendingPoseFocus=null; }, true);
+document.addEventListener('focusin', event => { if (pendingEditFocus && event.target !== pendingEditFocus) pendingEditFocus = null;if(pendingPoseFocus&&event.target!==pendingPoseFocus.element)pendingPoseFocus=null; });
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -119,7 +122,11 @@ function setConnected(connected, error = '') {
   $('connection-label').textContent = connected ? 'Scene service connected' : 'Scene service offline';
   $('save-status').className = `save-status ${connected ? 'ok' : 'error'}`;
   $('save-status').lastChild.textContent = connected ? (busy ? 'Applying change…' : 'Scene synchronized') : (error || 'Connection interrupted');
-  const locked = busy > 0 || !scene;
+  const locked = busy > 0 || !scene || !connected;
+  document.documentElement.classList.toggle('studio-disconnected',!connected);
+  $('connection-notice').hidden=connected||!scene;$('reconnect-button').disabled=busy>0;
+  $('mobile-reconnect').hidden=connected||!scene;$('mobile-reconnect').disabled=busy>0;
+  if(locked)capturePoseFocus();
   if (locked && document.activeElement?.matches('input[type="range"],[data-group-nudge],#scale-selection-button,#rotate-selection-button,#select-visible-button,#clear-selection-button')) pendingEditFocus = document.activeElement;
   for (const id of ['play-button', 'speed-button', 'add-island-button', 'add-tool', 'preset-select', 'fit-button', 'timeline-input', 'contours-input', 'tide-input']) $(id).disabled = locked;
   if(gesture?.id==='retime-keys'){$('play-button').disabled=true;$('timeline-input').disabled=true;}
@@ -134,7 +141,12 @@ function setConnected(connected, error = '') {
     const target = pendingEditFocus; pendingEditFocus = null;
     if (target.isConnected && !target.disabled && document.activeElement === document.body) target.focus({ preventScroll: true });
   }
+  if(!locked)restorePoseFocus();
 }
+function capturePoseFocus(){const element=document.activeElement;if(element?.matches('[data-keyframe-time]'))pendingPoseFocus={element,time:element.dataset.keyframeTime,context:retimeSelection.context};}
+function restorePoseFocus(){if(!pendingPoseFocus)return;const saved=pendingPoseFocus;pendingPoseFocus=null;const button=document.querySelector(`[data-keyframe-time="${saved.time}"]`);if(saved.context===retimeSelection.context&&button&&!button.disabled&&document.activeElement===document.body)button.focus({preventScroll:true});}
+function editGuard(state=scene){return {expectedRevision:state?.revision,expectedDocumentId:state?.document_id,expectedSessionId:state?.session_id};}
+function sameContext(state,guard){return state?.document_id===guard.expectedDocumentId&&state?.session_id===guard.expectedSessionId;}
 function toast(message, error = false) {
   $('toast').textContent = message;
   $('toast').classList.toggle('error', error);
@@ -165,9 +177,12 @@ function acceptScene(next, force = false) {
 }
 async function refresh({ initial = false } = {}) {
   try {
-    const response = await fetch('/api/scene', { cache: 'no-store' });
+    const response = await fetch('/api/scene', { cache: 'no-store',signal:AbortSignal.timeout(5000) });
     if (!response.ok) throw new Error(`Scene service responded ${response.status}.`);
     const next = await response.json();
+    if(next.session_id&&retiredSessions.has(next.session_id))return null;
+    const changedContext=scene&&(next.document_id!==scene.document_id||next.session_id!==scene.session_id);
+    if(changedContext&&!busy){if(dragging)endDrag(true);if(gesture)cancelGesture();pendingPoseFocus=null;acceptScene(next,true);toast('Studio session changed. The unsaved preview was cleared; review the reconnected scene.',true);}
     if (!gesture && !dragging && !busy) acceptScene(next);
     setConnected(true);
     return next;
@@ -182,8 +197,10 @@ async function refresh({ initial = false } = {}) {
   }
 }
 function command(op, args = {}, options = {}) {
+  const context={expectedDocumentId:options.expectedDocumentId??scene?.document_id,expectedSessionId:options.expectedSessionId??scene?.session_id};
   const task = async () => {
     if (!scene) throw new Error('Open the scene before making an edit.');
+    if(!online)throw new Error('Reconnect before editing the scene.');
     // A separately requested transaction supersedes any uncommitted gesture.
     if (dragging) endDrag(true);
     if (gesture) cancelGesture();
@@ -191,8 +208,8 @@ function command(op, args = {}, options = {}) {
     setConnected(online);
     try {
       const response = await fetch('/api/command', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...args, op, expected_revision: options.expectedRevision ?? scene.revision, request_id: crypto.randomUUID() }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },signal:AbortSignal.timeout(10000),
+        body: JSON.stringify({ ...args, op, expected_revision: options.expectedRevision ?? scene.revision,expected_document_id:context.expectedDocumentId,expected_session_id:context.expectedSessionId, request_id: crypto.randomUUID() }),
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
@@ -210,7 +227,7 @@ function command(op, args = {}, options = {}) {
       updateUI();
       const fresh = await refresh();
       if (fresh) acceptScene(fresh, true);
-      if (!options.quiet) toast(error.code === 'revision_conflict' ? 'The scene changed elsewhere. Your preview was cleared; try the edit again.' : error.message, true);
+      if (!options.quiet) toast(error.code === 'revision_conflict' ? 'The scene changed elsewhere. Your preview was cleared; try the edit again.' : ['document_conflict','session_conflict'].includes(error.code)?'Studio session changed. Your preview was cleared; review the reconnected scene.':error.name==='TimeoutError'?(fresh?'Save confirmation timed out. The scene was refreshed; review it before retrying.':'Save confirmation timed out. Reconnect to check what was saved before retrying.'):error.name==='TypeError'?(fresh?'Could not confirm the edit. The scene was refreshed; review it before retrying.':'Could not confirm the edit. Reconnect and review the current scene before retrying.'):error.message, true);
       throw error;
     } finally {
       busy -= 1;
@@ -261,7 +278,7 @@ function updateUI() {
   $('play-button').setAttribute('aria-label', state.animation?.playing ? 'Pause animation' : 'Play animation');
   $('play-button').innerHTML = state.animation?.playing ? '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5 4h3v10H5zm5 0h3v10h-3z"/></svg>' : '<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M6 3.5 14 9l-8 5.5z"/></svg>';
   $('motion-label').textContent = state.animation?.playing ? 'LIVE COMPOSITION' : 'COMPOSITION / PAUSED';
-  $('recipe-code').textContent = JSON.stringify(recipe(state), null, 2);
+  $('recipe-code').textContent = JSON.stringify(recipe(scene), null, 2);
   const entries = scene.history?.entries || [];
   $('action-list').innerHTML = entries.length ? [...entries].reverse().slice(0,4).map(entry=>`<li class="action-item"><span class="action-icon">${sourceKind(entry)==='mcp_protocol'?'✧':'↳'}</span><div class="action-text"><strong>${esc(entry.summary||'Committed edit')}</strong><span>${esc(sourceLabel(entry))} · revision ${esc(entry.revision)}</span></div><span class="action-time">#${entry.revision}</span></li>`).join('') : '<li class="empty-activity">Your edits and client calls appear here.</li>';
   updateActivity();
@@ -269,9 +286,10 @@ function updateUI() {
   setConnected(online);
 }
 function setLayerLocks(state) {
-  const locked=busy>0||Boolean(dragging||gesture), layer=selectedLayer(state), object=selected(state);
+  const locked=!online||busy>0||Boolean(dragging||gesture), layer=selectedLayer(state), object=selected(state);
   $('layer-palette').disabled=locked||!layer;
-  $('layer-opacity').disabled=busy>0||Boolean(dragging)||Boolean(gesture&&gesture.id!=='layer-opacity')||!layer;
+  document.querySelectorAll('.layer-row').forEach(button=>button.disabled=!online||busy>0);
+  $('layer-opacity').disabled=!online||busy>0||Boolean(dragging)||Boolean(gesture&&gesture.id!=='layer-opacity')||!layer;
   $('layer-demo-button').disabled=locked;
   $('remove-button').disabled=locked||!object||sourceBlends(state,object.id).length>0;
   document.querySelectorAll('[data-layer-action]').forEach(button=>{const index=state.layer_order.indexOf(button.dataset.id);button.disabled=locked||(button.dataset.layerAction==='forward'&&index===state.layer_order.length-1)||(button.dataset.layerAction==='backward'&&index===0);});
@@ -302,11 +320,11 @@ function updateLayers(state) {
 $('layer-palette').addEventListener('change',()=>{const layer=selectedLayer(scene);if(layer)run('set_style',{id:layer.id,style:{palette:$('layer-palette').value}});});
 $('layer-opacity').addEventListener('input',()=>{
   const layer=selectedLayer(scene);if(!layer||busy||dragging||(gesture&&gesture.id!=='layer-opacity'))return;
-  if(!gesture){gesture={id:'layer-opacity',revision:scene.revision,layerId:layer.id};preview=clone(scene);}
+  if(!gesture){gesture={id:'layer-opacity',guard:editGuard(scene),revision:scene.revision,layerId:layer.id};preview=clone(scene);}
   allLayers(preview).find(o=>o.id===gesture.layerId).style.opacity=Number($('layer-opacity').value)/100;
   $('layer-opacity-output').textContent=`${$('layer-opacity').value}%`;progress($('layer-opacity'));renderDirty=true;
 });
-$('layer-opacity').addEventListener('change',()=>{if(gesture?.id!=='layer-opacity')return;const saved=gesture;gesture=null;run('set_style',{id:saved.layerId,style:{opacity:Number($('layer-opacity').value)/100}},{expectedRevision:saved.revision});});
+$('layer-opacity').addEventListener('change',()=>{if(gesture?.id!=='layer-opacity')return;const saved=gesture;gesture=null;run('set_style',{id:saved.layerId,style:{opacity:Number($('layer-opacity').value)/100}},{...saved.guard,expectedRevision:saved.revision});});
 $('layer-opacity').addEventListener('pointercancel',()=>cancelGesture());
 
 function selectionIslands(state = current()) { return state?.selection?.length ? resolveIslands(state,state.selection) : []; }
@@ -316,7 +334,7 @@ function groupPivot(state = current(),time = getTime(state)) {
 }
 function updateGrouping(state) {
   if(!state)return;
-  const count=state.selection.length,objects=selectionIslands(state),locked=busy>0||Boolean(gesture||dragging);
+  const count=state.selection.length,objects=selectionIslands(state),locked=!online||busy>0||Boolean(gesture||dragging);
   updateLayoutControls(state);
   $('selection-count').textContent=count;
   $('multi-select-button').textContent=multiSelection?'Done selecting':'Select multiple';
@@ -335,10 +353,10 @@ function layoutSelection(state) {
   return Boolean(state?.selection.length>=2&&state.selection.every(id=>state.objects.some(object=>object.id===id)));
 }
 function updateLayoutControls(state) {
-  const isPreview=gesture?.id==='layout',locked=busy>0||Boolean(gesture||dragging),valid=layoutSelection(state);
+  const isPreview=gesture?.id==='layout',locked=!online||busy>0||Boolean(gesture||dragging),valid=layoutSelection(state);
   document.querySelectorAll('[data-layout-mode]').forEach(button=>button.disabled=locked||!valid||(button.dataset.layoutMode.startsWith('space')&&state.selection.length<3));
   $('layout-preview-actions').hidden=!isPreview;
-  $('layout-apply').disabled=busy>0||!isPreview;$('layout-cancel').disabled=busy>0||!isPreview;
+  $('layout-apply').disabled=!online||busy>0||!isPreview;$('layout-cancel').disabled=busy>0||!isPreview;
   if(isPreview)$('layout-status').textContent=`${layoutNames[gesture.args.mode]} preview at ${gesture.args.time.toFixed(2)}s · Apply saves one edit; Cancel keeps the original.`;
   else $('layout-status').textContent=!valid?(state.selection.some(id=>state.blends.some(blend=>blend.id===id))?'Select island rows rather than blend records. Retained sources keep their blend links.':'Select two islands to align, three to space.'):'Preview centers at the visible playhead. Complete paths move; edges may overlap.';
 }
@@ -351,7 +369,7 @@ function previewLayout(mode) {
     const replacements=new Map(changed.map(island=>[island.id,island]));
     preview=clone(scene);preview.objects=preview.objects.map(island=>replacements.get(island.id)||island);
     preview.animation.playing=false;preview.animation.time=args.time;
-    gesture={id:'layout',revision:scene.revision,args,pausePlayback:scene.animation.playing};
+    gesture={id:'layout',guard:editGuard(scene),revision:scene.revision,args,pausePlayback:scene.animation.playing};
     $('time-value').textContent=args.time.toFixed(2).padStart(5,'0');$('timeline-input').value=args.time;progress($('timeline-input'));
     renderDirty=true;updateUI();$('layout-apply').focus({preventScroll:true});
   }catch(error){toast(error.message,true);}
@@ -361,8 +379,8 @@ $('layout-cancel').addEventListener('click',cancelGesture);
 $('layout-apply').addEventListener('click',()=>{
   if(gesture?.id!=='layout'||busy)return;
   const saved=gesture;gesture=null;
-  if(saved.pausePlayback)run('batch',{label:layoutNames[saved.args.mode],commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.args.time}},{op:'layout_islands',...saved.args}]},{expectedRevision:saved.revision});
-  else run('layout_islands',saved.args,{expectedRevision:saved.revision});
+  if(saved.pausePlayback)run('batch',{label:layoutNames[saved.args.mode],commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.args.time}},{op:'layout_islands',...saved.args}]},{...saved.guard,expectedRevision:saved.revision});
+  else run('layout_islands',saved.args,{...saved.guard,expectedRevision:saved.revision});
 });
 
 function chooseLayer(id,event={}) {
@@ -421,7 +439,7 @@ function updateBlending(state) {
 }
 function setBlendingLocks(state) {
   const blends=state.blends||[],blend=blends.find(b=>b.id===activeBlendId),count=state.objects.filter(o=>!o.keyframes?.length).length;
-  const locked=busy>0||Boolean(gesture||dragging),a=$('blend-source-a').value,b=$('blend-source-b').value;
+  const locked=!online||busy>0||Boolean(gesture||dragging),a=$('blend-source-a').value,b=$('blend-source-b').value;
   for(const id of ['blend-select','blend-source-a','blend-source-b','blend-operation','edit-source-a','edit-source-b'])$(id).disabled=locked||count<2;
   $('blend-amount-input').disabled=busy>0||Boolean(dragging)||Boolean(gesture&&gesture.id!=='blend-amount')||count<2||$('blend-operation').value==='union';
   $('apply-blend').disabled=locked||!a||!b||a===b||(!blend&&blends.length>=2);
@@ -444,10 +462,10 @@ for(const [button,input] of [['edit-source-a','blend-source-a'],['edit-source-b'
 $('blend-amount-input').addEventListener('input', () => {
   $('blend-amount-output').textContent = Number($('blend-amount-input').value).toFixed(2);
   if (!activeBlendId || busy || dragging) return;
-  if (!gesture) { gesture = {id:'blend-amount',revision:scene.revision,blendId:activeBlendId};preview=clone(scene); }
+  if (!gesture) { gesture = {id:'blend-amount',guard:editGuard(scene),revision:scene.revision,blendId:activeBlendId};preview=clone(scene); }
   preview.blends.find(b=>b.id===gesture.blendId).amount=Number($('blend-amount-input').value);renderDirty=true;
 });
-$('blend-amount-input').addEventListener('change',()=>{if(!gesture||gesture.id!=='blend-amount')return;const saved=gesture;gesture=null;run('update_blend',{id:saved.blendId,amount:Number($('blend-amount-input').value)},{expectedRevision:saved.revision});});
+$('blend-amount-input').addEventListener('change',()=>{if(!gesture||gesture.id!=='blend-amount')return;const saved=gesture;gesture=null;run('update_blend',{id:saved.blendId,amount:Number($('blend-amount-input').value)},{...saved.guard,expectedRevision:saved.revision});});
 $('blend-amount-input').addEventListener('pointercancel',()=>cancelGesture());
 $('blend-demo-button').addEventListener('click',()=>run('load_recipe',{recipe:clone(blendDemoRecipe)}).then(result=>{if(result){activeBlendId=result.scene.blends[0]?.id||'';updateUI();}}));
 
@@ -488,7 +506,7 @@ function updatePoseControls(state, time) {
     ['radius', 'radius', n => `${Math.round(n)} px`], ['stretch', 'elongation', n => `${n.toFixed(2)}×`],
     ['organic', 'warp', n => `${Math.round(n * 100)}%`], ['rotation', 'rotation', n => `${Math.round(n)}°`],
   ]) {
-    $(id + '-input').disabled = busy > 0 || !object || gesture?.id==='retime-keys';
+    $(id + '-input').disabled = !online || busy > 0 || !object || gesture?.id==='retime-keys';
     if (p) $(id + '-input').value = p[field];
     $(id + '-output').textContent = p ? format(p[field]) : '—';
     progress($(id + '-input'));
@@ -497,7 +515,7 @@ function updatePoseControls(state, time) {
 function updateKeyframeControls(state, time) {
   const object = state && scene ? trackObject(state) : null;
   const key = object?.keyframes?.find(k => Math.abs(k.time - time) < 1e-7);
-  const locked = busy > 0 || !object || Boolean(gesture || dragging);
+  const locked = !online || busy > 0 || !object || Boolean(gesture || dragging);
   $('capture-keyframe').disabled = locked || linkedSources(scene).has(object?.id) || (!key && object.keyframes.length >= 24);
   $('delete-keyframe').disabled = locked || !key || Boolean(state?.animation.playing);
   $('keyframe-easing').disabled = locked;
@@ -507,10 +525,11 @@ function updateKeyframeControls(state, time) {
   $('retime-keyframe').disabled = $('key-time-input').disabled;
   if (document.activeElement !== $('key-time-input')) $('key-time-input').value = key ? key.time : '';
   $('capture-keyframe').textContent = key ? 'Update pose' : 'Capture pose';
-  document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(selectingPoseKeys?displayRetimeTimes().includes(Number(button.dataset.keyframeTime)):Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
+  document.querySelectorAll('[data-keyframe-time]').forEach(button => { button.disabled = !online || busy > 0 || Boolean(gesture || dragging); button.setAttribute('aria-pressed', String(selectingPoseKeys?displayRetimeTimes().includes(Number(button.dataset.keyframeTime)):Math.abs(Number(button.dataset.keyframeTime) - time) < 1e-7)); });
   updateRetimeControls();
 }
 function updateKeyframes(state) {
+  capturePoseFocus();
   const object = trackObject(state), time = authoredTime(state);
   syncRetimeSelection(selected(scene));
   const keys = object?.keyframes || [];
@@ -553,8 +572,7 @@ $('keyframe-list').addEventListener('click', event => {
 });
 
 function syncRetimeSelection(object) {
-  const context=`${scene?.session_id}/${scene?.document_id}/${object?.id}`,signature=JSON.stringify(object?.keyframes||[]);
-  if(retimeSelection.context!==context||retimeSelection.signature!==signature){retimeSelection={context,signature,times:[]};selectingPoseKeys=false;}
+  const next=poseMemory.sync(scene,object,{...retimeSelection,selecting:selectingPoseKeys});retimeSelection=next;selectingPoseKeys=next.selecting;
 }
 function timingDestination(time,args,operation){return operation==='scale_keyframes'?scaledTime(time,args.anchor,args.factor):time+args.delta;}
 function displayRetimeTimes(){return gesture?.id==='retime-keys'?gesture.resultTimes:retimeSelection.times;}
@@ -563,14 +581,14 @@ function scaleAnchor(times,time){
   return mode==='first'?Math.min(...times):mode==='last'?Math.max(...times):mode==='playhead'?time:Number($('scale-anchor-time').value);
 }
 function updateRetimeControls(){
-  const object=selected(scene),held=gesture?.id==='retime-keys',locked=busy>0||Boolean(gesture||dragging),available=Boolean(object?.keyframes.length);
+  const object=selected(scene),held=gesture?.id==='retime-keys',locked=!online||busy>0||Boolean(gesture||dragging),available=Boolean(object?.keyframes.length);
   for(const id of ['select-poses-button','select-all-poses','clear-poses'])$(id).disabled=locked||!available;
   $('select-poses-button').textContent=selectingPoseKeys?'Done selecting poses':'Select poses';$('select-poses-button').setAttribute('aria-pressed',String(selectingPoseKeys));
   $('retime-shift').disabled=locked||!available;$('preview-retime').disabled=locked||!retimeSelection.times.length;
   $('time-scale-factor').disabled=locked||!available;$('scale-anchor-mode').disabled=locked||!available;
   $('scale-anchor-time').disabled=locked||!available||$('scale-anchor-mode').value!=='custom';$('custom-scale-anchor').hidden=$('scale-anchor-mode').value!=='custom';
   $('preview-time-scale').disabled=locked||!retimeSelection.times.length;
-  $('retime-preview-actions').hidden=!held;$('apply-retime').disabled=busy>0||!held;$('cancel-retime').disabled=busy>0||!held;
+  $('retime-preview-actions').hidden=!held;$('apply-retime').disabled=!online||busy>0||!held;$('cancel-retime').disabled=busy>0||!held;
   const scaling=held&&gesture.operation==='scale_keyframes';
   $('apply-retime').textContent=scaling?'Apply timing scale':'Apply shift';$('cancel-retime').textContent=scaling?'Cancel timing scale':'Cancel shift';
   $('retime-status').textContent=held?`${gesture.args.targets[0].times.length} poses preview ${scaling?`${gesture.args.factor}× around anchor ${gesture.args.anchor}s`:`${gesture.args.delta>=0?'+':''}${gesture.args.delta}s`} at ${gesture.time.toFixed(2)}s. Apply saves one edit; Cancel keeps the original.`:retimeSelection.times.length?`${retimeSelection.times.length} poses selected. Shift or scale within 0–12s; unselected keys stay fixed.`:!object?'Select one island with poses to edit timing.':!available?'Capture poses before shifting or scaling timing.':'Select poses and choose chips, or Select all poses. Timing preserves each pose and easing.';
@@ -603,7 +621,7 @@ function previewTiming(operation,args,time){
     if(resultTimes.every((t,i)=>t===args.targets[0].times[i])){toast('Selected times already match this timing. Nothing to apply.');return;}
     const replacements=new Map(changed.map(o=>[o.id,o]));
     preview=clone(scene);preview.objects=preview.objects.map(o=>replacements.get(o.id)||o);preview.animation={...preview.animation,playing:false,time};
-    gesture={id:'retime-keys',operation,revision:scene.revision,args,resultTimes,time,pausePlayback:scene.animation.playing};
+    gesture={id:'retime-keys',operation,guard:editGuard(scene),revision:scene.revision,args,resultTimes,time,pausePlayback:scene.animation.playing};
     $('time-value').textContent=time.toFixed(2).padStart(5,'0');$('timeline-input').value=time;progress($('timeline-input'));
     renderDirty=true;updateUI();$('apply-retime').focus({preventScroll:true});
   }catch(error){toast(error.message,true);}
@@ -612,8 +630,8 @@ $('cancel-retime').addEventListener('click',cancelGesture);
 $('apply-retime').addEventListener('click',()=>{
   if(gesture?.id!=='retime-keys'||busy)return;
   const saved=gesture;gesture=null;
-  const promise=saved.pausePlayback?run('batch',{label:saved.operation==='scale_keyframes'?'Scale selected key times':'Shift selected motion keys',commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.time}},{op:saved.operation,...saved.args}]},{expectedRevision:saved.revision}):run(saved.operation,saved.args,{expectedRevision:saved.revision});
-  promise.then(result=>{if(result&&selected(scene)?.id===saved.args.targets[0].id){retimeSelection.times=saved.resultTimes;selectingPoseKeys=true;updateKeyframes(current());if(document.activeElement===document.body)$(saved.operation==='scale_keyframes'?'preview-time-scale':'preview-retime').focus({preventScroll:true});}});
+  const promise=saved.pausePlayback?run('batch',{label:saved.operation==='scale_keyframes'?'Scale selected key times':'Shift selected motion keys',commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.time}},{op:saved.operation,...saved.args}]},{...saved.guard,expectedRevision:saved.revision}):run(saved.operation,saved.args,{...saved.guard,expectedRevision:saved.revision});
+  promise.then(result=>{if(result&&sameContext(scene,saved.guard)&&selected(scene)?.id===saved.args.targets[0].id){retimeSelection.times=saved.resultTimes;selectingPoseKeys=true;updateKeyframes(current());if(document.activeElement===document.body)$(saved.operation==='scale_keyframes'?'preview-time-scale':'preview-retime').focus({preventScroll:true});}});
 });
 $('motion-path-button').addEventListener('click', () => { editMotionPath = !editMotionPath; showHandles = true; $('handles-button').setAttribute('aria-pressed', 'true'); $('handles-button').classList.add('active'); updateUI(); renderDirty = true; });
 $('retime-keyframe').addEventListener('click', () => {
@@ -788,7 +806,7 @@ function hitMotionKey(point) {
     .sort((a, b) => Math.abs(a.time - authoredTime()) - Math.abs(b.time - authoredTime()))[0] || null;
 }
 canvas.addEventListener('pointerdown', (event) => {
-  if (!scene || busy || event.button !== 0) return;
+  if (!scene || !online || busy || event.button !== 0) return;
   const point = worldPoint(event);
   if (activeTool === 'add') { addIsland(point); setTool('select'); return; }
   const clickedLayer=hitObject(point);
@@ -796,14 +814,14 @@ canvas.addEventListener('pointerdown', (event) => {
   const group=selectionIslands(scene);
   if(clickedLayer&&group.length>1&&(scene.selection.includes(clickedLayer.id)||group.some(object=>object.id===clickedLayer.id))) {
     const time=authoredTime(scene);preview=clone(scene);preview.animation.time=time;preview.animation.playing=false;
-    dragging={group:true,ids:[...scene.selection],base:clone(scene),pointerId:event.pointerId,start:point,time,moved:false,invalid:false,dx:0,dy:0,revision:scene.revision};
+    dragging={group:true,ids:[...scene.selection],base:clone(scene),pointerId:event.pointerId,start:point,time,moved:false,invalid:false,dx:0,dy:0,guard:editGuard(scene),revision:scene.revision};
     canvas.setPointerCapture(event.pointerId);canvas.classList.add('dragging');renderDirty=true;updateUI();return;
   }
   const motionKey = hitMotionKey(point);
   if (motionKey) {
     const object = selected(scene);
     preview = clone(scene); preview.animation.time = motionKey.time; preview.animation.playing = false;
-    dragging = { id: object.id, pointerId: event.pointerId, start: point, x: motionKey.parameters.x, y: motionKey.parameters.y, time: motionKey.time, pathKey: true, moved: false, revision: scene.revision };
+    dragging = { id: object.id, pointerId: event.pointerId, start: point, x: motionKey.parameters.x, y: motionKey.parameters.y, time: motionKey.time, pathKey: true, moved: false, guard:editGuard(scene),revision:scene.revision };
     canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
     $('selection-hint').textContent = 'Move this pose only · Esc to cancel'; renderDirty = true; updateUI(); return;
   }
@@ -817,7 +835,7 @@ canvas.addEventListener('pointerdown', (event) => {
   const pose = sampleParameters(object.parameters, object.keyframes || [], preview.animation.time);
   const previewObject = preview.objects.find(o => o.id === object.id);
   previewObject.parameters = pose; previewObject.keyframes = [];
-  dragging = { id: object.id, pointerId: event.pointerId, start: point, x: pose.x, y: pose.y, time: preview.animation.time, moved: false, revision: scene.revision };
+  dragging = { id: object.id, pointerId: event.pointerId, start: point, x: pose.x, y: pose.y, time: preview.animation.time, moved: false, guard:editGuard(scene),revision:scene.revision };
   canvas.setPointerCapture(event.pointerId); canvas.classList.add('dragging');
   $('selection-hint').textContent = 'Release to commit · Esc to cancel';
   renderDirty = true; updateUI();
@@ -855,7 +873,7 @@ async function endDrag(cancel = false) {
     if(drag.invalid||!drag.moved){preview=null;renderDirty=true;updateUI();if(drag.invalid)toast('Whole-path move exceeded a pose limit. Nothing was saved.',true);return;}
     const commands=[];if(scene.animation.playing)commands.push({op:'set_view',view:{},animation:{playing:false,time:drag.time}});
     commands.push({op:'transform_layers',ids:drag.ids,dx:drag.dx,dy:drag.dy});
-    await run('batch',{label:'Move selected layers and whole paths',commands},{expectedRevision:drag.revision});return;
+    await run('batch',{label:'Move selected layers and whole paths',commands},{...drag.guard,expectedRevision:drag.revision});return;
   }
   const commands = [];
   if (!scene.selection.includes(drag.id)) commands.push({ op: 'select', ids: [drag.id] });
@@ -867,7 +885,7 @@ async function endDrag(cancel = false) {
     }
   } else if (drag.moved && object) commands.push(...poseEditCommands(scene.objects.find(o => o.id === drag.id), { x: Number(object.parameters.x.toFixed(2)), y: Number(object.parameters.y.toFixed(2)) }, drag.time));
   if (!commands.length) { preview = null; renderDirty = true; updateUI(); return; }
-  await run('batch', { label: drag.pathKey ? 'Edit motion path pose' : drag.moved ? 'Moved island' : 'Selected island', commands }, { expectedRevision: drag.revision });
+  await run('batch', { label: drag.pathKey ? 'Edit motion path pose' : drag.moved ? 'Moved island' : 'Selected island', commands }, { ...drag.guard,expectedRevision:drag.revision });
 }
 canvas.addEventListener('pointerup', () => endDrag());
 canvas.addEventListener('pointercancel', () => endDrag(true));
@@ -912,7 +930,7 @@ function bindSlider(id, target, field, format) {
   input.addEventListener('input', () => {
     if (!scene || busy) { updateUI(); return; }
     if (!gesture) {
-      gesture = { id, revision: scene.revision, objectId: selected(scene)?.id, time: authoredTime(scene) };
+      gesture = { id, guard:editGuard(scene),revision:scene.revision, objectId: selected(scene)?.id, time: authoredTime(scene) };
       preview = clone(scene); preview.animation.time = gesture.time; preview.animation.playing = false;
       if (target === 'object') { const object = preview.objects.find(o => o.id === gesture.objectId); if (object) { object.parameters = sampleParameters(object.parameters, object.keyframes || [], gesture.time); object.keyframes = []; } }
     }
@@ -924,9 +942,9 @@ function bindSlider(id, target, field, format) {
   input.addEventListener('change', () => {
     if (!gesture || gesture.id !== id) return;
     const saved = gesture; const value = Number(input.value); gesture = null;
-    if (target === 'object') run('batch', { label: 'Shape island pose', commands: poseEditCommands(scene.objects.find(o => o.id === saved.objectId), { [field]: value }, saved.time) }, { expectedRevision: saved.revision });
-    else if (target === 'animation') run('set_view', { view: {}, animation: { [field]: value } }, { expectedRevision: saved.revision });
-    else run('set_view', { view: { [field]: value } }, { expectedRevision: saved.revision });
+    if (target === 'object') run('batch', { label: 'Shape island pose', commands: poseEditCommands(scene.objects.find(o => o.id === saved.objectId), { [field]: value }, saved.time) }, { ...saved.guard,expectedRevision:saved.revision });
+    else if (target === 'animation') run('set_view', { view: {}, animation: { [field]: value } }, { ...saved.guard,expectedRevision:saved.revision });
+    else run('set_view', { view: { [field]: value } }, { ...saved.guard,expectedRevision:saved.revision });
   });
   input.addEventListener('pointercancel', cancelGesture);
 }
@@ -939,8 +957,8 @@ bindSlider('contours', 'view', 'contours', (n) => String(n));
 bindSlider('tide', 'animation', 'motion', (n) => `${Math.round(n * 100)}%`);
 $('play-button').addEventListener('click', () => { if (scene) run('set_view', { view: {}, animation: { playing: !scene.animation.playing, time: getTime() } }); });
 $('speed-button').addEventListener('click', () => { if (!scene) return; const speeds = [.5, .75, 1, 1.5, 2]; const index = speeds.indexOf(scene.animation.speed); run('set_view', { view: {}, animation: { speed: speeds[(index + 1) % speeds.length], time: getTime() } }); });
-$('timeline-input').addEventListener('input', () => { if (!scene || busy) { updateUI(); return; } if (!gesture) { gesture = { id: 'timeline', revision: scene.revision }; preview = clone(scene); } preview.animation.time = Number($('timeline-input').value); preview.animation.playing = false; $('time-value').textContent = preview.animation.time.toFixed(2).padStart(5, '0'); progress($('timeline-input')); updatePoseControls(preview, preview.animation.time); updateKeyframeControls(preview, preview.animation.time); renderDirty = true; });
-$('timeline-input').addEventListener('change', () => { if (!gesture || gesture.id !== 'timeline') return; const revision = gesture.revision; gesture = null; run('set_view', { view: {}, animation: { time: Number($('timeline-input').value), playing: false } }, { expectedRevision: revision }); });
+$('timeline-input').addEventListener('input', () => { if (!scene || busy) { updateUI(); return; } if (!gesture) { gesture = { id: 'timeline', guard:editGuard(scene),revision:scene.revision }; preview = clone(scene); } preview.animation.time = Number($('timeline-input').value); preview.animation.playing = false; $('time-value').textContent = preview.animation.time.toFixed(2).padStart(5, '0'); progress($('timeline-input')); updatePoseControls(preview, preview.animation.time); updateKeyframeControls(preview, preview.animation.time); renderDirty = true; });
+$('timeline-input').addEventListener('change', () => { if (!gesture || gesture.id !== 'timeline') return; const guard=gesture.guard,revision = gesture.revision; gesture = null; run('set_view', { view: {}, animation: { time: Number($('timeline-input').value), playing: false } }, { ...guard,expectedRevision: revision }); });
 $('timeline-input').addEventListener('pointercancel', cancelGesture);
 $('undo-button').addEventListener('click', () => run('undo'));
 $('redo-button').addEventListener('click', () => run('redo'));
@@ -948,17 +966,18 @@ $('fit-button').addEventListener('click', () => run('set_view', { view: { zoom: 
 $('retry-button').addEventListener('click', () => { $('canvas-loading').hidden = false; $('canvas-error').hidden = true; refresh({ initial: true }); });
 function setView(view) { const isRecipe = view === 'recipe'; $('recipe-view').hidden = !isRecipe; $('canvas-stage').hidden = isRecipe; $('canvas-tab').classList.toggle('active', !isRecipe); $('recipe-tab').classList.toggle('active', isRecipe); if (!isRecipe) { resize(); renderDirty = true; } }
 $('canvas-tab').addEventListener('click', () => setView('canvas'));
+document.querySelector('.authoring-nav a[href="#canvas-section"]').addEventListener('click',()=>setView('canvas'));
 $('recipe-tab').addEventListener('click', () => setView('recipe'));
 $('import-recipe').addEventListener('click', () => { if (scene && !busy) $('recipe-file').click(); });
 $('recipe-file').addEventListener('change', async () => {
   const file = $('recipe-file').files?.[0];
   $('recipe-file').value = '';
   if (!file || !scene) return;
-  const revision = scene.revision;
+  const guard=editGuard(scene),revision = scene.revision;
   try {
     if (file.size > 512000) throw new Error('Choose a scene recipe smaller than 512 KB.');
     const imported = JSON.parse(await file.text());
-    const result = await run('load_recipe', { recipe: imported }, { expectedRevision: revision });
+    const result = await run('load_recipe', { recipe: imported }, { ...guard,expectedRevision: revision });
     if (result) toast('Recipe loaded. Undo restores your previous scene.');
   } catch (error) { toast(error instanceof SyntaxError ? 'That file is not valid JSON. Your scene was not changed.' : error.message, true); }
 });
@@ -1045,5 +1064,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Delete' || event.key === 'Backspace') { const object = selected(scene); if (object) { event.preventDefault(); run('delete_geometry', { id: object.id }); } }
 });
 window.addEventListener('beforeunload', () => { destroyed = true; });
-setInterval(() => { if (!document.hidden && !gesture && !dragging && !busy) refresh(); }, 1300);
+for(const id of ['reconnect-button','mobile-reconnect'])$(id).addEventListener('click',()=>refresh());
+window.addEventListener('offline',()=>setConnected(false));window.addEventListener('online',()=>refresh());
+setInterval(() => { if (!document.hidden && !busy) refresh(); }, 1300);
 refresh({ initial: true });

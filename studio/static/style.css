@@ -1289,3 +1289,20 @@
 .layout-buttons .small-button{min-height:44px;padding:7px;white-space:normal}
 #layout-preview-actions[hidden]{display:none}
 #layout-apply{background:#dfeacd;border-color:#9eb287;color:#304c2c}
+
+/* Read-only section jumps keep phone authoring usable without rearranging the scene. */
+.authoring-nav{display:none}
+.export-wrap{position:relative;z-index:40}
+.connection-notice{position:sticky;top:0;z-index:31;display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:12px;background:#fff5df;border:1px solid #dbc59a;border-radius:6px;font-size:12px;color:#5b4727}
+.connection-notice span{flex:1}.connection-notice button{min-height:44px}
+.connection-notice[hidden],#mobile-reconnect[hidden]{display:none}
+#canvas-section,#layers-panel,#timing-panel{scroll-margin-top:20px}
+.studio-disconnected #canvas-section,.studio-disconnected #layers-panel,.studio-disconnected #timing-panel{scroll-margin-top:100px}
+@media(max-width:700px){
+  .authoring-nav{display:flex;position:sticky;top:0;z-index:32;gap:6px;padding:6px 0;margin-bottom:12px;background:#f4f2ec}
+  .authoring-nav a,.authoring-nav button{flex:1;min-width:0;min-height:44px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:6px;border:1px solid #d2dbcd;border-radius:4px;background:#fcfbf7;font:inherit;font-size:12px;color:#30492e;text-decoration:none}
+  .authoring-nav a:focus-visible,.authoring-nav button:focus-visible{outline:2px solid #557846;outline-offset:2px}
+  .connection-notice{top:56px;flex-wrap:wrap}
+  #canvas-section,#layers-panel,#timing-panel{scroll-margin-top:68px}
+  .studio-disconnected #canvas-section,.studio-disconnected #layers-panel,.studio-disconnected #timing-panel{scroll-margin-top:180px}
+}

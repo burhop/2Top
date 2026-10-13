@@ -445,6 +445,14 @@ Child = Annotated[
 
 class Mutation(StrictModel):
     expected_revision: int = Field(ge=0, strict=True)
+    expected_document_id: Identifier | None = Field(
+        None,
+        description="Document ID from get_scene; protects edits when documents change.",
+    )
+    expected_session_id: Identifier | None = Field(
+        None,
+        description="Session ID from get_scene; protects cached edits across restarts.",
+    )
     request_id: Identifier | None = None
 
 
@@ -995,6 +1003,24 @@ class SceneService:
             json.dumps(normalized, sort_keys=True).encode()
         ).hexdigest()
         with self._lock:
+            if (
+                parsed.expected_document_id is not None
+                and parsed.expected_document_id != self._scene["document_id"]
+            ):
+                raise SceneError(
+                    "document_conflict",
+                    "The document changed. Reconnect and review the current scene.",
+                    status=409,
+                )
+            if (
+                parsed.expected_session_id is not None
+                and parsed.expected_session_id != self._session_id
+            ):
+                raise SceneError(
+                    "session_conflict",
+                    "The studio session changed. Reconnect and review the current scene.",
+                    status=409,
+                )
             if parsed.request_id and parsed.request_id in self._requests:
                 prior_fingerprint, prior_result = self._requests[parsed.request_id]
                 if fingerprint != prior_fingerprint:
@@ -1192,7 +1218,14 @@ class SceneService:
                 changed = transformed_islands(
                     targets,
                     **command.model_dump(
-                        exclude={"op", "ids", "expected_revision", "request_id"}
+                        exclude={
+                            "op",
+                            "ids",
+                            "expected_revision",
+                            "expected_document_id",
+                            "expected_session_id",
+                            "request_id",
+                        }
                     ),
                 )
             except KeyError as exc:
@@ -1227,7 +1260,15 @@ class SceneService:
                 raise SceneError("blend_limit", "A scene supports at most two blends")
             blend = Blend(
                 id="blend_" + uuid.uuid4().hex[:12],
-                **command.model_dump(exclude={"op", "expected_revision", "request_id"}),
+                **command.model_dump(
+                    exclude={
+                        "op",
+                        "expected_revision",
+                        "expected_document_id",
+                        "expected_session_id",
+                        "request_id",
+                    }
+                ),
             ).model_dump()
             scene["blends"].append(blend)
             scene["layer_order"].append(blend["id"])
@@ -1245,7 +1286,15 @@ class SceneService:
             else:
                 values = command.model_dump(
                     exclude_unset=True,
-                    exclude={"op", "id", "style", "expected_revision", "request_id"},
+                    exclude={
+                        "op",
+                        "id",
+                        "style",
+                        "expected_revision",
+                        "expected_document_id",
+                        "expected_session_id",
+                        "request_id",
+                    },
                 )
                 blend.update(values)
                 if command.style is not None:

@@ -38,6 +38,16 @@ The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
 
+## Integrated authoring in 0.11.1
+
+On a phone-sized layout, use sticky **Canvas**, **Layers** and **Timing** jumps.
+Select pose chips, nudge a complete path and Undo/Redo timing edits: known pose
+selection now stays usable. Import resets local pose selection deliberately.
+If the isolated session disconnects, edits lock and **Reconnect** reads the scene;
+it does not resend an uncertain save. A changed session clears unsaved previews.
+Keep port 8000 intact; reconnect testing uses disposable instances only.
+[Reliability guide](authoring_reliability.md). Actual phone/network testing remains separate.
+
 ## Stretch/compress selected timing in 0.11.0
 
 In the separate current-dev session, choose **Play demo**, pause and select one

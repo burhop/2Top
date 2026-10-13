@@ -107,13 +107,21 @@ previews with atomic collision/range rejection. First/last selected pose, visibl
 playhead and custom anchors remain explicit at commit time.
 [Scaling contract](anchored_time_scaling.md).
 
-## Next: combined authoring integration review and polish
+## 0.11.1 - integrated authoring reliability patch
 
-Assess move/layout, pose capture, shifting/scaling, playback, shared undo/redo and
-save/reopen as one creator workflow. Prioritize phone navigation, selection
-continuity, long-session reliability and reconnection behavior. The 0.11.0 scripted
-25-step review and desktop/touch acceptance are initial evidence; hands-on creator
-review remains. Defer unrelated features until this integrated experience is assessed.
+The bounded review reproduced pose-selection loss during geometry edits and
+cached-preview acceptance across equal-revision restarts. Phone section jumps,
+bounded selection restoration, context guards and explicit reconnect/save-failure
+handling address those flows. Regression evidence includes actual owned loopback
+restarts and clearly labeled browser offline/transport simulation.
+[Reliability contract](authoring_reliability.md).
+
+## Independent authoring stopping point
+
+The tested move/layout/capture/shift/scale/undo/import flow is coherent. Do not
+extend it with unrelated features merely to continue development. Hands-on creator
+feedback, actual phone/network checks and native model-host verification remain
+distinct from these automated passes; follow up only on a concrete new defect.
 
 ## Most important remaining showcase gap
 

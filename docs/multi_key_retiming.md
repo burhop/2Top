@@ -18,11 +18,12 @@ attached to the selected keys. Preview the new timing before one reversible edit
 4. **Apply shift** saves one shared undoable edit. A playing UI session pauses at
    its captured time in that same transaction. A paused session keeps its playhead.
    Successful shifts retain the translated key selection. Undo/Redo restore the
-   whole track and reset transient key selection when the track changes.
+   whole track; 0.11.1 restores known local pose selections for timing history.
 5. Export JSON to retain the result. Schema 4 and existing recipe migrations remain.
 
 Key selection is local to the editor and one selected island, not a new scene
-field. Switching island/document/session or observing a changed track clears it.
+field. Switching island/document/session or importing clears it. In 0.11.1 same-time
+geometry edits retain it; unknown structural changes clear it safely.
 Hidden tracks can be selected in the layer list and stay hidden. Blend records
 and static blend operands have no motion track to retime.
 
@@ -89,3 +90,6 @@ is explicitly mocked; native host and natural-language execution remain unverifi
 Version 0.11.0 completes [anchored time scaling](anchored_time_scaling.md).
 Next is combined authoring usability/reliability review and polish, rather than
 indefinitely adding independent features.
+
+Version 0.11.1 completes the bounded [integrated reliability pass](authoring_reliability.md).
+It defines the current navigation, selection, reconnect and save-confirmation behavior.

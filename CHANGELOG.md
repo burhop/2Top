@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.1
+
+- Sticky phone Canvas/Layers/Timing jumps retain previews and reduce long-page
+  navigation; Canvas also exits Recipe view.
+- Export menus remain clickable above the phone bar. Authoritative Recipe view
+  now uses confirmed scene data rather than an uncommitted preview.
+- Pose selection survives same-time geometry edits and restores through known
+  timing Undo/Redo with bounded local memory; import/context changes clear it.
+  Native pose-chip focus returns after saves without stealing intervening focus.
+- Optional document/session mutation guards reject cached edits across equal-
+  revision restarts. Offline edits lock; reconnect reads and changed sessions clear
+  stale previews. Bounded save confirmation and lost-reply reconciliation never
+  automatically replay an ambiguous write.
+- Regression QA preserves baseline failures and tests owned loopback restarts,
+  browser offline simulation and integrated authoring. No new art operation,
+  recipe/geometry/dependency change or deployment is introduced.
+
 ## 0.11.0
 
 - Anchored timing stretch/compression with first/last selected pose, visible
