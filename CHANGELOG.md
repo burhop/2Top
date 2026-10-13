@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0
+
+- Multi-keyframe retiming with desktop/touch key selection, a shared time shift,
+  Preview, Apply, Cancel/Escape and one undoable edit. Complete poses/easing stay
+  attached; selected keys vacate together and may cross unselected keys.
+- The 22nd shared `retime_keyframes` tool supports 1..16 explicit island tracks
+  atomically, rejecting all targets on any collision, missing key or 0..12s range
+  failure. Geometry, schema 4, dependencies and direct-protocol playback remain.
+- Version, README, guides, roadmap and desktop/touch/protocol acceptance coverage
+  updated; native WebMCP/model-host verification remains separate.
+
 ## 0.9.0 — center alignment and even spacing
 
 - Add desktop/touch center-layout Preview, Apply and Cancel, preserving one atomic undo step.

@@ -1,10 +1,10 @@
-# 2Top 0.9.0 · Tidal Atlas
+# 2Top 0.10.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.9.0** adds [center alignment and even spacing](docs/center_layout.md) with Preview, Apply and Cancel. Selected islands' complete authored paths translate together; outer centers stay fixed during spacing. Desktop/touch selection, retained blend references, undo/redo, bounds and revision guards remain shared. Existing [group transforms](docs/group_authoring.md), geometry accuracy, single-pose editing and schema-4 compatibility remain. The catalog now contains 21 tools. Development targets **dev** with tested updates; main and the live user demo are preserved.
+Version **0.10.0** adds [multi-keyframe retiming](docs/multi_key_retiming.md): select pose chips on desktop or touch, preview one shared time shift, then Apply or Cancel. Every destination is checked before one undoable edit; occupied/out-of-range times reject all selected tracks. Complete poses/easing, base geometry and schema 4 remain compatible. Existing [center layout](docs/center_layout.md) and [group transforms](docs/group_authoring.md) remain. The shared catalog now contains 22 tools. Development targets **dev** with tested updates; main and the live user demo are preserved.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -49,7 +49,7 @@ terminal error if startup fails; first startup can take several seconds.
 - Play, pause and scrub a smooth 12-second tide; save JSON recipes, SVG artwork or PNG images
 - Select, duplicate, hide, delete, undo and redo complete operations
 - Connect an MCP client to **http://127.0.0.1:8000/mcp/** or launch the stdio proxy with `python -m studio.mcp_server`
-- In a supported top-level browser, `document.modelContext` registers the same 21 tools, including center layout, whole-path arrangement, choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
+- In a supported top-level browser, `document.modelContext` registers the same 22 tools, including center layout, whole-path arrangement, choreography and static blend creation/update/removal. Unsupported browsers retain the complete manual app
 
 Recipes export schema 4 with complete back-to-front `layer_order` and bounded static blends. Schema-1/2/3 recipes reopen in their original islands-then-blends order, preserving styles, fields, tracks and dependencies. The next save uses schema 4, which older studios cannot read; keep original recipes for exchange. See [composition layers](docs/composition_layers.md) and [static blending](docs/static_blending.md) for limits.
 
@@ -310,7 +310,7 @@ semantics and compositing limits. Native WebMCP host execution is still unverifi
 ### Coauthor workflow (0.7.0)
 
 Open **Client setup**, connect an already configured local client, discover the
-21 tools and read `get_scene` before making an edit. Coauthor activity shows
+22 tools and read `get_scene` before making an edit. Coauthor activity shows
 committed routes and differences; refine a layer by hand and share Undo/Redo.
 The shipped protocol helper and acceptance scripts do not establish live model
 inference. [Coauthor guide](docs/coauthoring.md) explains setup, revision-safe

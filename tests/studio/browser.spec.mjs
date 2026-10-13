@@ -1006,3 +1006,92 @@ test('stale layout preview cannot overwrite a real client edit',async({page,requ
   await expect(page.locator('#toast')).toContainText('changed elsewhere');await expect.poll(async()=>(await uiScene(page)).revision).toBe(peer.scene.revision);
   expect((await uiScene(page)).objects).toEqual(peer.scene.objects);await expect(page.getByRole('button',{name:'Apply layout',exact:true})).toBeHidden();
 });
+
+async function retimeStudy(page,request,{playing=false,interior=false}={}) {
+  const recipe=JSON.parse(await readFile(new URL('../../examples/tidal_atlas_choreography.json',import.meta.url),'utf8'));
+  recipe.animation.playing=playing;recipe.animation.time=4;recipe.title='A later bloom — motion study';
+  if(interior)for(const object of recipe.objects)object.keyframes.forEach((key,i)=>key.time=[1,3,6,9,11][i]);
+  const before=await serverScene(request);
+  const reset=await request.post('/api/command',{data:{op:'load_recipe',recipe,expected_revision:before.revision,request_id:randomUUID()}});expect(reset.ok()).toBeTruthy();
+  await page.reload();await expect(page.locator('#canvas-loading')).toBeHidden();
+  await edit(page,()=>page.getByRole('button',{name:`Select ${recipe.objects[0].name}`,exact:true}).click());
+  return uiScene(page);
+}
+async function choosePoseKeys(page,times,{modifiers=false,touch=false}={}) {
+  if(!modifiers)await page.getByRole('button',{name:'Select poses',exact:true}).click();
+  for(const time of times){
+    const label=`${modifiers&&time===times[0]?'Go to':'Select'} keyframe ${time.toFixed(2)} seconds`;
+    const button=page.getByRole('button',{name:label,exact:true});
+    if(touch)await button.tap();else await button.click(modifiers?{modifiers:['Shift']}:{});
+  }
+}
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test.describe(`multi-key retiming ${viewport.name}`,()=>{
+    test.use({viewport:{width:viewport.width,height:viewport.height},hasTouch:viewport.name==='phone'});
+    test('selects poses, previews cancels applies undoes and saves a shared shift',async({page,request},testInfo)=>{
+      const before=await retimeStudy(page,request);
+      await choosePoseKeys(page,[3,6],{modifiers:viewport.name==='desktop',touch:viewport.name==='phone'});
+      await expect(page.locator('#retime-status')).toContainText('2 poses selected');
+      expect((await uiScene(page)).revision).toBe(before.revision);
+      await page.getByLabel('Time shift (seconds)').fill('1.5');
+      await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+      await expect(page.locator('#retime-status')).toContainText('2 poses preview +1.5s');
+      await expect(page.getByRole('button',{name:'Select keyframe 4.50 seconds',exact:true})).toBeDisabled();
+      await expect(page.getByRole('slider',{name:'Animation playhead',exact:true})).toBeDisabled();
+      expect((await uiScene(page)).objects).toEqual(before.objects);expect((await serverScene(request)).revision).toBe(before.revision);
+      await page.getByRole('button',{name:'Cancel shift',exact:true}).click();
+      expect((await uiScene(page)).objects).toEqual(before.objects);
+      await page.getByRole('button',{name:'Preview shift',exact:true}).click();await page.keyboard.press('Escape');
+      await expect(page.getByRole('button',{name:'Apply shift',exact:true})).toBeHidden();
+      await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+      const after=await edit(page,()=>page.getByRole('button',{name:'Apply shift',exact:true}).click());
+      expect(after.revision).toBe(before.revision+1);expect(after.objects[0].keyframes.map(k=>k.time)).toEqual([0,4.5,7.5,9,12]);
+      for(const time of [3,6])expect(after.objects[0].keyframes.find(k=>k.time===time+1.5)).toEqual({...before.objects[0].keyframes.find(k=>k.time===time),time:time+1.5});
+      expect(after.objects[0].parameters).toEqual(before.objects[0].parameters);expect(after.objects.slice(1)).toEqual(before.objects.slice(1));
+      await expect(page.locator('#retime-status')).toContainText('2 poses selected');
+      const undone=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undone.objects).toEqual(before.objects);
+      const redone=await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click());expect(redone.objects).toEqual(after.objects);
+      const exported=JSON.parse(await download(page,testInfo,'json'));expect(exported.objects).toEqual(after.objects);expect(exported.schema_version).toBe(4);
+      if(viewport.name==='phone'){expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);const box=await page.locator('[data-keyframe-time="4.5"]').boundingBox();expect(box.height).toBeGreaterThanOrEqual(44);}
+      await settleCanvas(page);await screenshot(page,testInfo,`retimed-poses-${viewport.name}`);
+      await page.locator('.retime-controls').screenshot({path:testInfo.outputPath(`retime-controls-${viewport.name}.png`)});
+    });
+  });
+}
+test('multi-key retiming rejects collisions ranges and zero shifts before committing',async({page,request},testInfo)=>{
+  const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);
+  await page.getByLabel('Time shift (seconds)').fill('3');await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('unselected pose');expect((await serverScene(request)).revision).toBe(before.revision);
+  await page.getByRole('button',{name:'Select all poses',exact:true}).click();
+  await page.getByLabel('Time shift (seconds)').fill('0.01');await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('0..12');
+  await page.getByLabel('Time shift (seconds)').fill('-0.01');await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('0..12');
+  await page.getByLabel('Time shift (seconds)').fill('0');await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('Zero shift');expect((await uiScene(page)).revision).toBe(before.revision);
+  await page.getByRole('button',{name:'Clear poses',exact:true}).click();await expect(page.getByRole('button',{name:'Preview shift',exact:true})).toBeDisabled();
+  const interior=await retimeStudy(page,request,{interior:true});await page.getByRole('button',{name:'Select all poses',exact:true}).click();
+  await page.getByLabel('Time shift (seconds)').fill('1');await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  const endpoint=await edit(page,()=>page.getByRole('button',{name:'Apply shift',exact:true}).click());expect(endpoint.objects[0].keyframes.at(-1).time).toBe(12);expect(endpoint.objects[0].keyframes.length).toBe(interior.objects[0].keyframes.length);
+  await edit(page,()=>page.getByRole('button',{name:`Select ${interior.objects[1].name}`,exact:true}).click());await expect(page.getByRole('button',{name:'Preview shift',exact:true})).toBeDisabled();
+  await screenshot(page,testInfo,'retime-boundaries');
+});
+test('multi-key retiming captures playback time and pauses only when applied',async({page,request},testInfo)=>{
+  const before=await retimeStudy(page,request,{playing:true});await choosePoseKeys(page,[3,6]);
+  await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  const time=Number(await page.locator('#time-value').textContent());expect((await uiScene(page)).animation.playing).toBe(true);
+  await page.getByRole('button',{name:'Cancel shift',exact:true}).click();expect((await uiScene(page)).animation.playing).toBe(true);
+  await page.getByRole('button',{name:'Preview shift',exact:true}).click();const held=Number(await page.locator('#time-value').textContent());expect(held).toBeGreaterThanOrEqual(time);
+  const after=await edit(page,()=>page.getByRole('button',{name:'Apply shift',exact:true}).click());expect(after.animation.playing).toBe(false);expect(after.animation.time).toBe(held);expect(after.revision).toBe(before.revision+1);
+  const undo=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undo.animation.playing).toBe(true);expect(undo.objects).toEqual(before.objects);
+  await screenshot(page,testInfo,'retime-playing-preview');
+});
+test('stale multi-key preview cannot overwrite a real MCP retime and shares undo',async({page,request,expectedHttpFailures},testInfo)=>{
+  const before=await retimeStudy(page,request);await choosePoseKeys(page,[3,6]);await page.getByRole('button',{name:'Preview shift',exact:true}).click();
+  const peer=await actualMcp(testInfo,'retime_keyframes',{targets:[{id:before.objects[1].id,times:[3,6]},{id:before.objects[2].id,times:[3]}],delta:1.5,expected_revision:before.revision,request_id:`retime-peer-${randomUUID()}`});expect(peer.ok).toBe(true);
+  expectedHttpFailures.add('409 /api/command');await page.getByRole('button',{name:'Apply shift',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('scene changed elsewhere');await expect.poll(async()=>(await uiScene(page)).revision).toBe(peer.scene.revision);
+  expect((await uiScene(page)).objects).toEqual(peer.scene.objects);await expect(page.getByRole('button',{name:'Apply shift',exact:true})).toBeHidden();
+  const undo=await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click());expect(undo.objects).toEqual(before.objects);
+  await screenshot(page,testInfo,'retime-client-conflict');
+});

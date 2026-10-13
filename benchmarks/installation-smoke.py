@@ -76,6 +76,7 @@ def main():
                     "/static/geometry.js",
                     "/static/transforms.js",
                     "/static/layout.js",
+                    "/static/retiming.js",
                     "/static/choreography.js",
                     "/static/static-blend.js",
                     "/static/layers.js",

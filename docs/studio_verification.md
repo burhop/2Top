@@ -1,43 +1,56 @@
 # Tidal Atlas development verification
 
-Updated October 13, 2026 for version 0.9.0. Work17 executes the local application
+Updated October 13, 2026 for version 0.10.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.9.0 adds center alignment and even spacing with Preview, Apply and
-Cancel. Layout translates selected islands' complete authored paths, validates
-every base/key pose and rejects stale/out-of-bounds edits atomically. Alignment
-uses the mean sampled center; spacing holds outer centers fixed. Blend record
-IDs are rejected; retained source islands can be selected explicitly. The command
-is exposed through all adapters; the catalog contains 21 tools and recipes remain
-schema 4. [Layout contract](center_layout.md) and [group transforms](group_authoring.md).
+Version 0.10.0 adds multi-keyframe retiming with desktop/touch selection and a
+frozen Preview/Apply/Cancel flow. The shared command shifts explicit keys across
+1..16 island tracks atomically, vacating selected times together and rejecting
+any missing key, occupied destination or 0..12s range violation. Poses/easing stay
+attached, sorted keys can cross unselected keys, and geometry remains unchanged.
+The catalog contains 22 tools; recipes remain schema 4. The manual selector edits
+one island's track. [Retiming contract](multi_key_retiming.md),
+[center layout](center_layout.md) and [group transforms](group_authoring.md).
 Existing geometry/parity, quality and clean-wheel checks remain. The
 [0.7.2 performance baseline and reproduction guide](studio_performance.md) remain available.
 
-The manual UI, real MCP HTTP/stdio and WebMCP adapter share 21 validated tools,
+The manual UI, real MCP HTTP/stdio and WebMCP adapter share 22 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
 is guarded while referenced. See [static blending](static_blending.md) for field
 semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,313 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,348 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: **275 cases**, including center layout, choreography, motion-edit and whole-path group cases for interpolation,
+- Studio subset: **310 cases**, including multi-key retiming, center layout, choreography, motion-edit and whole-path group cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **137 files already formatted**.
-- Actual Playwright Chromium acceptance: **36 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **139 files already formatted**.
+- Actual Playwright Chromium acceptance: **41 cases passed**, with unexpected
   console, page and HTTP failures rejected.
-- Installed 0.9.0 wheel: outside-checkout startup, all packaged assets including
-  `layout.js` and the real read-only 21-tool MCP catalog passed. Only declared
+- Installed 0.10.0 wheel: outside-checkout startup, all packaged assets including
+  `retiming.js` and the real read-only 22-tool MCP catalog passed. Only declared
   dependencies are installed; pytest/PySide6 are absent.
+
+0.10.0 adds 33 retiming cases and two real HTTP/stdio MCP cases: simultaneous
+vacated-time movement, multi-track rollback, bounds/collisions, destination float
+collapse, maximum 16 tracks/24 keys, invalid targets, exact key lookup,
+persistence, retries/stale revisions, atomic batches and shared undo/redo.
+Python/JavaScript valid-result and invalid-preview parity is checked. Five new
+actual desktop/touch browser workflows exercise selection, preview/cancellation,
+Apply, undo/redo, JSON export, endpoints, frozen playback and a real client conflict.
+Desktop/phone screenshots were visually reviewed; pose chips and retiming buttons
+have 44px minimum touch targets. The final collision wording has six targeted
+rechecks, and the final installed wheel is rebuilt/smoked after that wording change.
+Native host/natural-language execution remains separate from these checks.
 
 0.9.0 adds 28 layout cases, two real HTTP/stdio MCP cases and five actual browser
 workflows. They verify center placement/fixed endpoints, complete tracks,

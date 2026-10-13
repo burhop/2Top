@@ -44,7 +44,7 @@ preserved. Transforming a blend does not introduce animated or nested operands.
 ## Shared command contract
 
 The new `transform_layers` tool is available through the manual command API,
-real MCP HTTP/stdio and WebMCP adapter. The current catalog contains **21 tools**.
+real MCP HTTP/stdio and WebMCP adapter. The current catalog contains **22 tools**.
 Read `get_scene` for actual IDs and the current revision before an edit.
 
 ```json
@@ -99,5 +99,6 @@ WebMCP forwarding contract is explicitly mocked; native/model-host execution
 remains a separate verification gap.
 
 Version 0.9.0 adds [center alignment and spacing](center_layout.md) alongside these
-transforms. The next independent step is multi-keyframe retiming with preview and
-atomic collision/range rejection. It does not depend on the external model host.
+transforms. Version 0.10.0 adds [multi-key retiming](multi_key_retiming.md). Next is
+time scaling around an explicit anchor with preview and atomic guards,
+independent of the external model host.
