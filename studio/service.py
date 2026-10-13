@@ -31,7 +31,7 @@ from pydantic import (
 from geometry.choreography import sample_parameters, validate_keyframes
 from studio.transforms import resolve_islands, transformed_islands
 from studio.layout import laid_out_islands
-from studio.retiming import RetimeError, retimed_islands
+from studio.retiming import RetimeError, retimed_islands, scaled_islands
 
 
 class StrictModel(BaseModel):
@@ -357,10 +357,8 @@ class RetimeTarget(StrictModel):
         return self
 
 
-class RetimeKeyframes(StrictModel):
-    op: Literal["retime_keyframes"]
+class TimingTargets(StrictModel):
     targets: list[RetimeTarget] = Field(min_length=1, max_length=16)
-    delta: float = Field(ge=-12, le=12)
 
     @model_validator(mode="after")
     def unique_tracks(self):
@@ -368,6 +366,17 @@ class RetimeKeyframes(StrictModel):
         if len(ids) != len(set(ids)):
             raise ValueError("Target island IDs must be unique")
         return self
+
+
+class RetimeKeyframes(TimingTargets):
+    op: Literal["retime_keyframes"]
+    delta: float = Field(ge=-12, le=12)
+
+
+class ScaleKeyframes(TimingTargets):
+    op: Literal["scale_keyframes"]
+    anchor: float = Field(ge=0, le=12)
+    factor: float = Field(ge=0.1, le=4)
 
 
 class EditKeyframe(StrictModel):
@@ -425,6 +434,7 @@ Child = Annotated[
         DeleteKeyframe,
         EditKeyframe,
         RetimeKeyframes,
+        ScaleKeyframes,
         CreateBlend,
         UpdateBlend,
         DeleteBlend,
@@ -490,6 +500,10 @@ class RetimeKeyframesCommand(RetimeKeyframes, Mutation):
     pass
 
 
+class ScaleKeyframesCommand(ScaleKeyframes, Mutation):
+    pass
+
+
 class CreateBlendCommand(CreateBlend, Mutation):
     pass
 
@@ -535,6 +549,7 @@ COMMAND_MODELS = {
     "delete_keyframe": DeleteKeyframeCommand,
     "edit_keyframe": EditKeyframeCommand,
     "retime_keyframes": RetimeKeyframesCommand,
+    "scale_keyframes": ScaleKeyframesCommand,
     "create_blend": CreateBlendCommand,
     "update_blend": UpdateBlendCommand,
     "delete_blend": DeleteBlendCommand,
@@ -565,6 +580,7 @@ DESCRIPTIONS = {
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
     "retime_keyframes": "Shift explicit existing keys together by delta seconds across 1..16 unique island tracks. Supply targets [{id,times}] with 1..24 unique exact source times each and finite delta -12..12. Vacate selected times simultaneously, preserve each pose/easing and sort afterward. Crossing unselected keys is allowed when final times are free. Reject the entire edit for missing keys, destinations outside 0..12 or exact occupied/duplicate destinations; never round, clamp or wrap. Preserve base geometry, styles, selection, order and playback. Blend record IDs are unsupported. Requires latest revision; shared undo/redo and atomic batch apply.",
+    "scale_keyframes": "Stretch/compress explicit selected key times using anchor + (time-anchor)*factor across 1..16 unique island tracks, with 1..24 exact source times per target. Required anchor is finite 0..12 seconds; required positive factor is 0.1..4 (1 is exact identity). No inferred selection or wall-clock anchor. Preserve anchored times exactly, all poses/easing, base geometry, styles, order, selection and playback. Vacate selected times together, sort afterward and reject all targets for missing keys, exact occupied/duplicate destinations or any result outside 0..12. No rounding, clamping, wrapping, reversal or endpoint auto-match. Shared atomic batch/revision/retry/undo contracts apply.",
     "batch": "Apply up to 32 edits atomically with one undo step. Child schemas and operation preconditions apply; cross-record scene invariants are checked on the final candidate before persistence. Failure leaves artwork/history/revision unchanged. Child commands cannot include revision metadata.",
     "undo": "Undo the last complete transaction, across manual and agent edits. Revision continues increasing.",
     "redo": "Restore the last undone transaction. Revision continues increasing.",
@@ -1050,6 +1066,7 @@ class SceneService:
                     "delete_keyframe": "Remove island pose",
                     "edit_keyframe": "Edit island motion key",
                     "retime_keyframes": "Shift selected motion keys",
+                    "scale_keyframes": "Scale selected key times around anchor",
                     "create_blend": "Create static confluence",
                     "update_blend": "Shape static confluence",
                     "delete_blend": "Remove confluence, retain sources",
@@ -1138,12 +1155,13 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
-        if command.op == "retime_keyframes":
+        if command.op in {"retime_keyframes", "scale_keyframes"}:
             try:
-                changed = retimed_islands(
-                    scene,
-                    [target.model_dump() for target in command.targets],
-                    command.delta,
+                targets = [target.model_dump() for target in command.targets]
+                changed = (
+                    retimed_islands(scene, targets, command.delta)
+                    if command.op == "retime_keyframes"
+                    else scaled_islands(scene, targets, command.anchor, command.factor)
                 )
             except RetimeError as exc:
                 raise SceneError(exc.code, str(exc), status=exc.status) from exc

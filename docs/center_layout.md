@@ -84,5 +84,6 @@ sources, frozen playback and a real client edit conflicting with a held preview.
 WebMCP forwarding remains explicitly mocked; native hosting is unverified.
 
 Version 0.10.0 completes [multi-keyframe retiming](multi_key_retiming.md), previewing
-a shared time shift with atomic collision/end-time rejection. Next is time
-scaling around an explicit anchor, independent of external host verification.
+a shared time shift with atomic collision/end-time rejection. Version 0.11.0 adds
+[anchored timing](anchored_time_scaling.md). Next is combined authoring review and
+polish, independent of external host verification.

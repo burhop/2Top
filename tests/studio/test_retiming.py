@@ -299,7 +299,7 @@ def test_http_schemas_and_transaction_match_the_same_shared_service(authored):
         create_app(authored, enable_mcp=False), base_url="http://localhost"
     ) as client:
         catalog = client.get("/api/tools").json()
-        assert len(catalog) == 22 and any(
+        assert len(catalog) == 23 and any(
             t["name"] == "retime_keyframes" for t in catalog
         )
         before = authored.snapshot()

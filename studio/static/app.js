@@ -8,7 +8,7 @@ import { layeredDemoRecipe } from './layered-demo.js';
 import {sourceLabel,sourceKind,committedEntries} from './activity.js';
 import { resolveIslands, transformedIslands } from './transforms.js';
 import { layoutPlan, laidOutIslands } from './layout.js';
-import { retimedIslands } from './retiming.js';
+import { retimedIslands, scaledIslands, scaledTime } from './retiming.js';
 let selectingPoseKeys=false;
 let retimeSelection={context:'',signature:'',times:[]};
 let activityKey;
@@ -556,14 +556,28 @@ function syncRetimeSelection(object) {
   const context=`${scene?.session_id}/${scene?.document_id}/${object?.id}`,signature=JSON.stringify(object?.keyframes||[]);
   if(retimeSelection.context!==context||retimeSelection.signature!==signature){retimeSelection={context,signature,times:[]};selectingPoseKeys=false;}
 }
-function displayRetimeTimes(){return gesture?.id==='retime-keys'?gesture.args.targets[0].times.map(t=>t+gesture.args.delta):retimeSelection.times;}
+function timingDestination(time,args,operation){return operation==='scale_keyframes'?scaledTime(time,args.anchor,args.factor):time+args.delta;}
+function displayRetimeTimes(){return gesture?.id==='retime-keys'?gesture.resultTimes:retimeSelection.times;}
+function scaleAnchor(times,time){
+  const mode=$('scale-anchor-mode').value;
+  return mode==='first'?Math.min(...times):mode==='last'?Math.max(...times):mode==='playhead'?time:Number($('scale-anchor-time').value);
+}
 function updateRetimeControls(){
   const object=selected(scene),held=gesture?.id==='retime-keys',locked=busy>0||Boolean(gesture||dragging),available=Boolean(object?.keyframes.length);
   for(const id of ['select-poses-button','select-all-poses','clear-poses'])$(id).disabled=locked||!available;
   $('select-poses-button').textContent=selectingPoseKeys?'Done selecting poses':'Select poses';$('select-poses-button').setAttribute('aria-pressed',String(selectingPoseKeys));
   $('retime-shift').disabled=locked||!available;$('preview-retime').disabled=locked||!retimeSelection.times.length;
+  $('time-scale-factor').disabled=locked||!available;$('scale-anchor-mode').disabled=locked||!available;
+  $('scale-anchor-time').disabled=locked||!available||$('scale-anchor-mode').value!=='custom';$('custom-scale-anchor').hidden=$('scale-anchor-mode').value!=='custom';
+  $('preview-time-scale').disabled=locked||!retimeSelection.times.length;
   $('retime-preview-actions').hidden=!held;$('apply-retime').disabled=busy>0||!held;$('cancel-retime').disabled=busy>0||!held;
-  $('retime-status').textContent=held?`${gesture.args.targets[0].times.length} poses preview ${gesture.args.delta>=0?'+':''}${gesture.args.delta}s at ${gesture.time.toFixed(2)}s. Apply saves one edit; Cancel keeps the original.`:retimeSelection.times.length?`${retimeSelection.times.length} poses selected. Shift together within 0–12s; unselected keys stay fixed.`:'Select poses and choose chips, or Select all poses. Shift preserves each pose and easing.';
+  const scaling=held&&gesture.operation==='scale_keyframes';
+  $('apply-retime').textContent=scaling?'Apply timing scale':'Apply shift';$('cancel-retime').textContent=scaling?'Cancel timing scale':'Cancel shift';
+  $('retime-status').textContent=held?`${gesture.args.targets[0].times.length} poses preview ${scaling?`${gesture.args.factor}× around anchor ${gesture.args.anchor}s`:`${gesture.args.delta>=0?'+':''}${gesture.args.delta}s`} at ${gesture.time.toFixed(2)}s. Apply saves one edit; Cancel keeps the original.`:retimeSelection.times.length?`${retimeSelection.times.length} poses selected. Shift or scale within 0–12s; unselected keys stay fixed.`:!object?'Select one island with poses to edit timing.':!available?'Capture poses before shifting or scaling timing.':'Select poses and choose chips, or Select all poses. Timing preserves each pose and easing.';
+  const times=retimeSelection.times;
+  $('scale-status').textContent=held&&scaling?`Captured anchor: ${gesture.args.anchor}s. Selected time span scales by ${gesture.args.factor}×.`:times.length?`Anchor: ${scaleAnchor(times,authoredTime(scene))}s · selected span ${Math.min(...times)}–${Math.max(...times)}s. Below 1 compresses; above 1 stretches.`:'Choose selected poses, then an anchor. The anchor stays fixed.';
+  $('timing-preview-list').hidden=!held;
+  $('timing-preview-list').innerHTML=held?gesture.args.targets[0].times.map((time,i)=>`<li>${time}s → ${gesture.resultTimes[i]}s</li>`).join(''):'';
 }
 $('select-poses-button').addEventListener('click',()=>{selectingPoseKeys=!selectingPoseKeys;updateKeyframes(current());});
 $('select-all-poses').addEventListener('click',()=>{const object=selected(scene);if(!object)return;selectingPoseKeys=true;retimeSelection.times=object.keyframes.map(k=>k.time);updateKeyframes(current());});
@@ -572,20 +586,34 @@ $('preview-retime').addEventListener('click',()=>{
   const object=selected(scene),input=$('retime-shift');if(!object||busy||gesture||dragging||!retimeSelection.times.length||input.value===''||!input.reportValidity())return;
   const args={targets:[{id:object.id,times:[...retimeSelection.times].sort((a,b)=>a-b)}],delta:Number(input.value)};
   if(args.delta===0){toast('Zero shift keeps the original. Nothing to apply.');return;}
+  previewTiming('retime_keyframes',args,authoredTime(scene));
+});
+for(const id of ['scale-anchor-mode','scale-anchor-time','time-scale-factor'])$(id).addEventListener('change',updateRetimeControls);
+$('preview-time-scale').addEventListener('click',()=>{
+  const object=selected(scene),factor=$('time-scale-factor'),custom=$('scale-anchor-time');
+  if(!object||busy||gesture||dragging||!retimeSelection.times.length||factor.value===''||!factor.reportValidity())return;
+  if($('scale-anchor-mode').value==='custom'&&(custom.value===''||!custom.reportValidity()))return;
+  const times=[...retimeSelection.times].sort((a,b)=>a-b),time=authoredTime(scene);
+  previewTiming('scale_keyframes',{targets:[{id:object.id,times}],anchor:scaleAnchor(times,time),factor:Number(factor.value)},time);
+});
+function previewTiming(operation,args,time){
   try{
-    const changed=retimedIslands(scene,args.targets,args.delta),replacements=new Map(changed.map(o=>[o.id,o])),time=authoredTime(scene);
+    const changed=operation==='scale_keyframes'?scaledIslands(scene,args.targets,args.anchor,args.factor):retimedIslands(scene,args.targets,args.delta);
+    const resultTimes=args.targets[0].times.map(t=>timingDestination(t,args,operation));
+    if(resultTimes.every((t,i)=>t===args.targets[0].times[i])){toast('Selected times already match this timing. Nothing to apply.');return;}
+    const replacements=new Map(changed.map(o=>[o.id,o]));
     preview=clone(scene);preview.objects=preview.objects.map(o=>replacements.get(o.id)||o);preview.animation={...preview.animation,playing:false,time};
-    gesture={id:'retime-keys',revision:scene.revision,args,time,pausePlayback:scene.animation.playing};
+    gesture={id:'retime-keys',operation,revision:scene.revision,args,resultTimes,time,pausePlayback:scene.animation.playing};
     $('time-value').textContent=time.toFixed(2).padStart(5,'0');$('timeline-input').value=time;progress($('timeline-input'));
     renderDirty=true;updateUI();$('apply-retime').focus({preventScroll:true});
   }catch(error){toast(error.message,true);}
-});
+}
 $('cancel-retime').addEventListener('click',cancelGesture);
 $('apply-retime').addEventListener('click',()=>{
   if(gesture?.id!=='retime-keys'||busy)return;
   const saved=gesture;gesture=null;
-  const promise=saved.pausePlayback?run('batch',{label:'Shift selected motion keys',commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.time}},{op:'retime_keyframes',...saved.args}]},{expectedRevision:saved.revision}):run('retime_keyframes',saved.args,{expectedRevision:saved.revision});
-  promise.then(result=>{if(result&&selected(scene)?.id===saved.args.targets[0].id){retimeSelection.times=saved.args.targets[0].times.map(t=>t+saved.args.delta);selectingPoseKeys=true;updateKeyframes(current());if(document.activeElement===document.body)$('preview-retime').focus({preventScroll:true});}});
+  const promise=saved.pausePlayback?run('batch',{label:saved.operation==='scale_keyframes'?'Scale selected key times':'Shift selected motion keys',commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.time}},{op:saved.operation,...saved.args}]},{expectedRevision:saved.revision}):run(saved.operation,saved.args,{expectedRevision:saved.revision});
+  promise.then(result=>{if(result&&selected(scene)?.id===saved.args.targets[0].id){retimeSelection.times=saved.resultTimes;selectingPoseKeys=true;updateKeyframes(current());if(document.activeElement===document.body)$(saved.operation==='scale_keyframes'?'preview-time-scale':'preview-retime').focus({preventScroll:true});}});
 });
 $('motion-path-button').addEventListener('click', () => { editMotionPath = !editMotionPath; showHandles = true; $('handles-button').setAttribute('aria-pressed', 'true'); $('handles-button').classList.add('active'); updateUI(); renderDirty = true; });
 $('retime-keyframe').addEventListener('click', () => {
@@ -902,7 +930,7 @@ function bindSlider(id, target, field, format) {
   });
   input.addEventListener('pointercancel', cancelGesture);
 }
-function cancelGesture() { gesture = null; preview = null; renderDirty = true; updateUI(); }
+function cancelGesture() { const timing=gesture?.id==='retime-keys'?gesture.operation:null,ownedFocus=document.activeElement===document.body||Boolean(document.activeElement?.closest('#retime-preview-actions'));gesture = null; preview = null; renderDirty = true; updateUI();if(timing&&ownedFocus)$(timing==='scale_keyframes'?'preview-time-scale':'preview-retime').focus({preventScroll:true}); }
 bindSlider('radius', 'object', 'radius', (n) => `${Math.round(n)} px`);
 bindSlider('stretch', 'object', 'elongation', (n) => `${n.toFixed(2)}×`);
 bindSlider('organic', 'object', 'warp', (n) => `${Math.round(n * 100)}%`);

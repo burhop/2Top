@@ -86,6 +86,6 @@ JSON export, bounds and a real MCP change conflicting with a held preview. Offic
 HTTP/stdio clients and Python/JavaScript parity are exercised. WebMCP forwarding
 is explicitly mocked; native host and natural-language execution remain unverified.
 
-Next high-value independent step: **scale selected key times around an explicit
-anchor**, with a preview and the same atomic collision/range guards, to stretch
-or compress a choreography phrase while keeping its poses/easing.
+Version 0.11.0 completes [anchored time scaling](anchored_time_scaling.md).
+Next is combined authoring usability/reliability review and polish, rather than
+indefinitely adding independent features.

@@ -78,7 +78,7 @@ authored paths and resolves retained blend sources once. Bounds, revisions,
 undo/redo and schema-4 compatibility stay authoritative; no new group graph or
 engine formula is introduced. [Authoring contract and walkthrough](group_authoring.md).
 
-## Next independent authoring work
+## Completed authoring follow-through
 
 Version 0.9.0 completes alignment/spacing through authored-center anchors,
 whole-path translations, explicit island/source selections and a preview flow.
@@ -92,7 +92,7 @@ intact. Desktop/touch previews freeze the displayed playhead and apply one
 reversible transaction. Stale/invalid layouts reject atomically. Center placement
 does not guarantee equal edge gaps or collision avoidance.
 
-## Next independent motion-authoring work
+## 0.10.0 - multi-keyframe retiming
 
 Version 0.10.0 completes multi-keyframe retiming with transient desktop/touch key
 selection, a frozen preview and one shared time shift. The 22nd tool supports
@@ -100,11 +100,20 @@ multiple explicit island tracks atomically, rejecting any occupied/out-of-range
 destination. Poses/easing remain attached; selected times vacate together.
 [Retiming contract](multi_key_retiming.md).
 
-## Next independent choreography work
+## 0.11.0 - anchored time scaling
 
-Scale selected key times around an explicit anchor with Preview/Apply/Cancel and
-the same atomic collision/range guards. This stretches or compresses a phrase's
-rhythm while preserving poses/easing, independently of external host verification.
+Version 0.11.0 completes anchored time scaling, reusing selection and timing
+previews with atomic collision/range rejection. First/last selected pose, visible
+playhead and custom anchors remain explicit at commit time.
+[Scaling contract](anchored_time_scaling.md).
+
+## Next: combined authoring integration review and polish
+
+Assess move/layout, pose capture, shifting/scaling, playback, shared undo/redo and
+save/reopen as one creator workflow. Prioritize phone navigation, selection
+continuity, long-session reliability and reconnection behavior. The 0.11.0 scripted
+25-step review and desktop/touch acceptance are initial evidence; hands-on creator
+review remains. Defer unrelated features until this integrated experience is assessed.
 
 ## Most important remaining showcase gap
 
