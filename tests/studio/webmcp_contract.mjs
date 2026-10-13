@@ -20,15 +20,15 @@ const schema = {type:'object',properties:{expected_revision:{type:'integer'}},re
 document.modelContext = { registerTool: async (tool) => registered.push(tool) };
 let sent;
 globalThis.fetch = async (path, options) => {
-  if (path === '/api/tools') return {ok:true,json:async()=>['set_view','set_keyframe','delete_keyframe','edit_keyframe','create_blend','update_blend','delete_blend','reorder_layers','transform_layers'].map(name=>({name,description:name,inputSchema:schema,annotations:{readOnlyHint:false}}))};
+  if (path === '/api/tools') return {ok:true,json:async()=>['set_view','set_keyframe','delete_keyframe','edit_keyframe','create_blend','update_blend','delete_blend','reorder_layers','transform_layers','layout_islands'].map(name=>({name,description:name,inputSchema:schema,annotations:{readOnlyHint:false}}))};
   sent = {path,options};
   if (JSON.parse(options.body).expected_revision === 0) return {ok:true,json:async()=>({ok:true,scene:{revision:1}})};
   return {ok:false,status:409,json:async()=>({ok:false,error:{code:'revision_conflict',message:'Read scene again'}})};
 };
 adapter = await load('supported');
-assert.equal((await adapter.registerWebMCP()).registered, 9);
+assert.equal((await adapter.registerWebMCP()).registered, 10);
 await adapter.registerWebMCP();
-assert.equal(registered.length, 9);
+assert.equal(registered.length, 10);
 assert.deepEqual(registered[0].inputSchema, schema);
 // Presentation callbacks must not turn a committed edit into a tool failure.
 await adapter.registerWebMCP({onScene: () => {throw Error('render failed')}, onStatus: () => {throw Error('badge failed')}});
@@ -67,3 +67,7 @@ console.log('WebMCP contract checks passed (mock browser API).');
 const groupArguments={expected_revision:3,ids:['island_ember','blend_confluence'],dx:10,dy:-5,scale:1.1,rotation:15,pivot:{x:500,y:350}};
 globalThis.fetch=async(path,options)=>{assert.equal(path,'/api/tools/transform_layers');assert.deepEqual(JSON.parse(options.body),groupArguments);return {ok:true,json:async()=>({ok:true,scene:{revision:4}})};};
 assert.equal((await registered.find(tool=>tool.name==='transform_layers').execute(groupArguments)).scene.revision,4);
+
+const layoutArguments={expected_revision:4,ids:['island_ember','island_lagoon','island_moon'],mode:'space_x',time:4.5};
+globalThis.fetch=async(path,options)=>{assert.equal(path,'/api/tools/layout_islands');assert.deepEqual(JSON.parse(options.body),layoutArguments);return {ok:true,json:async()=>({ok:true,scene:{revision:5}})};};
+assert.equal((await registered.find(tool=>tool.name==='layout_islands').execute(layoutArguments)).scene.revision,5);

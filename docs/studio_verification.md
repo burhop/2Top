@@ -1,39 +1,51 @@
 # Tidal Atlas development verification
 
-Updated October 12, 2026 for version 0.8.0. Work17 executes the local application
+Updated October 13, 2026 for version 0.9.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
 
-Version 0.8.0 adds multi-selection and atomic whole-path arrangement. Desktop
-shortcuts/touch controls move, uniformly scale and rotate selected layers while
-preserving complete tracks and retained blend sources. Every resulting base/key
-pose is validated; stale/out-of-bounds edits cannot partially commit. The new
-command is exposed through all adapters; the catalog contains 20 tools and
-recipes remain schema 4. [Authoring contract](group_authoring.md).
+Version 0.9.0 adds center alignment and even spacing with Preview, Apply and
+Cancel. Layout translates selected islands' complete authored paths, validates
+every base/key pose and rejects stale/out-of-bounds edits atomically. Alignment
+uses the mean sampled center; spacing holds outer centers fixed. Blend record
+IDs are rejected; retained source islands can be selected explicitly. The command
+is exposed through all adapters; the catalog contains 21 tools and recipes remain
+schema 4. [Layout contract](center_layout.md) and [group transforms](group_authoring.md).
 Existing geometry/parity, quality and clean-wheel checks remain. The
 [0.7.2 performance baseline and reproduction guide](studio_performance.md) remain available.
 
-The manual UI, real MCP HTTP/stdio and WebMCP adapter share 20 validated tools,
+The manual UI, real MCP HTTP/stdio and WebMCP adapter share 21 validated tools,
 revisions, atomic batches, retry keys, persistence and undo/redo. Source deletion
 is guarded while referenced. See [static blending](static_blending.md) for field
 semantics, reference rules, sampling budgets and degenerate-case behavior.
 
 ## Local verification
 
-- Full Python suite: **1,283 passed, 27 skipped**. The skips require unavailable
+- Full Python suite: **1,313 passed, 27 skipped**. The skips require unavailable
   curves.db data or opt-in visual baselines. Numeric/runtime warnings remain
   visible rather than being suppressed.
-- Studio subset: **245 cases**, including choreography, motion-edit and whole-path group cases for interpolation,
+- Studio subset: **275 cases**, including center layout, choreography, motion-edit and whole-path group cases for interpolation,
   endpoint/loop semantics, Python/JavaScript parity, demo reproducibility,
   malformed input, sorted unique keys, limits, replay/stale revisions, rollback,
   persistence, legacy migration and real MCP HTTP/stdio pose edits.
 - JavaScript: **35 DOM/service checks and 10 real-raster/layer-policy checks passed**. This is distinct from
   native browser layout testing.
 - Explicitly mocked WebMCP contract: passed, including forwarding choreography and static-composition tools. This does not establish native host support.
-- Repository-wide Ruff lint and formatting: passed, **135 files already formatted**.
-- Actual Playwright Chromium acceptance: **31 cases passed**, with unexpected
+- Repository-wide Ruff lint and formatting: passed, **137 files already formatted**.
+- Actual Playwright Chromium acceptance: **36 cases passed**, with unexpected
   console, page and HTTP failures rejected.
+- Installed 0.9.0 wheel: outside-checkout startup, all packaged assets including
+  `layout.js` and the real read-only 21-tool MCP catalog passed. Only declared
+  dependencies are installed; pytest/PySide6 are absent.
+
+0.9.0 adds 28 layout cases, two real HTTP/stdio MCP cases and five actual browser
+workflows. They verify center placement/fixed endpoints, complete tracks,
+coincident fractional centers, deterministic ties, hidden/retained sources,
+atomic bounds/persistence/revision failures, desktop/phone preview/cancel/apply,
+undo/redo/export, captured playback time and a real client conflict. Desktop and
+phone layout screenshots were visually reviewed. WebMCP forwarding is mocked;
+native hosting and genuine natural-language coauthoring remain unverified.
 
 0.7.2 adds desktop/phone native keyboard continuity (including focus deliberately
 moved during a delayed save) and zero-size layout recovery. Measured baseline

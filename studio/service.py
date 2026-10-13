@@ -30,6 +30,7 @@ from pydantic import (
 
 from geometry.choreography import sample_parameters, validate_keyframes
 from studio.transforms import resolve_islands, transformed_islands
+from studio.layout import laid_out_islands
 
 
 class StrictModel(BaseModel):
@@ -325,6 +326,23 @@ class TransformLayers(StrictModel):
         return self
 
 
+class LayoutIslands(StrictModel):
+    op: Literal["layout_islands"]
+    ids: list[Identifier] = Field(
+        min_length=2, max_length=16, json_schema_extra={"uniqueItems": True}
+    )
+    mode: Literal["align_x", "align_y", "space_x", "space_y"]
+    time: float = Field(0, ge=0, le=12)
+
+    @model_validator(mode="after")
+    def valid_selection(self):
+        if len(self.ids) != len(set(self.ids)):
+            raise ValueError("Layout IDs must be unique")
+        if self.mode.startswith("space") and len(self.ids) < 3:
+            raise ValueError("Even spacing needs at least three islands")
+        return self
+
+
 class EditKeyframe(StrictModel):
     op: Literal["edit_keyframe"]
     id: Identifier
@@ -375,6 +393,7 @@ Child = Annotated[
         SetView,
         Select,
         TransformLayers,
+        LayoutIslands,
         SetKeyframe,
         DeleteKeyframe,
         EditKeyframe,
@@ -420,6 +439,10 @@ class SelectCommand(Select, Mutation):
 
 
 class TransformLayersCommand(TransformLayers, Mutation):
+    pass
+
+
+class LayoutIslandsCommand(LayoutIslands, Mutation):
     pass
 
 
@@ -475,6 +498,7 @@ COMMAND_MODELS = {
     "set_view": ViewCommand,
     "select": SelectCommand,
     "transform_layers": TransformLayersCommand,
+    "layout_islands": LayoutIslandsCommand,
     "set_keyframe": KeyframeCommand,
     "delete_keyframe": DeleteKeyframeCommand,
     "edit_keyframe": EditKeyframeCommand,
@@ -503,6 +527,7 @@ DESCRIPTIONS = {
     "set_view": "Set view and/or art-directed animation parameters. This is not a physical simulation. Requires latest revision.",
     "select": "Set selected island or blend layer IDs, visible in the manual inspector. Requires latest revision.",
     "transform_layers": "Atomically translate, uniformly scale, and rotate explicit island/blend IDs and every authored pose. Expand blends to retained sources, moving shared sources once; dependent blends may also change. Scale then rotate about supplied pivot (default unique base-center mean), then translate. Preserve times/easing, authored degrees, style, selection, order and playback; reject any out-of-bounds base/key pose without clamping. Existing procedural tide remains unchanged. Requires latest revision.",
+    "layout_islands": "Atomically align or evenly space 2..16 unique explicit island IDs using authored centers sampled at supplied time 0..12 (default 0; no wall-clock anchor). align_x makes a vertical line at mean x; align_y makes a horizontal line at mean y. space_x/space_y need 3+ islands: sort centers with ASCII ID tie-breaks and keep the outer centers fixed. Translate each complete base/track; preserve shape, timing/easing, style, order, selection and playback. Reject any out-of-bounds pose without partial commits. Blend IDs are unsupported; moving retained sources preserves references and can change dependent blends. Center spacing does not guarantee edge gaps or collision avoidance. Requires latest revision.",
     "set_keyframe": "Insert or replace a complete six-parameter island pose at 0..12 seconds. At most 24 unique sorted keys per island. Left key easing controls interpolation; rotation uses authored degrees. Requires latest revision.",
     "delete_keyframe": "Delete one island pose key at its exact time. Reversible with shared undo. Requires latest revision.",
     "edit_keyframe": "Move an existing key's x/y position and/or retime it within 0..12 seconds. Identify the exact source time. Preserve all other pose values and easing; sort after retiming. Occupied destination times fail without changes. Requires latest revision.",
@@ -984,6 +1009,7 @@ class SceneService:
                     "set_view": "Adjust view / motion",
                     "select": "Select layer",
                     "transform_layers": "Arrange layers and whole motion paths",
+                    "layout_islands": "Align or space island centers and whole paths",
                     "reorder_layers": "Reorder composition layers",
                     "delete_geometry": "Remove island",
                     "set_keyframe": "Capture island pose",
@@ -1077,6 +1103,22 @@ class SceneService:
         target.update(values)
 
     def _apply(self, scene: dict, command: BaseModel) -> list[str]:
+        if command.op == "layout_islands":
+            try:
+                changed = laid_out_islands(
+                    scene, command.ids, command.mode, command.time
+                )
+            except KeyError as exc:
+                raise SceneError(
+                    "object_not_found", f"Unknown island: {exc.args[0]}", status=404
+                ) from exc
+            except ValueError as exc:
+                raise SceneError("validation_error", str(exc)) from exc
+            replacements = {island["id"]: island for island in changed}
+            scene["objects"] = [
+                replacements.get(island["id"], island) for island in scene["objects"]
+            ]
+            return list(replacements)
         if command.op == "transform_layers":
             try:
                 targets = resolve_islands(scene, command.ids)

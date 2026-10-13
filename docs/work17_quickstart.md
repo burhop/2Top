@@ -38,6 +38,17 @@ The URL is local to Work17. The delivery verification record states whether a
 server was actually started and checked; this guide alone does not imply that
 one is running. Native WebMCP execution still requires a supported model host.
 
+## Preview center layout in 0.9.0
+
+Choose **Select visible** or select three island rows using **Select multiple**.
+Under **Center layout**, choose **Space horizontally**, inspect the preview, then
+**Cancel** or **Apply layout**. Undo/Redo restores the complete authored paths.
+**Align vertical** aligns x centers; **Align horizontal** aligns y centers.
+Spacing holds the outer centers fixed. Select island rows rather than blend rows.
+The preview pauses at its displayed authored time; Apply preserves that time.
+This arranges centers, not shore edges or collision-free gaps.
+[Layout guide](center_layout.md). Keep the existing port 8000 demo intact.
+
 ## Arrange layers in 0.8.0
 
 On the separate current-dev session at port 8768, choose **Select multiple**,

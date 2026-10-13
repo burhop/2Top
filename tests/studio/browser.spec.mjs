@@ -921,3 +921,88 @@ test('invalid and stale group drags cannot partially commit',async({page,expecte
   expect((await uiScene(page)).objects).toEqual(changed.scene.objects);
   expect((await uiScene(page)).selection).toEqual(before.selection);
 });
+
+async function layoutStudy(page,request) {
+  const recipe=structuredClone(seed);recipe.title='Quiet intervals — center study';
+  recipe.objects.forEach((island,index)=>{island.parameters.x=[220,390,780][index];island.parameters.y=[310,440,340][index];island.parameters.radius=130;island.style.opacity=.95;});
+  const state=await serverScene(request);
+  const response=await request.post('/api/command',{data:{op:'load_recipe',recipe,expected_revision:state.revision}});expect(response.ok()).toBe(true);
+  await page.evaluate(()=>window.tidalStudio.refresh({force:true}));
+  await edit(page,()=>page.getByRole('button',{name:'Select visible',exact:true}).click());
+  return uiScene(page);
+}
+
+for(const viewport of [{name:'desktop',width:1440,height:1100},{name:'phone',width:390,height:844}]) {
+  test.describe(`center layout ${viewport.name}`,()=>{
+    test.use({viewport});
+    test('center alignment and spacing preview, cancel, apply, undo and export',async({page,request},testInfo)=>{
+      await expect(page.getByRole('button',{name:'Align horizontal',exact:true})).toBeDisabled();
+      const before=await layoutStudy(page,request);
+      await page.getByRole('button',{name:'Space horizontally',exact:true}).click();
+      await expect(page.locator('#layout-status')).toContainText('preview at 0.00s');
+      expect((await uiScene(page)).objects).toEqual(before.objects);expect((await serverScene(request)).revision).toBe(before.revision);
+      await page.getByRole('button',{name:'Cancel preview',exact:true}).click();
+      await expect(page.getByRole('button',{name:'Apply layout',exact:true})).toBeHidden();expect((await uiScene(page)).revision).toBe(before.revision);
+      await page.getByRole('button',{name:'Space horizontally',exact:true}).click();await page.keyboard.press('Escape');
+      expect((await uiScene(page)).objects).toEqual(before.objects);
+      await page.getByRole('button',{name:'Space horizontally',exact:true}).click();
+      let spaced=await edit(page,()=>page.getByRole('button',{name:'Apply layout',exact:true}).click());
+      const xs=spaced.objects.map(object=>object.parameters.x).sort((a,b)=>a-b);expect(xs).toEqual([220,500,780]);
+      for(let i=0;i<3;i++)expect(spaced.objects[i].parameters.y).toBe(before.objects[i].parameters.y);
+      await page.getByRole('button',{name:'Space horizontally',exact:true}).click();await expect(page.locator('#toast')).toContainText('Nothing to apply');expect((await uiScene(page)).revision).toBe(spaced.revision);
+      await page.getByRole('button',{name:'Align horizontal',exact:true}).click();
+      const aligned=await edit(page,()=>page.getByRole('button',{name:'Apply layout',exact:true}).click());
+      const mean=before.objects.reduce((sum,object)=>sum+object.parameters.y,0)/3;
+      for(const object of aligned.objects)expect(object.parameters.y).toBeCloseTo(mean,8);
+      expect((await edit(page,()=>page.getByRole('button',{name:'Undo',exact:true}).click())).objects).toEqual(spaced.objects);
+      expect((await edit(page,()=>page.getByRole('button',{name:'Redo',exact:true}).click())).objects).toEqual(aligned.objects);
+      const json=JSON.parse((await download(page,testInfo,'json')).toString());expect(json.schema_version).toBe(4);expect(json.objects).toEqual(aligned.objects);
+      await settleCanvas(page);await screenshot(page,testInfo,`center-layout-${viewport.name}`);
+      await page.locator('.layout-controls').screenshot({path:testInfo.outputPath(`layout-controls-${viewport.name}.png`)});
+    });
+  });
+}
+
+test('layout selection edges preserve hidden and retained-source state',async({page},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Try layered study',exact:true}).click());
+  await edit(page,()=>page.locator('[data-layer-action="select"][data-id="blend_confluence"]').click());
+  await expect(page.getByRole('button',{name:'Align horizontal',exact:true})).toBeDisabled();await expect(page.locator('#layout-status')).toContainText('island rows rather than blend');
+  await page.getByRole('button',{name:'Select multiple',exact:true}).click();
+  await edit(page,()=>page.locator('[data-layer-action="select"][data-id="blend_confluence"]').click());
+  await edit(page,()=>page.locator('[data-layer-action="select"][data-id="island_ember"]').click());
+  await edit(page,()=>page.locator('[data-layer-action="select"][data-id="island_lagoon"]').click());
+  await page.getByRole('button',{name:'Done selecting',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Space horizontally',exact:true})).toBeDisabled();
+  await edit(page,()=>page.locator('[data-layer-action="visibility"][data-id="island_ember"]').click());
+  const before=await uiScene(page);
+  await page.getByRole('button',{name:'Align vertical',exact:true}).click();
+  const after=await edit(page,()=>page.getByRole('button',{name:'Apply layout',exact:true}).click());
+  expect(after.blends).toEqual(before.blends);expect(after.objects[2]).toEqual(before.objects[2]);expect(after.layer_order).toEqual(before.layer_order);
+  expect(after.objects[0].style.visible).toBe(before.objects[0].style.visible);expect(after.objects[1].style.visible).toBe(before.objects[1].style.visible);
+  await settleCanvas(page);await screenshot(page,testInfo,'retained-source-layout');
+});
+
+test('layout at an authored playhead translates every key and pauses only on apply',async({page},testInfo)=>{
+  await edit(page,()=>page.getByRole('button',{name:'Play demo',exact:true}).click());
+  await edit(page,()=>page.getByRole('button',{name:'Select visible',exact:true}).click());
+  const before=await uiScene(page);
+  await page.getByRole('button',{name:'Align horizontal',exact:true}).click();
+  const freeze=await page.locator('#time-value').textContent();expect((await uiScene(page)).animation.playing).toBe(true);
+  const after=await edit(page,()=>page.getByRole('button',{name:'Apply layout',exact:true}).click());expect(after.animation.playing).toBe(false);
+  expect(after.animation.time).toBeCloseTo(Number(freeze),2);
+  for(let i=0;i<3;i++){
+    const dy=after.objects[i].parameters.y-before.objects[i].parameters.y;
+    expect(after.objects[i].keyframes).toHaveLength(before.objects[i].keyframes.length);
+    for(let k=0;k<before.objects[i].keyframes.length;k++){expect(after.objects[i].keyframes[k].parameters.y-before.objects[i].keyframes[k].parameters.y).toBeCloseTo(dy,8);expect(after.objects[i].keyframes[k].time).toBe(before.objects[i].keyframes[k].time);expect(after.objects[i].keyframes[k].easing).toBe(before.objects[i].keyframes[k].easing);}
+  }
+  await settleCanvas(page);await screenshot(page,testInfo,'whole-track-center-layout');
+});
+
+test('stale layout preview cannot overwrite a real client edit',async({page,request,expectedHttpFailures},testInfo)=>{
+  const before=await layoutStudy(page,request);
+  await page.getByRole('button',{name:'Align horizontal',exact:true}).click();
+  const peer=await actualMcp(testInfo,'set_style',{id:before.objects[0].id,style:{opacity:.8},expected_revision:before.revision,request_id:`layout-peer-${randomUUID()}`});expect(peer.ok).toBe(true);
+  expectedHttpFailures.add('409 /api/command');await page.getByRole('button',{name:'Apply layout',exact:true}).click();
+  await expect(page.locator('#toast')).toContainText('changed elsewhere');await expect.poll(async()=>(await uiScene(page)).revision).toBe(peer.scene.revision);
+  expect((await uiScene(page)).objects).toEqual(peer.scene.objects);await expect(page.getByRole('button',{name:'Apply layout',exact:true})).toBeHidden();
+});

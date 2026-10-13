@@ -7,6 +7,7 @@ import { allLayers, orderedLayers, visibleLayers, sourceBlends, compositeLayer }
 import { layeredDemoRecipe } from './layered-demo.js';
 import {sourceLabel,sourceKind,committedEntries} from './activity.js';
 import { resolveIslands, transformedIslands } from './transforms.js';
+import { layoutPlan, laidOutIslands } from './layout.js';
 let activityKey;
 let dialogGeneration=0;
 const retiredSessions=new Set();
@@ -312,6 +313,7 @@ function groupPivot(state = current(),time = getTime(state)) {
 function updateGrouping(state) {
   if(!state)return;
   const count=state.selection.length,objects=selectionIslands(state),locked=busy>0||Boolean(gesture||dragging);
+  updateLayoutControls(state);
   $('selection-count').textContent=count;
   $('multi-select-button').textContent=multiSelection?'Done selecting':'Select multiple';
   $('multi-select-button').setAttribute('aria-pressed',String(multiSelection));
@@ -324,6 +326,41 @@ function updateGrouping(state) {
   if(multiSelection)$('selection-hint').textContent='Tap layers to add/remove · Done selecting to move';
   else if(!dragging)$('selection-hint').textContent=count>1?'Drag any selected layer to move their complete paths.':'Drag an island to change the tide.';
 }
+const layoutNames={align_x:'Vertical alignment',align_y:'Horizontal alignment',space_x:'Horizontal spacing',space_y:'Vertical spacing'};
+function layoutSelection(state) {
+  return Boolean(state?.selection.length>=2&&state.selection.every(id=>state.objects.some(object=>object.id===id)));
+}
+function updateLayoutControls(state) {
+  const isPreview=gesture?.id==='layout',locked=busy>0||Boolean(gesture||dragging),valid=layoutSelection(state);
+  document.querySelectorAll('[data-layout-mode]').forEach(button=>button.disabled=locked||!valid||(button.dataset.layoutMode.startsWith('space')&&state.selection.length<3));
+  $('layout-preview-actions').hidden=!isPreview;
+  $('layout-apply').disabled=busy>0||!isPreview;$('layout-cancel').disabled=busy>0||!isPreview;
+  if(isPreview)$('layout-status').textContent=`${layoutNames[gesture.args.mode]} preview at ${gesture.args.time.toFixed(2)}s · Apply saves one edit; Cancel keeps the original.`;
+  else $('layout-status').textContent=!valid?(state.selection.some(id=>state.blends.some(blend=>blend.id===id))?'Select island rows rather than blend records. Retained sources keep their blend links.':'Select two islands to align, three to space.'):'Preview centers at the visible playhead. Complete paths move; edges may overlap.';
+}
+function previewLayout(mode) {
+  if(!scene||busy||gesture||dragging||!layoutSelection(scene))return;
+  const args={ids:[...scene.selection],mode,time:authoredTime(scene)};
+  try {
+    const plan=layoutPlan(scene,args.ids,mode,args.time),changed=laidOutIslands(scene,args.ids,mode,args.time);
+    if(plan.every(move=>move.dx===0&&move.dy===0)){toast('Centers already have this layout. Nothing to apply.');return;}
+    const replacements=new Map(changed.map(island=>[island.id,island]));
+    preview=clone(scene);preview.objects=preview.objects.map(island=>replacements.get(island.id)||island);
+    preview.animation.playing=false;preview.animation.time=args.time;
+    gesture={id:'layout',revision:scene.revision,args,pausePlayback:scene.animation.playing};
+    $('time-value').textContent=args.time.toFixed(2).padStart(5,'0');$('timeline-input').value=args.time;progress($('timeline-input'));
+    renderDirty=true;updateUI();$('layout-apply').focus({preventScroll:true});
+  }catch(error){toast(error.message,true);}
+}
+document.querySelectorAll('[data-layout-mode]').forEach(button=>button.addEventListener('click',()=>previewLayout(button.dataset.layoutMode)));
+$('layout-cancel').addEventListener('click',cancelGesture);
+$('layout-apply').addEventListener('click',()=>{
+  if(gesture?.id!=='layout'||busy)return;
+  const saved=gesture;gesture=null;
+  if(saved.pausePlayback)run('batch',{label:layoutNames[saved.args.mode],commands:[{op:'set_view',view:{},animation:{playing:false,time:saved.args.time}},{op:'layout_islands',...saved.args}]},{expectedRevision:saved.revision});
+  else run('layout_islands',saved.args,{expectedRevision:saved.revision});
+});
+
 function chooseLayer(id,event={}) {
   const additive=multiSelection||event.shiftKey||event.ctrlKey||event.metaKey;
   const ids=additive?(scene.selection.includes(id)?scene.selection.filter(key=>key!==id):[...scene.selection,id]):[id];

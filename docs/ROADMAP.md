@@ -80,10 +80,24 @@ engine formula is introduced. [Authoring contract and walkthrough](group_authori
 
 ## Next independent authoring work
 
-Add alignment and even spacing for selected islands. First define placement
-anchors for whole motion paths and explicit treatment of shared blend operands,
-then use atomic transform commands with desktop/touch previews and undo/redo.
-This independent product work can continue while host verification is pending.
+Version 0.9.0 completes alignment/spacing through authored-center anchors,
+whole-path translations, explicit island/source selections and a preview flow.
+[Center-layout contract](center_layout.md) records the bounds and limitations.
+
+## 0.9.0 - center alignment and even spacing
+
+Align island centers on either axis; distribute three or more with fixed outer
+centers and deterministic ties. Shape/timing, schema 4 and blend references stay
+intact. Desktop/touch previews freeze the displayed playhead and apply one
+reversible transaction. Stale/invalid layouts reject atomically. Center placement
+does not guarantee equal edge gaps or collision avoidance.
+
+## Next independent motion-authoring work
+
+Add multi-keyframe retiming with a preview of one shared time shift, bounded
+end times and atomic collision rejection. Use existing edit-key/batch contracts,
+preserving relative timing/easing and shared undo. This product work can continue
+independently while external host verification is pending.
 
 ## Most important remaining showcase gap
 
