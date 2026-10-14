@@ -84,7 +84,7 @@ memory, cold-start or universal performance guarantees.
 ## Verification and remaining work
 
 The baseline new regressions reproduced 24 failures out of 30 cases before
-implementation. Expanded tests cover broadcast/empty/domain contracts, analytic
+implementation. The final full suite passes 1,472 cases with 27 skips; 72 new cases cover broadcast/empty/domain contracts, analytic
 normals, independent high-precision blend values and weights, holes, scale and
 translation, exact touching vertices, shared zero edges, extreme interpolation,
 input immutability and Python/browser agreement.

@@ -221,7 +221,9 @@ class RFunctionCurve(ImplicitCurve):
         This approximates min(f1, f2) but with smooth transitions.
         """
         value = blend_terms(f1, f2, alpha)
-        return float(value) if np.isscalar(f1) and np.isscalar(f2) else np.asarray(value)
+        return (
+            float(value) if np.isscalar(f1) and np.isscalar(f2) else np.asarray(value)
+        )
 
     def _gradient_sharp_union(self, f1, f2, grad1_x, grad1_y, grad2_x, grad2_y):
         """Gradient for sharp union operation"""

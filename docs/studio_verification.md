@@ -10,8 +10,14 @@ contour extraction. Independent review found and covered subnormal subtraction
 rounding and contours collapsing during world mapping. Baseline new tests
 reproduced 24 failures out of 30; expanded independent-oracle and browser-parity
 cases cover the final implementation. [Backend contracts and saved timings](implicit_backend.md).
-Local final suite, packaging and Chromium results are recorded below when complete.
-The following 0.11.1 results are historical until the new verification finishes.
+Final local verification: **1,472 Python cases passed, 27 skipped, 43 warnings**;
+**72 new numerical/parity cases**, 59 JavaScript checks, mocked WebMCP contract,
+143-file Ruff lint/format and **57 real Chromium cases passed (4.7 minutes)**.
+The installed 0.12.0 wheel passed outside-checkout startup, packaged assets,
+geometry response and the real read-only 23-tool MCP catalog without dev packages.
+The full-suite procedural cusp regression was fixed and rerun successfully.
+Native WebMCP host support remains unverified. Exact-commit CI gates dev integration.
+The detailed 0.11.1 results below are retained as historical evidence.
 
 Version 0.11.1 is the bounded integrated reliability patch: phone section jumps,
 known pose-selection restoration, guarded document/session edits and explicit

@@ -214,5 +214,5 @@
     }
   },
   "fixture_sha256": "916b43275b3147eeab2660a2ce8490f5290db1a84e3a1737a1968543e0ff1c35",
-  "implementation": "0.12.0 numerical implementation"
+  "implementation": "fbaf0da99e271ee2dcf3eb47263c9a50b1de6226 (0.12.0 numerical implementation; later formatting/docs do not change benchmark operations)"
 }
