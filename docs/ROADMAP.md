@@ -135,6 +135,12 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.16.0 supplies native analytic algebraic derivatives, query-local shared
+graph reuse and derivative-preserving contours with known procedural uncertainty.
+[Contracts and measured overhead](field_algebra.md). Domain-aware sampling,
+distance/occupancy derivative diagnostics and wider proved bounds remain useful
+independent increments. Cheap direct grids retain measurable validation overhead.
+
 Version 0.15.0 adds bounded automatic procedural steps, tested one-sided/off-ladder
 consistency, per-point diagnostics and explicit failure/cost measurements.
 [Automatic derivative contracts](automatic_derivatives.md). Finite samples still

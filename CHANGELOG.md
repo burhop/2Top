@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.16.0
+
+- Native algebraic fields reuse analytic child derivatives for quotient and
+  min/max composition, preserving left folds and explicitly undefined winning
+  ties/singular quotients. Binary exponent scaling handles tested extreme ratios.
+- Query-local graph reuse avoids repeated shared-node callbacks while preserving
+  mutable expressions, methods and operations; native cycles fail explicitly.
+- Blended contours retain derivatives and propagate known procedural heuristic
+  uncertainty, including stationary children and nested shifts. Serialization
+  keeps the existing honest procedural placeholder.
+- Independent symbolic/analytic regressions and reproducible warm measurements
+  record corrected translated derivatives, fewer callbacks and the additional
+  validity-check overhead on cheap direct grids.
+
 ## 0.15.0
 
 - Default procedural gradients choose local representable steps and bounded
