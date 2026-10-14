@@ -135,12 +135,21 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.23.0 propagates the existing gradient diagnostic protocol through
+composition and level-set wrappers, preserving uncertainty and shared probes.
+Native straight-distance contours retain geometric gradients; cheap normals
+reject unknown numerical gradients without adding adaptive work.
+[Contracts and complete-call costs](field_diagnostics.md) distinguish opt-in
+consistency from exact curved-source geometry. Explicit domain/scale policies,
+source closest-point semantics and native WebMCP host verification remain
+possible follow-ups.
+
 Version 0.22.0 adds opt-in bounded sampled/callback distance-gradient diagnostics.
 [Actual derivative targets, rejection cases and measured costs](distance_gradient_diagnostics.md).
 These can reject source-sign/chord-magnitude jumps and resolve smooth callback
 components, but sampled consistency is uncertified and smooth axes can exhaust
-the budget. Legacy algebra and procedural level-set normals do not automatically
-consume these diagnostics. Curved-source geometry contracts, propagation into
+the budget. The 0.23 opt-in algebra/wrapper protocol now preserves these diagnostics; cheap
+normals conservatively reject unknown numerical sources. Curved-source geometry contracts, propagation into
 composed normals, explicit domain/scale policies and native WebMCP host
 verification remain separate increments.
 

@@ -1,10 +1,10 @@
-# 2Top 0.22.0 · Tidal Atlas
+# 2Top 0.23.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.22.0** adds opt-in [distance-gradient diagnostics](docs/distance_gradient_diagnostics.md) using the existing bounded adaptive estimator. Unresolved vectors return two NaNs with raw candidates, heuristic errors, status, steps and call counts. Diagnostics differentiate the actual evaluated field: source containment signs combined with sampled boundary magnitudes can jump and do not define an exact curved signed distance. Authoritative gradient/evaluation/containment callbacks are preserved; native straight gradients retain their geometric contract. Legacy curved/callback gradients, algebra and level-set normals keep their documented approximation. Development targets **dev**.
+Version **0.23.0** propagates [field-gradient diagnostics](docs/field_diagnostics.md) through algebra and level-set wrappers. Explicit queries share repeated sources and preserve uncertainty, singular/tied gradients, callback authority and scalar/array shapes. Cheap gradients retain their cost contract; normals reject unknown numerical uncertainty without adding adaptive probes. Native straight-distance contours retain their geometric gradient. Diagnostics remain heuristic and opt-in; sampled curved fields do not become exact source distances. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,7 +62,7 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
-python -m pytest tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
+python -m pytest tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
 python benchmarks/distance_numerics.py --output distance-numerics.json
 python -m pytest tests/test_distance_cache.py
 python benchmarks/distance_cache.py --output distance.json

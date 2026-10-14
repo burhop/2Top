@@ -44,10 +44,34 @@ class LevelSetCurve(ImplicitCurve):
         return self.curve.gradient(x, y)
 
     def normal(self, x, y):
+        from .field_algebra import _method_is
+
+        if not _method_is(self, "gradient", LevelSetCurve.gradient):
+            return ImplicitCurve.normal(self, x, y)
+        if not _method_is(self, "evaluate", LevelSetCurve.evaluate) or not _method_is(
+            self, "gradient_diagnostics", LevelSetCurve.gradient_diagnostics
+        ):
+            raise ValueError("Normal undefined - unresolved numerical derivative")
         if not math.isfinite(self.evaluate(x, y)):
             raise ValueError("Normal undefined outside the shifted field domain")
         # A constant shift preserves regularity, including numerical cusp guards.
         return self.curve.normal(x, y)
+
+    def gradient_diagnostics(self, x, y):
+        """Propagate source diagnostics through a finite constant level shift."""
+        from .field_algebra import _method_is, callback_diagnostics, shifted_diagnostics
+
+        if not _method_is(self, "gradient", LevelSetCurve.gradient):
+            result = callback_diagnostics(self.evaluate, self.gradient, x, y)
+        elif not _method_is(self, "evaluate", LevelSetCurve.evaluate):
+            result = callback_diagnostics(self.evaluate, None, x, y)
+        elif callable(getattr(self.curve, "gradient_diagnostics", None)):
+            result = self.curve.gradient_diagnostics(x, y)
+        else:
+            result = callback_diagnostics(
+                self.curve.evaluate, self.curve.gradient, x, y
+            )
+        return shifted_diagnostics(result, self.evaluate(x, y))
 
     def sublevel_bounds(self, level=0):
         level = rational_level(level)

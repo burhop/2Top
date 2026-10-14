@@ -525,7 +525,6 @@ class SignedDistanceField(BaseField):
         """
         from .numeric import broadcast_coordinates, field_result
         from .distance_gradient import native_boundaries
-        from .adaptive_differentiation import automatic_gradient
 
         xx, yy, scalar = broadcast_coordinates(x, y)
         finite = np.isfinite(xx) & np.isfinite(yy)
@@ -543,7 +542,7 @@ class SignedDistanceField(BaseField):
             return field_result(value, xx.shape, scalar)
 
         def metadata(value):
-            return value.item() if scalar else value
+            return value.item() if scalar else np.asarray(value).copy()
 
         if provided or native:
             gx, gy = self.gradient(x, y)
@@ -574,33 +573,9 @@ class SignedDistanceField(BaseField):
                 certified=False,
             )
 
-        def evaluate(a, b):
-            # Keep scalar Python arguments and array callback shapes; do not
-            # vectorize/retry callbacks or swallow their internal exceptions.
-            return self.evaluate(float(a), float(b)) if scalar else self.evaluate(a, b)
+        from .field_algebra import callback_diagnostics
 
-        result = automatic_gradient(evaluate, xx, yy)
-        raw = result["gradient"]
-        available = finite.copy()
-        for value, error in zip(raw, result["error_estimate"]):
-            available &= np.isfinite(value) & np.isfinite(error)
-        result["raw_gradient"] = tuple(output(v) for v in raw)
-        result["gradient"] = tuple(output(np.where(available, v, np.nan)) for v in raw)
-        result["error_estimate"] = tuple(output(v) for v in result["error_estimate"])
-        result["steps"] = tuple(
-            tuple(tuple(output(v) for v in stencil) for stencil in axis)
-            for axis in result["steps"]
-        )
-        for key in ("status", "selection", "candidates"):
-            result[key] = tuple(metadata(v) for v in result[key])
-        result["status"] = tuple(
-            metadata(np.where(finite, v, "nonfinite_coordinate"))
-            for v in result["status"]
-        )
-        result["nominal_step"] = tuple(output(v) for v in result["nominal_step"])
-        result.update(
-            available=metadata(available), derivative_target="evaluate", certified=False
-        )
+        result = callback_diagnostics(self.evaluate, None, x, y)
         result["distance_model"] = (
             "boundary_magnitude_and_containment_sign"
             if self._has_native_distance_methods()
@@ -633,15 +608,17 @@ class SignedDistanceField(BaseField):
             ImplicitCurve representing the level set
         """
         import sympy as sp
-        from .procedural_curve import ProceduralCurve
+        from .field_algebra import _AlgebraicLevelSet
+        from .bounds import rational_level
 
-        # Create a procedural curve that represents the level set
+        try:
+            level = float(rational_level(level))
+        except OverflowError as error:
+            raise ValueError("Level shift must fit a finite float") from error
+        if not np.isfinite(level):
+            raise ValueError("Level shift must fit a finite float")
         x, y = sp.symbols("x y")
-
-        def level_set_function(x_val, y_val):
-            return self.evaluate(x_val, y_val) - level
-
-        return ProceduralCurve(level_set_function, (x, y))
+        return _AlgebraicLevelSet(self, level, (x, y))
 
     def to_dict(self) -> Dict[str, Any]:
         """
