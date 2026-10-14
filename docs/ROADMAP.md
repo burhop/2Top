@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.21.0 supplies scale-stable native signed-distance gradients and
+explicit undefined masks for genuine corners and conflicting nearest features.
+[Contracts, independent evidence and measured costs](distance_gradient.md).
+Sampled curved/callback derivatives and procedural level-set normals remain
+numerical; analytic curved-source distance derivatives, constructor scale
+contracts and native WebMCP host verification are separate useful increments.
+
 Version 0.20.0 separates strict native endpoint/hole distance signs from public
 fuzzy containment and retains custom callback contracts. Guarded endpoint and
 nearest-segment arithmetic reduce full sampled-curve costs while preserving the

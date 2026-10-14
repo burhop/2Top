@@ -1,0 +1,302 @@
+{
+  "label": "0.20.0",
+  "repository": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-distance-sign-0.20.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "geometry": "rectangle",
+      "shape": [
+        97,
+        97
+      ],
+      "evaluate": {
+        "median_ms": 0.596,
+        "batches_ms": [
+          0.6046,
+          0.5934,
+          0.596,
+          0.6055,
+          0.5794
+        ]
+      },
+      "gradient": {
+        "median_ms": 2.434,
+        "batches_ms": [
+          2.5174,
+          2.4307,
+          2.434
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 0.76723,
+        "batches_ms": [
+          0.76886,
+          0.76752,
+          0.76357,
+          0.76723,
+          0.7535
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 1281,
+      "retains_queries": false
+    },
+    {
+      "geometry": "rectangle",
+      "shape": [
+        257,
+        257
+      ],
+      "evaluate": {
+        "median_ms": 5.8845,
+        "batches_ms": [
+          6.1693,
+          5.8845,
+          5.7588,
+          6.0091,
+          5.8065
+        ]
+      },
+      "gradient": {
+        "median_ms": 27.5386,
+        "batches_ms": [
+          27.5386,
+          27.9272,
+          25.1525
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 0.7511,
+        "batches_ms": [
+          0.74623,
+          0.74267,
+          0.76692,
+          0.7511,
+          0.92009
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 8025,
+      "retains_queries": false
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        97,
+        97
+      ],
+      "evaluate": {
+        "median_ms": 1.0842,
+        "batches_ms": [
+          1.0842,
+          1.0784,
+          1.1294,
+          1.088,
+          1.0754
+        ]
+      },
+      "gradient": {
+        "median_ms": 4.3062,
+        "batches_ms": [
+          4.3095,
+          4.302,
+          4.3062
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 1.3158,
+        "batches_ms": [
+          1.32467,
+          1.3158,
+          1.31628,
+          1.3137,
+          1.31236
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 1653,
+      "retains_queries": false
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        257,
+        257
+      ],
+      "evaluate": {
+        "median_ms": 11.2313,
+        "batches_ms": [
+          10.9539,
+          11.8862,
+          10.1651,
+          11.8671,
+          11.2313
+        ]
+      },
+      "gradient": {
+        "median_ms": 61.9033,
+        "batches_ms": [
+          53.3413,
+          61.9033,
+          61.9803
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 1.67331,
+        "batches_ms": [
+          1.96577,
+          1.67331,
+          1.61672,
+          1.69067,
+          1.62611
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 9981,
+      "retains_queries": false
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        97,
+        97
+      ],
+      "evaluate": {
+        "median_ms": 83.7749,
+        "batches_ms": [
+          66.4936,
+          83.7749,
+          90.5342,
+          83.2748,
+          101.0761
+        ]
+      },
+      "gradient": {
+        "median_ms": 242.368,
+        "batches_ms": [
+          242.368,
+          241.8702,
+          251.6219
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 52.87281,
+        "batches_ms": [
+          50.55073,
+          53.26857,
+          44.66907,
+          52.87281,
+          61.50666
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 2471,
+      "retains_queries": false
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        257,
+        257
+      ],
+      "evaluate": {
+        "median_ms": 313.6159,
+        "batches_ms": [
+          373.1135,
+          313.6159,
+          293.3282,
+          348.4597,
+          308.7406
+        ]
+      },
+      "gradient": {
+        "median_ms": 1246.1269,
+        "batches_ms": [
+          1246.1269,
+          1277.0073,
+          1191.1571
+        ]
+      },
+      "scalar_gradient": {
+        "median_ms": 47.9852,
+        "batches_ms": [
+          49.24759,
+          47.9852,
+          57.20925,
+          46.85071,
+          47.21073
+        ]
+      },
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 17074,
+      "retains_queries": false
+    }
+  ],
+  "edge_cases": [
+    {
+      "workload": "exact_medial_ties_64",
+      "median_ms": 3.6352,
+      "batches_ms": [
+        3.4988,
+        4.5465,
+        4.5787,
+        3.6352,
+        2.3901
+      ],
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 64
+    },
+    {
+      "workload": "near_medial_ties_64",
+      "median_ms": 9.27,
+      "batches_ms": [
+        9.27,
+        4.5908,
+        6.5714,
+        11.0258,
+        9.9119
+      ],
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 64
+    },
+    {
+      "workload": "boundary_normals_64",
+      "median_ms": 2.711,
+      "batches_ms": [
+        2.711,
+        2.5784,
+        2.667,
+        3.6882,
+        3.8276
+      ],
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 0
+    },
+    {
+      "workload": "huge_smooth_64",
+      "median_ms": 3.3077,
+      "batches_ms": [
+        3.1798,
+        3.3077,
+        3.2287,
+        4.5383,
+        4.2224
+      ],
+      "unavailable_pairs": 0,
+      "only_one_unavailable_component": 0,
+      "finite_nonunit_at_1e_8": 64
+    }
+  ],
+  "limits": "Sequential warm full calls:five evaluation/edge batches,three grid-gradient batches,and five ten-call scalar batches. Same curved sampling/resolution; diagnostics are unit/mask counts,not derivative certificates. Baseline finite averages at singularities are misleading; exact-tie/boundary/scale guards have measurable costs. Shared-workstation wall-clock medians do not guarantee FPS or universal rounding."
+}
