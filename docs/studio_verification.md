@@ -1,9 +1,31 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.19.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.20.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.20.0 fixes [strict native distance signs and sampled-curve performance](distance_sign_performance.md).
+The focused sign/distance/field suite passed **355 tests**. Independent rational
+membership/projection/minimum oracles and read-only review cover endpoint trim
+extensions, default-policy tiny holes, boundaries/neighbor points, translations,
+curved source scaling, callback compatibility, extreme crossings and guarded
+endpoint/box reductions. All prior 0.19 numerical cases remain. All **59**
+JavaScript checks and mocked WebMCP, **156-file** configured Ruff and **49-file**
+explicit CI targets passed. All **58** dependency records are unchanged; h11's
+canonical metadata matches. The runtime-only installed wheel passed strict sign,
+padding/zero/extreme/subnormal geometry, outside-checkout startup/assets and the
+real **23-tool** MCP catalog. The full Work17 Python suite passed **2,045 tests**
+with **27 skips and 45 warnings**. Local Chromium and exact-feature/dev CI results
+are recorded with the milestone PR and handoff as those gates finish.
+Sequential full sampled-circle evaluation medians were **19.6/100.9 ms** on
+97x97/257x257 grids versus **46.1/936.4 ms** in 0.19 and **16.4/136.5 ms** in 0.18.
+Raw batch timings include slower remaining scalar, gradient and fallback cases;
+there is no universal throughput claim. Curved source/chord agreement, existing
+constructor scale limits, fixed-step derivative validity and native WebMCP host
+verification remain explicit limitations.
+
+## Previous milestone
 
 Version 0.19.0 adds [scale-robust segment distances](distance_numerics.md).
 The focused distance/field suite passed **245 tests**, including **135 new

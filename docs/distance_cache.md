@@ -2,6 +2,8 @@
 
 The subsequent [0.19.0 numerical milestone](distance_numerics.md) fixes the
 short-edge and squared-overflow reproductions recorded at the end of this page.
+The [0.20.0 milestone](distance_sign_performance.md) adds strict native endpoint
+signs and guarded ordinary-query performance; this page records the 0.18 state.
 
 Version 0.18.0 repairs stale signed-distance values and the corresponding generic
 polygon sign dependency. It retains the existing distance strategy, schema and

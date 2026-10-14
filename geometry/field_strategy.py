@@ -231,6 +231,11 @@ class SignedDistanceField(BaseField):
     boundary of the region. The sign indicates whether the point is inside
     (negative) or outside (positive) the region.
 
+    Native straight endpoint chains use strict geometric membership independent
+    of public containment tolerances. Exact zero distance is positive zero.
+    Curved/custom containment oracles keep their documented source limitations;
+    curved magnitudes remain sampled approximations.
+
     Attributes:
         region (AreaRegion): The region to compute distances to
         resolution (float): Sampling resolution for distance calculations
@@ -278,9 +283,53 @@ class SignedDistanceField(BaseField):
         return field_result(result, xx.shape, scalar)
 
     def _evaluate_vectorized(self, x_array, y_array):
-        is_inside = self.region.contains(x_array, y_array)
+        is_inside = self._inside_for_distance(x_array, y_array)
         distance = self._compute_distance_to_boundary_vectorized(x_array, y_array)
-        return np.where(is_inside, -distance, distance)
+        return np.where(distance == 0, 0.0, np.where(is_inside, -distance, distance))
+
+    def _inside_for_distance(self, x, y):
+        """Strict endpoint polygons; zero-tolerance source oracles for curves.
+
+        Custom containment overrides retain their callback contract. Signature
+        binding selects the supported call; errors inside callbacks propagate.
+        """
+        from .area_region import AreaRegion
+        from .composite_curve import CompositeCurve
+        from .numeric import endpoint_polygon_inside
+
+        callback = self.region.contains
+        if getattr(callback, "__func__", None) is not AreaRegion.contains:
+            import inspect
+
+            try:
+                signature = inspect.signature(callback)
+            except (TypeError, ValueError):
+                return callback(x, y)
+            try:
+                signature.bind(x, y, tolerance=0.0)
+            except TypeError:
+                return callback(x, y)
+            return callback(x, y, tolerance=0.0)
+
+        def boundary_inside(boundary):
+            if (
+                getattr(boundary.contains, "__func__", None) is CompositeCurve.contains
+                and boundary.segments
+                and all(
+                    not getattr(segment, "is_curved", True)
+                    and hasattr(segment, "get_endpoints")
+                    for segment in boundary.segments
+                )
+            ):
+                edges = [segment.get_endpoints() for segment in boundary.segments]
+                if all(edge is not None and len(edge) == 2 for edge in edges):
+                    return endpoint_polygon_inside(x, y, edges)
+            return boundary.contains(x, y, tolerance=0.0, region_containment=True)
+
+        inside = boundary_inside(self.region.outer_boundary)
+        for hole in self.region.holes:
+            inside = inside & ~np.asarray(boundary_inside(hole), dtype=bool)
+        return inside
 
     def _boundary_segments(self):
         """Prepare only this query's live outer/hole line segments and samples."""
@@ -310,7 +359,7 @@ class SignedDistanceField(BaseField):
         return segments_ab
 
     def _compute_distance_to_boundary_vectorized(self, x_array, y_array):
-        from .numeric import segment_distance
+        from .numeric import real_array, segment_distance
 
         flat_shape = x_array.shape
         flat_x = x_array.ravel()
@@ -318,7 +367,46 @@ class SignedDistanceField(BaseField):
         min_distances = np.full(flat_x.size, np.inf)
 
         # Query-local preparation avoids stale endpoints/samples after region edits.
-        for start, end in self._boundary_segments():
+        segments = self._boundary_segments()
+        use_bounds = len(segments) > 8 and flat_x.size >= 32
+        if use_bounds:
+            lower, upper = 2.0**-200, 2.0**200
+            ax, ay = np.abs(flat_x), np.abs(flat_y)
+            ordinary = ((ax == 0) | ((ax >= lower) & (ax <= upper))) & (
+                (ay == 0) | ((ay >= lower) & (ay <= upper))
+            )
+        for start, end in segments:
+            if use_bounds:
+                endpoints = real_array([start, end])
+                if endpoints.shape != (2, 2) or not np.isfinite(endpoints).all():
+                    raise ValueError(
+                        "Distance segment endpoints must be finite coordinate pairs"
+                    )
+                magnitudes = np.abs(endpoints)
+                edge_ordinary = np.all(
+                    (magnitudes == 0) | ((magnitudes >= lower) & (magnitudes <= upper))
+                )
+                if edge_ordinary:
+                    with np.errstate(all="ignore"):
+                        dx = flat_x - np.clip(
+                            flat_x, min(endpoints[:, 0]), max(endpoints[:, 0])
+                        )
+                        dy = flat_y - np.clip(
+                            flat_y, min(endpoints[:, 1]), max(endpoints[:, 1])
+                        )
+                        bound = np.hypot(dx, dy)
+                        # A segment lies in its box. Normal arithmetic's
+                        # relative rounding is below this conservative margin.
+                        inflated = min_distances * (1 + 64 * np.finfo(float).eps)
+                    candidates = ~(ordinary & (bound > inflated))
+                    if np.any(candidates):
+                        min_distances[candidates] = np.minimum(
+                            min_distances[candidates],
+                            segment_distance(
+                                flat_x[candidates], flat_y[candidates], start, end
+                            ),
+                        )
+                    continue
             min_distances = np.minimum(
                 min_distances, segment_distance(flat_x, flat_y, start, end)
             )
@@ -336,13 +424,13 @@ class SignedDistanceField(BaseField):
             Signed distance to the boundary
         """
         # Check if point is inside the region
-        is_inside = self.region.contains(x, y)
+        is_inside = self._inside_for_distance(x, y)
 
         # Compute unsigned distance to boundary
         distance = self._compute_distance_to_boundary(x, y)
 
         # Apply sign based on containment
-        return -distance if is_inside else distance
+        return 0.0 if distance == 0 else (-distance if is_inside else distance)
 
     def _compute_distance_to_boundary(self, x: float, y: float) -> float:
         """
