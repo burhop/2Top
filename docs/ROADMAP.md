@@ -135,6 +135,12 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.13.0 addresses procedural derivative accuracy with representable
+stencils, explicit local scales, diagnostics and analytic callbacks.
+[Contract and analytic measurements](procedural_derivatives.md). The next bounded
+increment is sound sublevel envelopes for smooth fields, with distinct bounded,
+empty and unknown results; zero-contour boxes cannot infer generic blend growth.
+
 Version 0.12.0 delivers a bounded reusable backend pass: broadcast evaluation,
 scale-stable normal and smooth union numerics, finite sampling validation and
 deterministic contour cycles. Saved timings measure extraction gains and stable

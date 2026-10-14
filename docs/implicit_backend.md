@@ -1,5 +1,9 @@
 # Reusable implicit backend: 0.12.0
 
+This document retains the 0.12 measurements and contracts. Version 0.13 replaces
+the fixed procedural derivative step with [representable stencils, local scales
+and analytic callbacks](procedural_derivatives.md).
+
 This milestone fixes measured failures in existing field evaluation, smooth
 composition and sampled contour extraction. Public constructors, recipe schema
 4, serialization dispatch and the 23 studio tools remain compatible. No new

@@ -15,7 +15,8 @@ import sympy as sp
 import numpy as np
 from typing import Tuple, Optional, Union, Callable
 from .implicit_curve import ImplicitCurve
-from .numeric import broadcast_coordinates, field_result
+from .numeric import broadcast_coordinates, field_result, real_array
+from .differentiation import estimate_gradient
 
 
 from .precision import PrecisionPolicy, get_precision_policy
@@ -37,6 +38,9 @@ class ProceduralCurve(ImplicitCurve):
         name: str = "custom",
         precision_policy: Optional[PrecisionPolicy] = None,
         is_periodic: bool = False,
+        *,
+        gradient_function=None,
+        derivative_scale=None,
     ):
         """
         Initialize a ProceduralCurve with a Python function.
@@ -56,6 +60,26 @@ class ProceduralCurve(ImplicitCurve):
         # Validate function
         if not callable(function):
             raise ValueError("function must be callable")
+        if gradient_function is not None and not callable(gradient_function):
+            raise ValueError("gradient_function must be callable or None")
+        scales = None
+        if derivative_scale is not None:
+            scales = real_array(derivative_scale)
+            if np.asarray(derivative_scale).dtype.kind == "b":
+                raise ValueError("derivative_scale must be positive and finite")
+            if scales.shape == ():
+                scales = np.repeat(scales, 2)
+            if (
+                scales.shape != (2,)
+                or not np.isfinite(scales).all()
+                or np.any(scales <= 0)
+            ):
+                raise ValueError(
+                    "derivative_scale must be a positive finite scalar or pair"
+                )
+            scales = tuple(float(v) for v in scales)
+        self._gradient_function = gradient_function
+        self._derivative_scale = scales
 
         # Store the function and metadata
         self.function = function
@@ -82,9 +106,6 @@ class ProceduralCurve(ImplicitCurve):
         # Instead, manually set up what we need
         self._eval_func = None  # We'll use our own function
         self._grad_funcs = None  # We'll compute gradients numerically
-
-        # Finite difference step size for numerical gradient
-        self._gradient_h = 1e-8
 
     def evaluate(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
@@ -116,99 +137,83 @@ class ProceduralCurve(ImplicitCurve):
     def gradient(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
     ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+        """Return the analytic callback or representable numerical estimate."""
+        if self._gradient_function is not None:
+            return self.gradient_diagnostics(x, y)["gradient"]
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        result = estimate_gradient(
+            self.evaluate, xx, yy, self._derivative_scale, diagnostics=False
+        )
+        return tuple(field_result(v, xx.shape, scalar) for v in result["gradient"])
+
+    def gradient_diagnostics(self, x, y):
+        """Gradient, heuristic error estimate and actual coarse/fine displacements.
+
+        Analytic callbacks have no claimed numerical error bound (None). The
+        default numerical scale is max(1, |coordinate|) per axis; explicit
+        derivative_scale supplies local coordinate units for small features.
         """
-        Compute the gradient using finite differences.
-
-        Args:
-            x: x-coordinate(s) for gradient evaluation
-            y: y-coordinate(s) for gradient evaluation
-
-        Returns:
-            Tuple of (grad_x, grad_y) components computed numerically
-
-        Note:
-            Uses central finite differences for numerical gradient approximation.
-        """
-        x_arr, y_arr, scalar = broadcast_coordinates(x, y)
-        if scalar:
-            return self._gradient_scalar(float(x_arr), float(y_arr))
-
-        h = self._gradient_h
-
-        try:
-            # Use vectorized evaluate to compute gradients at all points in one go
-            f_x_plus = self.evaluate(x_arr + h, y_arr)
-            f_x_minus = self.evaluate(x_arr - h, y_arr)
-            grad_x = (f_x_plus - f_x_minus) / (2 * h)
-
-            f_y_plus = self.evaluate(x_arr, y_arr + h)
-            f_y_minus = self.evaluate(x_arr, y_arr - h)
-            grad_y = (f_y_plus - f_y_minus) / (2 * h)
-
-            return grad_x, grad_y
-        except Exception:
-            # Fallback vectorized gradient computation
-            grad_x = np.zeros_like(x_arr, dtype=float)
-            grad_y = np.zeros_like(y_arr, dtype=float)
-
-            flat_x = x_arr.flatten()
-            flat_y = y_arr.flatten()
-            flat_grad_x = grad_x.ravel()
-            flat_grad_y = grad_y.ravel()
-
-            for i, (xi, yi) in enumerate(zip(flat_x, flat_y)):
-                gx, gy = self._gradient_scalar(float(xi), float(yi))
-                flat_grad_x[i] = gx
-                flat_grad_y[i] = gy
-
-            return grad_x, grad_y
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        if self._gradient_function is not None:
+            if scalar:
+                result = self._gradient_function(float(xx), float(yy))
+            else:
+                try:
+                    result = self._gradient_function(xx, yy)
+                except (TypeError, ValueError):
+                    result = np.vectorize(
+                        self._gradient_function, otypes=[float, float]
+                    )(xx, yy)
+            try:
+                gx, gy = result
+            except (TypeError, ValueError) as error:
+                raise ValueError(
+                    "gradient_function must return two real components"
+                ) from error
+            return dict(
+                gradient=(
+                    field_result(gx, xx.shape, scalar),
+                    field_result(gy, xx.shape, scalar),
+                ),
+                error_estimate=None,
+                steps=None,
+                method="analytic",
+            )
+        result = estimate_gradient(self.evaluate, xx, yy, self._derivative_scale)
+        for key in ("gradient", "error_estimate"):
+            result[key] = tuple(field_result(v, xx.shape, scalar) for v in result[key])
+        result["steps"] = tuple(
+            tuple(
+                tuple(field_result(v, xx.shape, scalar) for v in stencil)
+                for stencil in axis
+            )
+            for axis in result["steps"]
+        )
+        return result
 
     def normal(self, x_val: float, y_val: float) -> Tuple[float, float]:
-        """Reject directions dominated by second-order derivative uncertainty.
-
-        Compare the fixed central step with one half-step, without changing the
-        public gradient or choosing an adaptive step. This is a conservative
-        convergence guard, not a proof that an arbitrary callback is regular.
-        """
-        direction = super().normal(x_val, y_val)
-        coarse = np.asarray(self.gradient(x_val, y_val))
-        fine = np.asarray(
-            self._gradient_scalar(float(x_val), float(y_val), self._gradient_h / 2)
-        )
-        scale = np.max(np.abs(coarse))
-        uncertainty = (4 / 3) * np.max(np.abs(coarse - fine))
-        if not np.isfinite(fine).all() or scale <= uncertainty * (
-            1 + 32 * np.finfo(float).eps
+        """Reject singular, nonfinite or numerically unresolved directions."""
+        if (
+            self._gradient_function is not None
+            or type(self).gradient is not ProceduralCurve.gradient
         ):
+            return super().normal(x_val, y_val)
+        try:
+            diagnostics = self.gradient_diagnostics(x_val, y_val)
+            gx, gy = diagnostics["gradient"]
+            value = self.evaluate(x_val, y_val)
+            finite = np.isfinite([value, gx, gy]).all()
+        except (ArithmeticError, ValueError) as error:
+            raise ValueError("Normal undefined outside the field domain") from error
+        scale = max(abs(gx), abs(gy))
+        uncertainty = max(diagnostics["error_estimate"])
+        if not finite or not np.isfinite(uncertainty) or scale <= uncertainty:
             raise ValueError(
                 "Normal undefined - zero gradient or unresolved numerical derivative"
             )
-        return direction
-
-    def _gradient_scalar(self, x: float, y: float, h=None) -> Tuple[float, float]:
-        """
-        Compute numerical gradient at a single point using finite differences.
-
-        Args:
-            x: x-coordinate
-            y: y-coordinate
-
-        Returns:
-            Tuple of (grad_x, grad_y)
-        """
-        h = self._gradient_h if h is None else h
-
-        # Central finite difference for x-component
-        f_x_plus = self.function(x + h, y)
-        f_x_minus = self.function(x - h, y)
-        grad_x = (f_x_plus - f_x_minus) / (2 * h)
-
-        # Central finite difference for y-component
-        f_y_plus = self.function(x, y + h)
-        f_y_minus = self.function(x, y - h)
-        grad_y = (f_y_plus - f_y_minus) / (2 * h)
-
-        return grad_x, grad_y
+        nx, ny = gx / scale, gy / scale
+        magnitude = np.hypot(nx, ny)
+        return (nx / magnitude, ny / magnitude)
 
     def to_dict(self) -> dict:
         """
@@ -230,8 +235,10 @@ class ProceduralCurve(ImplicitCurve):
 
         # Add warning about serialization limitations
         data["_serialization_note"] = (
-            "Function code cannot be serialized. This is a placeholder."
+            "Function and analytic gradient callbacks cannot be serialized. This is a placeholder."
         )
+        if self._derivative_scale is not None:
+            data["derivative_scale"] = list(self._derivative_scale)
 
         return data
 
@@ -287,7 +294,12 @@ class ProceduralCurve(ImplicitCurve):
                 "The original function cannot be reconstructed from serialized data."
             )
 
-        return cls(placeholder_function, variables=variables, name=name)
+        return cls(
+            placeholder_function,
+            variables=variables,
+            name=name,
+            derivative_scale=data.get("derivative_scale"),
+        )
 
     def bounding_box(self):
         """

@@ -1,9 +1,20 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.12.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.13.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.13.0 adds representable procedural stencils, local scale hints,
+uncertainty diagnostics and analytic gradient callbacks. Independent review
+corrected cross-axis scale coupling, scalar branching callback fallback and
+subnormal quantization reporting. [Contracts and raw measurements](procedural_derivatives.md).
+Work17: full Python suite **1,511 passed, 27 skipped, 43 warnings**; final focused
+derivative/singularity compatibility suite **138 passed**; 59 JavaScript checks,
+mocked WebMCP contract and 145-file repository Ruff checks passed. Installed
+0.13.0 wheel startup/assets/real 23-tool MCP smoke passed outside the checkout.
+Actual Chromium acceptance runs in exact-commit CI; local UI code is unchanged.
+Native WebMCP remains unverified. Prior milestones below retain their own counts.
 
 Version 0.12.0 fixes reusable field/normal/blend numerics and deterministic sampled
 contour extraction. Independent review found and covered subnormal subtraction
