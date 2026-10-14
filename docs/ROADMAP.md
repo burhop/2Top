@@ -135,6 +135,14 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.20.0 separates strict native endpoint/hole distance signs from public
+fuzzy containment and retains custom callback contracts. Guarded endpoint and
+nearest-segment arithmetic reduce full sampled-curve costs while preserving the
+0.19 robust fallback. [Independent oracles, measurements and limits](distance_sign_performance.md).
+The next concrete geometry opportunity is the existing fixed-step SDF gradient's
+validity at corners, medial axes and tiny features. Curved source/chord agreement,
+constructor scale limits and native model-host verification remain separate.
+
 Version 0.19.0 corrects short-edge and overflowed segment distances with scaled,
 compensated projection and bounded precision fallbacks. [Oracles, costs and
 limits](distance_numerics.md). Default containment tolerance still reverses the

@@ -1,5 +1,9 @@
 # Scale-robust segment distances
 
+The subsequent [0.20.0 sign/performance milestone](distance_sign_performance.md)
+replaces the default-tolerance SDF sign policy and adds guarded ordinary endpoint
+and nearest-segment reduction paths. Measurements below remain the 0.19 record.
+
 Version 0.19.0 corrects distance arithmetic inside the existing SDF strategy.
 It retains query-local boundary preparation, sign policy, serialization and the
 gradient/level-set APIs. Arbitrary implicit values are not Euclidean distances.

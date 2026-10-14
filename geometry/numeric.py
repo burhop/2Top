@@ -3,6 +3,70 @@
 import numpy as np
 
 
+def endpoint_polygon_inside(x, y, edges):
+    """Strict odd/even membership of a finite closed endpoint chain.
+
+    This SDF-only predicate ignores trim/plot padding. Exact rational crossings
+    resolve near-roundoff, subnormal and overflowing interpolation cases.
+    Boundary classification is immaterial when the distance is exactly zero.
+    """
+    edges = real_array(edges)
+    if edges.ndim != 3 or edges.shape[1:] != (2, 2) or not np.isfinite(edges).all():
+        raise ValueError("Distance segment endpoints must be finite coordinate pairs")
+    if not np.array_equal(edges[:, 1], np.roll(edges[:, 0], -1, axis=0)):
+        raise ValueError("Signed distance requires closed endpoint boundaries")
+    x, y = np.broadcast_arrays(real_array(x), real_array(y))
+    result = np.zeros(x.shape, dtype=bool)
+    for (ax, ay), (bx, by) in edges:
+        active = ((ay <= y) & (y < by)) | ((by <= y) & (y < ay))
+        if not np.any(active):
+            continue
+        if ax == bx:
+            result ^= active & (x < ax)
+            continue
+        px, py = x[active], y[active]
+        with np.errstate(all="ignore"):
+            numerator, denominator, delta_x = py - ay, by - ay, bx - ax
+            ratio = numerator / denominator
+            term = ratio * delta_x
+            crossing = ax + term
+            scale = np.abs(ax) + np.abs(term) + np.abs(crossing) + np.abs(px)
+            uncertain = (
+                ~np.isfinite(crossing)
+                | ~np.isfinite(scale)
+                | ~np.isfinite(numerator)
+                | ~np.isfinite(denominator)
+                | ~np.isfinite(delta_x)
+                | ~np.isfinite(ratio)
+                | ((ratio == 0) & (numerator != 0))
+                | ((term == 0) & (ratio != 0) & (delta_x != 0))
+                | (np.abs(crossing - px) <= 64 * np.finfo(float).eps * scale)
+            )
+            for value in (
+                px,
+                py,
+                numerator,
+                ratio,
+                term,
+                np.array([ax, ay, bx, by, denominator, delta_x]),
+            ):
+                if np.any((value != 0) & (np.abs(value) < np.finfo(float).tiny)):
+                    uncertain[:] = True
+        crossed = px < crossing
+        if np.any(uncertain):
+            from fractions import Fraction
+
+            fa, fy, fb, fby = [Fraction.from_float(float(v)) for v in (ax, ay, bx, by)]
+            for index in np.flatnonzero(uncertain):
+                qx, qy = (
+                    Fraction.from_float(float(px[index])),
+                    Fraction.from_float(float(py[index])),
+                )
+                crossed[index] = qx < fa + (qy - fy) * (fb - fa) / (fby - fy)
+        result[active] ^= crossed
+    return result
+
+
 def _difference_with_error(a, b):
     """TwoDiff: recover the low part of a finite binary64 subtraction."""
     difference = a - b
@@ -49,6 +113,72 @@ def _precise_segment_distance(x, y, endpoints):
 
 
 def segment_distance(x, y, start, end):
+    """Finite segment distance with a guarded ordinary endpoint fast path.
+
+    Axis-aligned segments clamp directly. For oblique segments, endpoint
+    projections are accepted only beyond a conservative roundoff bound and
+    within a binary exponent envelope that keeps every intermediate normal.
+    All interior, uncertain and extreme queries use the v0.19 robust kernel.
+    """
+    endpoints = real_array([start, end])
+    if endpoints.shape != (2, 2) or not np.isfinite(endpoints).all():
+        raise ValueError("Distance segment endpoints must be finite coordinate pairs")
+    x, y = np.broadcast_arrays(real_array(x), real_array(y))
+    shape = x.shape
+    x, y = x.ravel(), y.ravel()
+    valid = np.isfinite(x) & np.isfinite(y)
+    result = np.full(x.shape, np.nan)
+    if not np.any(valid):
+        return result.reshape(shape)
+    px, py = x[valid], y[valid]
+    (ax, ay), (bx, by) = endpoints
+    with np.errstate(all="ignore"):
+        if ay == by:
+            distance = np.hypot(px - np.clip(px, min(ax, bx), max(ax, bx)), py - ay)
+        elif ax == bx:
+            distance = np.hypot(px - ax, py - np.clip(py, min(ay, by), max(ay, by)))
+        else:
+            # With nonzero coordinates in [2^-200, 2^200], even adjacent
+            # representable differences/products stay normal and finite.
+            lower, upper = 2.0**-200, 2.0**200
+            magnitudes = np.abs(endpoints)
+            edge_ordinary = np.all(
+                (magnitudes == 0) | ((magnitudes >= lower) & (magnitudes <= upper))
+            )
+            abs_x, abs_y = np.abs(px), np.abs(py)
+            ordinary = (
+                ((abs_x == 0) | ((abs_x >= lower) & (abs_x <= upper)))
+                & ((abs_y == 0) | ((abs_y >= lower) & (abs_y <= upper)))
+                & edge_ordinary
+            )
+            dx, dy = bx - ax, by - ay
+            wx, wy = px - ax, py - ay
+            dot_x, dot_y = wx * dx, wy * dy
+            dot_a = dot_x + dot_y
+            length_sq = dx * dx + dy * dy
+            dot_b = dot_a - length_sq
+            epsilon = 64 * np.finfo(float).eps
+            # Normal subtraction/product relative errors bound the projection
+            # by the sum of absolute products. The B comparison additionally
+            # includes squared-norm and subtraction errors. 64eps exceeds the
+            # five rounded operations per product/sum and their bound rounding.
+            dot_scale = np.abs(dot_x) + np.abs(dot_y)
+            guard_a = epsilon * dot_scale
+            guard_b = epsilon * (dot_scale + length_sq)
+            at_a, at_b = ordinary & (dot_a < -guard_a), ordinary & (dot_b > guard_b)
+            settled = at_a | at_b
+            distance = np.empty(px.shape)
+            distance[at_a] = np.hypot(wx[at_a], wy[at_a])
+            distance[at_b] = np.hypot(px[at_b] - bx, py[at_b] - by)
+            if np.any(~settled):
+                distance[~settled] = _robust_segment_distance(
+                    px[~settled], py[~settled], start, end
+                )
+    result[valid] = distance
+    return result.reshape(shape)
+
+
+def _robust_segment_distance(x, y, start, end):
     """Euclidean distance to a finite segment, with true point degeneracy.
 
     Binary scaling avoids squared lengths and overflowing projection ratios.

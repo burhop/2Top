@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.20.0
+
+- Native straight endpoint boundaries use a strict SDF-only odd/even sign
+  predicate, including holes, reversed edges and concave polygons. Exact
+  rational crossings resolve guarded overflow, underflow and near-boundary cases.
+- Exact zero distance returns canonical positive zero. Public region/trim
+  containment tolerance is unchanged; custom callbacks keep their calling
+  conventions and internal errors propagate without a retry.
+- A bounded endpoint projection fast path avoids unnecessary compensated
+  arithmetic on ordinary queries. Interior, uncertain and extreme queries keep
+  the 0.19 robust kernel and all its rational/high-precision regressions.
+- Full sampled-circle measurements compare both 0.18 and 0.19; remaining curved
+  source, constructor, approximation and derivative limits stay explicit.
+
 ## 0.19.0
 
 - Segment distances use clamping/hypot for axis-aligned edges and separately

@@ -36,6 +36,90 @@ def exact_distance(start, end, point):
 
 SUB = np.nextafter(0.0, 1.0)
 MAX = np.finfo(float).max
+
+
+@pytest.mark.parametrize("exponent", [-201, -200, -100, 0, 100, 199, 200, 201])
+@pytest.mark.parametrize("offset", [0.0, 32.0])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_guarded_endpoint_projection_matches_rational_oracle(exponent, offset, reverse):
+    scale = 2.0**exponent
+    start = (offset * scale, -offset * scale)
+    end = ((offset + 3) * scale, (4 - offset) * scale)
+    if reverse:
+        start, end = end, start
+    # Exterior endpoint regions, interior projection, cancellation and both
+    # adjacent representable sides of the normal plane at each endpoint.
+    points = [
+        (offset - 2, -offset - 3),
+        (offset + 5, 7 - offset),
+        (offset + 1.5, 3 - offset),
+    ]
+    points = [(x * scale, y * scale) for x, y in points]
+    for a in (start, end):
+        points += [(np.nextafter(a[0], side), a[1]) for side in (-np.inf, np.inf)]
+    expected = [exact_distance(start, end, p) for p in points]
+    x, y = np.array(points).T
+    np.testing.assert_allclose(
+        segment_distance(x, y, start, end), expected, rtol=8e-15, atol=0.0
+    )
+    for point, value in zip(points, expected):
+        assert float(segment_distance(*point, start, end)) == pytest.approx(
+            value, rel=8e-15, abs=0.0
+        )
+
+
+@pytest.mark.parametrize(
+    "scale", [2.0**-201, 2.0**-200, 1.0, 2.0**200, 2.0**201, 1e-200, 1e200]
+)
+@pytest.mark.parametrize("reverse", [False, True])
+def test_box_pruned_minimum_matches_exact_rational_projection(scale, reverse):
+    angles = np.linspace(0.0, 2 * np.pi, 12, endpoint=False)
+    points = [
+        (float(scale * (32 + 3 * np.cos(a))), float(scale * (-32 + 4 * np.sin(a))))
+        for a in angles
+    ]
+    edges = list(zip(points, points[1:] + points[:1]))
+    if reverse:
+        edges = [(b, a) for a, b in reversed(edges)]
+    queries = [
+        (32 * scale, -32 * scale),
+        (36 * scale, -31 * scale),
+        (30 * scale, -30 * scale),
+        points[0],
+    ]
+    queries += [
+        (np.nextafter(points[0][0], -np.inf), points[0][1]),
+        (np.nextafter(points[0][0], np.inf), points[0][1]),
+    ]
+    expected = [min(exact_distance(a, b, p) for a, b in edges) for p in queries]
+    x, y = np.array(queries * 6).T
+    field = SignedDistanceField.__new__(SignedDistanceField)
+    field._boundary_segments = lambda: edges
+    np.testing.assert_allclose(
+        field._compute_distance_to_boundary_vectorized(x, y),
+        expected * 6,
+        rtol=8e-15,
+        atol=0.0,
+    )
+
+
+def test_box_pruning_never_silently_omits_invalid_or_extreme_queries():
+    field = SignedDistanceField.__new__(SignedDistanceField)
+    edges = [((float(i), 0.0), (float(i + 1), 1.0)) for i in range(12)]
+    field._boundary_segments = lambda: edges
+    x, y = np.array([0.0, 1e200, np.nan, np.inf] * 8), np.ones(32)
+    expected = np.minimum.reduce([segment_distance(x, y, a, b) for a, b in edges])
+    np.testing.assert_allclose(
+        field._compute_distance_to_boundary_vectorized(x, y),
+        expected,
+        rtol=8e-15,
+        atol=0.0,
+    )
+    edges.append(((1000.0, 1000.0), (np.nan, 2000.0)))
+    with pytest.raises(ValueError, match="finite"):
+        field._compute_distance_to_boundary_vectorized(np.zeros(32), np.zeros(32))
+
+
 CASES = [
     ((0.0, 0.0), (4e-6, 0.0), (2e-6, 1e-6)),
     ((0.0, 0.0), (4 * SUB, 0.0), (4 * SUB, 2 * SUB)),

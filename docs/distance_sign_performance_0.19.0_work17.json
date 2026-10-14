@@ -1,0 +1,276 @@
+{
+  "label": "0.19.0",
+  "repository": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-distance-numerics-0.19.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "geometry": "rectangle",
+      "shape": [
+        97,
+        97
+      ],
+      "boundary_segments": 4,
+      "evaluate": {
+        "median_ms": 0.7994,
+        "batches_ms": [
+          0.714,
+          0.7203,
+          0.9071,
+          0.7994,
+          0.8417
+        ]
+      },
+      "gradient": {
+        "median_ms": 2.7844,
+        "batches_ms": [
+          2.8728,
+          2.6789,
+          2.7844
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.1573,
+        "batches_ms": [
+          0.1644,
+          0.1573,
+          0.1545
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    },
+    {
+      "geometry": "rectangle",
+      "shape": [
+        257,
+        257
+      ],
+      "boundary_segments": 4,
+      "evaluate": {
+        "median_ms": 7.9594,
+        "batches_ms": [
+          7.895,
+          8.2439,
+          9.552,
+          7.6396,
+          7.9594
+        ]
+      },
+      "gradient": {
+        "median_ms": 38.5602,
+        "batches_ms": [
+          38.5602,
+          39.9001,
+          33.1932
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.1574,
+        "batches_ms": [
+          0.1608,
+          0.1574,
+          0.1559
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        97,
+        97
+      ],
+      "boundary_segments": 8,
+      "evaluate": {
+        "median_ms": 1.1497,
+        "batches_ms": [
+          1.1542,
+          1.1398,
+          1.1497,
+          1.1526,
+          1.133
+        ]
+      },
+      "gradient": {
+        "median_ms": 4.6063,
+        "batches_ms": [
+          4.6063,
+          4.581,
+          4.6249
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.2529,
+        "batches_ms": [
+          0.2562,
+          0.2515,
+          0.2529
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        257,
+        257
+      ],
+      "boundary_segments": 8,
+      "evaluate": {
+        "median_ms": 13.9893,
+        "batches_ms": [
+          14.576,
+          13.9893,
+          15.0264,
+          13.2312,
+          12.9741
+        ]
+      },
+      "gradient": {
+        "median_ms": 50.5576,
+        "batches_ms": [
+          55.1362,
+          50.3768,
+          50.5576
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.2296,
+        "batches_ms": [
+          0.2472,
+          0.2296,
+          0.2234
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        97,
+        97
+      ],
+      "boundary_segments": 50,
+      "evaluate": {
+        "median_ms": 46.1096,
+        "batches_ms": [
+          48.3747,
+          46.1096,
+          45.279,
+          45.677,
+          160.5429
+        ]
+      },
+      "gradient": {
+        "median_ms": 480.1583,
+        "batches_ms": [
+          480.1583,
+          502.6696,
+          442.2517
+        ]
+      },
+      "scalar": {
+        "median_ms": 25.9375,
+        "batches_ms": [
+          25.9375,
+          27.7033,
+          23.4148
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        257,
+        257
+      ],
+      "boundary_segments": 50,
+      "evaluate": {
+        "median_ms": 936.4166,
+        "batches_ms": [
+          947.1903,
+          925.4282,
+          930.4098,
+          936.4166,
+          936.4751
+        ]
+      },
+      "gradient": {
+        "median_ms": 3734.1706,
+        "batches_ms": [
+          3568.4247,
+          3734.1706,
+          4018.5901
+        ]
+      },
+      "scalar": {
+        "median_ms": 21.4014,
+        "batches_ms": [
+          21.4014,
+          21.8811,
+          19.927
+        ]
+      },
+      "nonfinite_results": 0,
+      "retains_query_arrays": false
+    }
+  ],
+  "edge_cases": [
+    {
+      "workload": "overflow_64",
+      "median_ms": 41.4503,
+      "batches_ms": [
+        40.9835,
+        42.7857,
+        41.4503,
+        42.0053,
+        40.3806
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "collinear_64",
+      "median_ms": 1.8693,
+      "batches_ms": [
+        2.0694,
+        1.8891,
+        1.8693,
+        1.8231,
+        1.8553
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "near_line_64",
+      "median_ms": 0.5008,
+      "batches_ms": [
+        0.4939,
+        0.5152,
+        0.5117,
+        0.5008,
+        0.4714
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "endpoint_257",
+      "median_ms": 20.2899,
+      "batches_ms": [
+        20.2899,
+        21.9763,
+        19.0613,
+        18.8225,
+        21.9645
+      ],
+      "nonfinite_results": 0
+    }
+  ],
+  "limits": "Sequential warm complete calls; five evaluate/edge batches and three gradient/scalar batches, one call each. Same 50-point curved sampling across revisions. Wall-clock measurements include source sign, boundary preparation and reduction; no source-curve accuracy or application FPS claim. Baseline edge workloads may be incorrect."
+}
