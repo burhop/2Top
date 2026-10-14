@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.19.0 corrects short-edge and overflowed segment distances with scaled,
+compensated projection and bounded precision fallbacks. [Oracles, costs and
+limits](distance_numerics.md). Default containment tolerance still reverses the
+sign near a tiny hole in a recorded case; distance sign/precision semantics are
+the next concrete opportunity. Sampled curves and derivative uncertainty remain
+separate contracts.
+
 Version 0.18.0 repairs signed-distance query freshness and the generic polygon
 containment dependency, includes nearest hole boundaries and retains no query
 buffers. [Analytic cases, measured cost and limits](distance_cache.md). The next

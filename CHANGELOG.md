@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.19.0
+
+- Segment distances use clamping/hypot for axis-aligned edges and separately
+  scaled, compensated projection for oblique edges. Remove the absolute short-
+  edge cutoff and squared-distance overflow; only identical endpoints are points.
+- Bounded high-precision fallback handles observed overflow, underflow, endpoint
+  rounding and cancellation. Nonfinite endpoint geometry raises explicitly.
+- Exact-rational/high-precision fixtures cover tested tiny/huge coordinates,
+  translations, degeneracy, reversal, holes and scalar/broadcast paths.
+- Ordinary and fallback-heavy measurements document added arithmetic costs;
+  curved sampling, containment tolerances and derivative limits remain explicit.
+
 ## 0.18.0
 
 - Removed borrowed-grid/result and sampled-boundary caches from signed distance.

@@ -1,9 +1,23 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.18.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.19.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.19.0 adds [scale-robust segment distances](distance_numerics.md).
+The focused distance/field suite passed **245 tests**, including **135 new
+numerical cases**. Exact rational/high-precision oracles and independent review
+cover extreme/subnormal inputs, translations, projection/cancellation, degeneracy,
+endpoint reversal and configured-tolerance hole integration. All 59 JavaScript
+checks, mocked WebMCP, 155-file configured Ruff and 47-file explicit CI targets
+passed. The runtime-only installed wheel passed numerical geometry, outside-
+checkout startup/assets and the real 23-tool MCP catalog. Full Work17 and exact-
+feature/dev CI results are recorded with the milestone PR and handoff as those
+gates finish. Normal/fallback costs and remaining sign/sampling/derivative limits
+are explicit. All 58 dependency records are unchanged; h11 metadata matches.
+
+## Previous milestone
 
 Version 0.18.0 repairs [signed-distance cache freshness](distance_cache.md),
 nearest-hole magnitude and live generic polygon containment. Independent source
