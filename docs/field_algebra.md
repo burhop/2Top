@@ -68,5 +68,7 @@ accuracy certificates; the previously documented hidden-feature counterexample
 still applies. No symbolic flattening crosses custom evaluator boundaries.
 
 Next useful work includes denominator-sensitive domain-aware procedural sampling
-and error diagnostics for distance/occupancy fields, which retain numerical
-derivatives. Arbitrary smooth-field bounds remain unknown where no proof exists.
+and error diagnostics for distance/occupancy fields. Signed distance retains
+numerical derivatives; binary occupancy returns zero gradients even at its
+discontinuous boundary. Arbitrary smooth-field bounds remain unknown where no
+proof exists.

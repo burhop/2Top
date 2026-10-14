@@ -1,4 +1,8 @@
-"""Query-local algebraic evaluation; no persistent graph or expression snapshots."""
+"""Query-local algebraic evaluation; no persistent graph or expression snapshots.
+
+Callbacks are assumed pure and pointwise: shared-node reuse changes call counts.
+Unknown custom derivative implementations retain responsibility for their validity.
+"""
 
 import numpy as np
 
