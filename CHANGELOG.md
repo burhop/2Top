@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.14.0
+
+- Sublevel queries distinguish bounded, proved empty and unknown sets. Supported
+  native quadratics use exact stored coefficients and checked outward endpoints;
+  unsupported/custom/unbounded fields remain unknown.
+- Smooth R-function bounds propagate alpha/2 through nested operands in field
+  units. Unknown union operands no longer borrow a known child's box and discard
+  remote intersections. Searches retain finite-domain limits.
+- CurveField level sets retain stable numeric kernels, gradients, procedural
+  normal guards and scalar/broadcast contracts through LevelSetCurve. Serialized
+  wrappers preserve source types and honest callback placeholders.
+- Expression/variable assignment invalidates native compiled kernels, keeping evaluation
+  consistent with enclosure proofs. Independent analytic regressions and saved
+  before/after measurements document fixes and mathematical/performance limits.
+
 ## 0.13.0
 
 - Procedural gradients use actual representable coarse/fine stencils and

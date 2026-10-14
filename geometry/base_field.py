@@ -18,6 +18,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Dict, Any, Tuple, List
 from .implicit_curve import ImplicitCurve
+from .bounds import SublevelBounds, rational_level
 
 
 class BaseField(ABC):
@@ -107,6 +108,13 @@ class BaseField(ABC):
         """
         pass
 
+    def sublevel_bounds(self, level=0):
+        """Unknown unless a field implementation supplies an enclosure proof."""
+        rational_level(level)
+        return SublevelBounds(
+            "unknown", reason="Field has no certified sublevel envelope"
+        )
+
     def clear_cache(self) -> None:
         """Clear any cached evaluation results."""
         pass
@@ -193,8 +201,7 @@ class CurveField(BaseField):
         Returns:
             ImplicitCurve representing the level set
         """
-        # Kinetic curves retain their numeric recipe when their wrapped field
-        # is shifted. Keep the legacy symbolic path unchanged for other types.
+        # Keep the kinetic recipe specialization and its serialized identity.
         from .kinetic_field import KineticIslandCurve
 
         if isinstance(self.curve, KineticIslandCurve):
@@ -203,17 +210,15 @@ class CurveField(BaseField):
             shift = _finite_number(level, "level")
             return self.curve.field.level_set(self.curve.level + shift)
 
-        # Create a new curve with the expression shifted by the level
+        from .level_set_curve import LevelSetCurve
 
-        # Get the original expression and variables
-        original_expr = self.curve.expression
-        variables = self.curve.variables
+        return LevelSetCurve(self.curve, level)
 
-        # Create shifted expression: f(x,y) - level = 0
-        shifted_expr = original_expr - level
-
-        # Return a new ImplicitCurve with the shifted expression
-        return ImplicitCurve(shifted_expr, variables)
+    def sublevel_bounds(self, level=0):
+        if getattr(self.evaluate, "__func__", None) is not CurveField.evaluate:
+            rational_level(level)
+            return SublevelBounds("unknown", reason="Custom CurveField evaluator")
+        return self.curve.sublevel_bounds(level)
 
     def to_dict(self) -> Dict[str, Any]:
         """

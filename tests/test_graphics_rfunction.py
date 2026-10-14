@@ -101,14 +101,15 @@ class TestBoundingBox:
         bb = r.bounding_box()
         assert bb is None
 
-    def test_bbox_uses_one_child_when_other_is_none(self):
+    def test_union_box_unknown_when_other_child_has_remote_pocket(self):
         from geometry.procedural_curve import ProceduralCurve
 
         c1 = _circle(0, 0, 2)
-        c2 = ProceduralCurve(lambda x, y: x**2 + y**2 - 1)
+        c2 = ProceduralCurve(lambda x, y: (x - 30) ** 2 + y**2 - 1)
         r = union(c1, c2)
         bb = r.bounding_box()
-        assert bb is not None
+        assert r.evaluate(30, 0) < 0
+        assert bb is None
 
 
 # ── get_child_curves ─────────────────────────────────────────────────────────

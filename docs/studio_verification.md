@@ -1,9 +1,22 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.13.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.14.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.14.0 adds supported quadratic sublevel envelopes, recursive smooth
+blend bounds and numeric-kernel-preserving CurveField level sets.
+[Contracts, counterexamples and measurements](sublevel_bounds.md). Independent
+review covered custom wrapper evaluators, compiled expression/variable changes
+and shifted procedural normal guards. Final Work17 Python suite: **1,550 passed,
+27 skipped, 43 warnings**, including **39 new analytic/regression cases**.
+All 59 JavaScript checks, mocked WebMCP, 148-file repository Ruff and explicit
+29-file CI lint/format targets passed. The final installed 0.14.0 wheel passed
+outside-checkout startup, packaged assets and the real 23-tool MCP catalog with
+runtime dependencies only. Real Chromium acceptance runs in exact-commit CI;
+native WebMCP remains unverified. Enclosures apply to the mathematical field,
+and unsupported domains and finite sampling retain documented limits.
 
 Version 0.13.0 adds representable procedural stencils, local scale hints,
 uncertainty diagnostics and analytic gradient callbacks. Independent review

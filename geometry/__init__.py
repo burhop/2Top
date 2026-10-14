@@ -2,6 +2,8 @@
 
 # Import all curve classes
 from .implicit_curve import ImplicitCurve
+from .bounds import SublevelBounds
+from .level_set_curve import LevelSetCurve
 from .conic_section import ConicSection
 from .polynomial_curve import PolynomialCurve
 from .superellipse import Superellipse
@@ -40,6 +42,8 @@ from .field_strategy import (
 __all__ = [
     # Core curve classes
     "ImplicitCurve",
+    "SublevelBounds",
+    "LevelSetCurve",
     "ConicSection",
     "PolynomialCurve",
     "Superellipse",

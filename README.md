@@ -1,10 +1,10 @@
-# 2Top 0.13.0 · Tidal Atlas
+# 2Top 0.14.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.13.0** improves [procedural derivative accuracy](docs/procedural_derivatives.md): actual representable stencils, independent local coordinate scales, uncertainty diagnostics and optional analytic gradients. Saved analytic fixtures reproduce the old large-coordinate and small-feature failures and measure the corrected estimates. Numeric gradients cost more field evaluations; callbacks avoid probing. Existing [backend improvements](docs/implicit_backend.md), authoring behavior, recipe schema 4 and 23 tools remain compatible. Development targets **dev**.
+Version **0.14.0** adds [sublevel envelopes and stable level-set wrappers](docs/sublevel_bounds.md): supported quadratics and nested smooth blends distinguish bounded, empty and unknown results. Unknown child bounds no longer discard remote intersections. CurveField level sets preserve procedural callbacks and stable numeric kernels. Saved counterexamples measure fixes and costs. The preceding [procedural derivative improvements](docs/procedural_derivatives.md) remain available. Authoring behavior, recipe schema 4 and 23 tools remain compatible. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -61,6 +61,8 @@ See [the studio guide](docs/tidal_atlas.md), [agent connection details and compa
 python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
+python -m pytest tests/test_sublevel_bounds.py
+python benchmarks/sublevel_bounds.py --output bounds.json
 python benchmarks/procedural_accuracy.py --output accuracy.json
 python benchmarks/implicit_backend.py --output backend-timing.json
 node tests/studio/webmcp_contract.mjs
