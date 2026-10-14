@@ -24,6 +24,7 @@ from numbers import Real
 from typing import Tuple, Union, Dict, Any
 from .implicit_curve import ImplicitCurve
 from .numeric import blend_terms
+from .bounds import SublevelBounds, rational_level, union_bounds, intersection_bounds
 
 
 class RFunctionCurve(ImplicitCurve):
@@ -324,54 +325,26 @@ class RFunctionCurve(ImplicitCurve):
             variables=variables,
         )
 
+    def sublevel_bounds(self, level=0):
+        """Compose sublevel enclosures in field units, including smooth growth."""
+        level = rational_level(level)
+        if getattr(self.evaluate, "__func__", None) is not RFunctionCurve.evaluate:
+            return SublevelBounds("unknown", reason="Custom R-function evaluator")
+        if self.operation == "difference":
+            return self.curve1.sublevel_bounds(level)
+        if self.operation == "blend":
+            # min(f1,f2)-alpha/2 <= smooth_min(f1,f2) <= min(f1,f2).
+            # Every output sublevel therefore lies in this expanded union.
+            level += sp.Rational(self.alpha) / 2
+        first = self.curve1.sublevel_bounds(level)
+        second = self.curve2.sublevel_bounds(level)
+        if self.operation == "intersection":
+            return intersection_bounds(first, second)
+        return union_bounds(first, second)
+
     def bounding_box(self):
-        """
-        Return bounding box depending on the R-function operation.
-
-        - union / blend  → union of both child bounding boxes (the result can fill both)
-        - intersection   → intersection of both child bounding boxes (result is bounded by both)
-        - difference     → bounding box of curve1 (we subtract from it, so it can't grow)
-
-        Returns:
-            (xmin, xmax, ymin, ymax) or None if child boxes are unavailable.
-        """
-        bb1 = getattr(self.curve1, "bounding_box", lambda: None)()
-        bb2 = getattr(self.curve2, "bounding_box", lambda: None)()
-
-        if bb1 is None and bb2 is None:
-            return None
-        # If one is missing, fall back to the other
-        if bb1 is None:
-            return bb2
-        if bb2 is None:
-            return bb1
-
-        x1min, x1max, y1min, y1max = bb1
-        x2min, x2max, y2min, y2max = bb2
-
-        if self.operation in ("union", "blend"):
-            return (
-                min(x1min, x2min),
-                max(x1max, x2max),
-                min(y1min, y2min),
-                max(y1max, y2max),
-            )
-        elif self.operation == "intersection":
-            xmin = max(x1min, x2min)
-            xmax = min(x1max, x2max)
-            ymin = max(y1min, y2min)
-            ymax = min(y1max, y2max)
-            # If no overlap, fall back to union box
-            if xmin >= xmax or ymin >= ymax:
-                return (
-                    min(x1min, x2min),
-                    max(x1max, x2max),
-                    min(y1min, y2min),
-                    max(y1max, y2max),
-                )
-            return (xmin, xmax, ymin, ymax)
-        else:  # difference: curve1 - curve2
-            return bb1
+        """Finite sublevel enclosure, or None for unknown/empty (legacy API)."""
+        return self.sublevel_bounds().box
 
     def get_child_curves(self):
         """

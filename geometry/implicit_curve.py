@@ -15,6 +15,7 @@ from abc import abstractmethod
 
 from .precision import PrecisionPolicy, get_precision_policy
 from .numeric import broadcast_coordinates, field_result
+from .bounds import SublevelBounds, quadratic_sublevel_bounds, rational_level
 
 
 class ImplicitCurve:
@@ -25,6 +26,28 @@ class ImplicitCurve:
     a symbolic expression and providing methods to evaluate, differentiate,
     and visualize the curve.
     """
+
+    @property
+    def expression(self):
+        return self._expression
+
+    @expression.setter
+    def expression(self, value):
+        # Expression assignment must not leave compiled kernels describing a
+        # different field from the new envelope proof.
+        self._expression = value
+        self._eval_func = None
+        self._grad_funcs = None
+
+    @property
+    def variables(self):
+        return self._variables
+
+    @variables.setter
+    def variables(self, value):
+        self._variables = tuple(value)
+        self._eval_func = None
+        self._grad_funcs = None
 
     def __init__(
         self,
@@ -371,6 +394,20 @@ class ImplicitCurve:
         values_array = np.asarray(values)
         return np.abs(values_array) <= tol
 
+    def sublevel_bounds(self, level=0) -> SublevelBounds:
+        """Enclose the mathematical set f <= level, or report unknown/empty.
+
+        Symbolic display hints cannot certify a different custom evaluator.
+        Supported native quadratics use exact stored coefficients and outward
+        checked float endpoints; this is not an interval floating evaluator.
+        """
+        level = rational_level(level)
+        if getattr(self.evaluate, "__func__", None) is not ImplicitCurve.evaluate:
+            return SublevelBounds(
+                "unknown", reason="Custom evaluator has no certified envelope"
+            )
+        return quadratic_sublevel_bounds(self.expression, self.variables, level)
+
     def bounding_box(self) -> Tuple[float, float, float, float]:
         """
         Returns a bounding box (xmin, xmax, ymin, ymax) for the implicit curve.
@@ -450,6 +487,10 @@ class ImplicitCurve:
             from .kinetic_field import KineticIslandCurve
 
             return KineticIslandCurve.from_dict(data)
+        elif curve_type == "LevelSetCurve":
+            from .level_set_curve import LevelSetCurve
+
+            return LevelSetCurve.from_dict(data)
         elif curve_type == "RFunctionCurve":
             from .rfunction_curve import RFunctionCurve
 

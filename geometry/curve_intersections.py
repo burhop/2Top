@@ -103,27 +103,33 @@ def find_curve_intersections(
 
     # Fast AABB overlap check to avoid expensive grid evaluation
     def _get_bbox(c):
-        if hasattr(c, "bounding_box"):
+        if hasattr(c, "sublevel_bounds"):
             try:
-                b = c.bounding_box()
-                if b and all(np.isfinite(v) for v in b):
-                    return b
+                result = c.sublevel_bounds(0)
+                if result.kind == "bounded":
+                    return result.box
             except Exception:
                 pass
-        # Check explicit trimming bounds
-        if hasattr(c, "_xmin") and c._xmin is not None:
-            return (c._xmin, c._xmax, c._ymin, c._ymax)
-        if (
-            hasattr(c, "base_curve")
-            and hasattr(c.base_curve, "_xmin")
-            and c.base_curve._xmin is not None
-        ):
-            return (
-                c.base_curve._xmin,
-                c.base_curve._xmax,
-                c.base_curve._ymin,
-                c.base_curve._ymax,
+            # Unknown is not a license to use a heuristic display box as an
+            # exclusion proof. A complete trim rectangle remains a constraint.
+        elif hasattr(c, "bounding_box"):
+            try:
+                box = c.bounding_box()
+                if box and len(box) == 4 and all(np.isfinite(v) for v in box):
+                    return box
+            except Exception:
+                pass
+        for candidate in (c, getattr(c, "base_curve", None)):
+            box = tuple(
+                getattr(candidate, key, None)
+                for key in ("_xmin", "_xmax", "_ymin", "_ymax")
             )
+            if (
+                all(v is not None and np.isfinite(v) for v in box)
+                and box[0] <= box[1]
+                and box[2] <= box[3]
+            ):
+                return box
         return None
 
     bbox1 = _get_bbox(curve1)

@@ -135,11 +135,16 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.14.0 completes supported quadratic sublevel envelopes, recursive smooth
+blend level propagation and stable CurveField level-set wrappers.
+[Bounds contracts, measurements and limitations](sublevel_bounds.md). Higher-degree
+and domain-bound envelopes, interval evaluation and general algebraic-field
+derivatives remain separate useful increments.
+
 Version 0.13.0 addresses procedural derivative accuracy with representable
 stencils, explicit local scales, diagnostics and analytic callbacks.
-[Contract and analytic measurements](procedural_derivatives.md). The next bounded
-increment is sound sublevel envelopes for smooth fields, with distinct bounded,
-empty and unknown results; zero-contour boxes cannot infer generic blend growth.
+[Contract and analytic measurements](procedural_derivatives.md). Zero-contour
+boxes cannot infer generic blend growth; 0.14 supplies supported sublevel proofs.
 
 Version 0.12.0 delivers a bounded reusable backend pass: broadcast evaluation,
 scale-stable normal and smooth union numerics, finite sampling validation and

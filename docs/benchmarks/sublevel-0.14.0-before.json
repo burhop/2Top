@@ -1,0 +1,56 @@
+{
+  "version": "0.13.0",
+  "samples": 1024,
+  "results": {
+    "identical_blend": {
+      "box": [
+        -1.0,
+        1.0,
+        -1.0,
+        1.0
+      ],
+      "analytic_radius": 1.4142135623730951,
+      "violations": 1020,
+      "maximum_excess": 0.41421356237309515,
+      "warm_box_mean_ms": 0.0034910000977106392
+    },
+    "nested_blend": {
+      "box": [
+        -1.0,
+        1.0,
+        -1.0,
+        1.0
+      ],
+      "analytic_radius": 1.7320508075688772,
+      "violations": 1024,
+      "maximum_excess": 0.7320508075688772,
+      "warm_box_mean_ms": 0.0058620001072995365
+    },
+    "procedural_level": {
+      "error_type": "TypeError",
+      "error": "unsupported operand type(s) for -: 'NoneType' and 'int'"
+    },
+    "extreme_blend_level": {
+      "actual": "-inf",
+      "expected": -1.1180339887498949e+200,
+      "finite": false
+    },
+    "remote_intersections": {
+      "actual": [],
+      "expected": [
+        [
+          3.25,
+          -0.9682458365518543
+        ],
+        [
+          3.25,
+          0.9682458365518543
+        ]
+      ],
+      "search_range": 5.0,
+      "grid_resolution": 160,
+      "tolerance": 1e-07
+    }
+  },
+  "note": "Analytic fixture checks; timings are local warm-cache means, not completeness or universal performance guarantees."
+}

@@ -1,0 +1,66 @@
+{
+  "version": "0.14.0",
+  "samples": 1024,
+  "results": {
+    "identical_blend": {
+      "box": [
+        -1.4142135623730951,
+        1.4142135623730951,
+        -1.4142135623730951,
+        1.4142135623730951
+      ],
+      "analytic_radius": 1.4142135623730951,
+      "violations": 0,
+      "maximum_excess": 0.0,
+      "warm_box_mean_ms": 0.006512999825645238
+    },
+    "nested_blend": {
+      "box": [
+        -1.7320508075688774,
+        1.7320508075688774,
+        -1.7320508075688774,
+        1.7320508075688774
+      ],
+      "analytic_radius": 1.7320508075688772,
+      "violations": 0,
+      "maximum_excess": 0.0,
+      "warm_box_mean_ms": 0.015793000056874007
+    },
+    "procedural_level": {
+      "actual": -1.0,
+      "expected": -1.0,
+      "finite": true
+    },
+    "extreme_blend_level": {
+      "actual": -1.1180339887498949e+200,
+      "expected": -1.1180339887498949e+200,
+      "finite": true
+    },
+    "remote_intersections": {
+      "actual": [
+        [
+          3.25,
+          -0.9682458365518543
+        ],
+        [
+          3.25,
+          0.9682458365518541
+        ]
+      ],
+      "expected": [
+        [
+          3.25,
+          -0.9682458365518543
+        ],
+        [
+          3.25,
+          0.9682458365518543
+        ]
+      ],
+      "search_range": 5.0,
+      "grid_resolution": 160,
+      "tolerance": 1e-07
+    }
+  },
+  "note": "Analytic fixture checks; timings are local warm-cache means, not completeness or universal performance guarantees."
+}
