@@ -471,19 +471,7 @@ class SignedDistanceField(BaseField):
         from .distance_gradient import native_boundaries, geometric_gradient
 
         xx, yy, scalar = broadcast_coordinates(x, y)
-        native_methods = (
-            "evaluate",
-            "_inside_for_distance",
-            "_boundary_segments",
-            "_compute_signed_distance",
-            "_compute_distance_to_boundary",
-            "_compute_distance_to_boundary_vectorized",
-        )
-        if not all(
-            getattr(getattr(self, name), "__func__", None)
-            is getattr(SignedDistanceField, name)
-            for name in native_methods
-        ):
+        if not self._has_native_distance_methods():
             return self._numerical_gradient(x, y)
         finite = np.isfinite(xx) & np.isfinite(yy)
         if not np.any(finite):
@@ -507,6 +495,118 @@ class SignedDistanceField(BaseField):
                 result.append(field_result(full, xx.shape, scalar))
             return tuple(result)
         return self._numerical_gradient(x, y)
+
+    def _has_native_distance_methods(self):
+        """Overrides remain authoritative; native geometric shortcuts are opt-out."""
+        native_methods = (
+            "evaluate",
+            "_evaluate_vectorized",
+            "_inside_for_distance",
+            "_boundary_segments",
+            "_compute_signed_distance",
+            "_compute_distance_to_boundary",
+            "_compute_distance_to_boundary_vectorized",
+        )
+        return all(
+            getattr(getattr(self, name), "__func__", None)
+            is getattr(SignedDistanceField, name)
+            for name in native_methods
+        )
+
+    def gradient_diagnostics(self, x, y):
+        """Opt-in native/provided gradients or bounded numerical consistency.
+
+        Numerical probes differentiate evaluate(), including its sampled magnitude
+        and authoritative sign callbacks, never an inferred exact curved distance.
+        Unresolved numerical vectors have two NaNs; raw_gradient retains the
+        candidate. Finite error estimates and available=True report sampled
+        consistency only, not a differentiability or accuracy certificate.
+        Legacy gradient() and its resolution-based callback contract are unchanged.
+        """
+        from .numeric import broadcast_coordinates, field_result
+        from .distance_gradient import native_boundaries
+        from .adaptive_differentiation import automatic_gradient
+
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        finite = np.isfinite(xx) & np.isfinite(yy)
+        provided = (
+            getattr(self.gradient, "__func__", None) is not SignedDistanceField.gradient
+        )
+        native = (
+            not provided
+            and self._has_native_distance_methods()
+            and np.any(finite)
+            and native_boundaries(self.region) is not None
+        )
+
+        def output(value):
+            return field_result(value, xx.shape, scalar)
+
+        def metadata(value):
+            return value.item() if scalar else value
+
+        if provided or native:
+            gx, gy = self.gradient(x, y)
+            raw = tuple(np.broadcast_to(v, xx.shape) for v in (gx, gy))
+            available = finite & np.isfinite(raw[0]) & np.isfinite(raw[1])
+            return dict(
+                gradient=tuple(output(np.where(available, v, np.nan)) for v in raw),
+                raw_gradient=tuple(output(v) for v in raw),
+                available=metadata(available),
+                status=tuple(
+                    metadata(
+                        np.where(
+                            available,
+                            "provided" if provided else "geometric",
+                            "unavailable",
+                        )
+                    )
+                    for _ in range(2)
+                ),
+                method="provided_gradient" if provided else "nearest_feature",
+                derivative_target="provided_gradient"
+                if provided
+                else "native_endpoint_distance",
+                error_estimate=None,
+                steps=None,
+                field_evaluations=None if provided else 0,
+                distance_model="provided_gradient" if provided else "native_straight",
+                certified=False,
+            )
+
+        def evaluate(a, b):
+            # Keep scalar Python arguments and array callback shapes; do not
+            # vectorize/retry callbacks or swallow their internal exceptions.
+            return self.evaluate(float(a), float(b)) if scalar else self.evaluate(a, b)
+
+        result = automatic_gradient(evaluate, xx, yy)
+        raw = result["gradient"]
+        available = finite.copy()
+        for value, error in zip(raw, result["error_estimate"]):
+            available &= np.isfinite(value) & np.isfinite(error)
+        result["raw_gradient"] = tuple(output(v) for v in raw)
+        result["gradient"] = tuple(output(np.where(available, v, np.nan)) for v in raw)
+        result["error_estimate"] = tuple(output(v) for v in result["error_estimate"])
+        result["steps"] = tuple(
+            tuple(tuple(output(v) for v in stencil) for stencil in axis)
+            for axis in result["steps"]
+        )
+        for key in ("status", "selection", "candidates"):
+            result[key] = tuple(metadata(v) for v in result[key])
+        result["status"] = tuple(
+            metadata(np.where(finite, v, "nonfinite_coordinate"))
+            for v in result["status"]
+        )
+        result["nominal_step"] = tuple(output(v) for v in result["nominal_step"])
+        result.update(
+            available=metadata(available), derivative_target="evaluate", certified=False
+        )
+        result["distance_model"] = (
+            "boundary_magnitude_and_containment_sign"
+            if self._has_native_distance_methods()
+            else "custom_evaluation"
+        )
+        return result
 
     def _numerical_gradient(self, x, y):
         """Compatibility approximation for sampled sources and custom callbacks."""

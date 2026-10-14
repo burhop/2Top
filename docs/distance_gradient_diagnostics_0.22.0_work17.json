@@ -1,0 +1,238 @@
+{
+  "label": "0.22.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "sampled_source_boundary",
+      "legacy_gradient": {
+        "median_ms": 11.2056,
+        "batches_ms": [
+          11.3938,
+          11.2159,
+          11.1907,
+          11.1217,
+          11.2056
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 1720.4628,
+        "batches_ms": [
+          499.4011,
+          1720.4628,
+          2123.0315
+        ]
+      },
+      "field_evaluations": 161,
+      "available_vectors": 0,
+      "query_points": 1,
+      "status_counts": [
+        {
+          "budget_exhausted": 1
+        },
+        {
+          "budget_exhausted": 1
+        }
+      ]
+    },
+    {
+      "workload": "sampled_smooth_chord",
+      "legacy_gradient": {
+        "median_ms": 50.023,
+        "batches_ms": [
+          48.4115,
+          53.9227,
+          53.2176,
+          50.023,
+          39.7353
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 221.5894,
+        "batches_ms": [
+          221.5894,
+          219.5995,
+          250.6804
+        ]
+      },
+      "field_evaluations": 17,
+      "available_vectors": 1,
+      "query_points": 1,
+      "status_counts": [
+        {
+          "sample_consistent": 1
+        },
+        {
+          "sample_consistent": 1
+        }
+      ]
+    },
+    {
+      "workload": "sampled_17x17",
+      "legacy_gradient": {
+        "median_ms": 122.6762,
+        "batches_ms": [
+          122.6762,
+          129.2941,
+          125.803,
+          122.5295,
+          118.2183
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 5571.3277,
+        "batches_ms": [
+          5537.2803,
+          5620.7034,
+          5571.3277
+        ]
+      },
+      "field_evaluations": 125,
+      "available_vectors": 284,
+      "query_points": 289,
+      "status_counts": [
+        {
+          "roundoff_limited": 1,
+          "sample_consistent": 288
+        },
+        {
+          "budget_exhausted": 1,
+          "roundoff_limited": 4,
+          "sample_consistent": 280,
+          "sampled_stationary": 4
+        }
+      ]
+    },
+    {
+      "workload": "tiny_circle_callback",
+      "legacy_gradient": {
+        "median_ms": 0.0562,
+        "batches_ms": [
+          0.0659,
+          0.0592,
+          0.0557,
+          0.0562,
+          0.055
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 11.009,
+        "batches_ms": [
+          11.009,
+          10.0642,
+          11.0802
+        ]
+      },
+      "field_evaluations": 89,
+      "available_vectors": 1,
+      "query_points": 1,
+      "status_counts": [
+        {
+          "sample_consistent": 1
+        },
+        {
+          "sample_consistent": 1
+        }
+      ]
+    },
+    {
+      "workload": "circle_medial_callback",
+      "legacy_gradient": {
+        "median_ms": 0.1131,
+        "batches_ms": [
+          0.1303,
+          0.1131,
+          0.1455,
+          0.1079,
+          0.1005
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 22.1729,
+        "batches_ms": [
+          22.1729,
+          22.2015,
+          14.4466
+        ]
+      },
+      "field_evaluations": 161,
+      "available_vectors": 0,
+      "query_points": 1,
+      "status_counts": [
+        {
+          "budget_exhausted": 1
+        },
+        {
+          "budget_exhausted": 1
+        }
+      ]
+    },
+    {
+      "workload": "affine_callback_64",
+      "legacy_gradient": {
+        "median_ms": 0.1573,
+        "batches_ms": [
+          0.2093,
+          0.1608,
+          0.1573,
+          0.1514,
+          0.1506
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 3.4411,
+        "batches_ms": [
+          3.1546,
+          3.457,
+          3.4411
+        ]
+      },
+      "field_evaluations": 17,
+      "available_vectors": 64,
+      "query_points": 64,
+      "status_counts": [
+        {
+          "sample_consistent": 64
+        },
+        {
+          "sample_consistent": 64
+        }
+      ]
+    },
+    {
+      "workload": "nonfinite_callback_64",
+      "legacy_gradient": {
+        "median_ms": 0.0971,
+        "batches_ms": [
+          0.1085,
+          0.104,
+          0.0971,
+          0.091,
+          0.0954
+        ]
+      },
+      "diagnostics": {
+        "median_ms": 21.775,
+        "batches_ms": [
+          26.1525,
+          21.775,
+          18.2576
+        ]
+      },
+      "field_evaluations": 161,
+      "available_vectors": 0,
+      "query_points": 64,
+      "status_counts": [
+        {
+          "nonfinite_coordinate": 64
+        },
+        {
+          "nonfinite_coordinate": 64
+        }
+      ]
+    }
+  ],
+  "retains_queries": false,
+  "limits": "Sequential warm complete calls:five legacy batches,three diagnostics batches. Numerical diagnostics are opt-in and bounded at321 vector evaluate calls, not per-point source-curve derivative certificates. Callbacks may perform unbounded internal work. Shared-workstation medians/ranges do not guarantee FPS or speedups; source-sign/sample-magnitude mismatch and smooth unresolved axes remain possible."
+}

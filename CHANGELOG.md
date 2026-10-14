@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.22.0
+
+- SignedDistanceField exposes the established gradient_diagnostics protocol
+  using the unchanged bounded adaptive estimator. Numerical diagnostics report
+  raw candidates, heuristic uncertainty, per-axis status/steps and call counts;
+  unresolved or nonfinite vectors return two NaNs.
+- Diagnostic targets explicitly distinguish native endpoint geometry, provided
+  gradients and evaluated sampled/custom fields. Source-sign/chord-magnitude
+  jumps are rejected without substituting an exact curved signed distance.
+  Sampled consistency remains uncertified and smooth axes can remain unresolved.
+- Provided gradients and scalar/array field/containment callbacks remain
+  authoritative. Native dispatch now also guards _evaluate_vectorized overrides.
+- Legacy curved/callback gradient behavior and algebra/level-set normal paths
+  retain their prior approximation; diagnostics are opt-in. Analytic circle,
+  annulus and domain oracles, independent review and complete-call measurements
+  document correctness, budgets and remaining costs.
+
 ## 0.21.0
 
 - Native straight-boundary SDF gradients use nearest-feature geometry instead

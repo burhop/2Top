@@ -1,9 +1,28 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.21.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.22.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.22.0 adds [opt-in distance-gradient diagnostics](distance_gradient_diagnostics.md).
+The final affected native/distance/adaptive/diagnostic suite passed **504 tests**,
+including **32 new analytic and callback-contract cases**. Independent source
+review covers the reproduced source-circle jump, callback authority, scalar/0d/
+broadcast/empty shapes, unresolved masks and bounded-estimator limits. The full
+Work17 run passed **2,158 tests**, with **27 skips and 45 warnings**. Initial CI
+exposed a decimal-scaled annulus point that was not exactly medial; independent
+rational review replaced it with an exact binary64 cusp fixture, preserving the
+unavailable assertion. The final **504-test** affected run passed; application
+source is unchanged since the full local run. All **59** JavaScript checks,
+mocked WebMCP, **159-file** configured and **54-file** explicit Ruff, h11 metadata,
+runtime-only wheel diagnostics, outside-checkout startup/assets and the actual
+**23-tool** MCP catalog passed. All **58** dependency records remain unchanged.
+Exact feature/dev CI and complete Chromium results are recorded with the
+milestone PR/handoff as gates finish. Native WebMCP host
+verification and legacy composed/level-set numerical normal paths remain gaps.
+
+## Previous milestone
 
 Version 0.21.0 corrects [native signed-distance gradients](distance_gradient.md).
 The affected gradient/sign/cache/distance/field suite passed **436 tests**,
