@@ -335,63 +335,9 @@ class BlendedField(BaseField):
         Returns:
             Combined field value(s) at the given coordinates
         """
-        # Evaluate all child fields
-        values = [field.evaluate(x, y) for field in self.fields]
+        from .field_algebra import algebraic_query
 
-        # Apply the specified operation
-        if self.operation == "add":
-            result = values[0]
-            for val in values[1:]:
-                result = result + val
-            return result
-        elif self.operation == "subtract":
-            result = values[0]
-            for val in values[1:]:
-                result = result - val
-            return result
-        elif self.operation == "multiply":
-            result = values[0]
-            for val in values[1:]:
-                result = result * val
-            return result
-        elif self.operation == "divide":
-            result = values[0]
-            for val in values[1:]:
-                # Handle division by zero gracefully
-                if np.isscalar(val) and val == 0.0:
-                    # Return 0.0 for division by zero (as expected by tests)
-                    return 0.0
-                elif not np.isscalar(val) and np.any(val == 0.0):
-                    # For arrays, handle element-wise division by zero
-                    result = np.divide(
-                        result, val, out=np.zeros_like(result), where=(val != 0.0)
-                    )
-                else:
-                    result = result / val
-            return result
-        elif self.operation == "min":
-            result = values[0]
-            for val in values[1:]:
-                if np.isscalar(result) and np.isscalar(val):
-                    result = min(result, val)
-                else:
-                    result = np.minimum(result, val)
-            return result
-        elif self.operation == "max":
-            result = values[0]
-            for val in values[1:]:
-                if np.isscalar(result) and np.isscalar(val):
-                    result = max(result, val)
-                else:
-                    result = np.maximum(result, val)
-            return result
-        elif self.operation == "average":
-            result = values[0]
-            for val in values[1:]:
-                result = result + val
-            return result / len(values)
-        else:
-            raise ValueError(f"Unknown operation: {self.operation}")
+        return algebraic_query(self, x, y)
 
     def gradient(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
@@ -409,66 +355,16 @@ class BlendedField(BaseField):
         Returns:
             Gradient vector(s) at the given coordinates
         """
-        # Get gradients from all child fields
-        gradients = [field.gradient(x, y) for field in self.fields]
+        from .field_algebra import algebraic_query, _method_is
+        from .numeric import broadcast_coordinates, field_result
 
-        # Extract x and y components
-        grad_x_values = [grad[0] for grad in gradients]
-        grad_y_values = [grad[1] for grad in gradients]
-
-        # Apply operation-specific gradient rules
-        if self.operation in ["add", "subtract"]:
-            # For addition/subtraction: ∇(f1 ± f2) = ∇f1 ± ∇f2
-            result_x = grad_x_values[0]
-            result_y = grad_y_values[0]
-
-            for i in range(1, len(grad_x_values)):
-                if self.operation == "add":
-                    result_x = result_x + grad_x_values[i]
-                    result_y = result_y + grad_y_values[i]
-                else:  # subtract
-                    result_x = result_x - grad_x_values[i]
-                    result_y = result_y - grad_y_values[i]
-
-            return (result_x, result_y)
-
-        elif self.operation == "multiply":
-            # For multiplication: ∇(f1 * f2) = f1 * ∇f2 + f2 * ∇f1
-            # For multiple fields, use product rule iteratively
-            field_values = [field.evaluate(x, y) for field in self.fields]
-
-            # Start with first field
-            result_x = (
-                field_values[0] * grad_x_values[1] + field_values[1] * grad_x_values[0]
+        if not _method_is(self, "evaluate", BlendedField.evaluate):
+            xx, yy, scalar = broadcast_coordinates(x, y)
+            return tuple(
+                field_result(v, xx.shape, scalar)
+                for v in self._numerical_gradient(xx, yy)
             )
-            result_y = (
-                field_values[0] * grad_y_values[1] + field_values[1] * grad_y_values[0]
-            )
-            current_product = field_values[0] * field_values[1]
-
-            # Apply product rule for additional fields
-            for i in range(2, len(self.fields)):
-                new_x = current_product * grad_x_values[i] + field_values[i] * result_x
-                new_y = current_product * grad_y_values[i] + field_values[i] * result_y
-                current_product = current_product * field_values[i]
-                result_x, result_y = new_x, new_y
-
-            return (result_x, result_y)
-
-        elif self.operation == "average":
-            # For average: ∇(average) = average(∇fields)
-            result_x = grad_x_values[0]
-            result_y = grad_y_values[0]
-
-            for i in range(1, len(grad_x_values)):
-                result_x = result_x + grad_x_values[i]
-                result_y = result_y + grad_y_values[i]
-
-            return (result_x / len(grad_x_values), result_y / len(grad_y_values))
-
-        else:
-            # For min/max and other operations, use numerical gradient as fallback
-            return self._numerical_gradient(x, y)
+        return algebraic_query(self, x, y, gradient=True)
 
     def _numerical_gradient(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], h: float = 1e-6
@@ -508,17 +404,15 @@ class BlendedField(BaseField):
         # Create symbolic variables
         x, y = sp.symbols("x y")
 
-        # For now, create a procedural curve that evaluates the blended field
-        # This is a simplified implementation - a more sophisticated version
-        # might try to create an analytical expression when possible
+        from .field_algebra import _AlgebraicLevelSet
 
-        def level_set_function(x_val, y_val):
-            return self.evaluate(x_val, y_val) - level
-
-        # Import ProceduralCurve to create the level set
-        from .procedural_curve import ProceduralCurve
-
-        return ProceduralCurve(level_set_function, (x, y))
+        try:
+            level = float(rational_level(level))
+        except OverflowError as error:
+            raise ValueError("Level shift must fit a finite float") from error
+        if not np.isfinite(level):
+            raise ValueError("Level shift must fit a finite float")
+        return _AlgebraicLevelSet(self, level, (x, y))
 
     def to_dict(self) -> Dict[str, Any]:
         """

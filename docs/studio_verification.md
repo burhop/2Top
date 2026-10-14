@@ -1,9 +1,25 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.15.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.16.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.16.0 adds analytic algebraic derivatives, query-local graph reuse and
+blended contours retaining known procedural uncertainty.
+[Independent contracts and raw timings](field_algebra.md). Work17 full suite:
+**1,658 passed, 27 skipped, 43 warnings**. After the final contour-override guard
+and fixture were added, all **73 new analytic/regression cases** passed in the
+final focused run. Exact-commit CI runs the complete final suite and real Chromium.
+All 59 JavaScript checks, mocked WebMCP, 152-file repository Ruff and explicit
+36-file CI lint/format targets passed. The runtime-only installed 0.16.0 wheel
+passed packaged algebraic geometry, outside-checkout startup/assets and the real
+23-tool MCP catalog. Independent review approved the final source. Direct cheap
+grid derivatives retain measured overhead; contour gradients avoid repeated
+finite-difference evaluation. Heuristic errors remain estimates, and native
+WebMCP remains unverified.
+
+## Previous milestones
 
 Version 0.15.0 adds bounded automatic procedural steps and sampled-consistency
 diagnostics while retaining explicit scales and analytic callbacks.

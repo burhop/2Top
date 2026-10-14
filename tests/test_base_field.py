@@ -318,16 +318,10 @@ class TestBlendedField:
         assert abs(grad_x - expected_grad_x) < 1e-10
         assert abs(grad_y - expected_grad_y) < 1e-10
 
-    def test_gradient_numerical_fallback(self, field1, field2):
-        """Test numerical gradient computation for non-analytical operations."""
+    def test_gradient_min_strict_winner(self, field1, field2):
         blended = BlendedField([field1, field2], "min")
-
-        grad_x, grad_y = blended.gradient(1.0, 1.0)
-        assert isinstance(grad_x, float)
-        assert isinstance(grad_y, float)
-        # Values will be computed numerically, so just check they're finite
-        assert np.isfinite(grad_x)
-        assert np.isfinite(grad_y)
+        assert blended.gradient(0.5, 1.0) == field1.gradient(0.5, 1.0)
+        assert np.isnan(blended.gradient(1.0, 1.0)).all()
 
     def test_level_set(self, field1, field2):
         """Test level set extraction."""
