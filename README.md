@@ -1,10 +1,10 @@
-# 2Top 0.18.0 · Tidal Atlas
+# 2Top 0.19.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.18.0** fixes [signed-distance query freshness](docs/distance_cache.md): coordinate edits, copied grids and mutated results cannot reuse stale values; distance and generic polygon queries read live boundary samples. Nearest hole boundaries now contribute to distance magnitude. Broadcast/scalar paths agree in the tested cases, and query arrays are not retained. Euclidean distances to supported straight edges and approximate curved-boundary distances remain distinct from generic implicit field values. Independent analytic fixtures and measurements document the repeated-query cost and remaining numerical/source limits. Development targets **dev**.
+Version **0.19.0** adds [scale-robust segment distances](docs/distance_numerics.md): tiny nonzero edges remain segments, large representable distances avoid squared overflow, and compensated projection retains tested near-line residuals. Exactly coincident endpoints are points; invalid endpoint geometry raises explicitly. Independent exact-rational/high-precision oracles and measured ordinary/fallback costs document the supported arithmetic. Curved boundaries remain sampled approximations; region tolerance and derivative uncertainty retain separate limits. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,6 +62,8 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
+python -m pytest tests/test_distance_numerics.py
+python benchmarks/distance_numerics.py --output distance-numerics.json
 python -m pytest tests/test_distance_cache.py
 python benchmarks/distance_cache.py --output distance.json
 python -m pytest tests/test_occupancy_validity.py

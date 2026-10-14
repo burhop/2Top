@@ -310,23 +310,19 @@ class SignedDistanceField(BaseField):
         return segments_ab
 
     def _compute_distance_to_boundary_vectorized(self, x_array, y_array):
+        from .numeric import segment_distance
+
         flat_shape = x_array.shape
         flat_x = x_array.ravel()
         flat_y = y_array.ravel()
-        min_dists_sq = np.full(flat_x.size, np.inf)
+        min_distances = np.full(flat_x.size, np.inf)
 
         # Query-local preparation avoids stale endpoints/samples after region edits.
-        for (xA, yA), (xB, yB) in self._boundary_segments():
-            dx, dy = xB - xA, yB - yA
-            length_sq = dx**2 + dy**2
-            if length_sq < 1e-9:
-                d2 = (flat_x - xA) ** 2 + (flat_y - yA) ** 2
-            else:
-                t = ((flat_x - xA) * dx + (flat_y - yA) * dy) / length_sq
-                t = np.clip(t, 0.0, 1.0)
-                d2 = (flat_x - (xA + t * dx)) ** 2 + (flat_y - (yA + t * dy)) ** 2
-            min_dists_sq = np.minimum(min_dists_sq, d2)
-        return np.sqrt(min_dists_sq).reshape(flat_shape)
+        for start, end in self._boundary_segments():
+            min_distances = np.minimum(
+                min_distances, segment_distance(flat_x, flat_y, start, end)
+            )
+        return min_distances.reshape(flat_shape)
 
     def _compute_signed_distance(self, x: float, y: float) -> float:
         """

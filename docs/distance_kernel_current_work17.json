@@ -1,0 +1,138 @@
+{
+  "label": "0.19.0 robust kernel final product-spread precision",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "axis_97",
+      "shape": [
+        97,
+        97
+      ],
+      "median_ms": 0.13276666666666664,
+      "batches_ms": [
+        0.157,
+        0.13273333333333334,
+        0.13276666666666664,
+        0.1182,
+        0.13476666666666665
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "oblique_97",
+      "shape": [
+        97,
+        97
+      ],
+      "median_ms": 1.5298666666666667,
+      "batches_ms": [
+        1.6364666666666667,
+        1.4832666666666667,
+        1.5298666666666667,
+        1.7707666666666668,
+        1.3919666666666668
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "axis_257",
+      "shape": [
+        257,
+        257
+      ],
+      "median_ms": 1.8673,
+      "batches_ms": [
+        1.9097333333333333,
+        1.9067333333333332,
+        1.8616,
+        1.8673,
+        1.8432333333333333
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "oblique_257",
+      "shape": [
+        257,
+        257
+      ],
+      "median_ms": 15.516966666666667,
+      "batches_ms": [
+        14.418566666666665,
+        15.516966666666667,
+        15.0282,
+        17.00473333333333,
+        17.7213
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "overflow_fallback_64",
+      "shape": [
+        64
+      ],
+      "median_ms": 26.71196666666667,
+      "batches_ms": [
+        28.4718,
+        27.236966666666667,
+        26.709266666666668,
+        26.71196666666667,
+        26.570433333333334
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "collinear_fallback_64",
+      "shape": [
+        64
+      ],
+      "median_ms": 0.6764,
+      "batches_ms": [
+        0.6875666666666667,
+        0.6699666666666666,
+        0.6826333333333334,
+        0.6764,
+        0.6627333333333334
+      ],
+      "nonfinite_results": 0
+    },
+    {
+      "workload": "near_line_64",
+      "shape": [
+        64
+      ],
+      "median_ms": 0.1855,
+      "batches_ms": [
+        0.18043333333333333,
+        0.20816666666666667,
+        0.18886666666666665,
+        0.17903333333333335,
+        0.1855
+      ],
+      "nonfinite_results": 0
+    }
+  ],
+  "reproductions": [
+    {
+      "side": 4e-06,
+      "point": [
+        2e-06,
+        1e-06
+      ],
+      "analytic": -1e-06,
+      "observed": -1e-06
+    },
+    {
+      "side": 4.0,
+      "point": [
+        1e+200,
+        2.0
+      ],
+      "analytic": 1e+200,
+      "observed": 1e+200
+    }
+  ],
+  "limits": "Warm full one-segment distance calls, five batches. Baseline may return invalid values. Fallback-heavy queries are deliberately pathological; sampled-curve accuracy and application FPS are not measured here."
+}

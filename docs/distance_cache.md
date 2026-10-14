@@ -1,5 +1,8 @@
 # Signed-distance query freshness
 
+The subsequent [0.19.0 numerical milestone](distance_numerics.md) fixes the
+short-edge and squared-overflow reproductions recorded at the end of this page.
+
 Version 0.18.0 repairs stale signed-distance values and the corresponding generic
 polygon sign dependency. It retains the existing distance strategy, schema and
 level-set wrapper; it does not reinterpret arbitrary implicit values as distance.

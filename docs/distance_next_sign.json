@@ -1,0 +1,24 @@
+{
+  "gap": "Default containment tolerance expands a tiny hole and reverses signed-distance sign; numeric kernel magnitude is correct",
+  "outer_box": [
+    0.0,
+    0.0,
+    6e-06,
+    6e-06
+  ],
+  "hole_box": [
+    2e-06,
+    2e-06,
+    4e-06,
+    4e-06
+  ],
+  "point": [
+    1.5e-06,
+    3e-06
+  ],
+  "default_tolerance": 0.0001,
+  "default_signed_distance": 4.999999999999999e-07,
+  "zero_tolerance_signed_distance": -4.999999999999999e-07,
+  "analytic_signed_distance": -5e-07,
+  "scope": "Existing region precision/sign policy is unchanged by 0.19.0"
+}
