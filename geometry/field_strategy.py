@@ -577,126 +577,158 @@ class OccupancyField(BaseField):
         self.inside_value = inside_value
         self.outside_value = outside_value
         self._cache = None
+        self.inside_value, self.outside_value = self._validated_values()
 
-    def _is_grid_cached(self, x: np.ndarray, y: np.ndarray) -> bool:
-        if not hasattr(self, "_cache") or self._cache is None:
-            return False
-        cached_x, cached_y, cached_res = self._cache
-        if x.shape != cached_x.shape or y.shape != cached_y.shape:
-            return False
-        if x is cached_x and y is cached_y:
-            return True
-        ndim = len(x.shape)
-        if ndim == 2:
-            h, w = x.shape
-            if h < 2 or w < 2:
-                return False
-            corners = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
-            center = (h // 2, w // 2)
-            indices = corners + [center]
-        elif ndim == 1:
-            n = len(x)
-            if n < 2:
-                return False
-            indices = [(0,), (-1,), (n // 2,)]
-        else:
-            return False
-        try:
-            for idx in indices:
-                if not np.isclose(x[idx], cached_x[idx], atol=1e-9) or not np.isclose(
-                    y[idx], cached_y[idx], atol=1e-9
-                ):
-                    return False
-            return True
-        except Exception:
-            return False
+    def _validated_values(self):
+        """Validate live public values; do not cache mutable field configuration."""
+        from .numeric import real_array
+
+        values = [real_array(v) for v in (self.inside_value, self.outside_value)]
+        if any(v.shape != () or not np.isfinite(v) for v in values):
+            raise ValueError("Occupancy values must be finite real scalars")
+        return tuple(float(v) for v in values)
 
     def clear_cache(self) -> None:
+        """Retain the common cache API; occupancy queries always read live state."""
         self._cache = None
 
-    def evaluate(
-        self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
-    ) -> Union[float, np.ndarray]:
+    @staticmethod
+    def _predicate_mask(value, shape):
+        value = np.asarray(value)
+        if value.dtype.kind != "b":
+            raise ValueError("Region predicates must return booleans")
+        return np.broadcast_to(value, shape)
+
+    def _domain_mask(self, x, y, scalar=False):
+        """Conservatively reject nonfinite or unavailable boundary evaluations."""
+        from .numeric import field_result
+        from .area_region import AreaRegion
+
+        if not isinstance(self.region, AreaRegion):
+            raise TypeError("Occupancy region must be an AreaRegion")
+
+        valid = np.ones(x.shape, dtype=bool)
+        coordinates = (float(x[0]), float(y[0])) if scalar else (x, y)
+        for boundary in [self.region.outer_boundary, *self.region.holes]:
+            tolerance = boundary._resolve_distance_tolerance(None)
+            if not boundary.segments or not boundary.is_closed(tolerance=tolerance):
+                raise ValueError("Occupancy requires nonempty closed region boundaries")
+            for segment in boundary.segments:
+                with np.errstate(all="ignore"):
+                    value = field_result(segment.evaluate(*coordinates), x.shape, False)
+                valid &= np.isfinite(value)
+        return valid
+
+    def evaluate(self, x, y):
+        """Return the legacy strict-interior mask; invalid domain points are NaN.
+
+        No cross-query result cache is safe for public mutable coordinates,
+        values, regions and callbacks. The algebraic query cache still reuses
+        this field within one pointwise evaluation.
         """
-        Evaluate the occupancy field at given coordinates.
+        from .numeric import broadcast_coordinates, field_result
 
-        Args:
-            x: x-coordinate(s) to evaluate
-            y: y-coordinate(s) to evaluate
+        inside_value, outside_value = self._validated_values()
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        finite = np.isfinite(xx) & np.isfinite(yy)
+        result = np.full(xx.shape, np.nan)
+        if inside_value == outside_value:
+            result[finite] = inside_value
+        elif np.any(finite):
+            px, py = xx[finite], yy[finite]
+            domain = self._domain_mask(px, py, scalar)
+            selected = np.full(px.shape, np.nan)
+            if np.any(domain):
+                dx, dy = px[domain], py[domain]
+                shape = dx.shape
+                coordinates = (float(dx[0]), float(dy[0])) if scalar else (dx, dy)
+                inside = self._predicate_mask(
+                    self.region.contains(*coordinates, tolerance=1e-8), shape
+                )
+                boundary = self._predicate_mask(
+                    self.region.contains_boundary(*coordinates, tolerance=1e-8), shape
+                )
+                selected[domain] = np.where(
+                    inside & ~boundary, inside_value, outside_value
+                )
+            result[finite] = selected
+        return field_result(result, xx.shape, scalar)
 
-        Returns:
-            Occupancy value(s) at the given coordinates
+    def gradient(self, x, y):
+        """Zero on valid constant pieces; both components NaN near jumps.
+
+        The 2e-8 guard conservatively includes the existing 1e-8 exclusion
+        band's transition. Bounded representable-neighbor membership checks
+        supplement trim/predicate mismatches; sampling is not a continuity proof.
+        Predicate units do not define a distance offset.
+        Equal finite output values define a constant field and need no boundary
+        queries. Known invalid source domains remain explicit.
         """
-        tol = 1e-8
-        if np.isscalar(x) and np.isscalar(y):
-            # Scalar case
-            is_inside = self.region.contains(
-                x, y, tolerance=tol
-            ) and not self.region.contains_boundary(x, y, tolerance=tol)
-            return self.inside_value if is_inside else self.outside_value
+        from .numeric import broadcast_coordinates, field_result
 
-        x_array = np.asarray(x)
-        y_array = np.asarray(y)
+        inside_value, outside_value = self._validated_values()
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        finite = np.isfinite(xx) & np.isfinite(yy)
+        result = np.full(xx.shape, np.nan)
+        if inside_value == outside_value:
+            result[finite] = 0.0
+        elif np.any(finite):
+            px, py = xx[finite], yy[finite]
+            domain = self._domain_mask(px, py, scalar)
+            selected = np.full(px.shape, np.nan)
+            if np.any(domain):
+                dx, dy = px[domain], py[domain]
+                coordinates = (float(dx[0]), float(dy[0])) if scalar else (dx, dy)
+                inside = self._predicate_mask(
+                    self.region.contains(*coordinates, tolerance=1e-8), dx.shape
+                )
+                boundary = self._predicate_mask(
+                    self.region.contains_boundary(*coordinates, tolerance=2e-8),
+                    dx.shape,
+                )
+                uncertain = np.array(boundary, copy=True)
+                candidates = ~boundary
+                if np.any(candidates):
+                    cx, cy = dx[candidates], dy[candidates]
+                    expected = np.where(inside[candidates], inside_value, outside_value)
+                    changed = np.zeros(cx.shape, dtype=bool)
+                    for axis in (0, 1):
+                        for sign in (-1, 1):
+                            base = cx if axis == 0 else cy
+                            with np.errstate(all="ignore"):
+                                neighbor = base + sign * 2e-8
+                                neighbor = np.where(
+                                    neighbor == base,
+                                    np.nextafter(base, sign * np.inf),
+                                    neighbor,
+                                )
+                            nx, ny = (neighbor, cy) if axis == 0 else (cx, neighbor)
+                            coordinates = (
+                                (float(nx[0]), float(ny[0])) if scalar else (nx, ny)
+                            )
+                            observed = np.asarray(self.evaluate(*coordinates))
+                            changed |= ~np.isfinite(observed) | (observed != expected)
+                    uncertain[candidates] |= changed
+                selected[domain] = np.where(uncertain, np.nan, 0.0)
+            result[finite] = selected
+        return tuple(field_result(v, xx.shape, scalar) for v in (result, result.copy()))
 
-        # Check cache
-        if self._is_grid_cached(x_array, y_array):
-            return self._cache[2]
+    def level_set(self, level):
+        """Reject binary-mask levels: empty sets or plateaus are not regular curves.
 
-        is_inside = self.region.contains(
-            x_array, y_array, tolerance=tol
-        ) & ~self.region.contains_boundary(x_array, y_array, tolerance=tol)
-        result = np.where(is_inside, self.inside_value, self.outside_value)
-        self._cache = (x_array, y_array, result)
-        return result
-
-    def gradient(
-        self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
-    ) -> Union[tuple, tuple]:
+        Use the existing region outer boundary and holes for boundary geometry;
+        choose SignedDistanceStrategy explicitly when a distance contour is needed.
         """
-        Compute the gradient of the occupancy field.
-
-        For a binary occupancy field, the gradient is zero everywhere except
-        at the boundary, where it's undefined. We return zero gradients.
-
-        Args:
-            x: x-coordinate(s) to evaluate
-            y: y-coordinate(s) to evaluate
-
-        Returns:
-            Zero gradient vector(s)
-        """
-        if np.isscalar(x) and np.isscalar(y):
-            return (0.0, 0.0)
-        else:
-            x_array = np.asarray(x)
-            y_array = np.asarray(y)
-            zeros_x = np.zeros_like(x_array, dtype=float)
-            zeros_y = np.zeros_like(y_array, dtype=float)
-            return (zeros_x, zeros_y)
-
-    def level_set(self, level: float) -> "ImplicitCurve":
-        """
-        Extract a level set from the occupancy field.
-
-        For an occupancy field, meaningful level sets are at the inside_value
-        and outside_value boundaries.
-
-        Args:
-            level: The level value to extract
-
-        Returns:
-            ImplicitCurve representing the level set
-        """
+        from .bounds import rational_level
         import sympy as sp
-        from .procedural_curve import ProceduralCurve
 
-        # Create a procedural curve that represents the level set
-        x, y = sp.symbols("x y")
-
-        def level_set_function(x_val, y_val):
-            return self.evaluate(x_val, y_val) - level
-
-        return ProceduralCurve(level_set_function, (x, y))
+        exact = rational_level(level)
+        inside_value, outside_value = self._validated_values()
+        if exact in (sp.Rational(inside_value), sp.Rational(outside_value)):
+            raise ValueError(
+                "Occupancy endpoint level is empty or a plateau, not a regular implicit curve"
+            )
+        raise ValueError("Occupancy level is empty, not an interpolated boundary curve")
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -705,11 +737,12 @@ class OccupancyField(BaseField):
         Returns:
             Dictionary representation of the field
         """
+        inside_value, outside_value = self._validated_values()
         return {
             "type": "OccupancyField",
             "region": self.region.to_dict(),
-            "inside_value": self.inside_value,
-            "outside_value": self.outside_value,
+            "inside_value": inside_value,
+            "outside_value": outside_value,
         }
 
     @classmethod

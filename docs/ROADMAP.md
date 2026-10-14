@@ -135,6 +135,12 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.17.0 corrects occupancy derivative/boundary validity, discrete level-set
+semantics and unsafe cross-query mask caching. [Contracts and cost](occupancy_validity.md).
+Signed-distance cache/derivative validity and domain/noise contracts remain
+independent opportunities; generic discontinuous plotting still assumes more
+continuity than arbitrary user predicates can guarantee.
+
 Version 0.16.0 supplies native analytic algebraic derivatives, query-local shared
 graph reuse and derivative-preserving contours with known procedural uncertainty.
 [Contracts and measured overhead](field_algebra.md). Domain-aware sampling,

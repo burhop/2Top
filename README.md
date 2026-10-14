@@ -1,10 +1,10 @@
-# 2Top 0.16.0 · Tidal Atlas
+# 2Top 0.17.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.16.0** adds [analytic algebraic field derivatives](docs/field_algebra.md), including stable quotient rules, explicit nonsmooth ties, query-local shared-node reuse and derivative-preserving blended contours. Known procedural uncertainty remains guarded. Independent analytic fixtures and warm measurements document correctness and cost; cheap direct grids retain measurable overhead. Existing [automatic procedural steps](docs/automatic_derivatives.md), [sublevel envelopes](docs/sublevel_bounds.md), authoring behavior, recipe schema 4 and 23 tools remain compatible. Development targets **dev**.
+Version **0.17.0** adds [occupancy boundary validity](docs/occupancy_validity.md): guarded derivatives reject tested binary-mask jumps and invalid domains; direct binary level sets reject empty or plateau sets instead of interpolating invented curves. Occupancy queries read fresh mutable state. Existing finite strict-interior values and serialization remain compatible; intentional level-set and invalid-input changes are documented. Independent analytic fixtures and timings record the added validation cost and finite-sampling limits. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,6 +62,8 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
+python -m pytest tests/test_occupancy_validity.py
+python benchmarks/occupancy_validity.py --output occupancy.json
 python -m pytest tests/test_field_algebra.py
 python benchmarks/field_algebra.py --output algebra.json
 python -m pytest tests/test_automatic_derivatives.py

@@ -640,16 +640,15 @@ class TestAreaRegionExtensive:
         results_occ = occ.evaluate(x_arr, y_arr)
         assert np.allclose(results_occ, [5.0, -1.0])
 
-        # Gradient (always returns zeros)
+        # Gradient is zero on these regular constant pieces.
         assert occ.gradient(0.0, 0.0) == (0.0, 0.0)
         grad_x, grad_y = occ.gradient(x_arr, y_arr)
         assert np.allclose(grad_x, 0.0)
         assert np.allclose(grad_y, 0.0)
 
-        # Level set
-        occ_lvl_set = occ.level_set(2.0)
-        assert isinstance(occ_lvl_set, ProceduralCurve)
-        assert np.isclose(occ_lvl_set.evaluate(0.0, 0.0), 3.0)
+        # The binary field takes only 5 and -1: level 2 has no actual zeros.
+        with pytest.raises(ValueError, match="empty"):
+            occ.level_set(2.0)
 
         # Serialization round-trip
         occ_dict = occ.to_dict()

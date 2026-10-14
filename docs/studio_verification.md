@@ -1,9 +1,25 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.16.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.17.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.17.0 corrects [occupancy boundary validity](occupancy_validity.md),
+discrete level-set semantics and unsafe mask caching. Independent review approved
+the final source. Work17's full run passed 1,731 tests with 27 skips and 43 warnings,
+then found one additional legacy integration assertion expecting a curve at an
+unattained binary level. That assertion now requires explicit rejection; the
+final affected AreaRegion/occupancy/field suite passed **220 tests**, including
+**73 new analytic/edge cases**. Exact-commit CI runs the complete final suite.
+All 59 JavaScript checks, mocked WebMCP, 153-file configured repository Ruff and
+41-file explicit CI targets passed. The runtime-only installed 0.17.0 wheel passed
+occupancy geometry, outside-checkout startup/assets and the real 23-tool MCP
+catalog. Existing legacy AreaRegion equality assertions remain outside the
+configured lint targets. Validation costs and finite-sampling, topology-cache
+and discontinuous-plot limits are recorded. Native WebMCP remains unverified.
+
+## Previous milestone
 
 Version 0.16.0 adds analytic algebraic derivatives, query-local graph reuse and
 blended contours retaining known procedural uncertainty.

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.17.0
+
+- Occupancy derivatives explicitly reject guarded jumps, observed membership
+  transitions and known invalid boundary domains; valid constant pieces keep
+  zero derivatives. Equal finite outputs remain constant without region queries.
+- Direct binary occupancy level sets now reject empty/plateau sets instead of
+  creating interpolated regular curves. Existing region boundaries remain the
+  boundary-geometry API; finite strict-interior values and schema stay compatible.
+- Removed unsafe cross-query occupancy caching. Mutated coordinates, results,
+  live values and region replacements are read afresh. Broadcast shapes, scalar
+  callbacks and live scalar JSON export retain their contracts.
+- Independent analytic/edge fixtures, separate review and saved warm measurements
+  document the added validation cost and finite-sampling/topology/rendering limits.
+
 ## 0.16.0
 
 - Native algebraic fields reuse analytic child derivatives for quotient and
