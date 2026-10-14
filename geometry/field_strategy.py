@@ -454,8 +454,11 @@ class SignedDistanceField(BaseField):
         """
         Compute the gradient of the signed distance field.
 
-        The gradient points in the direction of steepest increase in distance,
-        which is the outward normal direction from the boundary.
+        Native straight boundaries return geometric unit gradients at smooth
+        points and both components NaN at corners/conflicting nearest features.
+        Curved sources and overridden field/containment callbacks retain the
+        legacy resolution-based numerical approximation without a validity
+        certificate. Nonfinite coordinates are unavailable (NaN).
 
         Args:
             x: x-coordinate(s) to evaluate
@@ -464,7 +467,49 @@ class SignedDistanceField(BaseField):
         Returns:
             Gradient vector(s) at the given coordinates
         """
-        # Use numerical gradient for simplicity
+        from .numeric import broadcast_coordinates, field_result
+        from .distance_gradient import native_boundaries, geometric_gradient
+
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        native_methods = (
+            "evaluate",
+            "_inside_for_distance",
+            "_boundary_segments",
+            "_compute_signed_distance",
+            "_compute_distance_to_boundary",
+            "_compute_distance_to_boundary_vectorized",
+        )
+        if not all(
+            getattr(getattr(self, name), "__func__", None)
+            is getattr(SignedDistanceField, name)
+            for name in native_methods
+        ):
+            return self._numerical_gradient(x, y)
+        finite = np.isfinite(xx) & np.isfinite(yy)
+        if not np.any(finite):
+            return tuple(
+                field_result(np.full(xx.shape, np.nan), xx.shape, scalar)
+                for _ in range(2)
+            )
+        boundaries = native_boundaries(self.region)
+        if boundaries is not None:
+            px, py = xx[finite], yy[finite]
+            from .numeric import endpoint_polygon_inside
+
+            inside = endpoint_polygon_inside(px, py, boundaries[0])
+            for hole in boundaries[1:]:
+                inside &= ~endpoint_polygon_inside(px, py, hole)
+            values = geometric_gradient(px, py, boundaries, inside)
+            result = []
+            for value in values:
+                full = np.full(xx.shape, np.nan)
+                full[finite] = value
+                result.append(field_result(full, xx.shape, scalar))
+            return tuple(result)
+        return self._numerical_gradient(x, y)
+
+    def _numerical_gradient(self, x, y):
+        """Compatibility approximation for sampled sources and custom callbacks."""
         from .numeric import broadcast_coordinates, field_result
 
         x, y, scalar = broadcast_coordinates(x, y)

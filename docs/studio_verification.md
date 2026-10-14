@@ -1,9 +1,31 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.20.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.21.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.21.0 corrects [native signed-distance gradients](distance_gradient.md).
+The affected gradient/sign/cache/distance/field suite passed **436 tests**,
+including **81 new analytic and regression cases**. Independent read-only review
+compared 752 rectilinear boundary cases with the retained rational side proof and
+300 subtraction-residual comparisons with exact Fraction distances; an earlier
+review covered 140 oblique signed normals with high-precision projection oracles.
+The full Work17 run passed **2,125 tests**, with **27 skips and 45 warnings**,
+and one Windows dashboard-file open error before a legacy periodic test entered
+geometry code (`OSError: [Errno 22] Invalid argument`). That unchanged test and
+the full affected suite then passed together: **437 tests**. The original log is
+preserved; this is not represented as an all-green full local run. All **59**
+JavaScript checks and mocked WebMCP, **158-file** configured Ruff and **52-file**
+explicit CI targets passed. All **58** dependency records are unchanged; h11
+metadata matches. The runtime-only wheel passed geometric gradient checks,
+outside-checkout startup/assets and the real **23-tool** MCP catalog. Real
+Chromium and exact-feature/dev CI results are recorded with the milestone
+PR/handoff as those gates finish. Curved
+and callback numerical derivatives, procedural level-set normals, topology and
+native WebMCP host verification retain explicit limits.
+
+## Previous milestone
 
 Version 0.20.0 fixes [strict native distance signs and sampled-curve performance](distance_sign_performance.md).
 The focused sign/distance/field suite passed **355 tests**. Independent rational

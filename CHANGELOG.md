@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.21.0
+
+- Native straight-boundary SDF gradients use nearest-feature geometry instead
+  of a fixed central-difference step. Smooth interiors/exteriors and boundaries
+  return unit normals across tiny and huge scales; genuine corners and different
+  equally nearest projections return two NaNs. Shared vertex projections remain
+  valid away from the boundary.
+- Exact rational adjudication handles guarded ties, rounded-zero distances,
+  overflowing magnitudes and uncertain projections. Exact rectilinear side
+  limits and subtraction residual comparisons bound common-case costs.
+- Captured live endpoint chains drive each query's sign and gradient without
+  retaining query buffers. Curved/custom field and containment callbacks keep
+  their previous finite-difference contract; existing procedural level-set
+  normals remain numerical. No topology or universal-rounding claim is added.
+- Analytic/high-precision regressions, independent review and complete-call
+  baseline measurements document supported behavior and remaining overhead.
+
 ## 0.20.0
 
 - Native straight endpoint boundaries use a strict SDF-only odd/even sign
