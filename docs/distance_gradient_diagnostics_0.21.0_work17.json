@@ -1,0 +1,101 @@
+{
+  "label": "0.21.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "sampled_source_boundary",
+      "legacy_gradient": {
+        "median_ms": 13.0878,
+        "batches_ms": [
+          13.1746,
+          13.0878,
+          12.951,
+          12.9633,
+          13.1474
+        ]
+      }
+    },
+    {
+      "workload": "sampled_smooth_chord",
+      "legacy_gradient": {
+        "median_ms": 12.9438,
+        "batches_ms": [
+          13.0858,
+          13.0876,
+          12.9438,
+          12.7885,
+          12.8072
+        ]
+      }
+    },
+    {
+      "workload": "sampled_17x17",
+      "legacy_gradient": {
+        "median_ms": 47.9206,
+        "batches_ms": [
+          48.4394,
+          47.9206,
+          47.8393,
+          47.6352,
+          48.8131
+        ]
+      }
+    },
+    {
+      "workload": "tiny_circle_callback",
+      "legacy_gradient": {
+        "median_ms": 0.0183,
+        "batches_ms": [
+          0.0225,
+          0.0191,
+          0.0178,
+          0.0183,
+          0.018
+        ]
+      }
+    },
+    {
+      "workload": "circle_medial_callback",
+      "legacy_gradient": {
+        "median_ms": 0.018,
+        "batches_ms": [
+          0.0188,
+          0.0179,
+          0.0181,
+          0.018,
+          0.0177
+        ]
+      }
+    },
+    {
+      "workload": "affine_callback_64",
+      "legacy_gradient": {
+        "median_ms": 0.03,
+        "batches_ms": [
+          0.0308,
+          0.03,
+          0.0301,
+          0.0297,
+          0.0293
+        ]
+      }
+    },
+    {
+      "workload": "nonfinite_callback_64",
+      "legacy_gradient": {
+        "median_ms": 0.0247,
+        "batches_ms": [
+          0.0248,
+          0.0274,
+          0.0247,
+          0.0221,
+          0.0222
+        ]
+      }
+    }
+  ],
+  "retains_queries": false,
+  "limits": "Sequential warm complete calls:five legacy batches,three diagnostics batches. Numerical diagnostics are opt-in and bounded at321 vector evaluate calls, not per-point source-curve derivative certificates. Callbacks may perform unbounded internal work. Shared-workstation medians/ranges do not guarantee FPS or speedups; source-sign/sample-magnitude mismatch and smooth unresolved axes remain possible."
+}

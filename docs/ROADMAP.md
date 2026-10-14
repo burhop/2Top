@@ -135,6 +135,15 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.22.0 adds opt-in bounded sampled/callback distance-gradient diagnostics.
+[Actual derivative targets, rejection cases and measured costs](distance_gradient_diagnostics.md).
+These can reject source-sign/chord-magnitude jumps and resolve smooth callback
+components, but sampled consistency is uncertified and smooth axes can exhaust
+the budget. Legacy algebra and procedural level-set normals do not automatically
+consume these diagnostics. Curved-source geometry contracts, propagation into
+composed normals, explicit domain/scale policies and native WebMCP host
+verification remain separate increments.
+
 Version 0.21.0 supplies scale-stable native signed-distance gradients and
 explicit undefined masks for genuine corners and conflicting nearest features.
 [Contracts, independent evidence and measured costs](distance_gradient.md).
