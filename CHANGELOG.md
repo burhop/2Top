@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.15.0
+
+- Default procedural gradients choose local representable steps and bounded
+  refinement/expansion instead of requiring hints for the measured translated
+  and small-feature fields. Existing explicit scales and analytic callbacks
+  retain their paths and serialization contracts.
+- Diagnostics expose per-point selection/status, actual steps and probe counts;
+  off-ladder and shrinking one-sided checks reject tested alias/cusp failures.
+  Unresolved estimates carry infinite uncertainty. Sampled-flat axes retain
+  quantization uncertainty and regular affine normals without proving constancy.
+- Independent analytic fixtures show successes, budget/precision failures and a
+  smooth hidden-feature counterexample to any universal accuracy certificate.
+  The simple grid costs about 4.35x the previous default; fixed hints/callbacks
+  preserve performance options. The hard cap is 321 vector evaluations.
+
 ## 0.14.0
 
 - Sublevel queries distinguish bounded, proved empty and unknown sets. Supported

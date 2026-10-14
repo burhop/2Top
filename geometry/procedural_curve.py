@@ -17,6 +17,7 @@ from typing import Tuple, Optional, Union, Callable
 from .implicit_curve import ImplicitCurve
 from .numeric import broadcast_coordinates, field_result, real_array
 from .differentiation import estimate_gradient
+from .adaptive_differentiation import automatic_gradient
 
 
 from .precision import PrecisionPolicy, get_precision_policy
@@ -141,8 +142,12 @@ class ProceduralCurve(ImplicitCurve):
         if self._gradient_function is not None:
             return self.gradient_diagnostics(x, y)["gradient"]
         xx, yy, scalar = broadcast_coordinates(x, y)
-        result = estimate_gradient(
-            self.evaluate, xx, yy, self._derivative_scale, diagnostics=False
+        result = (
+            automatic_gradient(self.evaluate, xx, yy, diagnostics=False)
+            if self._derivative_scale is None
+            else estimate_gradient(
+                self.evaluate, xx, yy, self._derivative_scale, diagnostics=False
+            )
         )
         return tuple(field_result(v, xx.shape, scalar) for v in result["gradient"])
 
@@ -150,8 +155,9 @@ class ProceduralCurve(ImplicitCurve):
         """Gradient, heuristic error estimate and actual coarse/fine displacements.
 
         Analytic callbacks have no claimed numerical error bound (None). The
-        default numerical scale is max(1, |coordinate|) per axis; explicit
-        derivative_scale supplies local coordinate units for small features.
+        Default steps adapt within a fixed budget; status reports sampled
+        consistency, never a certified differentiability or accuracy proof.
+        Explicit derivative_scale retains the fixed-stencil override.
         """
         xx, yy, scalar = broadcast_coordinates(x, y)
         if self._gradient_function is not None:
@@ -179,7 +185,11 @@ class ProceduralCurve(ImplicitCurve):
                 steps=None,
                 method="analytic",
             )
-        result = estimate_gradient(self.evaluate, xx, yy, self._derivative_scale)
+        result = (
+            automatic_gradient(self.evaluate, xx, yy)
+            if self._derivative_scale is None
+            else estimate_gradient(self.evaluate, xx, yy, self._derivative_scale)
+        )
         for key in ("gradient", "error_estimate"):
             result[key] = tuple(field_result(v, xx.shape, scalar) for v in result[key])
         result["steps"] = tuple(
@@ -189,6 +199,12 @@ class ProceduralCurve(ImplicitCurve):
             )
             for axis in result["steps"]
         )
+        if self._derivative_scale is None:
+            for key in ("status", "selection", "candidates"):
+                result[key] = tuple(v.item() if scalar else v for v in result[key])
+            result["nominal_step"] = tuple(
+                field_result(v, xx.shape, scalar) for v in result["nominal_step"]
+            )
         return result
 
     def normal(self, x_val: float, y_val: float) -> Tuple[float, float]:

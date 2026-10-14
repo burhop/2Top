@@ -1,5 +1,9 @@
 # Procedural derivative contracts: 0.13.0
 
+This page retains the 0.13 fixed-stencil design and historical measurements.
+Version 0.15 uses [bounded automatic steps](automatic_derivatives.md) by default;
+explicit `derivative_scale` and analytic callbacks retain the paths below.
+
 `ProceduralCurve.gradient()` retains its scalar/broadcast array interface. Its
 default no longer uses a universal `1e-8` step: that step can round away at large
 coordinates or skip an entire small feature. No new dependencies are required.

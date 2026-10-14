@@ -1,0 +1,1905 @@
+{
+  "version": "0.15.0",
+  "python": "3.11.14 (main, Dec  9 2025, 18:59:10) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "results": [
+    {
+      "name": "affine_flat_axis",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        0,
+        1
+      ],
+      "gradient": [
+        0.0,
+        1.0000000000000617
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.5716116867044578e-12,
+        2.6073238606632338e-12
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "flat_samples",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0,
+        6.17284001691587e-14
+      ],
+      "normalized_error": [
+        0.0,
+        6.17284001691587e-14
+      ],
+      "normal": [
+        0.0,
+        1.0
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "nonlinear_flat_axis",
+      "point": [
+        1.0,
+        0.0
+      ],
+      "expected": [
+        3,
+        0
+      ],
+      "gradient": [
+        2.999999999999925,
+        0.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        1.3693732586230764e-07,
+        2.5716116867044578e-12
+      ],
+      "steps": [
+        [
+          [
+            0.0007400959797414508,
+            0.0007400959797414508
+          ],
+          [
+            0.0003700479898707254,
+            0.0003700479898707254
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "flat_samples"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        7.505107646466058e-14,
+        0.0
+      ],
+      "normalized_error": [
+        2.5017025488220195e-14,
+        0.0
+      ],
+      "normal": [
+        1.0,
+        0.0
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "translated_sine_0",
+      "point": [
+        0.3,
+        0.2
+      ],
+      "expected": [
+        0.955336489125606,
+        1
+      ],
+      "gradient": [
+        0.955336489125646,
+        1.0000000000001001
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.180414564683527e-08,
+        1.3099977284072878e-12
+      ],
+      "steps": [
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.0003700479898707254,
+            0.0003700479898707254
+          ]
+        ],
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.00037004798987069765,
+            0.00037004798987069765
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        3.9968028886505635e-14,
+        1.0014211682118912e-13
+      ],
+      "normalized_error": [
+        3.9968028886505635e-14,
+        1.0014211682118912e-13
+      ],
+      "normal": [
+        0.6907749687067831,
+        0.7230698047962885
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "translated_sine_1e+09",
+      "point": [
+        1000000000.3,
+        0.2
+      ],
+      "expected": [
+        0.9553365032171065,
+        1
+      ],
+      "gradient": [
+        0.9553365032170967,
+        0.9999999999999
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.180149881792608e-08,
+        1.3100346186942587e-12
+      ],
+      "steps": [
+        [
+          [
+            0.00074005126953125,
+            0.00074005126953125
+          ],
+          [
+            0.000370025634765625,
+            0.000370025634765625
+          ]
+        ],
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.00037004798987069765,
+            0.00037004798987069765
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        9.769962616701378e-15,
+        1.000310945187266e-13
+      ],
+      "normalized_error": [
+        9.769962616701378e-15,
+        1.000310945187266e-13
+      ],
+      "normal": [
+        0.6907749740340234,
+        0.7230697997069816
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "translated_sine_1e+12",
+      "point": [
+        1000000000000.3,
+        0.2
+      ],
+      "expected": [
+        0.955322058289171,
+        1
+      ],
+      "gradient": [
+        0.9553220582891697,
+        1.0000000000001001
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        3.796176279159003e-08,
+        1.3101176862161456e-12
+      ],
+      "steps": [
+        [
+          [
+            0.0009765625,
+            0.0009765625
+          ],
+          [
+            0.00048828125,
+            0.00048828125
+          ]
+        ],
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.00037004798987069765,
+            0.00037004798987069765
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.0009765625,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.3322676295501878e-15,
+        1.0014211682118912e-13
+      ],
+      "normalized_error": [
+        1.3322676295501878e-15,
+        1.0014211682118912e-13
+      ],
+      "normal": [
+        0.6907695131776578,
+        0.7230750166229655
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "sine_scale_1e-18",
+      "point": [
+        3e-19,
+        2.0000000000000002e-19
+      ],
+      "expected": [
+        9.553364891256059e+17,
+        9.999999999999999e+17
+      ],
+      "gradient": [
+        38525431884625.23,
+        9.999999999999999e+17
+      ],
+      "evaluate_calls": 89,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        444.08920985006324
+      ],
+      "steps": [
+        [
+          [
+            1.0769813958052037e-14,
+            1.0769813958052037e-14
+          ],
+          [
+            5.384906979026019e-15,
+            5.384906979026019e-15
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        1.0769813958052037e-14,
+        0.000740095979741405
+      ],
+      "field_evaluations": 89,
+      "max_candidates": 20,
+      "absolute_error": [
+        9.552979636937212e+17,
+        0.0
+      ],
+      "normalized_error": [
+        0.9999596734424748,
+        0.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "sine_scale_1e-12",
+      "point": [
+        3e-13,
+        2e-13
+      ],
+      "expected": [
+        955336489125.606,
+        1000000000000.0
+      ],
+      "gradient": [
+        955336489125.5121,
+        1000000000000.0
+      ],
+      "evaluate_calls": 93,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        288563.71451057686,
+        0.0004440892104872054
+      ],
+      "steps": [
+        [
+          [
+            2.6924534895130243e-15,
+            2.6924534895130243e-15
+          ],
+          [
+            1.346226744756487e-15,
+            1.346226744756487e-15
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        2.6924534895130093e-15,
+        0.000740095979741405
+      ],
+      "field_evaluations": 93,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0938720703125,
+        0.0
+      ],
+      "normalized_error": [
+        9.826073993930516e-14,
+        0.0
+      ],
+      "normal": [
+        0.6907749687067687,
+        0.7230698047963022
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "sine_scale_1e-09",
+      "point": [
+        3e-10,
+        2.0000000000000003e-10
+      ],
+      "expected": [
+        955336489.125606,
+        999999999.9999999
+      ],
+      "gradient": [
+        955336489.125507,
+        1000000000.0
+      ],
+      "evaluate_calls": 73,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        302.5809636041225,
+        4.83826085700267e-07
+      ],
+      "steps": [
+        [
+          [
+            2.757072373261337e-12,
+            2.757072373261337e-12
+          ],
+          [
+            1.3785361866306426e-12,
+            1.3785361866306426e-12
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        15,
+        1
+      ],
+      "nominal_step": [
+        2.7570723732613215e-12,
+        0.000740095979741405
+      ],
+      "field_evaluations": 73,
+      "max_candidates": 20,
+      "absolute_error": [
+        9.894371032714844e-05,
+        1.1920928955078125e-07
+      ],
+      "normalized_error": [
+        1.0356948724706306e-13,
+        1.1920928955078126e-16
+      ],
+      "normal": [
+        0.6907749687067668,
+        0.7230698047963041
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "sine_scale_1e-06",
+      "point": [
+        3e-07,
+        2e-07
+      ],
+      "expected": [
+        955336.489125606,
+        1000000.0
+      ],
+      "gradient": [
+        955336.4891254705,
+        1000000.0
+      ],
+      "evaluate_calls": 53,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        0.31727910192417746,
+        4.835314599029318e-10
+      ],
+      "steps": [
+        [
+          [
+            2.823242110219609e-09,
+            2.823242110219609e-09
+          ],
+          [
+            1.411621055109778e-09,
+            1.411621055109778e-09
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        10,
+        1
+      ],
+      "nominal_step": [
+        2.8232421102195932e-09,
+        0.000740095979741405
+      ],
+      "field_evaluations": 53,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.3550743460655212e-07,
+        0.0
+      ],
+      "normalized_error": [
+        1.4184262419472585e-13,
+        0.0
+      ],
+      "normal": [
+        0.690774968706753,
+        0.7230698047963172
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "sine_scale_1",
+      "point": [
+        0.3,
+        0.2
+      ],
+      "expected": [
+        0.955336489125606,
+        1.0
+      ],
+      "gradient": [
+        0.955336489125646,
+        1.0000000000001001
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.180414564683527e-08,
+        1.3099977284072878e-12
+      ],
+      "steps": [
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.0003700479898707254,
+            0.0003700479898707254
+          ]
+        ],
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.00037004798987069765,
+            0.00037004798987069765
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        3.9968028886505635e-14,
+        1.0014211682118912e-13
+      ],
+      "normalized_error": [
+        3.9968028886505635e-14,
+        1.0014211682118912e-13
+      ],
+      "normal": [
+        0.6907749687067831,
+        0.7230698047962885
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "sine_scale_1e+09",
+      "point": [
+        300000000.0,
+        200000000.0
+      ],
+      "expected": [
+        9.55336489125606e-10,
+        1e-09
+      ],
+      "gradient": [
+        9.553364891087497e-10,
+        9.999999999728148e-10
+      ],
+      "evaluate_calls": 113,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        3.0381335125897293e-19,
+        3.1201491596594978e-19
+      ],
+      "steps": [
+        [
+          [
+            3104.187528192997,
+            3104.187528192997
+          ],
+          [
+            1552.0937641263008,
+            1552.0937641263008
+          ]
+        ],
+        [
+          [
+            3104.1875282227993,
+            3104.1875282227993
+          ],
+          [
+            1552.0937640964985,
+            1552.0937640964985
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "expanded",
+        "expanded"
+      ],
+      "candidates": [
+        12,
+        12
+      ],
+      "nominal_step": [
+        3104.187528213294,
+        3104.187528213294
+      ],
+      "field_evaluations": 113,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.6856286522605598e-20,
+        2.7185290831555255e-20
+      ],
+      "normalized_error": [
+        1.6856286522605598e-20,
+        2.7185290831555255e-20
+      ],
+      "normal": [
+        0.69077496871025,
+        0.7230698047929764
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "anisotropic",
+      "point": [
+        0.0,
+        1000000000000000.0
+      ],
+      "expected": [
+        1,
+        1e-15
+      ],
+      "gradient": [
+        1.0000000000000369,
+        1.0000000000085785e-15
+      ],
+      "evaluate_calls": 81,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.282440027126049e-08,
+        4.431324710031809e-25
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            4294967296.0,
+            4294967296.0
+          ],
+          [
+            2147483648.0,
+            2147483648.0
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "expanded"
+      ],
+      "candidates": [
+        1,
+        17
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        4294967296.0
+      ],
+      "field_evaluations": 81,
+      "max_candidates": 20,
+      "absolute_error": [
+        3.68594044175552e-14,
+        8.578467913825893e-27
+      ],
+      "normalized_error": [
+        3.68594044175552e-14,
+        8.578467913825893e-27
+      ],
+      "normal": [
+        1.0,
+        1.0000000000085417e-15
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "output_offset_1e+09",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        1,
+        1
+      ],
+      "gradient": [
+        0.9999999999614592,
+        0.9999999999614592
+      ],
+      "evaluate_calls": 105,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        6.314070058877285e-10,
+        6.314070058877285e-10
+      ],
+      "steps": [
+        [
+          [
+            3104.187528213294,
+            3104.187528213294
+          ],
+          [
+            1552.093764106647,
+            1552.093764106647
+          ]
+        ],
+        [
+          [
+            3104.187528213294,
+            3104.187528213294
+          ],
+          [
+            1552.093764106647,
+            1552.093764106647
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "expanded",
+        "expanded"
+      ],
+      "candidates": [
+        12,
+        12
+      ],
+      "nominal_step": [
+        3104.187528213294,
+        3104.187528213294
+      ],
+      "field_evaluations": 105,
+      "max_candidates": 20,
+      "absolute_error": [
+        3.8540837188349997e-11,
+        3.8540837188349997e-11
+      ],
+      "normalized_error": [
+        3.8540837188349997e-11,
+        3.8540837188349997e-11
+      ],
+      "normal": [
+        0.7071067811865475,
+        0.7071067811865475
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "output_offset_1e+15",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        1,
+        1
+      ],
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2571.611686704458,
+        2571.611686704458
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "flat_samples",
+        "flat_samples"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.0,
+        1.0
+      ],
+      "normalized_error": [
+        1.0,
+        1.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "output_offset_1e+16",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        1,
+        1
+      ],
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        25716.116867044577,
+        25716.116867044577
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "flat_samples",
+        "flat_samples"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.0,
+        1.0
+      ],
+      "normalized_error": [
+        1.0,
+        1.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "quantized_oscillation",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        2,
+        1
+      ],
+      "gradient": [
+        2.0000066931867213,
+        0.9999999999614592
+      ],
+      "evaluate_calls": 69,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        6.314070058877285e-10
+      ],
+      "steps": [
+        [
+          [
+            0.01184153567586248,
+            0.01184153567586248
+          ],
+          [
+            0.00592076783793124,
+            0.00592076783793124
+          ]
+        ],
+        [
+          [
+            3104.187528213294,
+            3104.187528213294
+          ],
+          [
+            1552.093764106647,
+            1552.093764106647
+          ]
+        ]
+      ],
+      "status": [
+        "roundoff_limited",
+        "sample_consistent"
+      ],
+      "selection": [
+        "expanded",
+        "expanded"
+      ],
+      "candidates": [
+        4,
+        12
+      ],
+      "nominal_step": [
+        0.01184153567586248,
+        3104.187528213294
+      ],
+      "field_evaluations": 69,
+      "max_candidates": 20,
+      "absolute_error": [
+        6.693186721307143e-06,
+        3.8540837188349997e-11
+      ],
+      "normalized_error": [
+        3.3465933606535714e-06,
+        3.8540837188349997e-11
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "log_boundary",
+      "point": [
+        1e-09,
+        0.2
+      ],
+      "expected": [
+        1000000000.0,
+        1
+      ],
+      "gradient": [
+        999999999.9971339,
+        0.9999999999974749
+      ],
+      "evaluate_calls": 73,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        633.4675910843014,
+        5.2777870275633856e-11
+      ],
+      "steps": [
+        [
+          [
+            2.757072373261285e-12,
+            2.757072373261285e-12
+          ],
+          [
+            1.378536186630746e-12,
+            1.378536186630746e-12
+          ]
+        ],
+        [
+          [
+            0.0007400959797413953,
+            0.0007400959797413953
+          ],
+          [
+            0.00037004798987069765,
+            0.00037004798987069765
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        15,
+        1
+      ],
+      "nominal_step": [
+        2.7570723732613215e-12,
+        0.000740095979741405
+      ],
+      "field_evaluations": 73,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0028661489486694336,
+        2.525091247207456e-12
+      ],
+      "normalized_error": [
+        2.8661489486694336e-12,
+        2.525091247207456e-12
+      ],
+      "normal": [
+        1.0,
+        1.000000000000341e-09
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "abs_cusp",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": null,
+      "gradient": [
+        0.0,
+        1.0
+      ],
+      "evaluate_calls": 89,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        4.440892098500626e-16
+      ],
+      "steps": [
+        [
+          [
+            203436033.84898645,
+            203436033.84898645
+          ],
+          [
+            101718016.92449322,
+            101718016.92449322
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "sample_consistent"
+      ],
+      "selection": [
+        "expanded",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        203436033.84898645,
+        0.000740095979741405
+      ],
+      "field_evaluations": 89,
+      "max_candidates": 20,
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "sign_jump",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": null,
+      "gradient": [
+        866619736393429.4,
+        1.0
+      ],
+      "evaluate_calls": 89,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        4.440892098500626e-16
+      ],
+      "steps": [
+        [
+          [
+            2.6924534895130093e-15,
+            2.6924534895130093e-15
+          ],
+          [
+            1.3462267447565047e-15,
+            1.3462267447565047e-15
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        2.6924534895130093e-15,
+        0.000740095979741405
+      ],
+      "field_evaluations": 89,
+      "max_candidates": 20,
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "cube_root",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": null,
+      "gradient": [
+        9213718169.000498,
+        1.0
+      ],
+      "evaluate_calls": 89,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        4.440892098500626e-16
+      ],
+      "steps": [
+        [
+          [
+            2.6924534895130093e-15,
+            2.6924534895130093e-15
+          ],
+          [
+            1.3462267447565047e-15,
+            1.3462267447565047e-15
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        2.6924534895130093e-15,
+        0.000740095979741405
+      ],
+      "field_evaluations": 89,
+      "max_candidates": 20,
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "differentiable_cusp",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        0,
+        0
+      ],
+      "gradient": [
+        8.974844965043366e-16,
+        0.0
+      ],
+      "evaluate_calls": 89,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        2.465014791424264e-19
+      ],
+      "steps": [
+        [
+          [
+            2.6924534895130093e-15,
+            2.6924534895130093e-15
+          ],
+          [
+            1.3462267447565047e-15,
+            1.3462267447565047e-15
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "sampled_stationary"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        20,
+        1
+      ],
+      "nominal_step": [
+        2.6924534895130093e-15,
+        0.000740095979741405
+      ],
+      "field_evaluations": 89,
+      "max_candidates": 20,
+      "absolute_error": [
+        8.974844965043366e-16,
+        0.0
+      ],
+      "normalized_error": [
+        8.974844965043366e-16,
+        0.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "stationary",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        0,
+        0
+      ],
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        2.465014791424264e-19,
+        2.465014791424264e-19
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sampled_stationary",
+        "sampled_stationary"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0,
+        0.0
+      ],
+      "normalized_error": [
+        0.0,
+        0.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "cubic",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        0,
+        0
+      ],
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        1.3693551480734772e-07,
+        1.3693551480734772e-07
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sampled_stationary",
+        "sampled_stationary"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0,
+        0.0
+      ],
+      "normalized_error": [
+        0.0,
+        0.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    },
+    {
+      "name": "dyadic_alias",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        8489.689822899696,
+        1
+      ],
+      "gradient": [
+        8489.6898228996,
+        1.0
+      ],
+      "evaluate_calls": 41,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        0.0008323775541418297,
+        4.440892098500626e-16
+      ],
+      "steps": [
+        [
+          [
+            1.8068749505405397e-07,
+            1.8068749505405397e-07
+          ],
+          [
+            9.034374752702698e-08,
+            9.034374752702698e-08
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "sample_consistent",
+        "sample_consistent"
+      ],
+      "selection": [
+        "refined",
+        "local"
+      ],
+      "candidates": [
+        7,
+        1
+      ],
+      "nominal_step": [
+        1.8068749505405397e-07,
+        0.000740095979741405
+      ],
+      "field_evaluations": 41,
+      "max_candidates": 20,
+      "absolute_error": [
+        9.640643838793039e-11,
+        0.0
+      ],
+      "normalized_error": [
+        1.1355707970376977e-14,
+        0.0
+      ],
+      "normal": [
+        0.9999999930627659,
+        0.00011778993272114884
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "hidden_bump_counterexample",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        1,
+        1
+      ],
+      "gradient": [
+        0.0,
+        1.0
+      ],
+      "evaluate_calls": 17,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        5.7223e-320,
+        4.440892098500626e-16
+      ],
+      "steps": [
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ],
+        [
+          [
+            0.000740095979741405,
+            0.000740095979741405
+          ],
+          [
+            0.0003700479898707025,
+            0.0003700479898707025
+          ]
+        ]
+      ],
+      "status": [
+        "flat_samples",
+        "sample_consistent"
+      ],
+      "selection": [
+        "local",
+        "local"
+      ],
+      "candidates": [
+        1,
+        1
+      ],
+      "nominal_step": [
+        0.000740095979741405,
+        0.000740095979741405
+      ],
+      "field_evaluations": 17,
+      "max_candidates": 20,
+      "absolute_error": [
+        1.0,
+        0.0
+      ],
+      "normalized_error": [
+        1.0,
+        0.0
+      ],
+      "normal": [
+        0.0,
+        1.0
+      ],
+      "normal_accepted": true
+    },
+    {
+      "name": "subnormal_linear",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "expected": [
+        1e-320,
+        1e-320
+      ],
+      "gradient": [
+        1e-320,
+        1e-320
+      ],
+      "evaluate_calls": 161,
+      "method": "adaptive_richardson",
+      "error_estimate": [
+        "inf",
+        "inf"
+      ],
+      "steps": [
+        [
+          [
+            203436033.84898645,
+            203436033.84898645
+          ],
+          [
+            101718016.92449322,
+            101718016.92449322
+          ]
+        ],
+        [
+          [
+            203436033.84898645,
+            203436033.84898645
+          ],
+          [
+            101718016.92449322,
+            101718016.92449322
+          ]
+        ]
+      ],
+      "status": [
+        "budget_exhausted",
+        "budget_exhausted"
+      ],
+      "selection": [
+        "expanded",
+        "expanded"
+      ],
+      "candidates": [
+        20,
+        20
+      ],
+      "nominal_step": [
+        203436033.84898645,
+        203436033.84898645
+      ],
+      "field_evaluations": 161,
+      "max_candidates": 20,
+      "absolute_error": [
+        0.0,
+        0.0
+      ],
+      "normalized_error": [
+        0.0,
+        0.0
+      ],
+      "normal_accepted": false,
+      "normal_error": "Normal undefined - zero gradient or unresolved numerical derivative"
+    }
+  ],
+  "warm_grid_97_squared": {
+    "default": {
+      "median_seconds": 0.004653200012398884,
+      "samples_seconds": [
+        0.004813100007595494,
+        0.0046199999924283475,
+        0.004653200012398884,
+        0.004690899979323149,
+        0.004877100000157952,
+        0.004511000006459653,
+        0.004418700002133846
+      ]
+    },
+    "explicit_scale": {
+      "median_seconds": 0.0010699000267777592,
+      "samples_seconds": [
+        0.0011811000003945082,
+        0.0010842999909073114,
+        0.0010600000096019357,
+        0.0010699000267777592,
+        0.0010289000056218356,
+        0.0010492000146768987,
+        0.0010717999830376357
+      ]
+    },
+    "analytic": {
+      "median_seconds": 3.2899988582357764e-05,
+      "samples_seconds": [
+        3.4500000765547156e-05,
+        3.29999893438071e-05,
+        3.270001616328955e-05,
+        3.2899988582357764e-05,
+        3.2899988582357764e-05,
+        3.270001616328955e-05,
+        3.3499993151053786e-05
+      ]
+    }
+  },
+  "note": "Independent analytic fixture evidence and explicit finite-sampling counterexamples; error estimates and sampled consistency are not accuracy certificates."
+}

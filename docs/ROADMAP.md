@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.15.0 adds bounded automatic procedural steps, tested one-sided/off-ladder
+consistency, per-point diagnostics and explicit failure/cost measurements.
+[Automatic derivative contracts](automatic_derivatives.md). Finite samples still
+miss some smooth hidden features; known scales and analytic callbacks remain
+important. Domain/noise contracts and general algebraic-field derivatives are
+useful separate correctness increments.
+
 Version 0.14.0 completes supported quadratic sublevel envelopes, recursive smooth
 blend level propagation and stable CurveField level-set wrappers.
 [Bounds contracts, measurements and limitations](sublevel_bounds.md). Higher-degree
