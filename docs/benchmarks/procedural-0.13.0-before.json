@@ -1,0 +1,261 @@
+{
+  "python": "3.11.14 (main, Dec  9 2025, 18:59:10) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "baseline_constructor": true,
+  "measurement": "Deterministic analytic derivative fixtures, not a universal accuracy bound; local scale hints are explicit.",
+  "results": [
+    {
+      "name": "linear_at_0",
+      "point": [
+        0.0,
+        0.0
+      ],
+      "derivative_scale": 1.0,
+      "expected": [
+        1.0,
+        1.0
+      ],
+      "actual": [
+        1.0,
+        1.0
+      ],
+      "absolute_error": [
+        0.0,
+        0.0
+      ],
+      "normalized_error": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "linear_at_1",
+      "point": [
+        1.0,
+        0.0
+      ],
+      "derivative_scale": 1.0,
+      "expected": [
+        1.0,
+        1.0
+      ],
+      "actual": [
+        0.9999999994736442,
+        0.9999999994736442
+      ],
+      "absolute_error": [
+        5.26355847796367e-10,
+        5.26355847796367e-10
+      ],
+      "normalized_error": [
+        5.26355847796367e-10,
+        5.26355847796367e-10
+      ]
+    },
+    {
+      "name": "linear_at_1e+09",
+      "point": [
+        1000000000.0,
+        0.0
+      ],
+      "derivative_scale": 1000000000.0,
+      "expected": [
+        1.0,
+        1.0
+      ],
+      "actual": [
+        0.0,
+        0.0
+      ],
+      "absolute_error": [
+        1.0,
+        1.0
+      ],
+      "normalized_error": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "linear_at_1e+15",
+      "point": [
+        1000000000000000.0,
+        0.0
+      ],
+      "derivative_scale": 1000000000000000.0,
+      "expected": [
+        1.0,
+        1.0
+      ],
+      "actual": [
+        0.0,
+        0.0
+      ],
+      "absolute_error": [
+        1.0,
+        1.0
+      ],
+      "normalized_error": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "sine_scale_1e-09",
+      "point": [
+        3e-10,
+        2.0000000000000003e-10
+      ],
+      "derivative_scale": 1e-09,
+      "expected": [
+        955336489.125606,
+        999999999.9999999
+      ],
+      "actual": [
+        -51972321.80872627,
+        1000000000.0
+      ],
+      "absolute_error": [
+        1007308810.9343323,
+        1.1920928955078125e-07
+      ],
+      "normalized_error": [
+        1.054402111088937,
+        1.1920928955078126e-16
+      ]
+    },
+    {
+      "name": "sine_scale_1",
+      "point": [
+        0.3,
+        0.2
+      ],
+      "derivative_scale": 1.0,
+      "expected": [
+        0.955336489125606,
+        1.0
+      ],
+      "actual": [
+        0.955336487695746,
+        0.9999999994736442
+      ],
+      "absolute_error": [
+        1.4298600081730228e-09,
+        5.26355847796367e-10
+      ],
+      "normalized_error": [
+        1.4298600081730228e-09,
+        5.26355847796367e-10
+      ]
+    },
+    {
+      "name": "sine_scale_1e+09",
+      "point": [
+        300000000.0,
+        200000000.0
+      ],
+      "derivative_scale": 1000000000.0,
+      "expected": [
+        9.55336489125606e-10,
+        1e-09
+      ],
+      "actual": [
+        0.0,
+        0.0
+      ],
+      "absolute_error": [
+        9.55336489125606e-10,
+        1e-09
+      ],
+      "normalized_error": [
+        9.55336489125606e-10,
+        1e-09
+      ]
+    },
+    {
+      "name": "translated_sine_1e+09",
+      "point": [
+        1000000000.3,
+        0.2
+      ],
+      "derivative_scale": 1.0,
+      "expected": [
+        0.9553365032171065,
+        1.0
+      ],
+      "actual": [
+        0.0,
+        0.9999999994736442
+      ],
+      "absolute_error": [
+        0.9553365032171065,
+        5.26355847796367e-10
+      ],
+      "normalized_error": [
+        0.9553365032171065,
+        5.26355847796367e-10
+      ]
+    },
+    {
+      "name": "translated_sine_1e+12",
+      "point": [
+        1000000000000.3,
+        0.2
+      ],
+      "derivative_scale": 1.0,
+      "expected": [
+        0.955322058289171,
+        1.0
+      ],
+      "actual": [
+        0.0,
+        0.9999999994736442
+      ],
+      "absolute_error": [
+        0.955322058289171,
+        5.26355847796367e-10
+      ],
+      "normalized_error": [
+        0.955322058289171,
+        5.26355847796367e-10
+      ]
+    },
+    {
+      "name": "large_quadratic",
+      "point": [
+        1000000000.0,
+        0.0
+      ],
+      "derivative_scale": null,
+      "expected": [
+        2000000000.0,
+        0.0
+      ],
+      "actual": [
+        0.0,
+        0.0
+      ],
+      "absolute_error": [
+        2000000000.0,
+        0.0
+      ],
+      "normalized_error": [
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "warm_timings": {
+    "numerical_grid_97_squared": {
+      "median_seconds": 0.000145500001963228,
+      "samples_seconds": [
+        0.000145500001963228,
+        0.00014069999451749027,
+        0.00014150000060908496,
+        0.000148899998748675,
+        0.000166199984960258
+      ]
+    }
+  }
+}

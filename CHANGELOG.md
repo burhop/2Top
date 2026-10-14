@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.13.0
+
+- Procedural gradients use actual representable coarse/fine stencils and
+  nonuniform Richardson correction, replacing the universal fixed `1e-8` step.
+- Keyword-only analytic gradient callbacks and scalar/pair local scale hints
+  preserve scalar/broadcast APIs, scalar-only callback fallback and honest
+  placeholder serialization.
+- Diagnostics expose heuristic uncertainty and actual displacements; numerical
+  normals reject unresolved sampling and output quantization. Analytic and
+  subclass gradients retain finite/domain/zero-gradient validation.
+- Independent analytic fixtures and regression cases cover translations, small
+  scales, large field offsets, axis independence and subnormal uncertainty.
+  Numerical gradients require nine field probes instead of four; no universal
+  accuracy or performance guarantee is claimed.
+
 ## 0.12.0
 
 - Reusable symbolic/procedural evaluators broadcast real coordinates, constant
