@@ -1280,13 +1280,20 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
         """
         Approximate the composite curve as a list of straight-line segments.
         Each segment is represented as a tuple of start and end points ((x0, y0), (x1, y1)).
-        Caches the result in self._cached_polygon_segments.
+        Read public segments/endpoints live; do not retain sampled geometry across queries.
         """
-        if self._cached_polygon_segments is not None:
-            return self._cached_polygon_segments
-
         segments_list = []
         for segment in self.segments:
+            # Native straight edges need only their live endpoints, not 100 samples.
+            if not getattr(segment, "is_curved", True) and hasattr(
+                segment, "get_endpoints"
+            ):
+                endpoints = segment.get_endpoints()
+                if endpoints and len(endpoints) == 2:
+                    segments_list.append(
+                        tuple(tuple(float(v) for v in p) for p in endpoints)
+                    )
+                    continue
             # 1. If it has get_polyline_approximation (e.g. ParametricSegment)
             if hasattr(segment, "get_polyline_approximation"):
                 try:
@@ -1402,7 +1409,6 @@ class CompositeCurve(CompositePolygonMixin, ImplicitCurve):
             except Exception:
                 pass
 
-        self._cached_polygon_segments = segments_list
         return segments_list
 
     def _point_in_polygon_scalar(self, x: float, y: float) -> bool:

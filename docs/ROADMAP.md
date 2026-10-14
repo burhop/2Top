@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.18.0 repairs signed-distance query freshness and the generic polygon
+containment dependency, includes nearest hole boundaries and retains no query
+buffers. [Analytic cases, measured cost and limits](distance_cache.md). The next
+reproduced gap is scale-stable segment projection: absolute short-edge thresholds
+and squared-distance overflow remain. Curve sampling and derivative uncertainty
+require their own contracts; generic implicit values are not distances.
+
 Version 0.17.0 corrects occupancy derivative/boundary validity, discrete level-set
 semantics and unsafe cross-query mask caching. [Contracts and cost](occupancy_validity.md).
 Signed-distance cache/derivative validity and domain/noise contracts remain

@@ -249,185 +249,83 @@ class SignedDistanceField(BaseField):
         self._cache = None
         self._cached_segments_ab = None
 
-    def _is_grid_cached(self, x: np.ndarray, y: np.ndarray) -> bool:
-        if not hasattr(self, "_cache") or self._cache is None:
-            return False
-        cached_x, cached_y, cached_res = self._cache
-        if x.shape != cached_x.shape or y.shape != cached_y.shape:
-            return False
-        if x is cached_x and y is cached_y:
-            return True
-        ndim = len(x.shape)
-        if ndim == 2:
-            h, w = x.shape
-            if h < 2 or w < 2:
-                return False
-            corners = [(0, 0), (0, -1), (-1, 0), (-1, -1)]
-            center = (h // 2, w // 2)
-            indices = corners + [center]
-        elif ndim == 1:
-            n = len(x)
-            if n < 2:
-                return False
-            indices = [(0,), (-1,), (n // 2,)]
-        else:
-            return False
-        try:
-            for idx in indices:
-                if not np.isclose(x[idx], cached_x[idx], atol=1e-9) or not np.isclose(
-                    y[idx], cached_y[idx], atol=1e-9
-                ):
-                    return False
-            return True
-        except Exception:
-            return False
-
     def clear_cache(self) -> None:
+        """Compatibility hook; distance queries retain no grids or sampled geometry."""
         self._cache = None
         self._cached_segments_ab = None
 
-    def evaluate(
-        self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
-    ) -> Union[float, np.ndarray]:
+    def evaluate(self, x, y):
+        """Read live coordinates and boundaries, returning fresh signed distances.
+
+        Straight segments use Euclidean point-to-segment distance. Curved sources
+        retain the existing sampling approximation. No identity, partial-grid,
+        tolerance or persistent geometry cache can track arbitrary public edits.
+        Nonfinite coordinates are unavailable (NaN); finite points still evaluate.
         """
-        Evaluate the signed distance field at given coordinates.
+        from .numeric import broadcast_coordinates, field_result
 
-        Args:
-            x: x-coordinate(s) to evaluate
-            y: y-coordinate(s) to evaluate
+        xx, yy, scalar = broadcast_coordinates(x, y)
+        finite = np.isfinite(xx) & np.isfinite(yy)
+        result = np.full(xx.shape, np.nan)
+        if np.any(finite):
+            px, py = xx[finite], yy[finite]
+            if scalar:
+                result[finite] = self._compute_signed_distance(
+                    float(px[0]), float(py[0])
+                )
+            else:
+                result[finite] = self._evaluate_vectorized(px, py)
+        return field_result(result, xx.shape, scalar)
 
-        Returns:
-            Signed distance value(s) to the region boundary
-        """
-        if np.isscalar(x) and np.isscalar(y):
-            # Scalar case
-            return self._compute_signed_distance(x, y)
-
-        x_array = np.asarray(x)
-        y_array = np.asarray(y)
-
-        # Check cache
-        if self._is_grid_cached(x_array, y_array):
-            return self._cache[2]
-
-        # Handle NaN inputs by propagating them
-        if np.isnan(x_array).any() or np.isnan(y_array).any():
-            result = np.full_like(x_array, np.nan, dtype=float)
-            # Only compute for non-NaN points
-            valid_mask = ~np.isnan(x_array) & ~np.isnan(y_array)
-            if np.any(valid_mask):
-                valid_x = x_array[valid_mask]
-                valid_y = y_array[valid_mask]
-                valid_result = self._evaluate_vectorized(valid_x, valid_y)
-                result[valid_mask] = valid_result
-            return result
-
-        result = self._evaluate_vectorized(x_array, y_array)
-        self._cache = (x_array, y_array, result)
-        return result
-
-    def _evaluate_vectorized(
-        self, x_array: np.ndarray, y_array: np.ndarray
-    ) -> np.ndarray:
-        # Check if points are inside the region
+    def _evaluate_vectorized(self, x_array, y_array):
         is_inside = self.region.contains(x_array, y_array)
-
-        # Compute distance to boundary
         distance = self._compute_distance_to_boundary_vectorized(x_array, y_array)
-
-        # Return negative distance inside, positive distance outside
         return np.where(is_inside, -distance, distance)
 
-    def _compute_distance_to_boundary_vectorized(
-        self, x_array: np.ndarray, y_array: np.ndarray
-    ) -> np.ndarray:
+    def _boundary_segments(self):
+        """Prepare only this query's live outer/hole line segments and samples."""
+        segments_ab = []
+        for boundary in [self.region.outer_boundary, *self.region.holes]:
+            boundary_segments = []
+            for segment in boundary.segments:
+                is_curved = getattr(segment, "is_curved", True)
+                if not is_curved and hasattr(segment, "get_endpoints"):
+                    endpoints = segment.get_endpoints()
+                    if endpoints and len(endpoints) == 2:
+                        # Copy endpoint values into query-local immutable pairs.
+                        boundary_segments.append(tuple(tuple(p) for p in endpoints))
+                        continue
+                points = self.region._sample_segment_boundary(segment, num_points=50)
+                if points and len(points) >= 2:
+                    boundary_segments.extend(zip(points[:-1], points[1:]))
+            if not boundary_segments:
+                points = self.region._curve_to_polygon(boundary)
+                if points and len(points) >= 2:
+                    boundary_segments.extend(zip(points[:-1], points[1:]))
+                    if boundary.is_closed():
+                        boundary_segments.append((points[-1], points[0]))
+            if not boundary_segments:
+                raise ValueError("Signed distance boundary has no available segments")
+            segments_ab.extend(boundary_segments)
+        return segments_ab
+
+    def _compute_distance_to_boundary_vectorized(self, x_array, y_array):
         flat_shape = x_array.shape
         flat_x = x_array.ravel()
         flat_y = y_array.ravel()
-        pts_q = np.stack([flat_x, flat_y], axis=1)  # (M, 2)
+        min_dists_sq = np.full(flat_x.size, np.inf)
 
-        if not hasattr(self, "_cached_segments_ab") or self._cached_segments_ab is None:
-            segments_ab = []
-
-            if (
-                hasattr(self.region, "outer_boundary")
-                and self.region.outer_boundary is not None
-            ):
-                for segment in self.region.outer_boundary.segments:
-                    has_linear = False
-                    is_curved = getattr(segment, "is_curved", True)
-                    if not is_curved and hasattr(segment, "get_endpoints"):
-                        try:
-                            endpoints = segment.get_endpoints()
-                            if endpoints and len(endpoints) == 2:
-                                segments_ab.append((endpoints[0], endpoints[1]))
-                                has_linear = True
-                        except Exception:
-                            pass
-                    if not has_linear:
-                        try:
-                            pts = self.region._sample_segment_boundary(
-                                segment, num_points=50
-                            )
-                            if pts and len(pts) >= 2:
-                                for k in range(len(pts) - 1):
-                                    segments_ab.append((pts[k], pts[k + 1]))
-                        except Exception:
-                            pass
-
-            # If no segments found, try standard _curve_to_polygon
-            if len(segments_ab) == 0:
-                try:
-                    boundary_points = self.region._curve_to_polygon(
-                        self.region.outer_boundary
-                    )
-                    if boundary_points and len(boundary_points) >= 2:
-                        for k in range(len(boundary_points) - 1):
-                            segments_ab.append(
-                                (boundary_points[k], boundary_points[k + 1])
-                            )
-                        # If the outer boundary is closed, connect the last point to the first
-                        try:
-                            closed = False
-                            if hasattr(self.region.outer_boundary, "is_closed"):
-                                if callable(self.region.outer_boundary.is_closed):
-                                    closed = self.region.outer_boundary.is_closed()
-                                else:
-                                    closed = bool(self.region.outer_boundary.is_closed)
-                            if closed:
-                                segments_ab.append(
-                                    (boundary_points[-1], boundary_points[0])
-                                )
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-
-            self._cached_segments_ab = segments_ab
-        else:
-            segments_ab = self._cached_segments_ab
-
-        if len(segments_ab) == 0:
-            return np.ones_like(x_array, dtype=float)
-
-        min_dists_sq = np.full(len(pts_q), float("inf"))
-
-        # Exact vectorized distance to straight line segments
-        for (xA, yA), (xB, yB) in segments_ab:
-            dx = xB - xA
-            dy = yB - yA
-            L2 = dx**2 + dy**2
-            if L2 < 1e-9:
-                d2 = (pts_q[:, 0] - xA) ** 2 + (pts_q[:, 1] - yA) ** 2
-                min_dists_sq = np.minimum(min_dists_sq, d2)
+        # Query-local preparation avoids stale endpoints/samples after region edits.
+        for (xA, yA), (xB, yB) in self._boundary_segments():
+            dx, dy = xB - xA, yB - yA
+            length_sq = dx**2 + dy**2
+            if length_sq < 1e-9:
+                d2 = (flat_x - xA) ** 2 + (flat_y - yA) ** 2
             else:
-                t = ((pts_q[:, 0] - xA) * dx + (pts_q[:, 1] - yA) * dy) / L2
+                t = ((flat_x - xA) * dx + (flat_y - yA) * dy) / length_sq
                 t = np.clip(t, 0.0, 1.0)
-                px = xA + t * dx
-                py = yA + t * dy
-                d2 = (pts_q[:, 0] - px) ** 2 + (pts_q[:, 1] - py) ** 2
-                min_dists_sq = np.minimum(min_dists_sq, d2)
-
+                d2 = (flat_x - (xA + t * dx)) ** 2 + (flat_y - (yA + t * dy)) ** 2
+            min_dists_sq = np.minimum(min_dists_sq, d2)
         return np.sqrt(min_dists_sq).reshape(flat_shape)
 
     def _compute_signed_distance(self, x: float, y: float) -> float:
@@ -483,12 +381,17 @@ class SignedDistanceField(BaseField):
             Gradient vector(s) at the given coordinates
         """
         # Use numerical gradient for simplicity
+        from .numeric import broadcast_coordinates, field_result
+
+        x, y, scalar = broadcast_coordinates(x, y)
+        if scalar:
+            x, y = float(x), float(y)
         h = self.resolution / 10  # Use smaller step size than resolution
 
         grad_x = (self.evaluate(x + h, y) - self.evaluate(x - h, y)) / (2 * h)
         grad_y = (self.evaluate(x, y + h) - self.evaluate(x, y - h)) / (2 * h)
 
-        return (grad_x, grad_y)
+        return tuple(field_result(v, np.shape(x), scalar) for v in (grad_x, grad_y))
 
     def level_set(self, level: float) -> "ImplicitCurve":
         """

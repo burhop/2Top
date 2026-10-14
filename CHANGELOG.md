@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.18.0
+
+- Removed borrowed-grid/result and sampled-boundary caches from signed distance.
+  Live coordinates, regions, outer boundaries and holes are read on every query.
+- Generic polygon containment reads live segments/endpoints; straight edges use
+  endpoints directly. This closes the stale vector sign after coherent edits.
+- Nearest hole boundaries contribute to distance magnitude; broadcast, scalar,
+  invalid-coordinate and empty-result paths retain explicit contracts.
+- Unavailable boundaries raise ValueError instead of fabricating unit distance.
+  Curved sampling and legacy short-segment/overflow limitations remain explicit.
+- Independent distance oracles, defensive-result/retention regressions and warm
+  before/after measurements document correctness and repeated-query costs.
+
 ## 0.17.0
 
 - Verify selected locked artifact URLs/hashes against canonical release metadata;
