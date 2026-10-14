@@ -1,0 +1,204 @@
+{
+  "label": "0.23.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "native_tiny_contour",
+      "gradient": {
+        "median_ms": 0.7075,
+        "batches_ms": [
+          0.7497,
+          0.7075,
+          0.6298
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 1.2189,
+        "batches_ms": [
+          1.3472,
+          1.2173,
+          1.2189
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "diagnostics": {
+        "median_ms": 0.9701,
+        "batches_ms": [
+          1.0066,
+          0.9456,
+          0.9701
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "available_vectors": 1,
+      "query_points": 1,
+      "method": "nearest_feature",
+      "field_evaluations": 0,
+      "sources": []
+    },
+    {
+      "workload": "callback_blend_scalar",
+      "gradient": {
+        "median_ms": 0.1506,
+        "batches_ms": [
+          0.1793,
+          0.1506,
+          0.1442
+        ],
+        "callback_evaluations": 5,
+        "rejection": null
+      },
+      "diagnostics": {
+        "median_ms": 0.817,
+        "batches_ms": [
+          0.84,
+          0.817,
+          0.7913
+        ],
+        "callback_evaluations": 18,
+        "rejection": null
+      },
+      "available_vectors": 1,
+      "query_points": 1,
+      "method": "algebraic",
+      "field_evaluations": null,
+      "sources": [
+        {
+          "method": "adaptive_richardson",
+          "field_evaluations": 17,
+          "derivative_target": "evaluate"
+        }
+      ]
+    },
+    {
+      "workload": "callback_shared_alias_64",
+      "gradient": {
+        "median_ms": 0.2671,
+        "batches_ms": [
+          0.2671,
+          0.2682,
+          0.253
+        ],
+        "callback_evaluations": 5,
+        "rejection": null
+      },
+      "diagnostics": {
+        "median_ms": 1.1378,
+        "batches_ms": [
+          1.1378,
+          1.1714,
+          1.1284
+        ],
+        "callback_evaluations": 18,
+        "rejection": null
+      },
+      "available_vectors": 64,
+      "query_points": 64,
+      "method": "algebraic",
+      "field_evaluations": null,
+      "sources": [
+        {
+          "method": "adaptive_richardson",
+          "field_evaluations": 17,
+          "derivative_target": "evaluate"
+        }
+      ]
+    },
+    {
+      "workload": "sampled_jump_contour",
+      "gradient": {
+        "median_ms": 21.6895,
+        "batches_ms": [
+          20.5305,
+          22.14,
+          21.6895
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 33.4011,
+        "batches_ms": [
+          36.6556,
+          33.4011,
+          27.5243
+        ],
+        "callback_evaluations": 0,
+        "rejection": "Normal undefined - zero gradient or unresolved numerical derivative"
+      },
+      "diagnostics": {
+        "median_ms": 856.8754,
+        "batches_ms": [
+          856.8754,
+          1047.2583,
+          780.5455
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "available_vectors": 0,
+      "query_points": 1,
+      "method": "algebraic",
+      "field_evaluations": null,
+      "sources": [
+        {
+          "method": "adaptive_richardson",
+          "field_evaluations": 161,
+          "derivative_target": "evaluate"
+        }
+      ]
+    },
+    {
+      "workload": "sampled_smooth_contour",
+      "gradient": {
+        "median_ms": 19.0296,
+        "batches_ms": [
+          17.9772,
+          19.0296,
+          24.5655
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 27.9559,
+        "batches_ms": [
+          27.9559,
+          33.0821,
+          24.6118
+        ],
+        "callback_evaluations": 0,
+        "rejection": "Normal undefined - zero gradient or unresolved numerical derivative"
+      },
+      "diagnostics": {
+        "median_ms": 76.2985,
+        "batches_ms": [
+          76.2985,
+          78.3685,
+          69.7354
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "available_vectors": 1,
+      "query_points": 1,
+      "method": "algebraic",
+      "field_evaluations": null,
+      "sources": [
+        {
+          "method": "adaptive_richardson",
+          "field_evaluations": 17,
+          "derivative_target": "evaluate"
+        }
+      ]
+    }
+  ],
+  "retains_queries": false,
+  "limits": "Three sequential warm complete calls, including conservative rejection. Shared-workstation measurements are not speed/FPS guarantees. Only explicit diagnostics invoke new adaptive probes, bounded per distinct numerical leaf at321 vector evaluations plus graph/shift value checks. Supplied callback internal costs and universal accuracy remain unknown. Sampled consistency is uncertified; native endpoint geometry is not an exact curved-distance solver."
+}

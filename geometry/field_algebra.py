@@ -44,7 +44,7 @@ def _quotient_derivative(a, b, da, db):
 
 
 class _Query:
-    def __init__(self, root, x, y):
+    def __init__(self, root, x, y, *, diagnostics=False):
         self.root = root
         self.x, self.y, self.scalar = broadcast_coordinates(x, y)
         self.shape = self.x.shape
@@ -53,6 +53,9 @@ class _Query:
         )
         self.values, self.gradients, self.active = {}, {}, set()
         self.errors = {}
+        self.diagnostics = diagnostics
+        self.sources = []
+        self.has_error_estimate = False
 
     def array(self, value):
         return np.asarray(field_result(value, self.shape, False))
@@ -60,10 +63,18 @@ class _Query:
     def native(self, field):
         from .base_field import BlendedField
 
-        return field is self.root or (
-            isinstance(field, BlendedField)
-            and _method_is(field, "evaluate", BlendedField.evaluate)
-            and _method_is(field, "gradient", BlendedField.gradient)
+        return isinstance(field, BlendedField) and (
+            field is self.root
+            or (
+                _method_is(field, "evaluate", BlendedField.evaluate)
+                and _method_is(field, "gradient", BlendedField.gradient)
+                and (
+                    not self.diagnostics
+                    or _method_is(
+                        field, "gradient_diagnostics", BlendedField.gradient_diagnostics
+                    )
+                )
+            )
         )
 
     def children(self, field):
@@ -90,6 +101,17 @@ class _Query:
                 if self.native(field)
                 else self.leaf(field, gradient)
             )
+            if gradient and not self.diagnostics:
+                from .base_field import BlendedField
+
+                if (
+                    isinstance(field, BlendedField)
+                    and _method_is(field, "gradient", BlendedField.gradient)
+                    and not _method_is(
+                        field, "gradient_diagnostics", BlendedField.gradient_diagnostics
+                    )
+                ):
+                    self.errors[key] = (self.array(np.inf), self.array(np.inf))
             cache[key] = result
             return result
         finally:
@@ -103,12 +125,16 @@ class _Query:
         curve = getattr(field, "curve", None)
         if not gradient:
             shifts = []
+            seen_wrappers = set()
             if isinstance(field, CurveField) and _method_is(
                 field, "evaluate", CurveField.evaluate
             ):
                 while isinstance(curve, LevelSetCurve) and _method_is(
                     curve, "evaluate", LevelSetCurve.evaluate
                 ):
+                    if id(curve) in seen_wrappers:
+                        raise ValueError("Cyclic algebraic field graph")
+                    seen_wrappers.add(id(curve))
                     shifts.append(curve.level)
                     curve = curve.curve
                 if (
@@ -121,34 +147,131 @@ class _Query:
                         value = value - shift
                     return value
             return self.array(field.evaluate(*self.coordinates))
-        while isinstance(curve, LevelSetCurve) and _method_is(
-            curve, "gradient", LevelSetCurve.gradient
+        seen_wrappers = set()
+        while (
+            isinstance(curve, LevelSetCurve)
+            and _method_is(curve, "gradient", LevelSetCurve.gradient)
+            and _method_is(curve, "evaluate", LevelSetCurve.evaluate)
+            and _method_is(
+                curve, "gradient_diagnostics", LevelSetCurve.gradient_diagnostics
+            )
         ):
+            if id(curve) in seen_wrappers:
+                raise ValueError("Cyclic algebraic field graph")
+            seen_wrappers.add(id(curve))
             curve = curve.curve
         error = (0.0, 0.0)
         if (
             isinstance(field, CurveField)
             and _method_is(field, "gradient", CurveField.gradient)
+            and _method_is(field, "evaluate", CurveField.evaluate)
+            and (
+                field is self.root
+                or _method_is(
+                    field, "gradient_diagnostics", CurveField.gradient_diagnostics
+                )
+            )
             and isinstance(curve, _AlgebraicLevelSet)
-            and _method_is(curve, "gradient", ProceduralCurve.gradient)
+            and _method_is(curve, "gradient", _AlgebraicLevelSet.gradient)
             and curve._gradient_function is curve._algebraic_gradient
+            and curve.native()
+            and _method_is(
+                curve, "gradient_diagnostics", _AlgebraicLevelSet.gradient_diagnostics
+            )
         ):
             result = self.get(curve.field, True)
             error = self.errors[id(curve.field)]
         elif (
+            self.diagnostics
+            and isinstance(field, CurveField)
+            and _method_is(field, "gradient", CurveField.gradient)
+            and _method_is(field, "evaluate", CurveField.evaluate)
+            and (
+                field is self.root
+                or _method_is(
+                    field, "gradient_diagnostics", CurveField.gradient_diagnostics
+                )
+            )
+        ):
+            callback = getattr(curve, "gradient_diagnostics", None)
+            if callable(callback):
+                result, error = self.consume(callback(*self.coordinates))
+            else:
+                result = tuple(self.array(v) for v in field.gradient(*self.coordinates))
+        elif self.diagnostics and callable(
+            getattr(field, "gradient_diagnostics", None)
+        ):
+            result, error = self.consume(field.gradient_diagnostics(*self.coordinates))
+        elif (
+            not self.diagnostics
+            and isinstance(field, CurveField)
+            and _method_is(field, "gradient", CurveField.gradient)
+            and isinstance(curve, _AlgebraicLevelSet)
+            and _method_is(curve, "gradient", _AlgebraicLevelSet.gradient)
+            and curve._gradient_function is curve._algebraic_gradient
+        ):
+            result = tuple(self.array(v) for v in field.gradient(*self.coordinates))
+            error = (self.array(np.inf), self.array(np.inf))
+        elif (
             isinstance(field, CurveField)
             and _method_is(field, "gradient", CurveField.gradient)
+            and _method_is(field, "evaluate", CurveField.evaluate)
             and isinstance(curve, ProceduralCurve)
             and _method_is(curve, "gradient", ProceduralCurve.gradient)
         ):
             diagnostics = curve.gradient_diagnostics(*self.coordinates)
-            result = tuple(self.array(v) for v in diagnostics["gradient"])
-            if diagnostics["error_estimate"] is not None:
-                error = tuple(self.array(v) for v in diagnostics["error_estimate"])
-                valid = np.isfinite(error[0]) & np.isfinite(error[1])
-                result = tuple(np.where(valid, v, np.nan) for v in result)
+            result, error = self.consume(diagnostics)
         else:
             result = tuple(self.array(v) for v in field.gradient(*self.coordinates))
+            from .field_strategy import SignedDistanceField
+            from .distance_gradient import native_boundaries
+
+            if (
+                isinstance(field, SignedDistanceField)
+                and _method_is(field, "gradient", SignedDistanceField.gradient)
+                and not (
+                    field._has_native_distance_methods()
+                    and _method_is(
+                        field,
+                        "gradient_diagnostics",
+                        SignedDistanceField.gradient_diagnostics,
+                    )
+                    and np.any(np.isfinite(self.x) & np.isfinite(self.y))
+                    and native_boundaries(field.region) is not None
+                )
+            ):
+                # No new adaptive probes in the cheap path. Its fixed-step
+                # derivative has no claimed error; normals must not trust it.
+                error = (self.array(np.inf), self.array(np.inf))
+            elif (
+                isinstance(field, CurveField)
+                and _method_is(field, "gradient", CurveField.gradient)
+                and (
+                    not _method_is(field, "evaluate", CurveField.evaluate)
+                    or (
+                        isinstance(curve, LevelSetCurve)
+                        and _method_is(curve, "gradient", LevelSetCurve.gradient)
+                        and (
+                            not _method_is(curve, "evaluate", LevelSetCurve.evaluate)
+                            or not _method_is(
+                                curve,
+                                "gradient_diagnostics",
+                                LevelSetCurve.gradient_diagnostics,
+                            )
+                        )
+                    )
+                )
+            ):
+                error = (self.array(np.inf), self.array(np.inf))
+        if (
+            not self.diagnostics
+            and isinstance(field, CurveField)
+            and _method_is(field, "gradient", CurveField.gradient)
+            and not _method_is(
+                field, "gradient_diagnostics", CurveField.gradient_diagnostics
+            )
+        ):
+            error = (self.array(np.inf), self.array(np.inf))
         valid = (
             np.isfinite(self.get(field))
             & np.isfinite(result[0])
@@ -156,6 +279,59 @@ class _Query:
         )
         self.errors[id(field)] = error
         return tuple(np.where(valid, v, np.nan) for v in result)
+
+    def consume(self, diagnostics):
+        gx, gy = diagnostics["gradient"]
+        result = tuple(self.array(v) for v in (gx, gy))
+        error = (self.array(0.0), self.array(0.0))
+        if diagnostics.get("error_estimate") is not None:
+            ex, ey = diagnostics["error_estimate"]
+            error = tuple(self.array(v) for v in (ex, ey))
+            if any(np.any(v < 0) for v in error):
+                raise ValueError("Diagnostic error estimates must be nonnegative")
+            self.has_error_estimate = True
+        available = np.broadcast_to(
+            np.asarray(diagnostics.get("available", True)), self.shape
+        )
+        if available.dtype.kind != "b":
+            raise ValueError("Diagnostic availability must be boolean")
+        available = (
+            available
+            & np.isfinite(error[0])
+            & np.isfinite(error[1])
+            & np.isfinite(result[0])
+            & np.isfinite(result[1])
+            & np.isfinite(self.x)
+            & np.isfinite(self.y)
+        )
+        if not self.diagnostics:
+            return tuple(np.where(available, v, np.nan) for v in result), error
+        source = {
+            key: diagnostics[key]
+            for key in (
+                "method",
+                "status",
+                "field_evaluations",
+                "derivative_target",
+                "distance_model",
+            )
+            if key in diagnostics
+        }
+        source["error_estimate"] = (
+            None
+            if diagnostics.get("error_estimate") is None
+            else tuple(field_result(v, self.shape, self.scalar) for v in error)
+        )
+        source["available"] = (
+            available.item() if self.scalar else np.asarray(available).copy()
+        )
+        if "raw_gradient" in diagnostics:
+            source["raw_gradient"] = tuple(
+                field_result(v, self.shape, self.scalar)
+                for v in diagnostics["raw_gradient"]
+            )
+        self.sources.append(source)
+        return tuple(np.where(available, v, np.nan) for v in result), error
 
     def compose(self, field, gradient):
         children = self.children(field)
@@ -267,6 +443,108 @@ def algebraic_query(field, x, y, *, gradient=False):
     return field_result(result, query.shape, query.scalar)
 
 
+def algebraic_diagnostics(field, x, y):
+    """Explicit diagnostic graph walk; repeated leaves share this query only."""
+    query = _Query(field, x, y, diagnostics=True)
+    with np.errstate(all="ignore"):
+        raw = query.get(field, True)
+        error = query.errors[id(field)]
+        available = (
+            np.isfinite(query.get(field)) & np.isfinite(query.x) & np.isfinite(query.y)
+        )
+        for value, uncertainty in zip(raw, error):
+            available &= np.isfinite(value) & np.isfinite(uncertainty)
+    result = tuple(
+        field_result(np.where(available, v, np.nan), query.shape, query.scalar)
+        for v in raw
+    )
+    return dict(
+        gradient=result,
+        raw_gradient=tuple(field_result(v, query.shape, query.scalar) for v in raw),
+        available=available.item() if query.scalar else np.asarray(available).copy(),
+        error_estimate=tuple(field_result(v, query.shape, query.scalar) for v in error)
+        if query.has_error_estimate
+        else None,
+        method="algebraic",
+        derivative_target="composed_field",
+        certified=False,
+        sources=query.sources,
+        field_evaluations=None,
+    )
+
+
+def callback_diagnostics(evaluate, gradient, x, y):
+    """Respect an explicit gradient; otherwise reuse bounded numerical probes."""
+    from .adaptive_differentiation import automatic_gradient
+
+    xx, yy, scalar = broadcast_coordinates(x, y)
+    coordinates = (float(xx), float(yy)) if scalar else (xx, yy)
+    if gradient is not None:
+        gx, gy = gradient(*coordinates)
+        raw = tuple(np.asarray(field_result(v, xx.shape, False)) for v in (gx, gy))
+        available = (
+            np.isfinite(evaluate(*coordinates))
+            & np.isfinite(xx)
+            & np.isfinite(yy)
+            & np.isfinite(raw[0])
+            & np.isfinite(raw[1])
+        )
+        return dict(
+            gradient=tuple(
+                field_result(np.where(available, v, np.nan), xx.shape, scalar)
+                for v in raw
+            ),
+            raw_gradient=tuple(field_result(v, xx.shape, scalar) for v in raw),
+            available=available.item() if scalar else np.asarray(available).copy(),
+            error_estimate=None,
+            method="provided_gradient",
+            certified=False,
+            field_evaluations=None,
+        )
+
+    def sample(a, b):
+        return evaluate(float(a), float(b)) if scalar else evaluate(a, b)
+
+    result = automatic_gradient(sample, xx, yy)
+    raw = result["gradient"]
+    available = np.isfinite(xx) & np.isfinite(yy)
+    for value, error in zip(raw, result["error_estimate"]):
+        available &= np.isfinite(value) & np.isfinite(error)
+    result["raw_gradient"] = tuple(field_result(v, xx.shape, scalar) for v in raw)
+    result["gradient"] = tuple(
+        field_result(np.where(available, v, np.nan), xx.shape, scalar) for v in raw
+    )
+    result["error_estimate"] = tuple(
+        field_result(v, xx.shape, scalar) for v in result["error_estimate"]
+    )
+    result["steps"] = tuple(
+        tuple(
+            tuple(field_result(v, xx.shape, scalar) for v in stencil)
+            for stencil in axis
+        )
+        for axis in result["steps"]
+    )
+    for key in ("status", "selection", "candidates"):
+        result[key] = tuple(v.item() if scalar else v for v in result[key])
+    finite = np.isfinite(xx) & np.isfinite(yy)
+    result["status"] = tuple(
+        (v.item() if scalar else v)
+        for v in (
+            np.where(finite, status, "nonfinite_coordinate")
+            for status in result["status"]
+        )
+    )
+    result["nominal_step"] = tuple(
+        field_result(v, xx.shape, scalar) for v in result["nominal_step"]
+    )
+    result.update(
+        available=available.item() if scalar else np.asarray(available).copy(),
+        derivative_target="evaluate",
+        certified=False,
+    )
+    return result
+
+
 from .procedural_curve import ProceduralCurve
 
 
@@ -284,18 +562,61 @@ class _AlgebraicLevelSet(ProceduralCurve):
         self._algebraic_function = self.function
         self._algebraic_gradient = self._gradient_function
 
+    def native(self):
+        return (
+            self.function is self._algebraic_function
+            and self._gradient_function is self._algebraic_gradient
+            and _method_is(self, "gradient", _AlgebraicLevelSet.gradient)
+            and _method_is(self, "evaluate", ProceduralCurve.evaluate)
+        )
+
+    def gradient(self, x, y):
+        # Bypass virtual diagnostic dispatch: this callback retains the cheap
+        # field gradient, even though explicit diagnostics can be expensive.
+        return ProceduralCurve.gradient_diagnostics(self, x, y)["gradient"]
+
+    def gradient_diagnostics(self, x, y):
+        if not self.native():
+            provided = (
+                self.gradient
+                if not _method_is(self, "gradient", _AlgebraicLevelSet.gradient)
+                or self._gradient_function is not self._algebraic_gradient
+                else None
+            )
+            return callback_diagnostics(self.evaluate, provided, x, y)
+        result = self.field.gradient_diagnostics(x, y)
+        return shifted_diagnostics(result, self.evaluate(x, y))
+
     def normal(self, x, y):
         from .base_field import BlendedField
+        from .field_strategy import SignedDistanceField
 
         if (
             self._gradient_function is not self._algebraic_gradient
             or self.function is not self._algebraic_function
-            or not _method_is(self, "gradient", ProceduralCurve.gradient)
+            or not _method_is(self, "gradient", _AlgebraicLevelSet.gradient)
             or not _method_is(self, "evaluate", ProceduralCurve.evaluate)
-            or not _method_is(self.field, "gradient", BlendedField.gradient)
-            or not _method_is(self.field, "evaluate", BlendedField.evaluate)
         ):
+            if self._gradient_function is self._algebraic_gradient and _method_is(
+                self, "gradient", _AlgebraicLevelSet.gradient
+            ):
+                raise ValueError("Normal undefined - unresolved numerical derivative")
             return super().normal(x, y)
+        if not _method_is(
+            self, "gradient_diagnostics", _AlgebraicLevelSet.gradient_diagnostics
+        ):
+            raise ValueError("Normal undefined - unresolved numerical derivative")
+        implementation = (
+            BlendedField.gradient
+            if isinstance(self.field, BlendedField)
+            else SignedDistanceField.gradient
+        )
+        if not _method_is(self.field, "gradient", implementation):
+            return super().normal(x, y)
+        if isinstance(self.field, BlendedField) and not _method_is(
+            self.field, "evaluate", BlendedField.evaluate
+        ):
+            raise ValueError("Normal undefined - unresolved numerical derivative")
         query = _Query(self.field, x, y)
         with np.errstate(all="ignore"):
             gx, gy = query.get(self.field, True)
@@ -311,3 +632,27 @@ class _AlgebraicLevelSet(ProceduralCurve):
         nx, ny = gx / scale, gy / scale
         magnitude = np.hypot(nx, ny)
         return float(nx / magnitude), float(ny / magnitude)
+
+
+def shifted_diagnostics(diagnostics, value):
+    """A constant shift preserves derivatives but can invalidate finite domain."""
+    result = dict(diagnostics)
+    gx, gy = result["gradient"]
+    shape = np.shape(gx)
+    scalar = np.isscalar(gx)
+    available = np.broadcast_to(np.asarray(result.get("available", True)), shape)
+    if available.dtype.kind != "b":
+        raise ValueError("Diagnostic availability must be boolean")
+    available = available & np.isfinite(value) & np.isfinite(gx) & np.isfinite(gy)
+    if result.get("error_estimate") is not None:
+        for error in result["error_estimate"]:
+            error = np.asarray(error)
+            if np.any(error < 0):
+                raise ValueError("Diagnostic error estimates must be nonnegative")
+            available = available & np.isfinite(error)
+    result["gradient"] = tuple(
+        field_result(np.where(available, v, np.nan), shape, scalar) for v in (gx, gy)
+    )
+    result["available"] = available.item() if scalar else np.asarray(available).copy()
+    result["certified"] = False
+    return result

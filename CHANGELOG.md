@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.23.0
+
+- Extend the established gradient_diagnostics protocol to CurveField,
+  BlendedField and LevelSetCurve. Existing query-local algebra propagates
+  availability and heuristic errors; repeated contours/shifts share source probes.
+- Reuse the existing procedural contour for SignedDistanceField level sets,
+  preserving native nearest-feature gradients and corner/medial uncertainty.
+  Generated numerical contours no longer mislabel fixed-step gradients analytic.
+- Keep new adaptive probes opt-in. Cheap normals reject unknown numerical
+  derivatives; explicit diagnostics can return useful uncertified vectors.
+- Preserve supplied gradients/diagnostic callbacks, live edits, scalar/0d/
+  broadcast/empty shapes, finite-domain masks, cycle guards and super delegation.
+  Level shifts remain field-unit shifts with existing serialization placeholders.
+- Analytic regressions, independent review and complete-call measurements cover
+  validity and costs. Curved-distance and native WebMCP host limits remain.
+
+
 ## 0.22.0
 
 - SignedDistanceField exposes the established gradient_diagnostics protocol

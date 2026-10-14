@@ -188,6 +188,20 @@ class CurveField(BaseField):
         """
         return self.curve.gradient(x, y)
 
+    def gradient_diagnostics(self, x, y):
+        """Opt-in diagnostics preserving wrapped uncertainty and callbacks."""
+        from .field_algebra import (
+            _method_is,
+            algebraic_diagnostics,
+            callback_diagnostics,
+        )
+
+        if not _method_is(self, "gradient", CurveField.gradient):
+            return callback_diagnostics(self.evaluate, self.gradient, x, y)
+        if not _method_is(self, "evaluate", CurveField.evaluate):
+            return callback_diagnostics(self.evaluate, None, x, y)
+        return algebraic_diagnostics(self, x, y)
+
     def level_set(self, level: float) -> ImplicitCurve:
         """
         Extract a level set from the field.
@@ -365,6 +379,20 @@ class BlendedField(BaseField):
                 for v in self._numerical_gradient(xx, yy)
             )
         return algebraic_query(self, x, y, gradient=True)
+
+    def gradient_diagnostics(self, x, y):
+        """Explicit graph diagnostics; hot gradient() adds no adaptive probes."""
+        from .field_algebra import (
+            _method_is,
+            algebraic_diagnostics,
+            callback_diagnostics,
+        )
+
+        if not _method_is(self, "gradient", BlendedField.gradient):
+            return callback_diagnostics(self.evaluate, self.gradient, x, y)
+        if not _method_is(self, "evaluate", BlendedField.evaluate):
+            return callback_diagnostics(self.evaluate, None, x, y)
+        return algebraic_diagnostics(self, x, y)
 
     def _numerical_gradient(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray], h: float = 1e-6

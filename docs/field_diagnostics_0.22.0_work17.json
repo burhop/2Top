@@ -1,0 +1,147 @@
+{
+  "label": "0.22.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "native_tiny_contour",
+      "gradient": {
+        "median_ms": 27.3954,
+        "batches_ms": [
+          26.0029,
+          29.3379,
+          27.3954
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 28.0061,
+        "batches_ms": [
+          28.0061,
+          27.2006,
+          29.7528
+        ],
+        "callback_evaluations": 0,
+        "rejection": "Normal undefined - zero gradient or unresolved numerical derivative"
+      },
+      "diagnostics": {
+        "median_ms": 33.9843,
+        "batches_ms": [
+          34.8517,
+          33.9843,
+          33.6081
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "query_points": 1,
+      "method": "adaptive_richardson",
+      "field_evaluations": 109,
+      "sources": []
+    },
+    {
+      "workload": "callback_blend_scalar",
+      "gradient": {
+        "median_ms": 0.1213,
+        "batches_ms": [
+          0.1629,
+          0.1213,
+          0.1212
+        ],
+        "callback_evaluations": 5,
+        "rejection": null
+      }
+    },
+    {
+      "workload": "callback_shared_alias_64",
+      "gradient": {
+        "median_ms": 0.1984,
+        "batches_ms": [
+          0.1984,
+          0.2262,
+          0.1931
+        ],
+        "callback_evaluations": 5,
+        "rejection": null
+      }
+    },
+    {
+      "workload": "sampled_jump_contour",
+      "gradient": {
+        "median_ms": 16.1296,
+        "batches_ms": [
+          16.2908,
+          16.1296,
+          16.1215
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 20.0763,
+        "batches_ms": [
+          20.0763,
+          20.0603,
+          22.5821
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "diagnostics": {
+        "median_ms": 17.5506,
+        "batches_ms": [
+          17.4017,
+          17.5506,
+          17.8981
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "query_points": 1,
+      "method": "analytic",
+      "field_evaluations": null,
+      "sources": []
+    },
+    {
+      "workload": "sampled_smooth_contour",
+      "gradient": {
+        "median_ms": 17.6224,
+        "batches_ms": [
+          17.6224,
+          17.4799,
+          17.646
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "normal": {
+        "median_ms": 20.5064,
+        "batches_ms": [
+          20.7246,
+          20.5064,
+          20.4342
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "diagnostics": {
+        "median_ms": 19.0098,
+        "batches_ms": [
+          21.3709,
+          17.9421,
+          19.0098
+        ],
+        "callback_evaluations": 0,
+        "rejection": null
+      },
+      "query_points": 1,
+      "method": "analytic",
+      "field_evaluations": null,
+      "sources": []
+    }
+  ],
+  "retains_queries": false,
+  "limits": "Three sequential warm complete calls, including conservative rejection. Shared-workstation measurements are not speed/FPS guarantees. Only explicit diagnostics invoke new adaptive probes, bounded per distinct numerical leaf at321 vector evaluations plus graph/shift value checks. Supplied callback internal costs and universal accuracy remain unknown. Sampled consistency is uncertified; native endpoint geometry is not an exact curved-distance solver."
+}

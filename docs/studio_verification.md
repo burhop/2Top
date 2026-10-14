@@ -1,9 +1,24 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.22.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.23.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.23.0 adds [composed field and level-set diagnostics](field_diagnostics.md).
+The focused suite passed **286 tests** before the final unary-cycle case; the
+milestone adds **59 regressions**. Independent read-only review approved the
+source after reproducing and correcting diagnostic-override and super-delegation
+gaps. All **59 JavaScript checks**, mocked WebMCP, **160-file** configured and
+**56-file** explicit Ruff, and h11 metadata checks passed. All **58** dependency
+records remain unchanged. Complete Work17/wheel/exact feature/dev CI gates are
+recorded with the milestone PR/handoff as they finish.
+New adaptive probes stay opt-in; unavailable source errors/gradients propagate
+through aliases and shifts. Numerical normal rejection can be conservative,
+and sampled consistency remains uncertified. Native WebMCP host verification
+remains a separate gap.
+
+## Previous milestone
 
 Version 0.22.0 adds [opt-in distance-gradient diagnostics](distance_gradient_diagnostics.md).
 The final affected native/distance/adaptive/diagnostic suite passed **504 tests**,
