@@ -1,9 +1,24 @@
 # Tidal Atlas development verification
 
-Updated October 14, 2026 for version 0.17.0. Work17 executes the local application
+Updated October 14, 2026 for version 0.18.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.18.0 repairs [signed-distance cache freshness](distance_cache.md),
+nearest-hole magnitude and live generic polygon containment. Independent source
+review approved the bounded correction. The final affected distance/field/
+composite/region suite passed **175 tests**, including **66 new analytic/cache
+cases**. Full Work17 and exact-commit CI results are recorded with the milestone
+handoff and PR. All 59 JavaScript checks, mocked WebMCP, 154-file configured Ruff
+and 45-file explicit CI targets passed. Dependency metadata diffs change only
+the project version; all 58 dependency records remain unchanged, and both h11
+artifact records match canonical release metadata. Warm sequential measurements
+record repeated-query costs, generic straight-edge gains and no retained query
+buffers. Curved sampling, separate source metadata, short-edge/overflow numerics
+and native WebMCP remain explicit limits.
+
+## Previous milestone
 
 Version 0.17.0 corrects [occupancy boundary validity](occupancy_validity.md),
 discrete level-set semantics and unsafe mask caching. Independent review approved

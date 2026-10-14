@@ -1,0 +1,23 @@
+{
+  "gap": "Legacy absolute short-segment cutoff and squared-distance overflow remain outside cache repair",
+  "cases": [
+    {
+      "square_side": 4e-06,
+      "point": [
+        2e-06,
+        1e-06
+      ],
+      "observed": -2.2360679774997895e-06,
+      "analytic": -1e-06
+    },
+    {
+      "square_side": 4.0,
+      "point": [
+        1e+200,
+        2.0
+      ],
+      "observed": "inf",
+      "analytic": 1e+200
+    }
+  ]
+}

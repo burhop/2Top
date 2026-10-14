@@ -47,7 +47,7 @@ def test_field_grid_caching():
     res_sdf_1 = sdf.evaluate(grid_x, grid_y)
     res_occ_1 = occupancy.evaluate(grid_x, grid_y)
 
-    assert sdf._cache is not None
+    assert sdf._cache is None  # Distance queries also read mutable state live.
     assert occupancy._cache is None  # Mutable occupancy state is not cached.
 
     # Second evaluation (cache hit)
@@ -55,7 +55,8 @@ def test_field_grid_caching():
     res_sdf_2 = sdf.evaluate(grid_x, grid_y)
     res_occ_2 = occupancy.evaluate(grid_x, grid_y)
 
-    assert res_sdf_2 is res_sdf_1
+    assert res_sdf_2 is not res_sdf_1
+    np.testing.assert_array_equal(res_sdf_2, res_sdf_1)
     assert res_occ_2 is not res_occ_1
     np.testing.assert_array_equal(res_occ_2, res_occ_1)
 
@@ -64,8 +65,9 @@ def test_field_grid_caching():
     res_sdf_3 = sdf.evaluate(grid_x_new, grid_y_new)
     res_occ_3 = occupancy.evaluate(grid_x_new, grid_y_new)
 
-    # Numerical identity matches should hit cache and return the cached object
-    assert res_sdf_3 is res_sdf_1
+    # Identical values remain equal without retaining caller-owned buffers.
+    assert res_sdf_3 is not res_sdf_1
+    np.testing.assert_array_equal(res_sdf_3, res_sdf_1)
     assert res_occ_3 is not res_occ_1
     np.testing.assert_array_equal(res_occ_3, res_occ_1)
 

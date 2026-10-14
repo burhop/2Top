@@ -1,10 +1,10 @@
-# 2Top 0.17.0 · Tidal Atlas
+# 2Top 0.18.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.17.0** adds [occupancy boundary validity](docs/occupancy_validity.md): guarded derivatives reject tested binary-mask jumps and invalid domains; direct binary level sets reject empty or plateau sets instead of interpolating invented curves. Occupancy queries read fresh mutable state. Existing finite strict-interior values and serialization remain compatible; intentional level-set and invalid-input changes are documented. Independent analytic fixtures and timings record the added validation cost and finite-sampling limits. Development targets **dev**.
+Version **0.18.0** fixes [signed-distance query freshness](docs/distance_cache.md): coordinate edits, copied grids and mutated results cannot reuse stale values; distance and generic polygon queries read live boundary samples. Nearest hole boundaries now contribute to distance magnitude. Broadcast/scalar paths agree in the tested cases, and query arrays are not retained. Euclidean distances to supported straight edges and approximate curved-boundary distances remain distinct from generic implicit field values. Independent analytic fixtures and measurements document the repeated-query cost and remaining numerical/source limits. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,6 +62,8 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
+python -m pytest tests/test_distance_cache.py
+python benchmarks/distance_cache.py --output distance.json
 python -m pytest tests/test_occupancy_validity.py
 python benchmarks/occupancy_validity.py --output occupancy.json
 python -m pytest tests/test_field_algebra.py

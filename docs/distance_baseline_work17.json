@@ -1,0 +1,550 @@
+{
+  "label": "0.17.0 baseline c45000e sequential",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "geometry": "rectangle",
+      "shape": [
+        97,
+        97
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00084,
+        "batches_ms": [
+          0.00216,
+          0.00188,
+          0.00084,
+          0.00078,
+          0.00072
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.1086,
+        "batches_ms": [
+          0.1086,
+          0.11032,
+          0.104,
+          0.11394,
+          0.1063
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.0012,
+        "batches_ms": [
+          0.00128,
+          0.00156,
+          0.0012,
+          0.00112,
+          0.00102
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 0.23096,
+        "batches_ms": [
+          0.2404,
+          0.2332,
+          0.22334,
+          0.22748,
+          0.23096
+        ]
+      },
+      "gradient": {
+        "median_ms": 1.08155,
+        "batches_ms": [
+          1.06005,
+          1.044,
+          1.08155,
+          1.0982,
+          1.0841
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.04217,
+        "batches_ms": [
+          0.04353,
+          0.04209,
+          0.04217,
+          0.04193,
+          0.04271
+        ]
+      }
+    },
+    {
+      "geometry": "rectangle",
+      "shape": [
+        257,
+        257
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00082,
+        "batches_ms": [
+          0.00318,
+          0.001,
+          0.00082,
+          0.0008,
+          0.0008
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.15404,
+        "batches_ms": [
+          0.16232,
+          0.15234,
+          0.15404,
+          0.16082,
+          0.15072
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00148,
+        "batches_ms": [
+          0.00154,
+          0.00148,
+          0.0013,
+          0.00148,
+          0.0012
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 3.01864,
+        "batches_ms": [
+          2.97924,
+          3.01864,
+          3.0001,
+          3.04056,
+          3.06498
+        ]
+      },
+      "gradient": {
+        "median_ms": 12.4888,
+        "batches_ms": [
+          11.9804,
+          13.2385,
+          12.4087,
+          12.6493,
+          12.4888
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.04073,
+        "batches_ms": [
+          0.04088,
+          0.04073,
+          0.04011,
+          0.04196,
+          0.04003
+        ]
+      }
+    },
+    {
+      "geometry": "generic_rectangle",
+      "shape": [
+        97,
+        97
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00086,
+        "batches_ms": [
+          0.003,
+          0.00086,
+          0.00098,
+          0.00076,
+          0.00078
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.1085,
+        "batches_ms": [
+          0.1142,
+          0.10738,
+          0.1096,
+          0.1085,
+          0.10834
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00116,
+        "batches_ms": [
+          0.00132,
+          0.00116,
+          0.0013,
+          0.00112,
+          0.00112
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 41.90652,
+        "batches_ms": [
+          44.93338,
+          42.43904,
+          41.90652,
+          41.74214,
+          41.4019
+        ]
+      },
+      "gradient": {
+        "median_ms": 394.86175,
+        "batches_ms": [
+          311.802,
+          394.86175,
+          393.4767,
+          395.22605,
+          395.26805
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.41144,
+        "batches_ms": [
+          0.43042,
+          0.41304,
+          0.41144,
+          0.4038,
+          0.40963
+        ]
+      }
+    },
+    {
+      "geometry": "generic_rectangle",
+      "shape": [
+        257,
+        257
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00244,
+        "batches_ms": [
+          0.00746,
+          0.00264,
+          0.00244,
+          0.00242,
+          0.00238
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.58322,
+        "batches_ms": [
+          0.60082,
+          0.58028,
+          0.59062,
+          0.58322,
+          0.5733
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00478,
+        "batches_ms": [
+          0.00566,
+          0.00478,
+          0.00498,
+          0.00454,
+          0.00452
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 665.6838,
+        "batches_ms": [
+          659.34556,
+          661.84678,
+          665.6838,
+          685.33136,
+          686.2395
+        ]
+      },
+      "gradient": {
+        "median_ms": 2836.70565,
+        "batches_ms": [
+          2748.21315,
+          2691.87785,
+          2858.2117,
+          2902.96375,
+          2836.70565
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.42926,
+        "batches_ms": [
+          0.43733,
+          0.43892,
+          0.42926,
+          0.42734,
+          0.41893
+        ]
+      }
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        97,
+        97
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.0025,
+        "batches_ms": [
+          0.00638,
+          0.00272,
+          0.0023,
+          0.00226,
+          0.0025
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.46006,
+        "batches_ms": [
+          0.4597,
+          0.46006,
+          0.45918,
+          0.47734,
+          0.48938
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00454,
+        "batches_ms": [
+          0.00542,
+          0.00454,
+          0.00452,
+          0.00436,
+          0.00498
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 14.6475,
+        "batches_ms": [
+          14.6475,
+          12.43782,
+          16.4939,
+          12.09016,
+          15.35574
+        ]
+      },
+      "gradient": {
+        "median_ms": 48.121,
+        "batches_ms": [
+          44.73185,
+          46.28135,
+          49.9025,
+          49.0107,
+          48.121
+        ]
+      },
+      "scalar": {
+        "median_ms": 1.42981,
+        "batches_ms": [
+          1.33974,
+          1.3938,
+          1.53435,
+          1.42981,
+          1.68288
+        ]
+      }
+    },
+    {
+      "geometry": "circle",
+      "shape": [
+        257,
+        257
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00418,
+        "batches_ms": [
+          0.0111,
+          0.00422,
+          0.00386,
+          0.00376,
+          0.00418
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.64018,
+        "batches_ms": [
+          0.6102,
+          0.5885,
+          0.64018,
+          0.83376,
+          0.69128
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00546,
+        "batches_ms": [
+          0.00626,
+          0.00548,
+          0.00532,
+          0.0052,
+          0.00546
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 80.29448,
+        "batches_ms": [
+          77.60566,
+          87.73982,
+          80.29448,
+          84.08346,
+          79.1019
+        ]
+      },
+      "gradient": {
+        "median_ms": 322.1504,
+        "batches_ms": [
+          345.94925,
+          317.12595,
+          322.1504,
+          327.156,
+          306.4054
+        ]
+      },
+      "scalar": {
+        "median_ms": 1.56875,
+        "batches_ms": [
+          1.58365,
+          1.56009,
+          1.5646,
+          1.56875,
+          1.57969
+        ]
+      }
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        97,
+        97
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00224,
+        "batches_ms": [
+          0.00454,
+          0.00244,
+          0.00224,
+          0.00218,
+          0.0022
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.36212,
+        "batches_ms": [
+          0.36212,
+          0.31742,
+          0.46032,
+          0.3462,
+          0.41168
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00476,
+        "batches_ms": [
+          0.00602,
+          0.00498,
+          0.00476,
+          0.00464,
+          0.00448
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 1.01336,
+        "batches_ms": [
+          1.2812,
+          1.12578,
+          1.00914,
+          1.01336,
+          0.9932
+        ]
+      },
+      "gradient": {
+        "median_ms": 4.50815,
+        "batches_ms": [
+          4.49805,
+          4.50465,
+          4.50815,
+          4.77025,
+          4.95295
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.15952,
+        "batches_ms": [
+          0.16224,
+          0.15952,
+          0.15711,
+          0.15846,
+          0.166
+        ]
+      }
+    },
+    {
+      "geometry": "hole",
+      "shape": [
+        257,
+        257
+      ],
+      "repeated_same_grid": {
+        "median_ms": 0.00324,
+        "batches_ms": [
+          0.00922,
+          0.00432,
+          0.00318,
+          0.00324,
+          0.00302
+        ]
+      },
+      "copied_same_grid": {
+        "median_ms": 0.74234,
+        "batches_ms": [
+          0.75994,
+          0.7339,
+          0.7354,
+          0.7633,
+          0.74234
+        ]
+      },
+      "inplace_edited_grid": {
+        "median_ms": 0.00602,
+        "batches_ms": [
+          0.0074,
+          0.00642,
+          0.00602,
+          0.00592,
+          0.00594
+        ]
+      },
+      "cleared_distance_cache": {
+        "median_ms": 8.16138,
+        "batches_ms": [
+          8.25582,
+          8.17886,
+          8.0846,
+          8.16138,
+          8.13022
+        ]
+      },
+      "gradient": {
+        "median_ms": 32.8271,
+        "batches_ms": [
+          35.47445,
+          32.69,
+          32.8499,
+          32.7413,
+          32.8271
+        ]
+      },
+      "scalar": {
+        "median_ms": 0.15772,
+        "batches_ms": [
+          0.16092,
+          0.15778,
+          0.15772,
+          0.15661,
+          0.15715
+        ]
+      }
+    }
+  ],
+  "memory": {
+    "retained_query_arrays": 3,
+    "python_traced_retained_bytes": 1609591,
+    "python_traced_peak_bytes": 6467108
+  },
+  "limits": "Warm timings include each full query, no compilation. Old cache-hit timings can be wrong. Tracemalloc excludes some native allocations; sampled curves are approximate. No speed/FPS or full-domain certificate."
+}
