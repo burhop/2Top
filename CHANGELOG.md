@@ -2,6 +2,8 @@
 
 ## 0.17.0
 
+- Verify selected locked artifact URLs/hashes against canonical release metadata;
+  preserve h11's existing 0.16.0 pin independently of the project version.
 - Occupancy derivatives explicitly reject guarded jumps, observed membership
   transitions and known invalid boundary domains; valid constant pieces keep
   zero derivatives. Equal finite outputs remain constant without region queries.

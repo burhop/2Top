@@ -21,6 +21,9 @@ def test_package_versions_match():
     assert json.loads((ROOT / "package.json").read_text())["version"] == __version__
     lock = json.loads((ROOT / "package-lock.json").read_text())
     assert lock["version"] == lock["packages"][""]["version"] == __version__
+    python_lock = tomllib.loads((ROOT / "uv.lock").read_text())
+    project = next(p for p in python_lock["package"] if p["name"] == "twotop")
+    assert project["version"] == __version__
 
 
 def test_api_reports_current_version():
