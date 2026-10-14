@@ -1,9 +1,17 @@
 # Tidal Atlas development verification
 
-Updated October 13, 2026 for version 0.11.1. Work17 executes the local application
+Updated October 14, 2026 for version 0.12.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.12.0 fixes reusable field/normal/blend numerics and deterministic sampled
+contour extraction. Independent review found and covered subnormal subtraction
+rounding and contours collapsing during world mapping. Baseline new tests
+reproduced 24 failures out of 30; expanded independent-oracle and browser-parity
+cases cover the final implementation. [Backend contracts and saved timings](implicit_backend.md).
+Local final suite, packaging and Chromium results are recorded below when complete.
+The following 0.11.1 results are historical until the new verification finishes.
 
 Version 0.11.1 is the bounded integrated reliability patch: phone section jumps,
 known pose-selection restoration, guarded document/session edits and explicit

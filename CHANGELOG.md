@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.12.0
+
+- Reusable symbolic/procedural evaluators broadcast real coordinates, constant
+  values and gradient components consistently, preserving scalar and array APIs.
+- Normal directions remain stable under finite field rescaling; singular or
+  nonfinite domains fail explicitly.
+- Scaled rationalized smooth union avoids overflow, underflow and small-weight
+  cancellation; independent high-precision tests cover extreme finite values.
+- Contour extraction validates grids, vector-selects crossing triangles, retains
+  tiny/translated cycles and deduplicates zero edges. Branched, clipped or world-
+  collapsed components are counted and omitted deterministically in Python/JS.
+- Reproducible before/after timings report extraction gains and blend overhead.
+  Schema 4, 23 tools and dependencies remain compatible; arbitrary smooth-field
+  bounds and fixed procedural derivative steps remain explicit limitations.
+
 ## 0.11.1
 
 - Sticky phone Canvas/Layers/Timing jumps retain previews and reduce long-page

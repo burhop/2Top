@@ -15,6 +15,7 @@ import sympy as sp
 import numpy as np
 from typing import Tuple, Optional, Union, Callable
 from .implicit_curve import ImplicitCurve
+from .numeric import broadcast_coordinates, field_result
 
 
 from .precision import PrecisionPolicy, get_precision_policy
@@ -98,25 +99,19 @@ class ProceduralCurve(ImplicitCurve):
         Returns:
             Function value(s) at the given coordinates
         """
-        # Handle scalar inputs
-        if np.isscalar(x) and np.isscalar(y):
-            return self.function(float(x), float(y))
-
-        # Handle array inputs
-        x_arr = np.asarray(x)
-        y_arr = np.asarray(y)
-
-        if x_arr.shape != y_arr.shape:
-            raise ValueError("x and y arrays must have the same shape")
+        x_arr, y_arr, scalar = broadcast_coordinates(x, y)
+        if scalar:
+            return field_result(self.function(float(x_arr), float(y_arr)), (), True)
 
         # Vectorized evaluation path
         try:
             # Try evaluating directly (if the function supports vectorization)
-            return np.asarray(self.function(x_arr, y_arr), dtype=float)
+            result = self.function(x_arr, y_arr)
         except Exception:
             # Fallback to numpy's vectorize wrapper
             vfunc = np.vectorize(self.function, otypes=[float])
-            return vfunc(x_arr, y_arr)
+            result = vfunc(x_arr, y_arr)
+        return field_result(result, x_arr.shape, False)
 
     def gradient(
         self, x: Union[float, np.ndarray], y: Union[float, np.ndarray]
@@ -134,16 +129,9 @@ class ProceduralCurve(ImplicitCurve):
         Note:
             Uses central finite differences for numerical gradient approximation.
         """
-        # Handle scalar inputs
-        if np.isscalar(x) and np.isscalar(y):
-            return self._gradient_scalar(float(x), float(y))
-
-        # Handle array inputs
-        x_arr = np.asarray(x)
-        y_arr = np.asarray(y)
-
-        if x_arr.shape != y_arr.shape:
-            raise ValueError("x and y arrays must have the same shape")
+        x_arr, y_arr, scalar = broadcast_coordinates(x, y)
+        if scalar:
+            return self._gradient_scalar(float(x_arr), float(y_arr))
 
         h = self._gradient_h
 
@@ -175,7 +163,29 @@ class ProceduralCurve(ImplicitCurve):
 
             return grad_x, grad_y
 
-    def _gradient_scalar(self, x: float, y: float) -> Tuple[float, float]:
+    def normal(self, x_val: float, y_val: float) -> Tuple[float, float]:
+        """Reject directions dominated by second-order derivative uncertainty.
+
+        Compare the fixed central step with one half-step, without changing the
+        public gradient or choosing an adaptive step. This is a conservative
+        convergence guard, not a proof that an arbitrary callback is regular.
+        """
+        direction = super().normal(x_val, y_val)
+        coarse = np.asarray(self.gradient(x_val, y_val))
+        fine = np.asarray(
+            self._gradient_scalar(float(x_val), float(y_val), self._gradient_h / 2)
+        )
+        scale = np.max(np.abs(coarse))
+        uncertainty = (4 / 3) * np.max(np.abs(coarse - fine))
+        if not np.isfinite(fine).all() or scale <= uncertainty * (
+            1 + 32 * np.finfo(float).eps
+        ):
+            raise ValueError(
+                "Normal undefined - zero gradient or unresolved numerical derivative"
+            )
+        return direction
+
+    def _gradient_scalar(self, x: float, y: float, h=None) -> Tuple[float, float]:
         """
         Compute numerical gradient at a single point using finite differences.
 
@@ -186,7 +196,7 @@ class ProceduralCurve(ImplicitCurve):
         Returns:
             Tuple of (grad_x, grad_y)
         """
-        h = self._gradient_h
+        h = self._gradient_h if h is None else h
 
         # Central finite difference for x-component
         f_x_plus = self.function(x + h, y)

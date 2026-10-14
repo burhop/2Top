@@ -135,6 +135,11 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.12.0 delivers a bounded reusable backend pass: broadcast evaluation,
+scale-stable normal and smooth union numerics, finite sampling validation and
+deterministic contour cycles. Saved timings measure extraction gains and stable
+blend overhead. [Contracts, reproduction and remaining gaps](implicit_backend.md).
+
 Introduce a bounded subset of reusable primitives and reversible composition
 (union, difference, blend) into the artwork studio. First specify how those
 operations interact with tracks, immutable snapshots and persistence. Local
