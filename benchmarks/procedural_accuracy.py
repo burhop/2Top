@@ -81,7 +81,10 @@ def main():
         )
     axis = np.linspace(-1, 1, 97)
     xx, yy = np.meshgrid(axis, axis)
-    function = lambda x, y: np.sin(x) + y * y
+
+    def function(x, y):
+        return np.sin(x) + y * y
+
     jobs = {"numerical_grid_97_squared": ProceduralCurve(function)}
     if not args.baseline:
         jobs["analytic_grid_97_squared"] = ProceduralCurve(
