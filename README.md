@@ -1,10 +1,10 @@
-# 2Top 0.11.1 · Tidal Atlas
+# 2Top 0.12.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.11.1** completes a bounded [authoring usability/reliability pass](docs/authoring_reliability.md): phone Canvas/Layers/Timing jumps, pose-selection continuity through geometry edits and known Undo/Redo, and explicit disconnect/reconnect recovery. Document/session guards reject cached previews across equal-revision restarts; save failures reconcile without automatic replay. Existing [anchored timing](docs/anchored_time_scaling.md), shifting, layout and geometry remain compatible, with schema 4 and 23 tools. The independent authoring flow now has a coherent tested stopping point. Development targets **dev**; main and the live user demo are preserved. Responsive/browser fault tests are distinguished from actual phone/network testing.
+Version **0.12.0** improves the [reusable implicit backend](docs/implicit_backend.md): broadcasted symbolic/procedural field evaluation, scale-stable normals, robust smooth-blend values and gradients, and validated deterministic contour cycles. Tiny and translated contours survive; ambiguous or collapsed components are reported. Saved before/after fixtures measure faster contour extraction and the extra cost of stable blend evaluation. Existing authoring behavior, recipe schema 4 and 23 tools remain compatible. Development targets **dev**; main and the live user demo are preserved.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -60,6 +60,8 @@ See [the studio guide](docs/tidal_atlas.md), [agent connection details and compa
 ```bash
 python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
+python -m pytest tests/test_backend_numerics.py
+python benchmarks/implicit_backend.py --output backend-timing.json
 node tests/studio/webmcp_contract.mjs
 # Optional DOM/canvas behavioral checks (Node 24.15+):
 npm ci

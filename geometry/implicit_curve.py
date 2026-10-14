@@ -14,6 +14,7 @@ from typing import Tuple, Union, Optional
 from abc import abstractmethod
 
 from .precision import PrecisionPolicy, get_precision_policy
+from .numeric import broadcast_coordinates, field_result
 
 
 class ImplicitCurve:
@@ -89,20 +90,12 @@ class ImplicitCurve:
         if self._eval_func is None:
             self._eval_func = sp.lambdify(self.variables, self.expression, "numpy")
 
+        x, y, scalar = broadcast_coordinates(x_val, y_val)
         try:
-            result = self._eval_func(x_val, y_val)
-            if np.isscalar(result):
-                if np.isnan(result):
-                    return np.nan
-                return float(result)
-            else:
-                return np.asarray(result, dtype=float)
+            result = self._eval_func(x, y)
         except OverflowError:
-            if np.isscalar(x_val) and np.isscalar(y_val):
-                return float("inf")
-            else:
-                x_arr = np.asarray(x_val)
-                return np.full_like(x_arr, float("inf"), dtype=float)
+            result = np.full(x.shape, float("inf"))
+        return field_result(result, x.shape, scalar)
 
     @property
     def is_curved(self) -> bool:
@@ -241,15 +234,11 @@ class ImplicitCurve:
                 sp.lambdify(self.variables, grad_y, "numpy"),
             )
 
-        # Evaluate gradients
-        grad_x_val = self._grad_funcs[0](x_val, y_val)
-        grad_y_val = self._grad_funcs[1](x_val, y_val)
-
-        # Handle scalar vs array outputs
-        if np.isscalar(x_val) and np.isscalar(y_val):
-            return (float(grad_x_val), float(grad_y_val))
-        else:
-            return (np.asarray(grad_x_val), np.asarray(grad_y_val))
+        x, y, scalar = broadcast_coordinates(x_val, y_val)
+        return tuple(
+            field_result(function(x, y), x.shape, scalar)
+            for function in self._grad_funcs
+        )
 
     def normal(self, x_val: float, y_val: float) -> Tuple[float, float]:
         """
@@ -268,19 +257,20 @@ class ImplicitCurve:
         Note:
             The normal vector points outward from the curve (in direction of increasing f).
         """
-        grad_x, grad_y = self.gradient(x_val, y_val)
-
-        # Compute magnitude
-        magnitude = np.sqrt(grad_x**2 + grad_y**2)
-
-        # Handle zero gradient case
-        if magnitude < 1e-12:
+        try:
+            value = self.evaluate(x_val, y_val)
+            grad_x, grad_y = self.gradient(x_val, y_val)
+            finite = np.isfinite([value, grad_x, grad_y]).all()
+        except (ArithmeticError, ValueError) as error:
+            raise ValueError("Normal undefined outside the field domain") from error
+        scale = max(abs(grad_x), abs(grad_y))
+        if not finite or scale == 0:
             raise ValueError(
-                f"Normal undefined at point ({x_val}, {y_val}) - zero gradient"
+                f"Normal undefined at point ({x_val}, {y_val}) - zero gradient or nonfinite field"
             )
-
-        # Return unit normal
-        return (grad_x / magnitude, grad_y / magnitude)
+        gx, gy = grad_x / scale, grad_y / scale
+        magnitude = np.hypot(gx, gy)
+        return (gx / magnitude, gy / magnitude)
 
     def field(self, x_val: float, y_val: float) -> float:
         """

@@ -9,6 +9,7 @@ from .kinetic import normalize_parameters
 from .kinetic_field import KineticIslandField
 from .procedural_curve import ProceduralCurve
 from .rfunction_curve import RFunctionCurve
+from .numeric import real_array
 
 
 class _StaticBlendCurve(RFunctionCurve):
@@ -93,42 +94,83 @@ class StaticBlendField(CurveField):
         return cls(data["first"], data["second"], data["operation"], data["amount"])
 
 
+def _sampling_inputs(bounds, levels, resolution, minimum=1):
+    if type(resolution) is not int or not minimum <= resolution <= 192:
+        raise ValueError(f"Resolution must be an integer within {minimum}..192")
+    bounds, levels = real_array(bounds), real_array(levels)
+    if (
+        bounds.shape != (4,)
+        or not np.isfinite(bounds).all()
+        or bounds[0] >= bounds[1]
+        or bounds[2] >= bounds[3]
+    ):
+        raise ValueError("Invalid finite sampling bounds")
+    with np.errstate(over="ignore"):
+        extents = bounds[[1, 3]] - bounds[[0, 2]]
+    if not np.isfinite(extents).all():
+        raise ValueError("Sampling bounds must have finite extents")
+    if levels.ndim != 1 or not 1 <= len(levels) <= 16 or not np.isfinite(levels).all():
+        raise ValueError("At most 16 finite contour levels")
+    return bounds, levels
+
+
 def sample_field_contours(field, bounds, levels, resolution=128):
     """Fixed-diagonal marching triangles with shared vertex keys and linear edges.
 
     Closed loops only; open/clipped/zero-area fragments are reported and omitted.
     This is an approximation, not exact topology/continuity or Euclidean offsets.
     """
-    if type(resolution) is not int or not 24 <= resolution <= 192:
-        raise ValueError("Resolution must be an integer within 24..192")
-    if (
-        len(bounds) != 4
-        or not all(math.isfinite(v) for v in bounds)
-        or bounds[0] >= bounds[1]
-        or bounds[2] >= bounds[3]
-    ):
-        raise ValueError("Invalid sampling bounds")
-    if not 1 <= len(levels) <= 16 or not all(math.isfinite(v) for v in levels):
-        raise ValueError("At most 16 finite contour levels")
+    bounds, levels = _sampling_inputs(bounds, levels, resolution, 24)
     n = resolution + 1
     xs = np.linspace(bounds[0], bounds[1], n)
     ys = np.linspace(bounds[2], bounds[3], n)
     xx, yy = np.meshgrid(xs, ys)
-    values = np.asarray(field.evaluate(xx, yy)).reshape(-1)
-    if len(values) != n * n or not np.isfinite(values).all():
+    values = np.broadcast_to(real_array(field.evaluate(xx, yy)), xx.shape)
+    if not np.isfinite(values).all():
         raise ValueError("The sampled field must be finite")
-    return contours_from_grid(values.tolist(), bounds, levels, resolution)
+    return contours_from_grid(values, bounds, levels, resolution)
 
 
 def contours_from_grid(values, bounds, levels, resolution):
+    """Extract deterministic closed cycles of the sampled triangulation.
+
+    Accept a row-major flat grid or a square grid. Open, branched and numerically
+    degenerate connected components count once in ``omitted``; exact-level
+    vertices belong outside. This does not establish continuous-field topology.
+    """
+    bounds, levels = _sampling_inputs(bounds, levels, resolution)
     n = resolution + 1
+    values = real_array(values)
+    if values.shape not in {(n * n,), (n, n)}:
+        raise ValueError("Sampled grid must have (resolution + 1)^2 values")
+    if not np.isfinite(values).all():
+        raise ValueError("The sampled field must be finite")
+    values = values.reshape(-1)
+    rows, cols = np.indices((resolution, resolution))
+    starts = (rows * n + cols).ravel()
+    triangles = np.stack(
+        (
+            np.stack((starts, starts + 1, starts + n + 1), axis=1),
+            np.stack((starts, starts + n + 1, starts + n), axis=1),
+        ),
+        axis=1,
+    ).reshape(-1, 3)
+    triangle_values = values[triangles]
     layers = []
     for level in levels:
-        points, neighbors, segments = {}, {}, []
+        points, local_points, neighbors, segments, unique = {}, {}, {}, [], set()
 
         def crossing(a, b):
             a, b = min(a, b), max(a, b)
-            fraction = (level - values[a]) / (values[b] - values[a])
+            first, second = float(values[a]), float(values[b])
+            numerator, denominator = float(level) - first, second - first
+            if math.isfinite(numerator) and math.isfinite(denominator):
+                fraction = numerator / denominator
+            else:
+                scale = max(abs(first), abs(second), abs(float(level)))
+                fraction = (level / scale - first / scale) / (
+                    second / scale - first / scale
+                )
             key = f"v{a}" if fraction == 0 else f"v{b}" if fraction == 1 else f"{a}:{b}"
             if key not in points:
                 gx = a % n + fraction * (b % n - a % n)
@@ -137,36 +179,64 @@ def contours_from_grid(values, bounds, levels, resolution):
                     bounds[0] + gx / resolution * (bounds[1] - bounds[0]),
                     bounds[2] + gy / resolution * (bounds[3] - bounds[2]),
                 ]
+                # Measure representable output coordinates, so a loop that
+                # collapses during world mapping is omitted too.
+                local_points[key] = [
+                    (points[key][0] - bounds[0]) / (bounds[1] - bounds[0]),
+                    (points[key][1] - bounds[2]) / (bounds[3] - bounds[2]),
+                ]
             return key
 
-        for row in range(resolution):
-            for col in range(resolution):
-                a = row * n + col
-                for tri in ((a, a + 1, a + n + 1), (a, a + n + 1, a + n)):
-                    inside = [values[v] < level for v in tri]
-                    if all(inside) or not any(inside):
-                        continue
-                    keys = [
-                        crossing(tri[i], tri[j])
-                        for i, j in ((0, 1), (1, 2), (2, 0))
-                        if inside[i] != inside[j]
-                    ]
-                    if keys[0] == keys[1]:
-                        continue
-                    edge = len(segments)
-                    segments.append(keys)
-                    for key in keys:
-                        neighbors.setdefault(key, []).append(edge)
+        inside_values = triangle_values < level
+        candidates = np.flatnonzero(
+            inside_values.any(axis=1) & ~inside_values.all(axis=1)
+        )
+        for index in candidates:
+            tri, inside = triangles[index], inside_values[index]
+            keys = [
+                crossing(int(tri[i]), int(tri[j]))
+                for i, j in ((0, 1), (1, 2), (2, 0))
+                if inside[i] != inside[j]
+            ]
+            identity = tuple(sorted(keys))
+            if keys[0] == keys[1] or identity in unique:
+                continue
+            unique.add(identity)
+            edge = len(segments)
+            segments.append(keys)
+            for key in keys:
+                neighbors.setdefault(key, []).append(edge)
         visited, paths, omitted = set(), [], 0
         for edge, (start, _) in enumerate(segments):
             if edge in visited:
                 continue
-            key, path, closed = start, [points[start]], False
+            # Reject the whole ambiguous/open component, rather than guessing
+            # which branches form a loop at a shared exact-level vertex.
+            component, pending, vertices = set(), [edge], set()
+            while pending:
+                current = pending.pop()
+                if current in component:
+                    continue
+                component.add(current)
+                for vertex in segments[current]:
+                    vertices.add(vertex)
+                    pending.extend(e for e in neighbors[vertex] if e not in component)
+            if any(len(neighbors[v]) != 2 for v in vertices):
+                visited.update(component)
+                omitted += 1
+                continue
+            key, path, local, closed = (
+                start,
+                [points[start]],
+                [local_points[start]],
+                False,
+            )
             while edge not in visited:
                 visited.add(edge)
                 a, b = segments[edge]
                 key = b if key == a else a
                 path.append(points[key])
+                local.append(local_points[key])
                 if key == start:
                     closed = True
                     break
@@ -174,8 +244,16 @@ def contours_from_grid(values, bounds, levels, resolution):
                 if not candidates:
                     break
                 edge = candidates[0]
-            area = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(path, path[1:]))
-            if closed and len(path) >= 4 and abs(area) > 1e-10:
+            ox, oy = local[0]
+            area = math.fsum(
+                (a[0] - ox) * (b[1] - oy) - (b[0] - ox) * (a[1] - oy)
+                for a, b in zip(local, local[1:])
+            )
+            span = max(
+                max(p[i] for p in local) - min(p[i] for p in local) for i in (0, 1)
+            )
+            tolerance = 32 * np.finfo(float).eps * span**2 * len(local)
+            if closed and len(path) >= 4 and abs(area) > tolerance:
                 paths.append(path)
             else:
                 omitted += 1

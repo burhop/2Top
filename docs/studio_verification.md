@@ -1,9 +1,23 @@
 # Tidal Atlas development verification
 
-Updated October 13, 2026 for version 0.11.1. Work17 executes the local application
+Updated October 14, 2026 for version 0.12.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.12.0 fixes reusable field/normal/blend numerics and deterministic sampled
+contour extraction. Independent review found and covered subnormal subtraction
+rounding and contours collapsing during world mapping. Baseline new tests
+reproduced 24 failures out of 30; expanded independent-oracle and browser-parity
+cases cover the final implementation. [Backend contracts and saved timings](implicit_backend.md).
+Final local verification: **1,472 Python cases passed, 27 skipped, 43 warnings**;
+**72 new numerical/parity cases**, 59 JavaScript checks, mocked WebMCP contract,
+143-file Ruff lint/format and **57 real Chromium cases passed (4.7 minutes)**.
+The installed 0.12.0 wheel passed outside-checkout startup, packaged assets,
+geometry response and the real read-only 23-tool MCP catalog without dev packages.
+The full-suite procedural cusp regression was fixed and rerun successfully.
+Native WebMCP host support remains unverified. Exact-commit CI gates dev integration.
+The detailed 0.11.1 results below are retained as historical evidence.
 
 Version 0.11.1 is the bounded integrated reliability patch: phone section jumps,
 known pose-selection restoration, guarded document/session edits and explicit

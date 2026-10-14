@@ -20,8 +20,10 @@ Key Features:
 
 import sympy as sp
 import numpy as np
+from numbers import Real
 from typing import Tuple, Union, Dict, Any
 from .implicit_curve import ImplicitCurve
+from .numeric import blend_terms
 
 
 class RFunctionCurve(ImplicitCurve):
@@ -76,8 +78,15 @@ class RFunctionCurve(ImplicitCurve):
 
         # Validate alpha parameter
         if operation == "blend":
-            if alpha <= 0:
-                raise ValueError("alpha must be positive for blend operations")
+            if (
+                isinstance(alpha, (bool, np.bool_))
+                or not isinstance(alpha, Real)
+                or not np.isfinite(alpha)
+                or alpha <= 0
+            ):
+                raise ValueError(
+                    "alpha must be positive and finite for blend operations"
+                )
         else:
             if alpha != 0.0:
                 raise ValueError(f"alpha must be 0 for {operation} operations")
@@ -113,7 +122,9 @@ class RFunctionCurve(ImplicitCurve):
             else:  # blend
                 # Symbolic representation of smooth blend (approximation)
                 f1, f2 = curve1.expression, curve2.expression
-                expression = (f1 + f2 - sp.sqrt((f1 - f2) ** 2 + alpha**2)) / 2
+                expression = (
+                    f1 + f2 - sp.sqrt((f1 - f2) ** 2 + sp.Float(alpha) ** 2)
+                ) / 2
 
             # Initialize parent class
             super().__init__(expression, variables)
@@ -209,13 +220,15 @@ class RFunctionCurve(ImplicitCurve):
         Formula: (f1 + f2 - sqrt((f1-f2)^2 + alpha^2)) / 2
         This approximates min(f1, f2) but with smooth transitions.
         """
-        diff = f1 - f2
-        return (f1 + f2 - np.sqrt(diff**2 + alpha**2)) / 2
+        value = blend_terms(f1, f2, alpha)
+        return (
+            float(value) if np.isscalar(f1) and np.isscalar(f2) else np.asarray(value)
+        )
 
     def _gradient_sharp_union(self, f1, f2, grad1_x, grad1_y, grad2_x, grad2_y):
         """Gradient for sharp union operation"""
         # Use gradient of whichever function is smaller
-        if np.isscalar(f1):
+        if np.isscalar(f1) and np.isscalar(f2):
             if f1 <= f2:
                 return grad1_x, grad1_y
             else:
@@ -230,7 +243,7 @@ class RFunctionCurve(ImplicitCurve):
     def _gradient_sharp_intersection(self, f1, f2, grad1_x, grad1_y, grad2_x, grad2_y):
         """Gradient for sharp intersection operation"""
         # Use gradient of whichever function is larger
-        if np.isscalar(f1):
+        if np.isscalar(f1) and np.isscalar(f2):
             if f1 >= f2:
                 return grad1_x, grad1_y
             else:
@@ -246,7 +259,7 @@ class RFunctionCurve(ImplicitCurve):
         """Gradient for sharp difference operation"""
         # Difference is max(f1, -f2), so gradient depends on which is larger
         neg_f2 = -f2
-        if np.isscalar(f1):
+        if np.isscalar(f1) and np.isscalar(f2):
             if f1 >= neg_f2:
                 return grad1_x, grad1_y
             else:
@@ -260,16 +273,7 @@ class RFunctionCurve(ImplicitCurve):
 
     def _gradient_smooth_blend(self, f1, f2, grad1_x, grad1_y, grad2_x, grad2_y, alpha):
         """Gradient for smooth blend operation"""
-        # Derivative of smooth blend formula
-        diff = f1 - f2
-        sqrt_term = np.sqrt(diff**2 + alpha**2)
-
-        # Avoid division by zero
-        safe_sqrt = np.where(sqrt_term > 1e-12, sqrt_term, 1e-12)
-
-        # Blend weights
-        w1 = 0.5 * (1 - diff / safe_sqrt)
-        w2 = 0.5 * (1 + diff / safe_sqrt)
+        _, w1, w2 = blend_terms(f1, f2, alpha, gradient=True)
 
         grad_x = w1 * grad1_x + w2 * grad2_x
         grad_y = w1 * grad1_y + w2 * grad2_y

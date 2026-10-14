@@ -1,0 +1,218 @@
+{
+  "python": "3.11.14 (main, Dec  9 2025, 18:59:10) [MSC v.1944 64 bit (AMD64)]",
+  "numpy": "2.4.6",
+  "sympy": "1.14.0",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "warm_repeats": 5,
+  "measurement": "Sequential warm wall-clock timings on this host; includes contour validation/selection/stitching, excludes field sampling for grid jobs. No memory/renderer/FPS guarantee.",
+  "results": {
+    "ellipse_grid_192_16_levels": {
+      "median_seconds": 0.43913319997955114,
+      "min_seconds": 0.4329041999881156,
+      "max_seconds": 0.47349199999007396,
+      "samples_seconds": [
+        0.43913319997955114,
+        0.43648179998854175,
+        0.4329041999881156,
+        0.47349199999007396,
+        0.4489076000172645
+      ],
+      "output": [
+        {
+          "paths": 1,
+          "vertices": 371,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 419,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 467,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 503,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 535,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 575,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 603,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 631,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 659,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 687,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 719,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 743,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 767,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 791,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 815,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 835,
+          "omitted": 0
+        }
+      ]
+    },
+    "static_blend_grid_128_12_levels": {
+      "median_seconds": 0.15124430001014844,
+      "min_seconds": 0.1502856000151951,
+      "max_seconds": 0.1518766999943182,
+      "samples_seconds": [
+        0.1502856000151951,
+        0.15124430001014844,
+        0.15055250001023524,
+        0.1518766999943182,
+        0.15161699999589473
+      ],
+      "output": [
+        {
+          "paths": 1,
+          "vertices": 563,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 531,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 509,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 495,
+          "omitted": 0
+        },
+        {
+          "paths": 1,
+          "vertices": 485,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 460,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 404,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 358,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 310,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 266,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 214,
+          "omitted": 0
+        },
+        {
+          "paths": 2,
+          "vertices": 174,
+          "omitted": 0
+        }
+      ]
+    },
+    "symbolic_field_193_squared": {
+      "median_seconds": 0.0002261999761685729,
+      "min_seconds": 0.00021389999892562628,
+      "max_seconds": 0.0003105999785475433,
+      "samples_seconds": [
+        0.0003105999785475433,
+        0.00022059999173507094,
+        0.00021389999892562628,
+        0.0002355000178795308,
+        0.0002261999761685729
+      ],
+      "output": {
+        "shape": [
+          193,
+          193
+        ],
+        "finite": true
+      }
+    },
+    "smooth_blend_field_193_squared": {
+      "median_seconds": 0.00010639999527484179,
+      "min_seconds": 0.00010140001541003585,
+      "max_seconds": 0.00010939998901449144,
+      "samples_seconds": [
+        0.00010720000136643648,
+        0.0001047999830916524,
+        0.00010639999527484179,
+        0.00010140001541003585,
+        0.00010939998901449144
+      ],
+      "output": {
+        "shape": [
+          193,
+          193
+        ],
+        "finite": true
+      }
+    }
+  },
+  "fixture_sha256": "916b43275b3147eeab2660a2ce8490f5290db1a84e3a1737a1968543e0ff1c35",
+  "implementation": "f003ee40b17a45dd8f5646382cf3342e5c16d1c0 (0.11.1)"
+}
