@@ -77,14 +77,17 @@ def test_true_circle_medial_axis_is_not_a_zero_normal(scale):
 
 
 def test_annulus_medial_radius_is_unresolved_and_smooth_sides_are_radial():
-    field = callback_field(lambda x, y: np.abs(np.hypot(x, y) - 0.7) - 0.3)
+    field = callback_field(lambda x, y: np.abs(np.hypot(x, y) - 0.75) - 0.25)
     for radius, sign in ((0.5, -1), (0.9, 1)):
         result = field.gradient_diagnostics(0.8 * radius, 0.6 * radius)
         assert result["available"]
         np.testing.assert_allclose(
             result["gradient"], (sign * 0.8, sign * 0.6), rtol=3e-6
         )
-    result = field.gradient_diagnostics(0.8 * 0.7, 0.6 * 0.7)
+    # This binary64 point is exactly on the medial radius. Decimal scaled
+    # products need not lie on their intended radius even if hypot rounds there.
+    # Along x the actual local callback is |x-0.75|-0.25: a genuine cusp.
+    result = field.gradient_diagnostics(0.75, 0.0)
     assert not result["available"]
     assert all(np.isnan(v) for v in result["gradient"])
 

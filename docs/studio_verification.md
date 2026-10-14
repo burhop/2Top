@@ -9,9 +9,17 @@ Version 0.22.0 adds [opt-in distance-gradient diagnostics](distance_gradient_dia
 The final affected native/distance/adaptive/diagnostic suite passed **504 tests**,
 including **32 new analytic and callback-contract cases**. Independent source
 review covers the reproduced source-circle jump, callback authority, scalar/0d/
-broadcast/empty shapes, unresolved masks and bounded-estimator limits. Full
-Work17, wheel, lint, JavaScript, Chromium and exact feature/dev CI results are
-recorded with the milestone PR/handoff as gates finish. Native WebMCP host
+broadcast/empty shapes, unresolved masks and bounded-estimator limits. The full
+Work17 run passed **2,158 tests**, with **27 skips and 45 warnings**. Initial CI
+exposed a decimal-scaled annulus point that was not exactly medial; independent
+rational review replaced it with an exact binary64 cusp fixture, preserving the
+unavailable assertion. The final **504-test** affected run passed; application
+source is unchanged since the full local run. All **59** JavaScript checks,
+mocked WebMCP, **159-file** configured and **54-file** explicit Ruff, h11 metadata,
+runtime-only wheel diagnostics, outside-checkout startup/assets and the actual
+**23-tool** MCP catalog passed. All **58** dependency records remain unchanged.
+Exact feature/dev CI and complete Chromium results are recorded with the
+milestone PR/handoff as gates finish. Native WebMCP host
 verification and legacy composed/level-set numerical normal paths remain gaps.
 
 ## Previous milestone

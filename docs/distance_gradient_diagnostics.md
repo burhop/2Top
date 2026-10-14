@@ -61,6 +61,10 @@ Results and geometry remain query-local with no retained input buffers/cache.
 
 Finite sampling cannot rule out hidden features, aliasing, noise or domain
 boundaries between probes. Flat sample statuses do not prove a zero derivative.
+Near-medial decimal coordinates need not lie exactly on the intended radius;
+rounded callback values may look flat differently across platforms and escape
+detection. The annulus medial regression uses the exact binary64 point
+`(0.75, 0)` on radius `0.75` and keeps the unavailable-vector assertion.
 Smooth points can remain unresolved; this bounded pass adds no scale/domain
 solver, source closest-point solver or exact curved-distance claim. Legacy
 `gradient()`, algebra and level-set normal consumers do not automatically use
