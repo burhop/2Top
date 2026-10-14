@@ -337,8 +337,9 @@ class TestOccupancyField:
         """Test level set extraction."""
         field = OccupancyField(square_region, inside_value=1.0, outside_value=0.0)
 
-        level_curve = field.level_set(0.5)
-        assert hasattr(level_curve, "evaluate")  # Should be an ImplicitCurve
+        # A binary mask never equals 0.5; interpolating its jump invents a curve.
+        with pytest.raises(ValueError, match="empty"):
+            field.level_set(0.5)
 
     def test_serialization(self, square_region):
         """Test OccupancyField serialization."""

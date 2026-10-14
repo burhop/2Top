@@ -1,0 +1,29 @@
+{
+  "gap": "unchanged SignedDistanceField grid cache hides in-place coordinate mutation",
+  "initial": [
+    -1.0,
+    -1.0,
+    -1.0,
+    -1.0,
+    -1.0
+  ],
+  "after_coordinate_edit": [
+    -1.0,
+    -1.0,
+    -1.0,
+    -1.0,
+    -1.0
+  ],
+  "after_clear_cache": [
+    -1.0,
+    1.0,
+    -1.0,
+    -1.0,
+    -1.0
+  ],
+  "analytic_edited_point": 1.0,
+  "edited_point": [
+    -1.0,
+    2.0
+  ]
+}

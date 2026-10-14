@@ -12,7 +12,9 @@ def test_trimmed_implicit_curve_approximation_no_mask_filter():
 
     # Trimmed curve segment with endpoints at (2, 0) and (0, 2)
     # The mask checks if x >= 0 and y >= 0
-    mask = lambda px, py: px >= -1e-9 and py >= -1e-9
+    def mask(px, py):
+        return px >= -1e-9 and py >= -1e-9
+
     trimmed = TrimmedImplicitCurve(
         base_curve=circle,
         mask=mask,
@@ -46,7 +48,7 @@ def test_field_grid_caching():
     res_occ_1 = occupancy.evaluate(grid_x, grid_y)
 
     assert sdf._cache is not None
-    assert occupancy._cache is not None
+    assert occupancy._cache is None  # Mutable occupancy state is not cached.
 
     # Second evaluation (cache hit)
     # Verify reference equality works
@@ -54,7 +56,8 @@ def test_field_grid_caching():
     res_occ_2 = occupancy.evaluate(grid_x, grid_y)
 
     assert res_sdf_2 is res_sdf_1
-    assert res_occ_2 is res_occ_1
+    assert res_occ_2 is not res_occ_1
+    np.testing.assert_array_equal(res_occ_2, res_occ_1)
 
     # Evaluate with new identical grid (numerical equality check)
     grid_x_new, grid_y_new = np.meshgrid(np.linspace(-3, 3, 50), np.linspace(-3, 3, 50))
@@ -63,7 +66,8 @@ def test_field_grid_caching():
 
     # Numerical identity matches should hit cache and return the cached object
     assert res_sdf_3 is res_sdf_1
-    assert res_occ_3 is res_occ_1
+    assert res_occ_3 is not res_occ_1
+    np.testing.assert_array_equal(res_occ_3, res_occ_1)
 
     # Clear cache
     sdf.clear_cache()
