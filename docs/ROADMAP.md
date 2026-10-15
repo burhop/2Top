@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.24.0 recovers [thin-trim and endpoint intersections](trimmed_intersections.md)
+using a one-cell candidate halo and existing endpoint/refinement APIs. The small
+segment/circle example returns useful cutting/anchor coordinates. Final masks,
+scene schemas and numerical acceptance are retained. Tiny features without
+seeds, difficult tangencies, close-root deduplication and general overlap
+semantics remain separate possible increments; this is not a complete solver.
+
 Version 0.23.0 propagates the existing gradient diagnostic protocol through
 composition and level-set wrappers, preserving uncertainty and shared probes.
 Native straight-distance contours retain geometric gradients; cheap normals

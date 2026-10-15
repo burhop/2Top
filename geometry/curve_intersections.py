@@ -68,7 +68,11 @@ def find_curve_intersections(
         precision_policy: Optional precision policy to use for calculations
 
     Returns:
-        List of (x, y) intersection points
+        With detect_overlap=False, approximate (x, y) points accepted by residual
+        and final trim checks. Legacy overlap detection can return unrefined
+        coarse approximations; its original candidate inputs are retained.
+        Coarse grid seeds retain a one-cell trim halo; explicit trim endpoints
+        also seed refinement. This is not a completeness or exactness guarantee.
     """
 
     policy = (
@@ -218,34 +222,50 @@ def find_curve_intersections(
 
     intersection_mask = mask1 & mask2
 
-    # For trimmed curves, apply trimming masks efficiently
-    intersection_mask = _apply_trimming_masks_fast(
-        intersection_mask, X, Y, curve1, curve2
+    # A grid seed need not lie on the final trim: an exact zero-width rectangle
+    # usually contains no grid points. Retain the neighboring sampling cell.
+    # linspace has N-1 intervals, unlike the legacy clustering scale above.
+    trim_padding = (
+        abs(2.0 * search_range / (grid_resolution - 1)) if grid_resolution > 1 else 0.0
     )
+    intersection_mask = _apply_trimming_masks_fast(
+        intersection_mask, X, Y, curve1, curve2, padding=trim_padding
+    )
+    endpoint_seeds = _trim_endpoint_seeds(curve1, curve2, search_range)
 
-    if not np.any(intersection_mask):
+    if not np.any(intersection_mask) and not endpoint_seeds:
         return []
 
     # Extract candidate points
     x_candidates = X[intersection_mask]
     y_candidates = Y[intersection_mask]
 
-    if len(x_candidates) == 0:
-        return []
-
     # Simple overlap detection (only if enabled and many candidates)
     if detect_overlap and len(x_candidates) > 20:
-        overlap_endpoints = _detect_overlap_endpoints_fast(x_candidates, y_candidates)
-        if overlap_endpoints:
-            return overlap_endpoints
+        # Preserve this legacy heuristic's original inputs: newly padded seeds
+        # must pass numerical refinement, never become coarse overlap outputs.
+        overlap_mask = _apply_trimming_masks_fast(
+            intersection_mask, X, Y, curve1, curve2
+        )
+        if np.count_nonzero(overlap_mask) > 20:
+            overlap_endpoints = _detect_overlap_endpoints_fast(
+                X[overlap_mask], Y[overlap_mask]
+            )
+            if overlap_endpoints:
+                return overlap_endpoints
 
     # Step 2: Cluster nearby points to avoid duplicates
     candidate_points = np.column_stack([x_candidates, y_candidates])
-    starting_points = _cluster_candidates_fast(
-        candidate_points,
-        grid_spacing=grid_spacing,
-        is_periodic=is_periodic_or_procedural,
+    starting_points = list(
+        _cluster_candidates_fast(
+            candidate_points,
+            grid_spacing=grid_spacing,
+            is_periodic=is_periodic_or_procedural,
+        )
     )
+    # Endpoints are user-supplied seeds, not accepted intersections. Append after
+    # clustering so they are not averaged away or lost to grid subsampling.
+    starting_points.extend(endpoint_seeds)
 
     # Step 3: Refine intersections using numerical solver
     refined_intersections = []
@@ -398,43 +418,52 @@ def _are_curves_identical_fast(
     return finite_count >= 3
 
 
-def _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2):
+def _trim_endpoint_seeds(curve1, curve2, search_range):
+    """Finite explicit trim coordinates; refinement/contains remain authoritative."""
+    seeds = []
+    for curve in (curve1, curve2):
+        if not (hasattr(curve, "mask") and hasattr(curve, "base_curve")):
+            continue
+        endpoints = getattr(curve, "endpoints", None)
+        if endpoints is None:
+            continue
+        for endpoint in endpoints:
+            try:
+                point = np.asarray(endpoint, dtype=float)
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if (
+                point.shape == (2,)
+                and np.isfinite(point).all()
+                and np.all(np.abs(point) <= search_range + 1e-3)
+                and not any(np.array_equal(point, other) for other in seeds)
+            ):
+                seeds.append(point.copy())
+    return seeds
+
+
+def _apply_trimming_masks_fast(intersection_mask, X, Y, curve1, curve2, *, padding=0.0):
     """
     Fast application of trimming masks using vectorized operations when possible.
     """
-    # Apply curve1's trimming mask
-    if hasattr(curve1, "mask") and hasattr(curve1, "base_curve"):
-        if hasattr(curve1, "_xmin") and curve1._xmin is not None:
-            # Use explicit bounds (fast)
-            eps = 1e-9
-            trim_mask1 = (
-                (X >= (curve1._xmin - eps))
-                & (X <= (curve1._xmax + eps))
-                & (Y >= (curve1._ymin - eps))
-                & (Y <= (curve1._ymax + eps))
-            )
-            intersection_mask = intersection_mask & trim_mask1
-        else:
-            # Skip expensive point-by-point evaluation for performance
-            # Only apply mask to candidate points later
-            pass
-
-    # Apply curve2's trimming mask
-    if hasattr(curve2, "mask") and hasattr(curve2, "base_curve"):
-        if hasattr(curve2, "_xmin") and curve2._xmin is not None:
-            # Use explicit bounds (fast)
-            eps = 1e-9
-            trim_mask2 = (
-                (X >= (curve2._xmin - eps))
-                & (X <= (curve2._xmax + eps))
-                & (Y >= (curve2._ymin - eps))
-                & (Y <= (curve2._ymax + eps))
-            )
-            intersection_mask = intersection_mask & trim_mask2
-        else:
-            # Skip expensive point-by-point evaluation for performance
-            pass
-
+    # Partial rectangles are not exclusion proofs; contains also applies its
+    # rectangle only when all four bounds exist. Arbitrary masks stay final-only.
+    for curve in (curve1, curve2):
+        if not (hasattr(curve, "mask") and hasattr(curve, "base_curve")):
+            continue
+        bounds = tuple(
+            getattr(curve, key, None) for key in ("_xmin", "_xmax", "_ymin", "_ymax")
+        )
+        if not all(value is not None and np.isfinite(value) for value in bounds):
+            continue
+        xmin, xmax, ymin, ymax = bounds
+        eps = max(1e-9, padding)
+        intersection_mask = intersection_mask & (
+            (X >= xmin - eps)
+            & (X <= xmax + eps)
+            & (Y >= ymin - eps)
+            & (Y <= ymax + eps)
+        )
     return intersection_mask
 
 

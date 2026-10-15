@@ -1,0 +1,189 @@
+{
+  "label": "0.24.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-curve-intersections-0.24.0\\geometry\\curve_intersections.py",
+  "workloads": [
+    {
+      "workload": "thin_interior_100",
+      "median_ms": 2.7774,
+      "batches_ms": [
+        2.8966,
+        2.7774,
+        2.8207,
+        2.6568,
+        2.7644
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 10,
+      "solver_starts": 12,
+      "solver_system_calls": 82
+    },
+    {
+      "workload": "thin_interior_500",
+      "median_ms": 19.2747,
+      "batches_ms": [
+        20.0124,
+        19.0145,
+        18.7976,
+        19.2871,
+        19.2747
+      ],
+      "grid_resolution": 500,
+      "points": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 30,
+      "solver_starts": 32,
+      "solver_system_calls": 222
+    },
+    {
+      "workload": "thin_endpoint_100",
+      "median_ms": 2.2556,
+      "batches_ms": [
+        2.2556,
+        3.2865,
+        2.4853,
+        2.2553,
+        2.2052
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          1.0,
+          0.25
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 8,
+      "solver_starts": 10,
+      "solver_system_calls": 68
+    },
+    {
+      "workload": "thin_circle_crossings_100",
+      "median_ms": 2.7031,
+      "batches_ms": [
+        2.7561,
+        2.7085,
+        2.6935,
+        2.7031,
+        2.701
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -1.0,
+          0.75
+        ],
+        [
+          1.0,
+          0.75
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 8,
+      "solver_starts": 10,
+      "solver_system_calls": 102
+    },
+    {
+      "workload": "thin_outside_root_100",
+      "median_ms": 1.4596,
+      "batches_ms": [
+        2.2391,
+        1.6084,
+        1.4596,
+        1.4336,
+        1.4164
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 6,
+      "solver_starts": 8,
+      "solver_system_calls": 54
+    },
+    {
+      "workload": "partial_rectangle_100",
+      "median_ms": 5.765,
+      "batches_ms": [
+        5.9632,
+        5.9382,
+        5.765,
+        5.6873,
+        5.6615
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 25,
+      "solver_starts": 27,
+      "solver_system_calls": 187
+    },
+    {
+      "workload": "untrimmed_circle_crossings_100",
+      "median_ms": 5.7441,
+      "batches_ms": [
+        5.7037,
+        5.6801,
+        5.7938,
+        5.913,
+        5.7441
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -1.0,
+          0.75
+        ],
+        [
+          1.0,
+          0.75
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 22,
+      "solver_starts": 22,
+      "solver_system_calls": 220
+    },
+    {
+      "workload": "untrimmed_parabola_tangent_100",
+      "median_ms": 2176.4112,
+      "batches_ms": [
+        2253.3157,
+        2120.6854,
+        2176.4112,
+        2254.5712,
+        2099.3388
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 62,
+      "solver_starts": 62,
+      "solver_system_calls": 37324
+    }
+  ],
+  "limits": "Five sequential warm complete calls include grid evaluations, candidate clustering, solver refinement and final checks. Counters instrument clustering input and fsolve system calls; they exclude final residual/tangent/trim/identity evaluations and callback internals. These shared-workstation timings are not FPS or speedup guarantees. Baseline empty/error results do less useful work. No exactness/completeness/overlap certificate is claimed."
+}
