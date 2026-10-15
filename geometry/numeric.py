@@ -311,7 +311,12 @@ def real_array(value):
 
 def broadcast_coordinates(x, y):
     scalar = np.isscalar(x) and np.isscalar(y)
-    x, y = np.broadcast_arrays(real_array(x), real_array(y))
+    x, y = real_array(x), real_array(y)
+    # Equal shapes already satisfy broadcasting, including the scalar solver
+    # path. Keep validation and dtype conversion without repeating broadcast
+    # dispatch and shape checks on every field evaluation.
+    if x.shape != y.shape:
+        x, y = np.broadcast_arrays(x, y)
     return x, y, scalar
 
 

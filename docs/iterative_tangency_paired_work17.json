@@ -1,0 +1,152 @@
+{
+  "medians": {
+    "legacy": {
+      "wall_ms": 1975.318,
+      "cpu_ms": 1968.75
+    },
+    "current": {
+      "wall_ms": 1472.8749,
+      "cpu_ms": 1453.125
+    }
+  },
+  "batches": [
+    [
+      {
+        "method": "legacy",
+        "wall_ms": 694.9568,
+        "cpu_ms": 671.875,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      },
+      {
+        "method": "current",
+        "wall_ms": 1478.5811,
+        "cpu_ms": 1453.125,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      }
+    ],
+    [
+      {
+        "method": "current",
+        "wall_ms": 1203.9798,
+        "cpu_ms": 1156.25,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      },
+      {
+        "method": "legacy",
+        "wall_ms": 1975.318,
+        "cpu_ms": 1968.75,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      }
+    ],
+    [
+      {
+        "method": "legacy",
+        "wall_ms": 1881.2532,
+        "cpu_ms": 1859.375,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      },
+      {
+        "method": "current",
+        "wall_ms": 1381.6334,
+        "cpu_ms": 1375.0,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      }
+    ],
+    [
+      {
+        "method": "current",
+        "wall_ms": 1472.8749,
+        "cpu_ms": 1484.375,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      },
+      {
+        "method": "legacy",
+        "wall_ms": 2150.4876,
+        "cpu_ms": 2125.0,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      }
+    ],
+    [
+      {
+        "method": "legacy",
+        "wall_ms": 2055.1961,
+        "cpu_ms": 2015.625,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      },
+      {
+        "method": "current",
+        "wall_ms": 1562.5346,
+        "cpu_ms": 1546.875,
+        "points": [
+          [
+            -5.064137181853578e-126,
+            0.0
+          ]
+        ]
+      }
+    ]
+  ],
+  "parity_workloads": [
+    "parabola_origin",
+    "parabola_translated",
+    "procedural_parabola",
+    "quartic_contact",
+    "near_two_crossings",
+    "near_disjoint",
+    "trimmed_contact",
+    "recognized_circle_contact",
+    "coincident_parabolas"
+  ],
+  "patched_names": [
+    "geometry.numeric.broadcast_coordinates",
+    "geometry.implicit_curve.broadcast_coordinates",
+    "geometry.level_set_curve.broadcast_coordinates",
+    "geometry.procedural_curve.broadcast_coordinates"
+  ],
+  "limits": "Five alternating-order warm complete-call pairs within one isolated process. Reference is the original validated broadcast helper; all imported geometry bindings restored afterward. This preserves solver inputs; no universal time or accuracy guarantee."
+}

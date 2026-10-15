@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_package_versions_match():
-    assert __version__ == "0.25.0"
+    assert __version__ == "0.26.0"
     assert (
         tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
         == __version__

@@ -1,9 +1,23 @@
 # Tidal Atlas development verification
 
-Updated October 15, 2026 for version 0.25.0. Work17 executes the local application
+Updated October 15, 2026 for version 0.26.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.26.0 reduces [general numerical tangency evaluation costs](iterative_tangency.md).
+The focused suite passed **273 tests**, including **62 new regressions**.
+Independent read-only review approved the production change and verified exact
+solver trace/output parity across all nine benchmark workloads. Five alternating
+paired calls measured the parabola at 1.98 s before and 1.47 s after; starts,
+budgets and residual checks remain unchanged. All **59 JavaScript checks**,
+mocked WebMCP, **166-file** configured / **65-file** explicit Ruff, and h11
+artifact metadata pass. All **58** dependency records are unchanged.
+Full local, runtime wheel and exact
+feature/dev CI totals are recorded with the milestone PR and Work17 handoff as
+gates finish. Native WebMCP host verification remains separate.
+
+## Previous milestone
 
 Version 0.25.0 fixes [native circle tangencies](tangent_intersections.md).
 The final focused suite passed **244 tests**, including **104 new cases**.

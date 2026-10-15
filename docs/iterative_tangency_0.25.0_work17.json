@@ -1,0 +1,4500 @@
+{
+  "label": "0.25.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-tangent-intersections-0.25.0\\geometry\\curve_intersections.py",
+  "workloads": [
+    {
+      "workload": "parabola_origin",
+      "median_ms": 1945.9351,
+      "batches_ms": [
+        657.9718,
+        1945.9351,
+        1455.154,
+        1997.8016,
+        2099.3523
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.064137181853578e-126,
+      "solver_starts": 62,
+      "solver_system_calls": 37324,
+      "solver_trace_sha256": "65e44860e581c89a03570c4d5250088045159e0bf8a5cb2ff987823e15849cef",
+      "solves": [
+        {
+          "start": [
+            -0.3434343434343432,
+            0.020202020202020332
+          ],
+          "solution": [
+            -5.064137181853578e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.303030303030303,
+            0.020202020202020332
+          ],
+          "solution": [
+            -4.48465747302544e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3434343434343432,
+            0.060606060606060996
+          ],
+          "solution": [
+            -5.21321954386177e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.303030303030303,
+            0.060606060606060996
+          ],
+          "solution": [
+            -4.6470682772812204e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.38383838383838365,
+            0.060606060606060996
+          ],
+          "solution": [
+            -5.776955903357562e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.10101010101010077,
+            0.060606060606060996
+          ],
+          "solution": [
+            -1.6050929638308495e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.06060606060606055,
+            0.060606060606060996
+          ],
+          "solution": [
+            -9.637249094277036e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.14141414141414121,
+            0.060606060606060996
+          ],
+          "solution": [
+            -2.2422193962446132e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.10101010101010077,
+            -0.06060606060606055
+          ],
+          "solution": [
+            -1.6050929638308606e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.06060606060606055,
+            -0.06060606060606055
+          ],
+          "solution": [
+            -9.637248483517417e-127,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.10101010101010077,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -1.595696014702166e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.06060606060606055,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -9.629291740095649e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.10101010101010077,
+            0.020202020202020332
+          ],
+          "solution": [
+            -1.5956960147021503e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.06060606060606055,
+            0.020202020202020332
+          ],
+          "solution": [
+            -9.629291740095546e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.18181818181818166,
+            -0.06060606060606055
+          ],
+          "solution": [
+            -2.8693648278801448e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.14141414141414121,
+            -0.06060606060606055
+          ],
+          "solution": [
+            -2.2422194221917304e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.14141414141414121,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -2.2026076119545963e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.14141414141414121,
+            0.020202020202020332
+          ],
+          "solution": [
+            -2.2026075997255974e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2222222222222221,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -3.343887570864637e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.18181818181818166,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -2.779515595383931e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.18181818181818166,
+            0.020202020202020332
+          ],
+          "solution": [
+            -2.7795155953839222e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2222222222222221,
+            0.060606060606060996
+          ],
+          "solution": [
+            -3.480165236699745e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.18181818181818166,
+            0.060606060606060996
+          ],
+          "solution": [
+            -2.8693648278801277e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.26262626262626254,
+            0.020202020202020332
+          ],
+          "solution": [
+            -3.9109180198805383e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2222222222222221,
+            0.020202020202020332
+          ],
+          "solution": [
+            -3.34388757086463e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.26262626262626254,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -3.910918019880544e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.26262626262626254,
+            0.060606060606060996
+          ],
+          "solution": [
+            -4.071712869995358e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.060606060606060996,
+            0.060606060606060996
+          ],
+          "solution": [
+            9.637249094276968e-127,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.10101010101010122,
+            0.060606060606060996
+          ],
+          "solution": [
+            1.6050929638308403e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.060606060606060996,
+            0.020202020202020332
+          ],
+          "solution": [
+            9.629292044716175e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.10101010101010122,
+            0.020202020202020332
+          ],
+          "solution": [
+            1.5956960416347972e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.14141414141414144,
+            0.020202020202020332
+          ],
+          "solution": [
+            2.2026076364125364e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.14141414141414144,
+            0.060606060606060996
+          ],
+          "solution": [
+            2.242219422191712e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.02020202020202011,
+            0.020202020202020332
+          ],
+          "solution": [
+            -3.212714562492577e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.020202020202020332,
+            0.020202020202020332
+          ],
+          "solution": [
+            3.2127145624925523e-127,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.02020202020202011,
+            0.060606060606060996
+          ],
+          "solution": [
+            -3.2127477390628322e-127,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.020202020202020332,
+            0.060606060606060996
+          ],
+          "solution": [
+            3.2127477390627687e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.060606060606060996,
+            -0.06060606060606055
+          ],
+          "solution": [
+            9.637249705036692e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.10101010101010122,
+            -0.06060606060606055
+          ],
+          "solution": [
+            1.6050929638308515e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.060606060606060996,
+            -0.02020202020202011
+          ],
+          "solution": [
+            9.62929204471626e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.10101010101010122,
+            -0.02020202020202011
+          ],
+          "solution": [
+            1.5956960506123602e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.02020202020202011,
+            -0.06060606060606055
+          ],
+          "solution": [
+            -3.2127477390628585e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.020202020202020332,
+            -0.06060606060606055
+          ],
+          "solution": [
+            3.2127477390627937e-127,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.02020202020202011,
+            -0.02020202020202011
+          ],
+          "solution": [
+            -3.2127145624926166e-127,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.020202020202020332,
+            -0.02020202020202011
+          ],
+          "solution": [
+            3.2127145624925912e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3434343434343434,
+            0.020202020202020332
+          ],
+          "solution": [
+            5.064137244835064e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3434343434343434,
+            0.060606060606060996
+          ],
+          "solution": [
+            5.213219616609698e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3838383838383841,
+            0.060606060606060996
+          ],
+          "solution": [
+            5.776955965964097e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.14141414141414144,
+            -0.06060606060606055
+          ],
+          "solution": [
+            2.2422193702975266e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.14141414141414144,
+            -0.02020202020202011
+          ],
+          "solution": [
+            2.202607636412553e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.1818181818181821,
+            -0.02020202020202011
+          ],
+          "solution": [
+            2.779515648492752e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.02020202020202011
+          ],
+          "solution": [
+            3.343887624883159e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.1818181818181821,
+            -0.06060606060606055
+          ],
+          "solution": [
+            2.869364867652664e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.1818181818181821,
+            0.020202020202020332
+          ],
+          "solution": [
+            2.7795156484927377e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.020202020202020332
+          ],
+          "solution": [
+            3.3438876248831535e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.1818181818181821,
+            0.060606060606060996
+          ],
+          "solution": [
+            2.8693648875389186e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.060606060606060996
+          ],
+          "solution": [
+            3.480165300151275e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.262626262626263,
+            0.060606060606060996
+          ],
+          "solution": [
+            4.071712947699014e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3030303030303032,
+            0.060606060606060996
+          ],
+          "solution": [
+            4.6470683418353414e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.262626262626263,
+            0.020202020202020332
+          ],
+          "solution": [
+            3.9109180850089695e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3030303030303032,
+            0.020202020202020332
+          ],
+          "solution": [
+            4.4846575276460175e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.262626262626263,
+            -0.02020202020202011
+          ],
+          "solution": [
+            3.9109180850089695e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        }
+      ]
+    },
+    {
+      "workload": "parabola_translated",
+      "median_ms": 137.6147,
+      "batches_ms": [
+        146.1858,
+        128.771,
+        127.6087,
+        137.6147,
+        163.2832
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.9999999928990561,
+          1.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          1.0,
+          1.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 7.100943943960658e-09,
+      "solver_starts": 49,
+      "solver_system_calls": 1908,
+      "solver_trace_sha256": "401836e9af503cf8eddcdebe7f85d7f86223d2deb8da10c2a3a5dae0e64e50fc",
+      "solves": [
+        {
+          "start": [
+            0.4285714285714284,
+            1.095238095238095
+          ],
+          "solution": [
+            0.9999999928990561,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.4285714285714284,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.999999995320357,
+            1.0
+          ],
+          "nfev": 43,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.5238095238095237,
+            1.0
+          ],
+          "solution": [
+            0.999999992695552,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.5238095238095237,
+            1.095238095238095
+          ],
+          "solution": [
+            0.9999999934532201,
+            1.0
+          ],
+          "nfev": 46,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6190476190476186,
+            1.0
+          ],
+          "solution": [
+            0.9999999945489031,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6190476190476186,
+            1.095238095238095
+          ],
+          "solution": [
+            0.9999999965217775,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6190476190476186,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.9999999931294461,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.5238095238095237,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.9999999874149045,
+            1.0
+          ],
+          "nfev": 50,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.714285714285714,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.9999999871550588,
+            1.0
+          ],
+          "nfev": 48,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.714285714285714,
+            0.9047619047619047
+          ],
+          "solution": [
+            0.9999999972758853,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8095238095238093,
+            0.9047619047619047
+          ],
+          "solution": [
+            0.9999999991235499,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8095238095238093,
+            0.8095238095238093
+          ],
+          "solution": [
+            0.9999999993988348,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9047619047619047,
+            0.8095238095238093
+          ],
+          "solution": [
+            0.9999999927144593,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9047619047619047,
+            0.9047619047619047
+          ],
+          "solution": [
+            1.0000000038738615,
+            1.0
+          ],
+          "nfev": 43,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.714285714285714,
+            1.0
+          ],
+          "solution": [
+            0.9999999939685583,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.714285714285714,
+            1.095238095238095
+          ],
+          "solution": [
+            0.9999999929269285,
+            1.0
+          ],
+          "nfev": 45,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8095238095238093,
+            1.0
+          ],
+          "solution": [
+            0.9999999872610424,
+            1.0
+          ],
+          "nfev": 47,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8095238095238093,
+            1.095238095238095
+          ],
+          "solution": [
+            0.9999999991227231,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9047619047619047,
+            1.0
+          ],
+          "solution": [
+            0.9999999932579107,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9047619047619047,
+            1.095238095238095
+          ],
+          "solution": [
+            0.999999992718007,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8095238095238093,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.9999999993996811,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9047619047619047,
+            1.1904761904761898
+          ],
+          "solution": [
+            0.999999992714713,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.2857142857142856,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.0000000128921613,
+            1.0
+          ],
+          "nfev": 48,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.3809523809523805,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.0000000048007687,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.2857142857142856,
+            1.0
+          ],
+          "solution": [
+            1.00000000597194,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.3809523809523805,
+            1.0
+          ],
+          "solution": [
+            1.0000000054619835,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.2857142857142856,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0000000027427682,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.3809523809523805,
+            1.095238095238095
+          ],
+          "solution": [
+            1.000000003588781,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.4761904761904763,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0000000025011895,
+            1.0
+          ],
+          "nfev": 43,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.4761904761904763,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.000000004352279,
+            1.0
+          ],
+          "nfev": 43,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.5714285714285712,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0000000071016835,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.5714285714285712,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.000000004678457,
+            1.0
+          ],
+          "nfev": 43,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.4761904761904763,
+            1.0
+          ],
+          "solution": [
+            1.0000000073067323,
+            1.0
+          ],
+          "nfev": 42,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.1904761904761898,
+            1.0
+          ],
+          "solution": [
+            1.0000000042416504,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.1904761904761898,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0000000003476568,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.1904761904761898,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.0000000006055705,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.0,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.0,
+            1.0
+          ],
+          "nfev": 7,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.095238095238095,
+            1.1904761904761898
+          ],
+          "solution": [
+            1.000000007290202,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.0,
+            1.0
+          ],
+          "solution": [
+            1.0,
+            1.0
+          ],
+          "nfev": 6,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.095238095238095,
+            1.0
+          ],
+          "solution": [
+            1.0000000068494188,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.0,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0,
+            1.0
+          ],
+          "nfev": 7,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.095238095238095,
+            1.095238095238095
+          ],
+          "solution": [
+            1.0000000110270408,
+            1.0
+          ],
+          "nfev": 50,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            1.0,
+            0.9047619047619047
+          ],
+          "solution": [
+            1.0,
+            1.0
+          ],
+          "nfev": 7,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.095238095238095,
+            0.9047619047619047
+          ],
+          "solution": [
+            1.0000000110276874,
+            1.0
+          ],
+          "nfev": 50,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            1.0,
+            0.8095238095238093
+          ],
+          "solution": [
+            1.0,
+            1.0
+          ],
+          "nfev": 7,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.095238095238095,
+            0.8095238095238093
+          ],
+          "solution": [
+            1.0000000072893214,
+            1.0
+          ],
+          "nfev": 39,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.1904761904761898,
+            0.8095238095238093
+          ],
+          "solution": [
+            1.000000000604642,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.1904761904761898,
+            0.9047619047619047
+          ],
+          "solution": [
+            1.000000000347595,
+            1.0
+          ],
+          "nfev": 41,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.2857142857142856,
+            0.9047619047619047
+          ],
+          "solution": [
+            1.0000000120581407,
+            1.0
+          ],
+          "nfev": 49,
+          "status": 1,
+          "message": "The solution converged."
+        }
+      ]
+    },
+    {
+      "workload": "procedural_parabola",
+      "median_ms": 700.9656,
+      "batches_ms": [
+        799.7817,
+        688.7791,
+        640.1464,
+        700.9656,
+        730.1905
+      ],
+      "grid_resolution": 50,
+      "points": [
+        [
+          -5.6134227931254994e-126,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.6134227931254994e-126,
+      "solver_starts": 23,
+      "solver_system_calls": 13846,
+      "solver_trace_sha256": "78b357cf57281e93b3f73d878e5eee328614c4d93482de49abaeefcf8a6142cd",
+      "solves": [
+        {
+          "start": [
+            -0.3673469387755104,
+            0.08163265306122436
+          ],
+          "solution": [
+            -5.6134227931254994e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.44897959183673475,
+            0.08163265306122436
+          ],
+          "solution": [
+            -6.75356005382611e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.5306122448979593,
+            0.12244897959183643
+          ],
+          "solution": [
+            -8.002342499650419e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.08163265306122436
+          ],
+          "solution": [
+            -4.448756825019919e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.20408163265306145,
+            0.08163265306122436
+          ],
+          "solution": [
+            -3.223552748318435e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.24489795918367363,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -3.76023460769184e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3673469387755104,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -5.475044139662426e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.40816326530612224,
+            0.04081632653061229
+          ],
+          "solution": [
+            6.052974528990235e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.40816326530612224,
+            0.12244897959183643
+          ],
+          "solution": [
+            6.286197295265899e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.5306122448979589,
+            0.12244897959183643
+          ],
+          "solution": [
+            8.002342591099127e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.3265306122448979,
+            -0.04081632653061229
+          ],
+          "solution": [
+            4.9020303817385904e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            0.08163265306122436
+          ],
+          "solution": [
+            3.2235527838517536e-126,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.08163265306122436
+          ],
+          "solution": [
+            4.448756897570573e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            -0.08163265306122458
+          ],
+          "solution": [
+            3.223552801618401e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.08163265306122436,
+            -0.12244897959183687
+          ],
+          "solution": [
+            1.2981046509598073e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.08163265306122436,
+            -0.04081632653061229
+          ],
+          "solution": [
+            1.2972383092288653e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.16326530612244916,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -2.592984294798458e-126,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.08163265306122458,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -1.2972382639728981e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -6.491034680214931e-127,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.08163265306122436,
+            0.04081632653061229
+          ],
+          "solution": [
+            1.2972383092288666e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.08163265306122436,
+            0.12244897959183643
+          ],
+          "solution": [
+            1.2981047003279358e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            0.08163265306122436
+          ],
+          "solution": [
+            -6.490991929304587e-127,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.12244897959183687,
+            0.08163265306122436
+          ],
+          "solution": [
+            -1.9454732494915005e-126,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        }
+      ]
+    },
+    {
+      "workload": "quartic_contact",
+      "median_ms": 2153.7888,
+      "batches_ms": [
+        1834.3772,
+        2288.5779,
+        2430.0436,
+        2128.6778,
+        2153.7888
+      ],
+      "grid_resolution": 50,
+      "points": [
+        [
+          -1.2572518942283821e-52,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 1.2572518942283821e-52,
+      "solver_starts": 64,
+      "solver_system_calls": 38528,
+      "solver_trace_sha256": "c0efa81b074b659ea73e915597331523328fe9f50e114cb719362701d3cb7ebd",
+      "solves": [
+        {
+          "start": [
+            -0.6938775510204083,
+            0.04081632653061229
+          ],
+          "solution": [
+            -1.2572518942283821e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.6938775510204083,
+            0.12244897959183643
+          ],
+          "solution": [
+            -1.275687341981928e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.6122448979591837,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -1.1144765748875582e-52,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.5306122448979593,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -9.750450914816515e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.6122448979591837,
+            0.04081632653061229
+          ],
+          "solution": [
+            -1.114476573803523e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.6122448979591837,
+            0.12244897959183643
+          ],
+          "solution": [
+            -1.136088771587478e-52,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.5306122448979593,
+            0.04081632653061229
+          ],
+          "solution": [
+            -9.750450914816515e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.5306122448979593,
+            0.12244897959183643
+          ],
+          "solution": [
+            -9.915246086935724e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.44897959183673475,
+            0.04081632653061229
+          ],
+          "solution": [
+            -8.349504844517239e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.44897959183673475,
+            0.12244897959183643
+          ],
+          "solution": [
+            -8.417741041205818e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3673469387755104,
+            0.04081632653061229
+          ],
+          "solution": [
+            -6.880219148676408e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3673469387755104,
+            0.12244897959183643
+          ],
+          "solution": [
+            -6.894600404374715e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.04081632653061229
+          ],
+          "solution": [
+            -5.362163718917478e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.12244897959183643
+          ],
+          "solution": [
+            -5.363756614784245e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.20408163265306145,
+            0.04081632653061229
+          ],
+          "solution": [
+            -3.8313106156143635e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.20408163265306145,
+            0.12244897959183643
+          ],
+          "solution": [
+            -3.83138842017282e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.44897959183673475,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -8.417741089733217e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3673469387755104,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -6.894600315185104e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.44897959183673475,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -8.349504836885898e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.3673469387755104,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -6.880219141417183e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -5.363756362466062e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.20408163265306145,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -3.8313884201728145e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -5.362163718917478e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.20408163265306145,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -3.8313106156143635e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.04081632653061229,
+            0.04081632653061229
+          ],
+          "solution": [
+            7.662790365658464e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.12244897959183643,
+            0.04081632653061229
+          ],
+          "solution": [
+            2.2988381923813944e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.04081632653061229,
+            0.12244897959183643
+          ],
+          "solution": [
+            7.662683725959844e-54,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.12244897959183643,
+            0.12244897959183643
+          ],
+          "solution": [
+            2.298838977008665e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.04081632653061229,
+            -0.12244897959183687
+          ],
+          "solution": [
+            7.662683725958132e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.12244897959183643,
+            -0.12244897959183687
+          ],
+          "solution": [
+            2.2988389770086634e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.04081632653061229,
+            -0.04081632653061229
+          ],
+          "solution": [
+            7.662790365658464e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.12244897959183643,
+            -0.04081632653061229
+          ],
+          "solution": [
+            2.2988381923813944e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.12244897959183687,
+            0.04081632653061229
+          ],
+          "solution": [
+            -2.29883779557745e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.12244897959183687,
+            0.12244897959183643
+          ],
+          "solution": [
+            -2.298838977008672e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            0.04081632653061229
+          ],
+          "solution": [
+            -7.662790365658464e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            0.12244897959183643
+          ],
+          "solution": [
+            -7.662898001232694e-54,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.12244897959183687,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -2.298838977008667e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            -0.12244897959183687
+          ],
+          "solution": [
+            -7.662898001230982e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.12244897959183687,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -2.2988377955774483e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            -0.04081632653061229,
+            -0.04081632653061229
+          ],
+          "solution": [
+            -7.662790365658464e-54,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.693877551020408,
+            0.04081632653061229
+          ],
+          "solution": [
+            1.2572519095856735e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.693877551020408,
+            0.12244897959183643
+          ],
+          "solution": [
+            1.2756873587469492e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.5306122448979589,
+            -0.04081632653061229
+          ],
+          "solution": [
+            9.750451042115184e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.6122448979591835,
+            -0.04081632653061229
+          ],
+          "solution": [
+            1.1144765859083239e-52,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.5306122448979589,
+            0.04081632653061229
+          ],
+          "solution": [
+            9.750451042115184e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.5306122448979589,
+            0.12244897959183643
+          ],
+          "solution": [
+            9.915246229656528e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.6122448979591835,
+            0.04081632653061229
+          ],
+          "solution": [
+            1.11447658699236e-52,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.6122448979591835,
+            0.12244897959183643
+          ],
+          "solution": [
+            1.1360887870193875e-52,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.36734693877551017,
+            0.04081632653061229
+          ],
+          "solution": [
+            6.880219250305597e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.4489795918367343,
+            0.04081632653061229
+          ],
+          "solution": [
+            8.349504958987305e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.36734693877551017,
+            0.12244897959183643
+          ],
+          "solution": [
+            6.894600521782629e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.4489795918367343,
+            0.12244897959183643
+          ],
+          "solution": [
+            8.417741217478646e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.36734693877551017,
+            -0.12244897959183687
+          ],
+          "solution": [
+            6.894600432593022e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.4489795918367343,
+            -0.12244897959183687
+          ],
+          "solution": [
+            8.417741120590146e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.36734693877551017,
+            -0.04081632653061229
+          ],
+          "solution": [
+            6.880219257564822e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.4489795918367343,
+            -0.04081632653061229
+          ],
+          "solution": [
+            8.34950491340074e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            0.04081632653061229
+          ],
+          "solution": [
+            3.831310787014388e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            0.12244897959183643
+          ],
+          "solution": [
+            3.8313885915902553e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.04081632653061229
+          ],
+          "solution": [
+            5.362163781283347e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.12244897959183643
+          ],
+          "solution": [
+            5.363756739702248e-53,
+            0.0
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            -0.12244897959183687
+          ],
+          "solution": [
+            3.8313885915902493e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            -0.12244897959183687
+          ],
+          "solution": [
+            5.363756612302093e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.204081632653061,
+            -0.04081632653061229
+          ],
+          "solution": [
+            3.831310787014388e-53,
+            5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            -0.04081632653061229
+          ],
+          "solution": [
+            5.36216378128335e-53,
+            -5e-324
+          ],
+          "nfev": 602,
+          "status": 2,
+          "message": "The number of calls to function has reached maxfev = 600."
+        }
+      ]
+    },
+    {
+      "workload": "near_two_crossings",
+      "median_ms": 74.6436,
+      "batches_ms": [
+        70.4523,
+        74.6436,
+        77.0112,
+        76.2385,
+        48.3336
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          -0.0316227766016838,
+          0.001
+        ],
+        [
+          0.0316227766016838,
+          0.001
+        ]
+      ],
+      "analytic_reference": [
+        [
+          -0.03162277660168379,
+          0.001
+        ],
+        [
+          0.03162277660168379,
+          0.001
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 6.938893903907228e-18,
+      "solver_starts": 50,
+      "solver_system_calls": 728,
+      "solver_trace_sha256": "3e37f4eb41a716b2ab5b403209a52ca2c66da146969c90cb582d7f6d62ac96f7",
+      "solves": [
+        {
+          "start": [
+            0.34920634920634885,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.34920634920634885,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.34920634920634885,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.4761904761904763,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            -0.09523809523809534
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.09523809523809534
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.4126984126984128,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.4126984126984128,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.4761904761904763,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 16,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            -0.09523809523809534
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            -0.09523809523809534
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.03162277660168379,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            0.0952380952380949
+          ],
+          "solution": [
+            0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            0.0952380952380949
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 17,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 15,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 14,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -0.03162277660168379,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -0.0316227766016838,
+            0.001
+          ],
+          "nfev": 9,
+          "status": 1,
+          "message": "The solution converged."
+        }
+      ]
+    },
+    {
+      "workload": "near_disjoint",
+      "median_ms": 123.7575,
+      "batches_ms": [
+        116.6476,
+        122.1624,
+        148.1229,
+        160.0139,
+        123.7575
+      ],
+      "grid_resolution": 64,
+      "points": [],
+      "analytic_reference": [],
+      "count_matches": true,
+      "maximum_nearest_reference_error": null,
+      "solver_starts": 50,
+      "solver_system_calls": 2150,
+      "solver_trace_sha256": "bf51e9dc45a194de1b1674b57ce7f224b9b0ee2b6fbdc6c9ab8186a6df67b15d",
+      "solves": [
+        {
+          "start": [
+            0.34920634920634885,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.00011106987375685538,
+            -0.0005011725192624922
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.34920634920634885,
+            0.0952380952380949
+          ],
+          "solution": [
+            -2.663848809967427e-06,
+            -0.000500030423726648
+          ],
+          "nfev": 42,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.00013494570916166117,
+            -0.0004998322744220739
+          ],
+          "nfev": 32,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            0.0952380952380949
+          ],
+          "solution": [
+            8.187856275438814e-06,
+            -0.000499998213184941
+          ],
+          "nfev": 49,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.34920634920634885,
+            -0.031746031746031855
+          ],
+          "solution": [
+            5.516002370420618e-07,
+            -0.0004999985738199546
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.4761904761904763,
+            0.0952380952380949
+          ],
+          "solution": [
+            4.680115697922423e-05,
+            -0.000500005063075272
+          ],
+          "nfev": 44,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            -0.09523809523809534
+          ],
+          "solution": [
+            3.2308396211519858e-06,
+            -0.0004999982302558826
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            -0.031746031746031855
+          ],
+          "solution": [
+            1.704533261987027e-06,
+            -0.0004995026630236386
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -3.382916516272402e-05,
+            -0.0004996860997849948
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -9.855035366692071e-06,
+            -0.0004989520746279448
+          ],
+          "nfev": 37,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.09523809523809534
+          ],
+          "solution": [
+            7.453456216122986e-07,
+            -0.0004999974664116331
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            0.03174603174603163
+          ],
+          "solution": [
+            8.87624595384466e-06,
+            -0.0005000167020247347
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            0.0952380952380949
+          ],
+          "solution": [
+            -2.9403089178639106e-05,
+            -0.0004998577238137366
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.03174603174603163
+          ],
+          "solution": [
+            -2.024327918108705e-05,
+            -0.0005000259344480302
+          ],
+          "nfev": 45,
+          "status": 4,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last five Jacobian evaluations."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.03174603174603163
+          ],
+          "solution": [
+            7.210681838990874e-06,
+            -0.000498918555642441
+          ],
+          "nfev": 37,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.0952380952380949
+          ],
+          "solution": [
+            -8.04456679745712e-06,
+            -0.0005000786553513803
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.0952380952380949
+          ],
+          "solution": [
+            7.950786462251606e-06,
+            -0.0005000035710322474
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0001110684599462455,
+            -0.0005011725549025251
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            0.0952380952380949
+          ],
+          "solution": [
+            2.665425647869987e-06,
+            -0.0005000304227866814
+          ],
+          "nfev": 42,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.4126984126984128,
+            0.03174603174603163
+          ],
+          "solution": [
+            -0.0001349452829263883,
+            -0.000499832283667923
+          ],
+          "nfev": 32,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.4126984126984128,
+            0.0952380952380949
+          ],
+          "solution": [
+            -8.187372043249535e-06,
+            -0.0004999982132462631
+          ],
+          "nfev": 49,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.4761904761904763,
+            0.0952380952380949
+          ],
+          "solution": [
+            -4.680022550395901e-05,
+            -0.0005000050629492808
+          ],
+          "nfev": 44,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.03174603174603163
+          ],
+          "solution": [
+            -7.209926863903002e-06,
+            -0.0004989185525038986
+          ],
+          "nfev": 37,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            0.0952380952380949
+          ],
+          "solution": [
+            -7.949929350973305e-06,
+            -0.0005000035708982944
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            0.03174603174603163
+          ],
+          "solution": [
+            2.0245200954170357e-05,
+            -0.0005000259334713702
+          ],
+          "nfev": 45,
+          "status": 4,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last five Jacobian evaluations."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            0.0952380952380949
+          ],
+          "solution": [
+            8.045256755417574e-06,
+            -0.0005000786538244892
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.2857142857142858,
+            -0.031746031746031855
+          ],
+          "solution": [
+            9.855784235419625e-06,
+            -0.0004989520695662188
+          ],
+          "nfev": 37,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            -0.031746031746031855
+          ],
+          "solution": [
+            3.3830434484947044e-05,
+            -0.0004996864796962641
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.3492063492063493,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -5.496892398566498e-07,
+            -0.0004999985732281936
+          ],
+          "nfev": 46,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            -0.031746031746031855
+          ],
+          "solution": [
+            2.3524734860913766e-05,
+            -0.0005010081729359508
+          ],
+          "nfev": 46,
+          "status": 4,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last five Jacobian evaluations."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            -0.031746031746031855
+          ],
+          "solution": [
+            1.996553494797842e-06,
+            -0.000500067925320305
+          ],
+          "nfev": 42,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            -0.09523809523809534
+          ],
+          "solution": [
+            6.614146123575811e-05,
+            -0.0005006809692022444
+          ],
+          "nfev": 47,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            -0.09523809523809534
+          ],
+          "solution": [
+            7.087215394757963e-05,
+            -0.0004997377283515439
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            0.03174603174603163
+          ],
+          "solution": [
+            3.322142505962254e-05,
+            -0.0004999983247878047
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            0.0952380952380949
+          ],
+          "solution": [
+            1.022963902706595e-05,
+            -0.0004995206730844416
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            0.03174603174603163
+          ],
+          "solution": [
+            -3.321781002623073e-05,
+            -0.0004999983258994462
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            0.03174603174603163
+          ],
+          "solution": [
+            4.56141616323629e-06,
+            -0.000500183456947742
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.03174603174603163,
+            0.0952380952380949
+          ],
+          "solution": [
+            -1.0326118475625316e-05,
+            -0.0004995204439410661
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            0.0952380952380949
+          ],
+          "solution": [
+            5.316562341721871e-05,
+            -0.0004997200665071845
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            0.03174603174603163
+          ],
+          "solution": [
+            -8.875460458577248e-06,
+            -0.0005000169089376375
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            0.0952380952380949
+          ],
+          "solution": [
+            2.940397499887978e-05,
+            -0.0004998577291958611
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            0.03174603174603163
+          ],
+          "solution": [
+            -4.560215392016286e-06,
+            -0.0005001834472169302
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            0.0952380952380949
+          ],
+          "solution": [
+            -5.3165232373453145e-05,
+            -0.0004997200678640291
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.22222222222222232,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -7.453456545370791e-07,
+            -0.0004999974664555289
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -3.2299433075689316e-06,
+            -0.0004999982294187021
+          ],
+          "nfev": 45,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.15873015873015883,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -1.7037195606610898e-06,
+            -0.0004995026578841983
+          ],
+          "nfev": 39,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -1.9951483834924e-06,
+            -0.0005000674026094429
+          ],
+          "nfev": 42,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.09523809523809534,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -7.087252406181855e-05,
+            -0.0004997365094798346
+          ],
+          "nfev": 43,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            -0.09523809523809534
+          ],
+          "solution": [
+            -6.620895415591617e-05,
+            -0.0005006802888081723
+          ],
+          "nfev": 47,
+          "status": 5,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last ten iterations."
+        },
+        {
+          "start": [
+            -0.031746031746031855,
+            -0.031746031746031855
+          ],
+          "solution": [
+            -2.3575580288807556e-05,
+            -0.0005010117763073858
+          ],
+          "nfev": 46,
+          "status": 4,
+          "message": "The iteration is not making good progress, as measured by the \n improvement from the last five Jacobian evaluations."
+        }
+      ]
+    },
+    {
+      "workload": "trimmed_contact",
+      "median_ms": 94.6092,
+      "batches_ms": [
+        137.9282,
+        126.9675,
+        85.8532,
+        94.6092,
+        87.3256
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.4999999999999999,
+          5e-324
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.5,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 1.1102230246251565e-16,
+      "solver_starts": 27,
+      "solver_system_calls": 2063,
+      "solver_trace_sha256": "73786782f6ff2dc09a063eb939c07f461368e6ee7e7703e0f78efa6b0979c60e",
+      "solves": [
+        {
+          "start": [
+            0.34920634920634885,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.4999999999999999,
+            5e-324
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.34920634920634885,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.4999999999999999,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.4999999999999997,
+            5e-324
+          ],
+          "nfev": 74,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.41269841269841256,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.4999999999999997,
+            0.0
+          ],
+          "nfev": 74,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.4999999999999999,
+            0.0
+          ],
+          "nfev": 78,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.49999999999999994,
+            5e-324
+          ],
+          "nfev": 79,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.22222222222222232,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.4999999999999999,
+            -5e-324
+          ],
+          "nfev": 78,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.2857142857142856,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.49999999999999994,
+            5e-324
+          ],
+          "nfev": 79,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.49999999999999994,
+            0.0
+          ],
+          "nfev": 80,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.1587301587301586,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.49999999999999994,
+            0.0
+          ],
+          "nfev": 80,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0952380952380949,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.49999999999999983,
+            -5e-324
+          ],
+          "nfev": 78,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.4761904761904763,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.4999999999999999,
+            0.0
+          ],
+          "nfev": 73,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.5396825396825395,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.5000000000000006,
+            0.0
+          ],
+          "nfev": 71,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.4761904761904763,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.4999999999999999,
+            5e-324
+          ],
+          "nfev": 73,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.5396825396825395,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000006,
+            -5e-324
+          ],
+          "nfev": 71,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6031746031746028,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 76,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6031746031746028,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 76,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6666666666666665,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.6666666666666665,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.8571428571428568,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000007,
+            0.0
+          ],
+          "nfev": 75,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.9206349206349205,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 79,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.7301587301587302,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.7936507936507935,
+            -0.031746031746031855
+          ],
+          "solution": [
+            0.5000000000000006,
+            0.0
+          ],
+          "nfev": 75,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.7301587301587302,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000001,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.7936507936507935,
+            0.03174603174603163
+          ],
+          "solution": [
+            0.5000000000000006,
+            -5e-324
+          ],
+          "nfev": 75,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            0.0,
+            0.0
+          ],
+          "solution": [
+            0.49999999999999994,
+            0.0
+          ],
+          "nfev": 80,
+          "status": 1,
+          "message": "The solution converged."
+        },
+        {
+          "start": [
+            1.0,
+            0.0
+          ],
+          "solution": [
+            0.5000000000000003,
+            0.0
+          ],
+          "nfev": 77,
+          "status": 1,
+          "message": "The solution converged."
+        }
+      ]
+    },
+    {
+      "workload": "recognized_circle_contact",
+      "median_ms": 0.6442,
+      "batches_ms": [
+        0.7001,
+        0.5278,
+        0.6442,
+        0.6199,
+        0.6543
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0,
+      "solver_trace_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "solves": []
+    },
+    {
+      "workload": "coincident_parabolas",
+      "median_ms": 0.6894,
+      "batches_ms": [
+        0.7566,
+        0.6868,
+        0.6894,
+        0.7347,
+        0.6776
+      ],
+      "grid_resolution": 64,
+      "points": [],
+      "analytic_reference": [],
+      "count_matches": true,
+      "maximum_nearest_reference_error": null,
+      "solver_starts": 0,
+      "solver_system_calls": 0,
+      "solver_trace_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "solves": []
+    }
+  ],
+  "limits": "Five warm unprofiled complete calls, followed by a separate trace validation call. Trace hashes cover ordered fsolve input coordinates and returned field pairs; per-start status, nfev, solutions and seeds are also recorded. No start reduction, changed budgets, relaxed residuals or accuracy/completeness guarantee. Timing varies on a shared workstation."
+}
