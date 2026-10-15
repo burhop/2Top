@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.26.0 reduces [general tangency evaluation costs](iterative_tangency.md)
+by avoiding repeated broadcast dispatch for validated equal-shape coordinates.
+The paired parabola measurement is about 25% faster with unchanged solver trace.
+Short iteration caps were rejected after false-contact evidence. Native quadratic
+contact classification and higher-order residual/position diagnostics remain
+separate next opportunities, rather than blanket pruning of nearby seeds.
+
 Version 0.25.0 handles [native circle tangencies](tangent_intersections.md)
 through bounded exact coefficient classification and validated float contacts.
 The demonstration distinguishes isolated contacts, nearby crossings, disjoint

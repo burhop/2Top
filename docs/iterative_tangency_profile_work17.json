@@ -1,0 +1,16 @@
+{
+  "repository": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-iterative-tangency-0.26.0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-iterative-tangency-0.26.0\\geometry\\curve_intersections.py",
+  "points": [
+    [
+      -5.064137181853578e-126,
+      0.0
+    ]
+  ],
+  "profile_ms": 4925.9323,
+  "solver_starts": 62,
+  "system_calls": 37324,
+  "termination": {
+    "status_2_maxfev_600": 62
+  }
+}

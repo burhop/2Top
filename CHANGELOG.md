@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.26.0
+
+- Profile the general parabola/line tangency: 62 starts all exhaust the existing
+  600-evaluation budget, totaling 37,324 field-system calls.
+- Skip redundant NumPy broadcasting dispatch after both coordinate inputs pass
+  existing real-number validation and already have equal shapes. Keep scalar/0d,
+  dtype, aliasing, strides, writeability and unequal-shape behavior.
+- Preserve all solver budgets, starts and final residual/mask checks. Nine
+  workloads retain identical ordered solver traces and outputs. Paired Work17
+  complete-call medians improve from 1.98 s to 1.47 s on the parabola control.
+- Reject short-budget acceptance after a higher-order tangency counterexample;
+  document existing accuracy limits and evidence-led next opportunities.
+- Add 62 coordinate/analytic regressions and a parabola JSON/PNG demonstration;
+  synchronize versions, README, documentation and CI lint/path coverage.
+
+
 ## 0.25.0
 
 - Recover one isolated contact for native circle/line and circle/circle exact
