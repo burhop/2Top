@@ -1,0 +1,708 @@
+{
+  "python": "3.11.14",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "workloads": [
+    {
+      "workload": "reproduced_x8_candidates",
+      "median_ms": 1.3966,
+      "batches_ms": [
+        1.3969,
+        1.3807,
+        1.3909,
+        1.3966,
+        1.4042
+      ],
+      "diagnostic_scalar_evaluations": 80,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              -6.829726660065598e-25,
+              0.0
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -4.7339817707891045e-194,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  2.721675110869136e-38,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 0.0,
+            "local_model_status": "singular_or_derivative_unresolved",
+            "linearized_displacement": null,
+            "linearized_displacement_norm": null,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_unavailable"
+            ]
+          },
+          {
+            "point": [
+              0.04034497007056071,
+              3.5097360754451864e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -3.509909435679711e-12,
+                "gradient": [
+                  -1.3919245165279637e-09,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  8.200375983968293e-13,
+                  4.440892130092061e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 3.5097360754451864e-12,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  6.31797481620414e-24,
+                  4.4408921300905e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 6.95962258263982e-10,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              -0.005043122258263545,
+              -3.5097360754451864e-12
+            ],
+            "linearized_displacement_norm": 0.005043122258263545,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_exceeds_spatial_tolerance"
+            ]
+          },
+          {
+            "point": [
+              0.039130717428059125,
+              2.7486059581860673e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -2.7486060071290776e-12,
+                "gradient": [
+                  -1.1238660766868516e-09,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  7.038617069259306e-13,
+                  4.440892123239843e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 2.7486059581860673e-12,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.947843042951744e-24,
+                  4.440892123239842e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 5.619330383434259e-10,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              -0.004891340773912211,
+              -2.7486059581860673e-12
+            ],
+            "linearized_displacement_norm": 0.004891340773912211,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_exceeds_spatial_tolerance"
+            ]
+          },
+          {
+            "point": [
+              -0.04250188382084752,
+              5.323967939926004e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -5.323968216286872e-12,
+                "gradient": [
+                  2.0042282337873213e-09,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  1.063921561476511e-12,
+                  4.440892146419752e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 5.323967939926004e-12,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  9.583824721767472e-24,
+                  4.440892146419749e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 1.0021141168936608e-09,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              0.0053127363324743885,
+              -5.323967939926004e-12
+            ],
+            "linearized_displacement_norm": 0.0053127363324743885,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_exceeds_spatial_tolerance"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "true_flat_origin",
+      "median_ms": 0.3405,
+      "batches_ms": [
+        0.3405,
+        0.3557,
+        0.335,
+        0.3342,
+        0.3635
+      ],
+      "diagnostic_scalar_evaluations": 20,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  2.721675110869136e-38,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 0.0,
+            "local_model_status": "singular_or_derivative_unresolved",
+            "linearized_displacement": null,
+            "linearized_displacement_norm": null,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_unavailable"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "transverse_offset",
+      "median_ms": 0.351,
+      "batches_ms": [
+        0.4063,
+        0.3723,
+        0.351,
+        0.3474,
+        0.3474
+      ],
+      "diagnostic_scalar_evaluations": 20,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              1.1,
+              2.2
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": 0.10000000000000009,
+                "gradient": [
+                  1.0,
+                  0.0
+                ],
+                "gradient_error_estimate": [
+                  1.6364801642664626e-13,
+                  8.182400821332313e-14
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.20000000000000018,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  3.2729603285329253e-13,
+                  1.6364801642664626e-13
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 1.0,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              -0.10000000000000009,
+              -0.20000000000000018
+            ],
+            "linearized_displacement_norm": 0.22360679774997916,
+            "warnings": [
+              "linearized_displacement_exceeds_spatial_tolerance"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "two_flat_crossings",
+      "median_ms": 0.7332,
+      "batches_ms": [
+        0.7469,
+        0.74,
+        0.7332,
+        0.7257,
+        0.7132
+      ],
+      "diagnostic_scalar_evaluations": 40,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              -0.04,
+              6.5536e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -1.6155871338926322e-27,
+                "gradient": [
+                  1.3107197311644255e-09,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  7.855790572938552e-13,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 6.553598655822129e-10,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              1.2325954172196421e-18,
+              -0.0
+            ],
+            "linearized_displacement_norm": 1.2325954172196421e-18,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian"
+            ]
+          },
+          {
+            "point": [
+              0.04,
+              6.5536e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -1.6155871338926322e-27,
+                "gradient": [
+                  -1.3107197311644255e-09,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  7.855790572938552e-13,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 6.553598655822129e-10,
+            "local_model_status": "finite_sample_linearization",
+            "linearized_displacement": [
+              -1.2325954172196421e-18,
+              0.0
+            ],
+            "linearized_displacement_norm": 1.2325954172196421e-18,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "near_miss",
+      "median_ms": 0.3511,
+      "batches_ms": [
+        0.3793,
+        0.3531,
+        0.3511,
+        0.3381,
+        0.3433
+      ],
+      "diagnostic_scalar_evaluations": 20,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              0.0,
+              -1e-12
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": -1e-12,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  1.8001281806931474e-24,
+                  4.440892107501267e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 0.0,
+            "local_model_status": "singular_or_derivative_unresolved",
+            "linearized_displacement": null,
+            "linearized_displacement_norm": null,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_unavailable"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "trim_excluded",
+      "median_ms": 0.3461,
+      "batches_ms": [
+        0.3611,
+        0.3461,
+        0.3493,
+        0.3426,
+        0.3432
+      ],
+      "diagnostic_scalar_evaluations": 20,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  2.721675110869136e-38,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  4.005e-320,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "excluded"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 0.0,
+            "local_model_status": "singular_or_derivative_unresolved",
+            "linearized_displacement": null,
+            "linearized_displacement_norm": null,
+            "warnings": [
+              "field_2_trim_excluded",
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_unavailable"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    },
+    {
+      "workload": "coincident_sample",
+      "median_ms": 0.3776,
+      "batches_ms": [
+        0.3776,
+        0.3694,
+        0.4043,
+        0.3966,
+        0.3519
+      ],
+      "diagnostic_scalar_evaluations": 20,
+      "report": {
+        "method": "sampled_intersection_diagnostics",
+        "certified": false,
+        "completeness": "not_assessed",
+        "overlap": "not_assessed",
+        "position_tolerance": 1e-06,
+        "derivative_scale": null,
+        "trim_tolerance": null,
+        "candidate_reports": [
+          {
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_status": "position_unverified",
+            "position_verified": false,
+            "positional_error_bound": null,
+            "isolated_root_status": "not_established",
+            "fields": [
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  2.721675110869136e-38,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              },
+              {
+                "residual": 0.0,
+                "gradient": [
+                  0.0,
+                  1.0
+                ],
+                "gradient_error_estimate": [
+                  2.721675110869136e-38,
+                  4.440892098500626e-16
+                ],
+                "scalar_evaluations": 10,
+                "trim": "not_applicable"
+              }
+            ],
+            "normalized_jacobian_reciprocal_condition": 0.0,
+            "local_model_status": "singular_or_derivative_unresolved",
+            "linearized_displacement": null,
+            "linearized_displacement_norm": null,
+            "warnings": [
+              "ill_conditioned_sampled_jacobian",
+              "linearized_displacement_unavailable"
+            ]
+          }
+        ],
+        "limits": "All supplied candidates remain position-unverified. Condition and derivative-error estimates are heuristic; linearized displacement is not a distance-to-root estimate or bound. Finite probes cannot certify arbitrary fields, isolation, completeness or overlap. No search, filtering, registration or solver-tolerance changes occur."
+      }
+    }
+  ],
+  "unchanged_solver_trace_workloads": [
+    "parabola_origin",
+    "parabola_translated",
+    "procedural_parabola",
+    "quartic_contact",
+    "near_two_crossings",
+    "near_disjoint",
+    "trimmed_contact",
+    "recognized_circle_contact",
+    "coincident_parabolas"
+  ],
+  "limits": "Five warm complete diagnostic calls on supplied candidates, separate from root search. Ten direct scalar probes per field/candidate, plus optional contains internals. All reports remain position-unverified; timing/error estimates are not certificates. Nine complete legacy solver traces compare to recorded0.26data, not rerun baseline measurements."
+}

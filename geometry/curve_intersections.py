@@ -201,6 +201,9 @@ def find_curve_intersections(
         coarse approximations; its original candidate inputs are retained.
         Coarse grid seeds retain a one-cell trim halo; explicit trim endpoints
         also seed refinement. This is not a completeness or exactness guarantee.
+        A small residual does not verify root position, particularly at flat
+        contacts. diagnose_intersection_candidates provides opt-in, explicitly
+        uncertified positional evidence for the returned candidates.
     """
 
     policy = (

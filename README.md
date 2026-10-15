@@ -1,10 +1,10 @@
-# 2Top 0.26.0 · Tidal Atlas
+# 2Top 0.27.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.26.0** reduces [general numerical tangency evaluation costs](docs/iterative_tangency.md). Profiling the parabola/line control found 62 solver starts and 37,324 evaluations. Validated equal-shape coordinates now skip redundant broadcasting dispatch; solver budgets, tolerances, masks and results stay unchanged. Paired Work17 medians improved from about 1.98 s to 1.47 s, with identical recorded solver traces across nine workloads. The [parabola example](examples/parabola_contact_demo.py) retains one contact, two nearby crossings and a disjoint case. The 0.24 trim and 0.25 circle fixes remain; general intersection results remain approximate and incomplete. Development targets **dev**.
+Version **0.27.0** adds [explicit intersection-position uncertainty](docs/intersection_diagnostics.md). The reproduced `x**8` case has three candidates about 0.04 from the only root despite residuals around 1e-12. Public `diagnose_intersection_candidates` reports every supplied point as **position-unverified**, with sampled conditioning, derivative uncertainty and a linearized displacement that is not a root-error bound. It exposes risk without filtering legitimate flat contacts or changing legacy acceptance; the old finder still returns the four reproduced candidates. The [JSON/PNG example](examples/intersection_uncertainty_demo.py) compares them with an independent analytic/160-digit Decimal oracle. Prior solver traces, masks and native-circle behavior remain; quadratic/line acceleration is deferred. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,7 +62,7 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
-python -m pytest tests/test_coordinate_broadcast.py tests/test_tangent_intersections.py tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
+python -m pytest tests/test_intersection_diagnostics.py tests/test_coordinate_broadcast.py tests/test_tangent_intersections.py tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
 python benchmarks/distance_numerics.py --output distance-numerics.json
 python -m pytest tests/test_distance_cache.py
 python benchmarks/distance_cache.py --output distance.json

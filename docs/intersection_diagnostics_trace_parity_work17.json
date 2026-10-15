@@ -1,0 +1,107 @@
+{
+  "matched_workloads": [
+    {
+      "workload": "parabola_origin",
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "solver_starts": 62,
+      "solver_system_calls": 37324,
+      "solver_trace_sha256": "65e44860e581c89a03570c4d5250088045159e0bf8a5cb2ff987823e15849cef"
+    },
+    {
+      "workload": "parabola_translated",
+      "points": [
+        [
+          0.9999999928990561,
+          1.0
+        ]
+      ],
+      "solver_starts": 49,
+      "solver_system_calls": 1908,
+      "solver_trace_sha256": "401836e9af503cf8eddcdebe7f85d7f86223d2deb8da10c2a3a5dae0e64e50fc"
+    },
+    {
+      "workload": "procedural_parabola",
+      "points": [
+        [
+          -5.6134227931254994e-126,
+          0.0
+        ]
+      ],
+      "solver_starts": 23,
+      "solver_system_calls": 13846,
+      "solver_trace_sha256": "78b357cf57281e93b3f73d878e5eee328614c4d93482de49abaeefcf8a6142cd"
+    },
+    {
+      "workload": "quartic_contact",
+      "points": [
+        [
+          -1.2572518942283821e-52,
+          0.0
+        ]
+      ],
+      "solver_starts": 64,
+      "solver_system_calls": 38528,
+      "solver_trace_sha256": "c0efa81b074b659ea73e915597331523328fe9f50e114cb719362701d3cb7ebd"
+    },
+    {
+      "workload": "near_two_crossings",
+      "points": [
+        [
+          -0.0316227766016838,
+          0.001
+        ],
+        [
+          0.0316227766016838,
+          0.001
+        ]
+      ],
+      "solver_starts": 50,
+      "solver_system_calls": 728,
+      "solver_trace_sha256": "3e37f4eb41a716b2ab5b403209a52ca2c66da146969c90cb582d7f6d62ac96f7"
+    },
+    {
+      "workload": "near_disjoint",
+      "points": [],
+      "solver_starts": 50,
+      "solver_system_calls": 2150,
+      "solver_trace_sha256": "bf51e9dc45a194de1b1674b57ce7f224b9b0ee2b6fbdc6c9ab8186a6df67b15d"
+    },
+    {
+      "workload": "trimmed_contact",
+      "points": [
+        [
+          0.4999999999999999,
+          5e-324
+        ]
+      ],
+      "solver_starts": 27,
+      "solver_system_calls": 2063,
+      "solver_trace_sha256": "73786782f6ff2dc09a063eb939c07f461368e6ee7e7703e0f78efa6b0979c60e"
+    },
+    {
+      "workload": "recognized_circle_contact",
+      "points": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "solver_starts": 0,
+      "solver_system_calls": 0,
+      "solver_trace_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "workload": "coincident_parabolas",
+      "points": [],
+      "solver_starts": 0,
+      "solver_system_calls": 0,
+      "solver_trace_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "all_per_start_records_match": true
+}
