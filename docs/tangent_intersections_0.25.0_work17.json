@@ -1,0 +1,288 @@
+{
+  "label": "0.25.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-tangent-intersections-0.25.0\\geometry\\curve_intersections.py",
+  "workloads": [
+    {
+      "workload": "large_circle_line",
+      "median_ms": 0.3949,
+      "batches_ms": [
+        0.5359,
+        0.4395,
+        0.3949,
+        0.3395,
+        0.3245
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "large_external_circles",
+      "median_ms": 0.3945,
+      "batches_ms": [
+        0.4834,
+        0.4131,
+        0.3863,
+        0.3754,
+        0.3945
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          1000.0,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          1000.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "large_oblique_circles",
+      "median_ms": 0.4474,
+      "batches_ms": [
+        0.5299,
+        0.4474,
+        0.4061,
+        0.4019,
+        0.5816
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          600.0,
+          800.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          600.0,
+          800.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "large_circle_line_default_grid",
+      "median_ms": 0.3201,
+      "batches_ms": [
+        0.3877,
+        0.346,
+        0.3201,
+        0.3131,
+        0.3061
+      ],
+      "grid_resolution": 500,
+      "points": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "scaled_unit_fields",
+      "median_ms": 0.403,
+      "batches_ms": [
+        0.4933,
+        0.4473,
+        0.3955,
+        0.403,
+        0.3963
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "near_crossing",
+      "median_ms": 40.7997,
+      "batches_ms": [
+        41.7475,
+        40.7997,
+        40.669,
+        40.0611,
+        42.7662
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          -44.71017781221685,
+          999.0
+        ],
+        [
+          44.71017781221597,
+          999.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          -44.710177812216315,
+          999.0
+        ],
+        [
+          44.710177812216315,
+          999.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.329070518200751e-13,
+      "solver_starts": 26,
+      "solver_system_calls": 3097
+    },
+    {
+      "workload": "near_disjoint",
+      "median_ms": 61.9409,
+      "batches_ms": [
+        68.242,
+        61.9409,
+        60.3084,
+        59.7068,
+        227.3873
+      ],
+      "grid_resolution": 64,
+      "points": [],
+      "analytic_reference": [],
+      "count_matches": true,
+      "maximum_nearest_reference_error": null,
+      "solver_starts": 26,
+      "solver_system_calls": 4788
+    },
+    {
+      "workload": "trimmed_endpoint",
+      "median_ms": 1.2747,
+      "batches_ms": [
+        1.2681,
+        1.225,
+        1.4207,
+        1.2755,
+        1.2747
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "thin_trim_crossing_control",
+      "median_ms": 12.2009,
+      "batches_ms": [
+        12.7396,
+        7.8026,
+        7.5091,
+        12.2009,
+        14.091
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 12,
+      "solver_system_calls": 82
+    },
+    {
+      "workload": "parabola_tangent_control",
+      "median_ms": 2053.8414,
+      "batches_ms": [
+        1910.7976,
+        2053.8414,
+        2163.5344,
+        1988.2233,
+        2154.0779
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.064137181853578e-126,
+      "solver_starts": 62,
+      "solver_system_calls": 37324
+    }
+  ],
+  "limits": "Five sequential warm complete calls include recognition, grid/clustering or native contact validation, final residual/trim/search checks and result creation. fsolve counters exclude identity/grid/final residual/tangent/trim work and callback internals. Native classification is exact only for supported stored coefficient models; public coordinates remain floats and callbacks stay authoritative. Timings on this shared workstation are not general speedup or FPS guarantees; non-tangent controls disclose added recognition costs."
+}

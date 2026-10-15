@@ -135,6 +135,12 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.25.0 handles [native circle tangencies](tangent_intersections.md)
+through bounded exact coefficient classification and validated float contacts.
+The demonstration distinguishes isolated contacts, nearby crossings, disjoint
+curves and coincidence. Other fields and nonzero discriminants retain numerical
+search; general tangencies, overlap and certified accuracy remain future work.
+
 Version 0.24.0 recovers [thin-trim and endpoint intersections](trimmed_intersections.md)
 using a one-cell candidate halo and existing endpoint/refinement APIs. The small
 segment/circle example returns useful cutting/anchor coordinates. Final masks,

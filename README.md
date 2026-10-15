@@ -1,10 +1,10 @@
-# 2Top 0.24.0 · Tidal Atlas
+# 2Top 0.25.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.24.0** fixes [missed intersections of thin trimmed curves](docs/trimmed_intersections.md). Coarse candidates retain a one-cell trim halo, and explicit endpoints seed numerical refinement even when the grid has no candidates. Final masks, residual checks and existing scene/API contracts remain authoritative. The [segment/circle example](examples/trimmed_intersection_demo.py) recovers both crossings for reusable cutting/anchor workflows. Results remain approximate; no general solver or overlap guarantee is added. Development targets **dev**.
+Version **0.25.0** fixes [duplicate and missed native circle tangencies](docs/tangent_intersections.md) with bounded exact classification of stored circle/line or circle/circle coefficients. Contact coordinates still pass actual finite field residuals, final masks and existing search limits. The [tangent/crossing example](examples/tangent_intersection_demo.py) shows one isolated contact, two nearby crossings and a disjoint case. The 0.24 thin-trim fixes remain. Other fields retain numerical refinement; this is no general solver or all-tangencies guarantee. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,7 +62,7 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
-python -m pytest tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
+python -m pytest tests/test_tangent_intersections.py tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
 python benchmarks/distance_numerics.py --output distance-numerics.json
 python -m pytest tests/test_distance_cache.py
 python benchmarks/distance_cache.py --output distance.json

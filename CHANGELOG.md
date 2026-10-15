@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.25.0
+
+- Recover one isolated contact for native circle/line and circle/circle exact
+  tangencies without merging distinct nearby crossings. Large-circle duplicate
+  contacts and a strongly scaled unit-field miss reproduce the prior gap.
+- Bound recognition to native low-degree rational/Float coefficients and
+  unchanged evaluation kernels; custom callbacks and nonzero discriminants
+  retain the existing numerical path. Coincident circles do not enumerate roots.
+- Validate actual finite field residuals, final trims, search/point limits and
+  registry callbacks. Independent review corrected nonfinite sentinel acceptance.
+- Add 104 regression cases, a JSON/PNG contact/crossing demonstration and
+  complete-call timing evidence. Preserve 0.24 thin-trim candidate recovery.
+- Synchronize versions and documentation. No general symbolic solver, certified
+  positional accuracy or guarantee to find all tangencies is introduced.
+
+
 ## 0.24.0
 
 - Recover interior and endpoint crossings lost when exact trim rectangles

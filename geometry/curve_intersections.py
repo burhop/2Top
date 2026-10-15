@@ -43,6 +43,134 @@ def _is_transcendental_or_procedural(c) -> bool:
     return False
 
 
+def _quadratic_degree(expression, variables):
+    """Reject unsupported/high-degree structure before polynomial expansion."""
+    import sympy as sp
+
+    if isinstance(expression, (sp.Rational, sp.Float)):
+        return 0
+    if expression in variables:
+        return 1
+    if expression.is_Add or expression.is_Mul:
+        degrees = [_quadratic_degree(arg, variables) for arg in expression.args]
+        if any(degree is None for degree in degrees):
+            return None
+        degree = max(degrees) if expression.is_Add else sum(degrees)
+    elif expression.is_Pow and expression.exp in (0, 1, 2):
+        base = _quadratic_degree(expression.base, variables)
+        if base is None:
+            return None
+        degree = base * int(expression.exp)
+    else:
+        return None
+    return degree if degree <= 2 else None
+
+
+def _native_circle_or_line(curve):
+    """Recognize only native kernels for stored rational/Float circle or line fields."""
+    import sympy as sp
+    from .implicit_curve import ImplicitCurve
+    from .trimmed_implicit_curve import TrimmedImplicitCurve
+
+    seen = set()
+    while isinstance(curve, TrimmedImplicitCurve):
+        if (
+            id(curve) in seen
+            or getattr(curve.evaluate, "__func__", None)
+            is not TrimmedImplicitCurve.evaluate
+        ):
+            return None
+        seen.add(id(curve))
+        curve = curve.base_curve
+    if (
+        not isinstance(curve, ImplicitCurve)
+        or getattr(curve.evaluate, "__func__", None) is not ImplicitCurve.evaluate
+        or getattr(type(curve), "expression", None) is not ImplicitCurve.expression
+        or getattr(type(curve), "variables", None) is not ImplicitCurve.variables
+    ):
+        return None
+    expression, variables = curve.expression, curve.variables
+    kernel = curve._eval_func
+    if kernel is not None and (
+        kernel is not getattr(curve, "_native_eval_func", None)
+        or (expression, variables) != getattr(curve, "_native_eval_state", None)
+    ):
+        return None
+    if (
+        not isinstance(expression, sp.Expr)
+        or sp.count_ops(expression) > 256
+        or _quadratic_degree(expression, variables) is None
+    ):
+        return None
+    try:
+        exact = expression.xreplace(
+            {v: sp.Rational(v) for v in expression.atoms(sp.Float)}
+        )
+        polynomial = sp.Poly(exact, *variables)
+        if polynomial.total_degree() > 2 or any(
+            not isinstance(c, sp.Rational) for c in polynomial.coeffs()
+        ):
+            return None
+        coefficients = polynomial.as_dict()
+        a, b, c, d, e, f = (
+            coefficients.get(power, sp.Integer(0))
+            for power in [(2, 0), (1, 1), (0, 2), (1, 0), (0, 1), (0, 0)]
+        )
+        if a == b == c == 0 and (d != 0 or e != 0):
+            return "line", (d, e, f)
+        if a != 0 and a == c and b == 0:
+            cx, cy = -d / (2 * a), -e / (2 * a)
+            radius_squared = cx * cx + cy * cy - f / a
+            if radius_squared > 0:
+                return "circle", (cx, cy, radius_squared)
+    except (TypeError, ValueError, OverflowError, sp.PolynomialError):
+        pass
+    return None
+
+
+def _native_tangent_candidates(curve1, curve2):
+    """One isolated exact native contact, [] for coincidence, None for fallback.
+
+    The discriminant is exact for stored coefficients; returned float coordinates
+    still need actual residual, final trim, search and limit validation.
+    Nonzero discriminants never become contacts through a fuzzy tolerance.
+    """
+    first, second = _native_circle_or_line(curve1), _native_circle_or_line(curve2)
+    if first is None or second is None:
+        return None
+    if first[0] != "circle":
+        first, second = second, first
+    if first[0] != "circle":
+        return None
+    cx, cy, radius_squared = first[1]
+    if second[0] == "circle":
+        ox, oy, other_radius_squared = second[1]
+        if cx == ox and cy == oy:
+            return [] if radius_squared == other_radius_squared else None
+        # Subtract normalized circle equations to obtain their radical axis.
+        d, e = 2 * (cx - ox), 2 * (cy - oy)
+        f = (
+            ox * ox
+            + oy * oy
+            - other_radius_squared
+            - (cx * cx + cy * cy - radius_squared)
+        )
+    else:
+        d, e, f = second[1]
+    normal_squared = d * d + e * e
+    offset = d * cx + e * cy + f
+    if radius_squared * normal_squared - offset * offset != 0:
+        return None
+    try:
+        point = (
+            float(cx - d * offset / normal_squared),
+            float(cy - e * offset / normal_squared),
+        )
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return [point] if np.isfinite(point).all() else None
+
+
 def find_curve_intersections(
     curve1,
     curve2,
@@ -100,6 +228,70 @@ def find_curve_intersections(
         2.5 * max_scale * grid_spacing,
         8 * policy.blended_tolerance(search_range),
     )
+
+    def finite_residual(point):
+        """Actual finite field values, separate from the solver's failure sentinel."""
+        x_val, y_val = point
+        try:
+            f1 = curve1.evaluate(x_val, y_val)
+            f2 = curve2.evaluate(x_val, y_val)
+            v1 = float(f1[0]) if isinstance(f1, np.ndarray) else float(f1)
+            v2 = float(f2[0]) if isinstance(f2, np.ndarray) else float(f2)
+            if not np.isfinite(v1) or not np.isfinite(v2):
+                return None
+            return [v1, v2]
+        except Exception:
+            return None
+
+    def intersection_system(point):
+        residual = finite_residual(point)
+        return residual if residual is not None else [1e6, 1e6]
+
+    def is_valid_intersection(x_val, y_val, tolerance):
+        """Check if intersection point is valid for both curves (respects trimming)"""
+        # For trimmed curves, check if point satisfies the mask
+        if hasattr(curve1, "mask") and hasattr(curve1, "base_curve"):
+            # This is a TrimmedImplicitCurve
+            if not curve1.contains(x_val, y_val, tolerance):
+                return False
+
+        if hasattr(curve2, "mask") and hasattr(curve2, "base_curve"):
+            # This is a TrimmedImplicitCurve
+            if not curve2.contains(x_val, y_val, tolerance):
+                return False
+
+        return True
+
+    def notify(points):
+        if registry_callback is not None:
+            for x_val, y_val in points:
+                try:
+                    registry_callback(x_val, y_val, curve1, curve2)
+                except Exception as e:
+                    print(f"Error in registry callback: {e}")
+
+    native = _native_tangent_candidates(curve1, curve2)
+    if native is not None:
+        if not native:
+            return []  # Coincident native circles have no isolated tangent root.
+        point = native[0]
+        residual = finite_residual(point)
+        if residual is not None and np.linalg.norm(residual) < tol:
+            try:
+                if (
+                    max_points <= 0
+                    or abs(point[0]) > search_range + 1e-3
+                    or abs(point[1]) > search_range + 1e-3
+                    or not is_valid_intersection(point[0], point[1], tol * 10)
+                ):
+                    return []
+            except Exception:
+                pass  # Retain the iterative path's handling of callback failures.
+            else:
+                notify(native)
+                return native
+        # Floating evaluation can disagree with the symbolic contact: retain the
+        # existing solver instead of asserting that a numeric point is valid.
 
     # Quick check for identical curves
     if _are_curves_identical_fast(curve1, curve2, tol, search_range):
@@ -270,35 +462,6 @@ def find_curve_intersections(
     # Step 3: Refine intersections using numerical solver
     refined_intersections = []
 
-    def intersection_system(point):
-        """System of equations: both curves should be zero"""
-        x_val, y_val = point
-        try:
-            f1 = curve1.evaluate(x_val, y_val)
-            f2 = curve2.evaluate(x_val, y_val)
-            v1 = float(f1[0]) if isinstance(f1, np.ndarray) else float(f1)
-            v2 = float(f2[0]) if isinstance(f2, np.ndarray) else float(f2)
-            if not np.isfinite(v1) or not np.isfinite(v2):
-                return [1e6, 1e6]
-            return [v1, v2]
-        except Exception:
-            return [1e6, 1e6]  # Large values to indicate failure
-
-    def is_valid_intersection(x_val, y_val, tolerance):
-        """Check if intersection point is valid for both curves (respects trimming)"""
-        # For trimmed curves, check if point satisfies the mask
-        if hasattr(curve1, "mask") and hasattr(curve1, "base_curve"):
-            # This is a TrimmedImplicitCurve
-            if not curve1.contains(x_val, y_val, tolerance):
-                return False
-
-        if hasattr(curve2, "mask") and hasattr(curve2, "base_curve"):
-            # This is a TrimmedImplicitCurve
-            if not curve2.contains(x_val, y_val, tolerance):
-                return False
-
-        return True
-
     def are_curves_tangent(x, y, h=1e-5):
         try:
             df1_dx = (curve1.evaluate(x + h, y) - curve1.evaluate(x - h, y)) / (2.0 * h)
@@ -371,12 +534,7 @@ def find_curve_intersections(
         except Exception:
             continue
 
-    if registry_callback is not None:
-        for x_val, y_val in refined_intersections:
-            try:
-                registry_callback(x_val, y_val, curve1, curve2)
-            except Exception as e:
-                print(f"Error in registry callback: {e}")
+    notify(refined_intersections)
 
     return refined_intersections[:max_points]
 

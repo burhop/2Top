@@ -1,9 +1,22 @@
 # Tidal Atlas development verification
 
-Updated October 15, 2026 for version 0.24.0. Work17 executes the local application
+Updated October 15, 2026 for version 0.25.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.25.0 fixes [native circle tangencies](tangent_intersections.md).
+The final focused suite passed **244 tests**, including **104 new cases**.
+Independent read-only review approved the source after reproducing and fixing
+nonfinite residual sentinel acceptance at a very loose tolerance. Complete-call
+costs and analytic references accompany the JSON/PNG example. All remaining
+local, wheel and exact feature/dev CI gates are recorded in the milestone PR
+and Work17 handoff as they finish. All **59 JavaScript checks**, mocked WebMCP,
+**164-file** configured and **62-file** explicit Ruff, and h11 artifact metadata
+passed. All **58** dependency records are unchanged. The iterative path and 0.24 trims
+remain covered. Native WebMCP host verification remains separate.
+
+## Previous milestone
 
 Version 0.24.0 fixes [thin trimmed-curve intersection candidates](trimmed_intersections.md).
 The focused trim/intersection/bounds suite passed **108 tests**, including

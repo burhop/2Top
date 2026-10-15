@@ -1,0 +1,303 @@
+{
+  "label": "0.24.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-curve-intersections-0.24.0\\geometry\\curve_intersections.py",
+  "workloads": [
+    {
+      "workload": "large_circle_line",
+      "median_ms": 51.6497,
+      "batches_ms": [
+        51.7169,
+        51.9803,
+        50.9994,
+        51.6497,
+        51.0287
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          -7.170161803859062e-06,
+          1000.0
+        ],
+        [
+          5.45128860798665e-06,
+          1000.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "count_matches": false,
+      "maximum_nearest_reference_error": 7.170161803859062e-06,
+      "solver_starts": 26,
+      "solver_system_calls": 4444
+    },
+    {
+      "workload": "large_external_circles",
+      "median_ms": 4.8877,
+      "batches_ms": [
+        4.8877,
+        4.8827,
+        4.9988,
+        4.8713,
+        4.9045
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          1000.0,
+          -5.688926511207111e-06
+        ],
+        [
+          1000.0,
+          6.429790503343491e-06
+        ]
+      ],
+      "analytic_reference": [
+        [
+          1000.0,
+          0.0
+        ]
+      ],
+      "count_matches": false,
+      "maximum_nearest_reference_error": 6.429790503343491e-06,
+      "solver_starts": 8,
+      "solver_system_calls": 316
+    },
+    {
+      "workload": "large_oblique_circles",
+      "median_ms": 5.2287,
+      "batches_ms": [
+        5.2379,
+        5.114,
+        5.2235,
+        5.3402,
+        5.2287
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          599.9999925715812,
+          800.0000055713141
+        ],
+        [
+          600.0000022545929,
+          799.9999983090553
+        ]
+      ],
+      "analytic_reference": [
+        [
+          600.0,
+          800.0
+        ]
+      ],
+      "count_matches": false,
+      "maximum_nearest_reference_error": 9.285523515245585e-06,
+      "solver_starts": 8,
+      "solver_system_calls": 324
+    },
+    {
+      "workload": "large_circle_line_default_grid",
+      "median_ms": 626.7638,
+      "batches_ms": [
+        160.4137,
+        498.7135,
+        626.7638,
+        776.9022,
+        747.217
+      ],
+      "grid_resolution": 500,
+      "points": [
+        [
+          -1.695175356012694e-05,
+          999.9999999999999
+        ],
+        [
+          -2.9109077149976246e-06,
+          1000.0
+        ],
+        [
+          1.2474505658024063e-05,
+          1000.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1000.0
+        ]
+      ],
+      "count_matches": false,
+      "maximum_nearest_reference_error": 1.695175356012694e-05,
+      "solver_starts": 76,
+      "solver_system_calls": 10912
+    },
+    {
+      "workload": "scaled_unit_fields",
+      "median_ms": 0.3405,
+      "batches_ms": [
+        0.3661,
+        0.3778,
+        0.3399,
+        0.3405,
+        0.3301
+      ],
+      "grid_resolution": 64,
+      "points": [],
+      "analytic_reference": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "count_matches": false,
+      "maximum_nearest_reference_error": null,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "near_crossing",
+      "median_ms": 212.3196,
+      "batches_ms": [
+        212.6071,
+        212.3196,
+        218.3481,
+        203.616,
+        192.8616
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          -44.71017781221685,
+          999.0
+        ],
+        [
+          44.71017781221597,
+          999.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          -44.710177812216315,
+          999.0
+        ],
+        [
+          44.710177812216315,
+          999.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.329070518200751e-13,
+      "solver_starts": 26,
+      "solver_system_calls": 3097
+    },
+    {
+      "workload": "near_disjoint",
+      "median_ms": 309.9659,
+      "batches_ms": [
+        246.9281,
+        309.9659,
+        317.7092,
+        301.8875,
+        314.9337
+      ],
+      "grid_resolution": 64,
+      "points": [],
+      "analytic_reference": [],
+      "count_matches": true,
+      "maximum_nearest_reference_error": null,
+      "solver_starts": 26,
+      "solver_system_calls": 4788
+    },
+    {
+      "workload": "trimmed_endpoint",
+      "median_ms": 31.633,
+      "batches_ms": [
+        30.6756,
+        32.2004,
+        23.9893,
+        31.633,
+        33.9568
+      ],
+      "grid_resolution": 64,
+      "points": [
+        [
+          6.351559468797377e-09,
+          1.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          1.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 6.351559468797377e-09,
+      "solver_starts": 11,
+      "solver_system_calls": 418
+    },
+    {
+      "workload": "thin_trim_crossing_control",
+      "median_ms": 13.4383,
+      "batches_ms": [
+        13.4822,
+        12.8983,
+        13.0131,
+        13.8262,
+        13.4383
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.5,
+          0.25
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 0.0,
+      "solver_starts": 12,
+      "solver_system_calls": 82
+    },
+    {
+      "workload": "parabola_tangent_control",
+      "median_ms": 2052.6312,
+      "batches_ms": [
+        2246.4372,
+        2467.1628,
+        1739.8721,
+        2052.6312,
+        2023.8364
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "analytic_reference": [
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "count_matches": true,
+      "maximum_nearest_reference_error": 5.064137181853578e-126,
+      "solver_starts": 62,
+      "solver_system_calls": 37324
+    }
+  ],
+  "limits": "Five sequential warm complete calls include recognition, grid/clustering or native contact validation, final residual/trim/search checks and result creation. fsolve counters exclude identity/grid/final residual/tangent/trim work and callback internals. Native classification is exact only for supported stored coefficient models; public coordinates remain floats and callbacks stay authoritative. Timings on this shared workstation are not general speedup or FPS guarantees; non-tangent controls disclose added recognition costs."
+}
