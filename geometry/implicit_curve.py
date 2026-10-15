@@ -37,6 +37,8 @@ class ImplicitCurve:
         # different field from the new envelope proof.
         self._expression = value
         self._eval_func = None
+        self._native_eval_func = None
+        self._native_eval_state = None
         self._grad_funcs = None
 
     @property
@@ -47,6 +49,8 @@ class ImplicitCurve:
     def variables(self, value):
         self._variables = tuple(value)
         self._eval_func = None
+        self._native_eval_func = None
+        self._native_eval_state = None
         self._grad_funcs = None
 
     def __init__(
@@ -112,6 +116,10 @@ class ImplicitCurve:
         # Create lambdified function on first use for performance
         if self._eval_func is None:
             self._eval_func = sp.lambdify(self.variables, self.expression, "numpy")
+            # Remember the kernel we compiled, so symbolic operations do not
+            # bypass a caller's replacement evaluator or stale private cache.
+            self._native_eval_func = self._eval_func
+            self._native_eval_state = (self.expression, self.variables)
 
         x, y, scalar = broadcast_coordinates(x_val, y_val)
         try:
