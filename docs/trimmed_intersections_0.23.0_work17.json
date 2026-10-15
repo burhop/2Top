@@ -1,0 +1,160 @@
+{
+  "label": "0.23.0",
+  "python": "3.11.14",
+  "numpy": "2.4.6",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-field-diagnostics-0.23.0\\geometry\\curve_intersections.py",
+  "workloads": [
+    {
+      "workload": "thin_interior_100",
+      "median_ms": 0.4122,
+      "batches_ms": [
+        0.4748,
+        0.4373,
+        0.4122,
+        0.3754,
+        0.3618
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "thin_interior_500",
+      "median_ms": 16.8883,
+      "batches_ms": [
+        16.5012,
+        16.6435,
+        16.8883,
+        17.3977,
+        18.5142
+      ],
+      "grid_resolution": 500,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "thin_endpoint_100",
+      "median_ms": 0.3551,
+      "batches_ms": [
+        0.4238,
+        0.3551,
+        0.3691,
+        0.351,
+        0.3399
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "thin_circle_crossings_100",
+      "median_ms": 0.3691,
+      "batches_ms": [
+        0.3964,
+        0.3692,
+        0.3691,
+        0.3455,
+        0.3307
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "thin_outside_root_100",
+      "median_ms": 0.3455,
+      "batches_ms": [
+        0.3808,
+        0.3643,
+        0.3455,
+        0.3375,
+        0.343
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": null,
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "partial_rectangle_100",
+      "median_ms": 0.3444,
+      "batches_ms": [
+        0.3456,
+        0.3223,
+        0.3239,
+        0.3444,
+        0.5112
+      ],
+      "grid_resolution": 100,
+      "points": [],
+      "rejection": "TypeError: unsupported operand type(s) for -: 'NoneType' and 'float'",
+      "grid_candidates": 0,
+      "solver_starts": 0,
+      "solver_system_calls": 0
+    },
+    {
+      "workload": "untrimmed_circle_crossings_100",
+      "median_ms": 6.5174,
+      "batches_ms": [
+        6.5174,
+        6.5202,
+        6.5059,
+        6.1129,
+        6.6833
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -1.0,
+          0.75
+        ],
+        [
+          1.0,
+          0.75
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 22,
+      "solver_starts": 22,
+      "solver_system_calls": 220
+    },
+    {
+      "workload": "untrimmed_parabola_tangent_100",
+      "median_ms": 1938.1358,
+      "batches_ms": [
+        1936.463,
+        2054.5691,
+        1948.4256,
+        1938.1358,
+        1914.7709
+      ],
+      "grid_resolution": 100,
+      "points": [
+        [
+          -5.064137181853578e-126,
+          0.0
+        ]
+      ],
+      "rejection": null,
+      "grid_candidates": 62,
+      "solver_starts": 62,
+      "solver_system_calls": 37324
+    }
+  ],
+  "limits": "Five sequential warm complete calls include grid evaluations, candidate clustering, solver refinement and final checks. Counters instrument clustering input and fsolve system calls; they exclude final residual/tangent/trim/identity evaluations and callback internals. These shared-workstation timings are not FPS or speedup guarantees. Baseline empty/error results do less useful work. No exactness/completeness/overlap certificate is claimed."
+}

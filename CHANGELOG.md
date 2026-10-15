@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.24.0
+
+- Recover interior and endpoint crossings lost when exact trim rectangles
+  discarded every coarse grid seed. Retain one actual linspace cell around the
+  rectangle for candidate generation; final contains and residual checks remain.
+- Append finite explicit trim endpoint seeds after clustering, including when
+  there are no grid candidates. Endpoints remain untrusted solver starts.
+- Skip incomplete rectangle exclusion filters consistently with trim membership.
+  Preserve both original inputs and activation threshold for legacy overlap
+  heuristics, keeping padded seeds in the refinement path.
+- Add 43 analytic regressions, a reproducible segment/circle JSON/PNG example,
+  independent review and complete-call costs. Results remain numerical; no
+  completeness, exactness, new symbolic solver or general overlap guarantee.
+- Synchronize project/studio/JavaScript versions and documentation. Scene formats,
+  dependencies, main, deployment and security settings remain unchanged.
+
+
 ## 0.23.0
 
 - Extend the established gradient_diagnostics protocol to CurveField,
