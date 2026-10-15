@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.27.0
+
+- Reproduce the four x**8/line residual-filtered candidates; an analytic/160-digit
+  Decimal oracle shows three are about 0.04 from the only root despite 1e-12
+  residuals. Preserve legacy acceptance and iteration budgets for compatibility.
+- Add public diagnose_intersection_candidates with every supplied position
+  explicitly unverified, no positional error bound and unassessed isolation,
+  completeness and overlap. It performs no root search, filtering or registration.
+- Report row-normalized sampled Jacobian conditioning, derivative-error evidence
+  and linearized displacement separately from trim membership. Singular or
+  uncertainty-dominated models have no displacement; none is a root certificate.
+- Preserve active evaluators, callback defaults and actual boolean trim evidence;
+  callback/nonfinite/unrepresentable evidence is reported unavailable.
+- Add 72 regressions, JSON/PNG independent-oracle example, measured opt-in costs
+  and exact parity across nine legacy solver traces. Synchronize versions,
+  README, changelog and CI coverage; defer quadratic/line acceleration.
+
+
 ## 0.26.0
 
 - Profile the general parabola/line tangency: 62 starts all exhaust the existing

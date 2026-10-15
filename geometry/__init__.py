@@ -3,6 +3,7 @@
 # Import all curve classes
 from .implicit_curve import ImplicitCurve
 from .bounds import SublevelBounds
+from .intersection_diagnostics import diagnose_intersection_candidates
 from .level_set_curve import LevelSetCurve
 from .conic_section import ConicSection
 from .polynomial_curve import PolynomialCurve
@@ -43,6 +44,7 @@ __all__ = [
     # Core curve classes
     "ImplicitCurve",
     "SublevelBounds",
+    "diagnose_intersection_candidates",
     "LevelSetCurve",
     "ConicSection",
     "PolynomialCurve",

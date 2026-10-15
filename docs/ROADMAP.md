@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.27.0 exposes [intersection-position uncertainty](intersection_diagnostics.md)
+through a public supplied-candidate diagnostic report. Every position remains
+unverified; the reproduced x**8 residual failure is no longer presented as a
+position certificate by this opt-in API. Legacy acceptance is unchanged. General
+safe rejection and true positional bounds remain unresolved; quadratic/line
+acceleration is deferred while the correctness limitation is explicit.
+
 Version 0.26.0 reduces [general tangency evaluation costs](iterative_tangency.md)
 by avoiding repeated broadcast dispatch for validated equal-shape coordinates.
 The paired parabola measurement is about 25% faster with unchanged solver trace.

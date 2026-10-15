@@ -1,9 +1,24 @@
 # Tidal Atlas development verification
 
-Updated October 15, 2026 for version 0.26.0. Work17 executes the local application
+Updated October 15, 2026 for version 0.27.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.27.0 adds [explicit intersection-position diagnostics](intersection_diagnostics.md).
+All **72 new diagnostic regressions** pass after independent review corrected
+trim callback defaults and invalid truthy evidence. An earlier affected suite
+passed **270 tests** before those final 11 trim cases were added. All nine
+recorded legacy solver traces remain identical. The four-candidate diagnostic
+report costs about 1.4 ms here, separately from unchanged numerical search.
+Full local, runtime-wheel, JavaScript/lint and exact feature/dev CI gates are
+recorded in the milestone PR and Work17 handoff as they finish. Legacy false
+contacts are not removed or certified. All **59 JavaScript checks**, mocked
+WebMCP, **169-file** configured / **69-file** explicit Ruff, and h11 artifact
+metadata pass. All **58** dependency records remain unchanged. Native WebMCP
+host verification is separate.
+
+## Previous milestone
 
 Version 0.26.0 reduces [general numerical tangency evaluation costs](iterative_tangency.md).
 The focused suite passed **273 tests**, including **62 new regressions**.
