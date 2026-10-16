@@ -1,9 +1,18 @@
 # Tidal Atlas development verification
 
-Updated October 16, 2026 for version 0.28.0. Work17 executes the local application
+Updated October 16, 2026 for version 0.29.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.29.0 adds [native rectangle trim proofs](native_rectangle_trims.md).
+Independent Fraction and 160-digit Decimal oracles cover irrational contacts,
+nonbinary rational bounds, directed float comparisons, nested masks, observed
+mutation and native serialization. Full local, installed-wheel, lint/JavaScript
+and exact feature/dev CI evidence is recorded in the milestone PR and Work17
+handoff as it finishes. Native WebMCP host verification remains separate.
+
+## Previous milestone
 
 Version 0.28.0 adds [native polynomial/line isolation](polynomial_line_intersections.md).
 Independent analytic and 160-digit Decimal oracles cover flat contacts, field

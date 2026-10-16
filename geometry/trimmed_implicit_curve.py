@@ -329,9 +329,28 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         Serialize TrimmedImplicitCurve to a dictionary.
 
-        Note: The mask function cannot be serialized. The reconstructed curve
-        will use a pass-through mask (accepts all points on the base curve).
+        Native RectangleMask bounds round-trip exactly. Other mask functions
+        retain the existing lossy reconstruction warning.
         """
+        from .rectangle_mask import _is_native_rectangle
+
+        native_mask = _is_native_rectangle(self.mask)
+        if native_mask:
+            from .polynomial_line_intersections import _capture
+
+            if (
+                getattr(self.contains, "__func__", None)
+                is not TrimmedImplicitCurve.contains
+                or getattr(self.evaluate, "__func__", None)
+                is not TrimmedImplicitCurve.evaluate
+            ):
+                raise ValueError(
+                    "Native rectangle serialization requires default trim methods"
+                )
+            if _capture(self) is None:
+                raise ValueError(
+                    "Native rectangle serialization requires native evaluators"
+                )
         d = {
             "type": "TrimmedImplicitCurve",
             "base_curve": self.base_curve.to_dict(),
@@ -342,6 +361,10 @@ class TrimmedImplicitCurve(ImplicitCurve):
                 "Manual reconstruction required to restore original mask behavior."
             ),
         }
+        if native_mask:
+            d["native_mask"] = self.mask.to_dict()
+            d["mask"] = "RectangleMask"
+            d["mask_description"] = "Exact closed rational rectangle bounds."
         if self._xmin is not None:
             d["xmin"] = self._xmin
         if self._xmax is not None:
@@ -359,10 +382,8 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         Reconstruct TrimmedImplicitCurve from a dictionary.
 
-        The mask is not serializable; the reconstructed curve uses a
-        pass-through mask (all points on the base curve are accepted).
-        Bounding-box bounds are used to approximate the original mask
-        when they were stored.
+        Native RectangleMask data restores the exact predicate. Other masks
+        retain the existing bounding-box/pass-through fallback and warning.
         """
         from .implicit_curve import ImplicitCurve
 
@@ -370,13 +391,22 @@ class TrimmedImplicitCurve(ImplicitCurve):
             raise ValueError(
                 f"Invalid type: expected 'TrimmedImplicitCurve', got {data.get('type')}"
             )
+        native_mask = "native_mask" in data
+        if native_mask or data.get("mask") == "RectangleMask":
+            if not native_mask or data.get("mask") != "RectangleMask":
+                raise ValueError(
+                    "RectangleMask marker and native_mask payload must agree"
+                )
+            from .rectangle_mask import RectangleMask
+
+            mask = RectangleMask.from_dict(data["native_mask"])
         base_curve = ImplicitCurve.from_dict(data["base_curve"])
         xmin = data.get("xmin")
         xmax = data.get("xmax")
         ymin = data.get("ymin")
         ymax = data.get("ymax")
 
-        if (
+        if not native_mask and (
             xmin is not None
             and xmax is not None
             and ymin is not None
@@ -385,7 +415,7 @@ class TrimmedImplicitCurve(ImplicitCurve):
 
             def mask(px, py, _xmin=xmin, _xmax=xmax, _ymin=ymin, _ymax=ymax):
                 return _xmin <= px <= _xmax and _ymin <= py <= _ymax
-        else:
+        elif not native_mask:
 
             def mask(px, py):
                 return True
@@ -406,9 +436,8 @@ class TrimmedImplicitCurve(ImplicitCurve):
             ymax=ymax,
             endpoints=endpoints,
         )
-        obj._deserialization_warning = (
-            "Mask function was not serialized. A placeholder pass-through mask is used."
-        )
+        if not native_mask:
+            obj._deserialization_warning = "Mask function was not serialized. A placeholder pass-through mask is used."
         return obj
 
     @classmethod

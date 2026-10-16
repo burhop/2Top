@@ -92,6 +92,11 @@ invalidates every accepted point and clears the model completeness claim.
 
 ## Conservative arbitrary trim membership
 
+Version 0.29 adds [native RectangleMask proofs](native_rectangle_trims.md) that
+can establish membership for irrational/nonbinary roots. The rules below apply
+to arbitrary opaque callbacks; actual float containment remains a separate gate
+for every wrapper, including native rectangles.
+
 Each nested trim wrapper's actual `contains` method is checked; the default
 argument is preserved unless `trim_tolerance` is explicitly supplied. Only an
 actual scalar bool is usable evidence. Callback exceptions and invalid truthy
@@ -101,7 +106,8 @@ or mutable hidden state follows a mathematical predicate.
 
 A nearby float satisfying a mask does not prove the exact root satisfies it.
 For example, float(sqrt(2)) lies above the exact root: x>=float(sqrt(2)) includes
-that representative while excluding the root. Therefore a trimmed model root is
+that representative while excluding the root. Therefore a model root under an
+opaque callback is
 accepted only when its enclosure-to-float bound is exactly zero and every trim
 check is true at that exact point. This handles the flat origin, dyadic endpoints
 and exact tangencies. Nonbinary rational/irrational roots under arbitrary masks

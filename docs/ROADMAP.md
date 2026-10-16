@@ -135,6 +135,14 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.29.0 adds [native closed-rectangle trim membership](native_rectangle_trims.md)
+for isolated polynomial/line roots, with exact rational predicates and a bounded
+native-mask serialization codec. Arbitrary callbacks retain uncertainty.
+The next bounded opportunity is native affine half-plane predicates for oblique
+cuts: rectangles now prove axis-aligned membership, while equivalent arbitrary
+oblique callbacks still leave irrational-root membership unverified. Reuse exact
+line-parameter comparisons with independent analytic boundary oracles.
+
 Version 0.28.0 adds [native polynomial/line root isolation](polynomial_line_intersections.md).
 The opt-in API resolves flat contacts within an explicit unchanged degree <= 8
 stored-coefficient model, using exact isolation rather than residual size.
