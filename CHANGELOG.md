@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.29.0
+
+- Add public immutable RectangleMask with exact closed rational/stored-binary
+  bounds and directed scalar/broadcast binary64 comparisons, including degenerate
+  boxes and subnormal limits. Nonfinite/unsupported/resource-heavy bounds fail.
+- Prove isolated polynomial/line root membership in trusted native rectangles
+  with exact affine parameter domains and rational root counts. Irrational and
+  nonbinary rational roots become useful without certifying arbitrary callbacks.
+- Keep model inclusion, actual representative containment, residual and position
+  checks separate. Closed boxes can contain a root but no usable float point.
+  Nested wrappers all apply; definitive exclusion survives opaque uncertainty.
+- Detect observed mask/method/bbox edits and deletions during callbacks; discard
+  stale point acceptance and trim proofs while retaining unchanged model evidence.
+- Serialize native rectangle bounds exactly with a bounded rational-string codec;
+  reject overridden trim/base evaluators instead of silently restoring different
+  behavior. Existing arbitrary-mask lossy serialization warnings remain.
+- Add independent Fraction/160-digit Decimal regressions, baseline/current
+  Work17 measurements, JSON example and CI coverage. Update version metadata,
+  README and roadmap; preserve legacy solver/defaults and all dependencies.
+
+
 ## 0.28.0
 
 - Add opt-in native polynomial/line root isolation for degree <= 8 rational or

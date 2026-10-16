@@ -5,6 +5,7 @@ from .implicit_curve import ImplicitCurve
 from .bounds import SublevelBounds
 from .intersection_diagnostics import diagnose_intersection_candidates
 from .polynomial_line_intersections import find_polynomial_line_intersections
+from .rectangle_mask import RectangleMask
 from .level_set_curve import LevelSetCurve
 from .conic_section import ConicSection
 from .polynomial_curve import PolynomialCurve
@@ -47,6 +48,7 @@ __all__ = [
     "SublevelBounds",
     "diagnose_intersection_candidates",
     "find_polynomial_line_intersections",
+    "RectangleMask",
     "LevelSetCurve",
     "ConicSection",
     "PolynomialCurve",

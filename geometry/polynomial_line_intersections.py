@@ -11,10 +11,138 @@ import sympy as sp
 
 from .implicit_curve import ImplicitCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
+from .rectangle_mask import RectangleMask, _is_native_rectangle
 
 _DEGREE = 8
 _BITS = 4096
 _NODES = 512
+_NATIVE_CONTAINS = TrimmedImplicitCurve.contains
+_MISSING = object()
+
+
+def _trim_state(wrapper):
+    try:
+        return _trim_state_values(wrapper)
+    except Exception:
+        return None
+
+
+def _trim_state_values(wrapper):
+    """Snapshot ordinary predicate edits, including mutable scalar bbox values."""
+    contains = getattr(wrapper, "contains", None)
+    mask = getattr(wrapper, "mask", None)
+    box = []
+    references = [mask, contains]
+    for name in ("_xmin", "_xmax", "_ymin", "_ymax"):
+        value = getattr(wrapper, name, _MISSING)
+        references.append(value)
+        if (
+            isinstance(value, np.ndarray)
+            and value.size <= 1
+            and value.dtype.kind in "biuf"
+        ):
+            box.append((value.dtype.str, value.shape, value.tobytes()))
+        else:
+            box.append(id(value))
+    try:
+        rectangle = (
+            (mask.bounds, mask._float_bounds, id(type(mask).__call__))
+            if type(mask) is RectangleMask
+            else None
+        )
+    except AttributeError:
+        rectangle = None
+    signature = (
+        id(mask),
+        id(getattr(contains, "__func__", contains)),
+        id(getattr(contains, "__self__", None)),
+        tuple(box),
+        rectangle,
+    )
+    # Retain compared objects so replacement cannot reuse a freed object's id.
+    return signature, references
+
+
+def _same_trim_state(first, second):
+    if first is None or second is None:
+        return first is second
+    return first[0] == second[0]
+
+
+def _rectangle_domain(wrapper, coordinates, parameter):
+    try:
+        return _rectangle_domain_values(wrapper, coordinates, parameter)
+    except Exception:
+        return None
+
+
+def _rectangle_domain_values(wrapper, coordinates, parameter):
+    if (
+        getattr(getattr(wrapper, "contains", None), "__func__", None)
+        is not _NATIVE_CONTAINS
+        or not _is_native_rectangle(getattr(wrapper, "mask", None))
+        or any(
+            getattr(wrapper, name, _MISSING) is not None
+            for name in ("_xmin", "_xmax", "_ymin", "_ymax")
+        )
+    ):
+        return None
+    lower, upper = None, None
+    for coordinate, lo, hi in zip(
+        coordinates, wrapper.mask.bounds[::2], wrapper.mask.bounds[1::2]
+    ):
+        slope, intercept = coordinate.diff(parameter), coordinate.subs(parameter, 0)
+        if slope == 0:
+            if not lo <= intercept <= hi:
+                return sp.Integer(1), sp.Integer(0)
+            continue
+        a, b = sorted(((lo - intercept) / slope, (hi - intercept) / slope))
+        if not _small_rational(a) or not _small_rational(b):
+            return None
+        lower = a if lower is None else max(lower, a)
+        upper = b if upper is None else min(upper, b)
+    return lower, upper
+
+
+def _compare_root(polynomial, interval, threshold):
+    """Exact side of one isolated root relative to a rational threshold."""
+    lower, upper = interval
+    if not _small_rational(threshold):
+        return None
+    if lower == upper:
+        return int(bool(lower > threshold)) - int(bool(lower < threshold))
+    if threshold < lower:
+        return 1
+    if threshold > upper:
+        return -1
+    endpoint_roots = [v for v in (lower, upper) if polynomial.eval(v) == 0]
+    if len(endpoint_roots) == 1:
+        root = endpoint_roots[0]
+        return int(bool(root > threshold)) - int(bool(root < threshold))
+    if endpoint_roots:
+        return None
+    if polynomial.eval(threshold) == 0:
+        return 0
+    if threshold == lower:
+        return 1
+    if threshold == upper:
+        return -1
+    try:
+        count = polynomial.count_roots(lower, threshold)
+    except (TypeError, ValueError, OverflowError, sp.PolynomialError):
+        return None
+    return -1 if count == 1 else (1 if count == 0 else None)
+
+
+def _rectangle_membership(polynomial, interval, domain):
+    lower, upper = domain
+    if lower > upper:
+        return "excluded"
+    left = _compare_root(polynomial, interval, lower)
+    right = _compare_root(polynomial, interval, upper)
+    if (left is not None and left < 0) or (right is not None and right > 0):
+        return "excluded"
+    return "included" if left is not None and right is not None else "unverified"
 
 
 def _small_rational(value):
@@ -96,7 +224,10 @@ def _capture(curve):
 
 
 def _unchanged(curve, captured):
-    current = _capture(curve)
+    try:
+        current = _capture(curve)
+    except Exception:
+        return False
     return (
         current is not None
         and current[0] is captured[0]
@@ -192,9 +323,10 @@ def find_polynomial_line_intersections(
     Float coefficients mean their exact stored binary values. Distinct model
     roots retain separate rational enclosures and multiplicities. Accepted
     float points meet an exact L-infinity enclosure bound and actual finite
-    residual checks. Arbitrary trims accept only an exactly representable model
-    root with true containment at every wrapper; other trim membership remains
-    unverified. No legacy fallback, search window, scene mutation or registration.
+    residual checks. Native RectangleMask trims have exact model-root membership
+    proofs. Arbitrary trims require exactly representable roots; unresolved trim
+    membership remains unverified. Every accepted float also needs actual true
+    containment at every wrapper. No legacy fallback or scene mutation.
 
     Structural/coefficient caps limit inputs, not wall-clock isolation time.
     Completeness concerns the captured untrimmed coefficient model only. A
@@ -216,7 +348,11 @@ def find_polynomial_line_intersections(
         "roots": [],
         "reason": None,
     }
-    captures = [_capture(first), _capture(second)]
+    try:
+        captures = [_capture(first), _capture(second)]
+    except Exception:
+        report["reason"] = "native_model_unavailable"
+        return report
     if any(c is None for c in captures):
         report["reason"] = "native_model_unavailable"
         return report
@@ -268,6 +404,11 @@ def find_polynomial_line_intersections(
         return report
     report.update(status="isolated_model", model_root_completeness=True)
     wrappers = [wrapper for captured in captures for wrapper in captured[3]]
+    trim_states = [_trim_state(wrapper) for wrapper in wrappers]
+    domains = [_rectangle_domain(wrapper, coordinates, t) for wrapper in wrappers]
+    square_free = (
+        restricted.sqf_part() if any(domain is not None for domain in domains) else None
+    )
     for (lower, upper), multiplicity in intervals:
         bounds = [
             sorted((coordinate.subs(t, lower), coordinate.subs(t, upper)))
@@ -289,6 +430,7 @@ def find_polynomial_line_intersections(
             "position_bound_exact": None,
             "representative_residuals": [None, None],
             "representative_contains": [],
+            "root_trim_checks": [],
             "root_trim_membership": "unverified" if wrappers else "not_applicable",
             "accepted": False,
             "reasons": [],
@@ -331,13 +473,38 @@ def find_polynomial_line_intersections(
         checks = [_contains(wrapper, point, trim_tolerance) for wrapper in wrappers]
         record["representative_contains"] = checks
         if wrappers:
-            if bound != 0 or any(value is None for value in checks):
-                record["reasons"].append("root_trim_membership_unverified")
-            elif all(checks):
-                record["root_trim_membership"] = "exact_point_accepted"
+            for domain, actual, state in zip(domains, checks, trim_states):
+                if state is None:
+                    status, kind = "unverified", "callback"
+                elif domain is not None:
+                    status = _rectangle_membership(square_free, (lower, upper), domain)
+                    kind = "native_rectangle"
+                else:
+                    status = (
+                        "unverified"
+                        if bound != 0 or actual is None
+                        else ("included" if actual else "excluded")
+                    )
+                    kind = "callback"
+                record["root_trim_checks"].append({"kind": kind, "status": status})
+            statuses = [evidence["status"] for evidence in record["root_trim_checks"]]
+            if "excluded" in statuses:
+                record["root_trim_membership"] = (
+                    "exact_point_excluded" if bound == 0 else "model_root_excluded"
+                )
+                record["reasons"].append(
+                    "exact_root_excluded_by_trim"
+                    if bound == 0
+                    else "model_root_excluded_by_trim"
+                )
+            elif all(status == "included" for status in statuses):
+                record["root_trim_membership"] = (
+                    "exact_point_accepted" if bound == 0 else "model_root_included"
+                )
             else:
-                record["root_trim_membership"] = "exact_point_excluded"
-                record["reasons"].append("exact_root_excluded_by_trim")
+                record["reasons"].append("root_trim_membership_unverified")
+            if not all(value is True for value in checks):
+                record["reasons"].append("representative_trim_not_accepted")
         record["accepted"] = not record["reasons"]
     # A callback can invalidate any captured model, including earlier records.
     if not all(_unchanged(curve, c) for curve, c in zip((first, second), captures)):
@@ -345,7 +512,24 @@ def find_polynomial_line_intersections(
         report["reason"] = "model_changed_during_validation"
         for record in report["roots"]:
             record["accepted"] = False
+            record["root_trim_membership"] = "unverified"
+            for evidence in record["root_trim_checks"]:
+                evidence["status"] = "unverified"
             record["reasons"].append("model_changed_during_validation")
+    if any(
+        not _same_trim_state(_trim_state(wrapper), state)
+        for wrapper, state in zip(wrappers, trim_states)
+    ):
+        if report["status"] != "model_changed":
+            report.update(
+                status="trim_changed", reason="trim_changed_during_validation"
+            )
+        for record in report["roots"]:
+            record["accepted"] = False
+            record["root_trim_membership"] = "unverified"
+            for evidence in record["root_trim_checks"]:
+                evidence["status"] = "unverified"
+            record["reasons"].append("trim_changed_during_validation")
     points = {}
     for record in report["roots"]:
         if record["point"] is not None:
