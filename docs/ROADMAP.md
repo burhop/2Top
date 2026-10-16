@@ -135,6 +135,12 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.28.0 adds [native polynomial/line root isolation](polynomial_line_intersections.md).
+The opt-in API resolves flat contacts within an explicit unchanged degree <= 8
+stored-coefficient model, using exact isolation rather than residual size.
+General callback certification and arbitrary irrational-root trim membership
+remain unresolved; the old numerical finder is unchanged.
+
 Version 0.27.0 exposes [intersection-position uncertainty](intersection_diagnostics.md)
 through a public supplied-candidate diagnostic report. Every position remains
 unverified; the reproduced x**8 residual failure is no longer presented as a

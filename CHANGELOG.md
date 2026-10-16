@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.28.0
+
+- Add opt-in native polynomial/line root isolation for degree <= 8 rational or
+  stored binary Float coefficients. Eliminate the line exactly, isolate every
+  real model root, retain multiplicities and rational coordinate enclosures.
+- Resolve the native x**8 flat-contact reproduction to one exact origin with
+  multiplicity eight; preserve genuine tangencies, near misses and two crossings.
+- Gate float representatives by exact L-infinity enclosure bounds and actual
+  finite field residuals. Retain distinct model roots when floats collide or
+  requested accuracy cannot be represented; never silently merge or fall back.
+- Check every trim wrapper. Only exactly representable model roots gain exact
+  root membership from arbitrary containment callbacks; irrational/nonbinary
+  masked roots remain explicitly unverified, even if a nearby float is included.
+- Preserve active evaluator authority, reject bounded unsupported structure,
+  guard coefficient growth and invalidate results after model-changing callbacks.
+- Add analytic/160-digit Decimal regression oracles, reproducible Work17 costs,
+  JSON example, documentation and CI coverage. Synchronize version metadata;
+  legacy numerical finder, dependencies and runtime defaults are unchanged.
+
+
 ## 0.27.0
 
 - Reproduce the four x**8/line residual-filtered candidates; an analytic/160-digit
