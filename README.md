@@ -1,10 +1,10 @@
-# 2Top 0.29.0 · Tidal Atlas
+# 2Top 0.30.0 · Tidal Atlas
 
 A canvas-first kinetic-art studio backed by a reusable Python implicit-geometry engine. Shape living topographic islands by hand or through real MCP and browser WebMCP tools. Every edit uses the same validated, revision-checked scene service.
 
 ## Development status
 
-Version **0.29.0** adds [reliable native rectangular trims](docs/native_rectangle_trims.md) to the opt-in polynomial/line solver. Public immutable `RectangleMask` declares exact closed rational bounds. The solver now accepts the positive irrational fourth-order contact of `(x**2-2)**4=0` with `y=0` inside `[0,2] x [-1,1]`, while excluding its negative partner. Exact line-domain/root comparisons establish trim membership independently of float containment, residual and positional checks. Native rectangle bounds survive serialization; overridden evaluators or trim methods cannot silently round-trip into native behavior. Arbitrary masks retain honest uncertainty. The general numerical finder stays unchanged. Development targets **dev**.
+Version **0.30.0** adds [native affine half-plane trims](docs/native_half_plane_trims.md). Public immutable `HalfPlaneMask(a,b,c,closed=True)` declares exact `a*x+b*y+c>=0`, or `>0` with an open boundary. The polynomial/line solver now proves the positive irrational contact inside `x+y>=0` on `y=x`; the equivalent opaque callback remains unresolved. Constant/degenerate predicates, negative scaling and boundary tangencies have explicit semantics. Outward float intervals plus exact rational fallback preserve predicate signs, and native serialization retains raw stored coefficients and boundary mode. Existing rectangle proofs and independent representative gates remain. Development targets **dev**.
 
 See the [milestone roadmap](docs/ROADMAP.md), [CHANGELOG.md](CHANGELOG.md) for version history and [verification details](docs/studio_verification.md) for tested behavior and remaining browser-host limits.
 
@@ -62,7 +62,7 @@ python -m pip install -e ".[studio,dev]"
 python -m pytest tests/studio
 python -m pytest tests/test_backend_numerics.py tests/test_procedural_derivatives.py
 python -m pytest tests/test_sublevel_bounds.py
-python -m pytest tests/test_native_rectangle_trims.py tests/test_polynomial_line_intersections.py tests/test_intersection_diagnostics.py tests/test_coordinate_broadcast.py tests/test_tangent_intersections.py tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
+python -m pytest tests/test_native_half_plane_trims.py tests/test_native_rectangle_trims.py tests/test_polynomial_line_intersections.py tests/test_intersection_diagnostics.py tests/test_coordinate_broadcast.py tests/test_tangent_intersections.py tests/test_trimmed_intersections.py tests/test_field_gradient_diagnostics.py tests/test_distance_gradient_diagnostics.py tests/test_distance_gradient.py tests/test_distance_sign.py tests/test_distance_numerics.py
 python benchmarks/distance_numerics.py --output distance-numerics.json
 python -m pytest tests/test_distance_cache.py
 python benchmarks/distance_cache.py --output distance.json

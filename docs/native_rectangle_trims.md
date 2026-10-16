@@ -94,9 +94,9 @@ functions retain the existing explicit lossy reconstruction warning. Existing
 base-curve serialization still governs unrelated curve-specific data.
 
 The [polynomial/line model limits](polynomial_line_intersections.md) still apply.
-The general numerical finder and default geometry behavior are unchanged. The
-next supported-predicate opportunity is native affine half-planes for oblique
-cuts, which arbitrary callbacks still leave unresolved at irrational roots.
+The general numerical finder and default geometry behavior are unchanged.
+Version 0.30 adds [native affine half-planes](native_half_plane_trims.md) for
+oblique cuts; arbitrary callbacks still leave irrational-root membership unresolved.
 
 
 ## Work17 measurements
@@ -126,5 +126,5 @@ Fraction/Decimal oracles and adversarial authority/serialization controls.
 
 The opaque_oblique_halfplane control includes the positive analytic root under
 x+y>=0 on y=x, yet its membership remains unverified. This is the measured
-reason to add a native affine half-plane predicate next, with closed/open
-boundary rules and exact rational root-side oracles.
+reason addressed by the native affine half-plane predicate in 0.30, with
+closed/open boundaries and exact rational root-side oracles.

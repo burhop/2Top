@@ -97,6 +97,10 @@ can establish membership for irrational/nonbinary roots. The rules below apply
 to arbitrary opaque callbacks; actual float containment remains a separate gate
 for every wrapper, including native rectangles.
 
+Version 0.30 also supports [native affine half-planes](native_half_plane_trims.md),
+with exact coefficients and closed/open boundaries. Arbitrary functions remain
+opaque even when they implement the same inequality.
+
 Each nested trim wrapper's actual `contains` method is checked; the default
 argument is preserved unless `trim_tolerance` is explicitly supplied. Only an
 actual scalar bool is usable evidence. Callback exceptions and invalid truthy

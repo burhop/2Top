@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.30.0
+
+- Add public immutable HalfPlaneMask(a,b,c,closed=True): exact stored-coefficient
+  a*x+b*y+c>=0 or >0, with explicit constant all/empty behavior when a=b=0.
+- Prove isolated polynomial/line root membership by exact affine substitution,
+  constant evaluation and rational root-side comparison. Resolve x+y>=0 on y=x
+  for irrational contacts while retaining arbitrary callback uncertainty.
+- Preserve signs at finite binary64 coordinates with positive exact coefficient
+  normalization, outward interval arithmetic and exact rational fallback for
+  cancellation, underflow, nonfinite intermediates and boundary equality.
+- Round-trip raw rational/stored-binary coefficients and open/closed mode through
+  the native codec; retain rectangle data, authority/mutation checks, nested
+  predicates and independent float position/residual/contains gates.
+- Add 94 analytic/Fraction/160-digit Decimal regressions, including scale/sign,
+  degenerate normals, open tangencies, extreme cancellation and malformed data.
+  Independent review adds 4,032 sign comparisons and 30 oblique root oracles.
+- Record baseline/current costs, JSON example and anchor-factory limitation;
+  synchronize versions, README, roadmap and CI. Dependencies and the general
+  numerical finder/default behavior remain unchanged.
+
+
 ## 0.29.0
 
 - Add public immutable RectangleMask with exact closed rational/stored-binary

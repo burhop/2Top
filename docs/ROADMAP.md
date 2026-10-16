@@ -135,6 +135,13 @@ are implied by this roadmap.
 
 ## Subsequent geometry work
 
+Version 0.30.0 adds [native affine half-plane predicates](native_half_plane_trims.md)
+with closed/open boundaries, exact coefficient preservation and sign-safe float
+evaluation. The motivating irrational x+y>=0 contact is now usable. The next
+bounded opportunity is a native projection/chord predicate for from_anchors:
+that factory still emits an opaque callback, while equivalent nested native
+half-planes classify its finite chord region and survive serialization.
+
 Version 0.29.0 adds [native closed-rectangle trim membership](native_rectangle_trims.md)
 for isolated polynomial/line roots, with exact rational predicates and a bounded
 native-mask serialization codec. Arbitrary callbacks retain uncertainty.

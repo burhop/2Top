@@ -329,12 +329,13 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         Serialize TrimmedImplicitCurve to a dictionary.
 
-        Native RectangleMask bounds round-trip exactly. Other mask functions
+        Native rectangle/half-plane coefficients round-trip exactly. Other masks
         retain the existing lossy reconstruction warning.
         """
-        from .rectangle_mask import _is_native_rectangle
+        from .half_plane_mask import _native_mask_kind
 
-        native_mask = _is_native_rectangle(self.mask)
+        native_kind = _native_mask_kind(self.mask)
+        native_mask = native_kind is not None
         if native_mask:
             from .polynomial_line_intersections import _capture
 
@@ -345,12 +346,10 @@ class TrimmedImplicitCurve(ImplicitCurve):
                 is not TrimmedImplicitCurve.evaluate
             ):
                 raise ValueError(
-                    "Native rectangle serialization requires default trim methods"
+                    "Native mask serialization requires default trim methods"
                 )
             if _capture(self) is None:
-                raise ValueError(
-                    "Native rectangle serialization requires native evaluators"
-                )
+                raise ValueError("Native mask serialization requires native evaluators")
         d = {
             "type": "TrimmedImplicitCurve",
             "base_curve": self.base_curve.to_dict(),
@@ -363,8 +362,12 @@ class TrimmedImplicitCurve(ImplicitCurve):
         }
         if native_mask:
             d["native_mask"] = self.mask.to_dict()
-            d["mask"] = "RectangleMask"
-            d["mask_description"] = "Exact closed rational rectangle bounds."
+            d["mask"] = native_kind
+            d["mask_description"] = (
+                "Exact closed rational rectangle bounds."
+                if native_kind == "RectangleMask"
+                else "Exact affine half-plane coefficients and boundary mode."
+            )
         if self._xmin is not None:
             d["xmin"] = self._xmin
         if self._xmax is not None:
@@ -382,7 +385,7 @@ class TrimmedImplicitCurve(ImplicitCurve):
         """
         Reconstruct TrimmedImplicitCurve from a dictionary.
 
-        Native RectangleMask data restores the exact predicate. Other masks
+        Native rectangle/half-plane data restores the exact predicate. Other masks
         retain the existing bounding-box/pass-through fallback and warning.
         """
         from .implicit_curve import ImplicitCurve
@@ -392,14 +395,20 @@ class TrimmedImplicitCurve(ImplicitCurve):
                 f"Invalid type: expected 'TrimmedImplicitCurve', got {data.get('type')}"
             )
         native_mask = "native_mask" in data
-        if native_mask or data.get("mask") == "RectangleMask":
-            if not native_mask or data.get("mask") != "RectangleMask":
-                raise ValueError(
-                    "RectangleMask marker and native_mask payload must agree"
-                )
-            from .rectangle_mask import RectangleMask
+        if native_mask or data.get("mask") in ("RectangleMask", "HalfPlaneMask"):
+            from .half_plane_mask import _native_mask_from_dict
 
-            mask = RectangleMask.from_dict(data["native_mask"])
+            payload = data.get("native_mask")
+            if (
+                not native_mask
+                or not isinstance(payload, dict)
+                or data.get("mask") != payload.get("type")
+            ):
+                raise ValueError(
+                    "Native mask marker and native_mask payload must agree"
+                )
+
+            mask = _native_mask_from_dict(payload)
         base_curve = ImplicitCurve.from_dict(data["base_curve"])
         xmin = data.get("xmin")
         xmax = data.get("xmax")

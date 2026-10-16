@@ -1,9 +1,19 @@
 # Tidal Atlas development verification
 
-Updated October 16, 2026 for version 0.29.0. Work17 executes the local application
+Updated October 16, 2026 for version 0.30.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.30.0 adds [native half-plane trim proofs](native_half_plane_trims.md).
+All 94 new regressions and 499 affected geometry checks pass. Independent
+Fraction/Decimal oracles cover irrational roots, boundary equality, signed
+scaling, extreme cancellation, degenerate normals and exact native codecs.
+Full local, installed-wheel, lint/JavaScript and exact feature/dev CI evidence
+is recorded in the milestone PR and Work17 handoff as it finishes. Native
+WebMCP host verification remains separate.
+
+## Previous milestone
 
 Version 0.29.0 adds [native rectangle trim proofs](native_rectangle_trims.md).
 Independent Fraction and 160-digit Decimal oracles cover irrational contacts,

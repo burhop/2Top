@@ -12,6 +12,7 @@ import sympy as sp
 from .implicit_curve import ImplicitCurve
 from .trimmed_implicit_curve import TrimmedImplicitCurve
 from .rectangle_mask import RectangleMask, _is_native_rectangle
+from .half_plane_mask import HalfPlaneMask, _is_native_half_plane
 
 _DEGREE = 8
 _BITS = 4096
@@ -50,6 +51,13 @@ def _trim_state_values(wrapper):
             if type(mask) is RectangleMask
             else None
         )
+        if type(mask) is HalfPlaneMask:
+            rectangle = (
+                mask.coefficients,
+                mask.closed,
+                mask._float_coefficients,
+                id(type(mask).__call__),
+            )
     except AttributeError:
         rectangle = None
     signature = (
@@ -132,6 +140,55 @@ def _compare_root(polynomial, interval, threshold):
     except (TypeError, ValueError, OverflowError, sp.PolynomialError):
         return None
     return -1 if count == 1 else (1 if count == 0 else None)
+
+
+def _native_trim_domain(wrapper, coordinates, parameter):
+    rectangle = _rectangle_domain(wrapper, coordinates, parameter)
+    if rectangle is not None:
+        return "native_rectangle", rectangle
+    try:
+        if (
+            getattr(getattr(wrapper, "contains", None), "__func__", None)
+            is not _NATIVE_CONTAINS
+            or not _is_native_half_plane(getattr(wrapper, "mask", None))
+            or any(
+                getattr(wrapper, name, _MISSING) is not None
+                for name in ("_xmin", "_xmax", "_ymin", "_ymax")
+            )
+        ):
+            return None
+        mask = wrapper.mask
+        slope = mask.a * coordinates[0].diff(parameter) + mask.b * coordinates[1].diff(
+            parameter
+        )
+        intercept = (
+            mask.a * coordinates[0].subs(parameter, 0)
+            + mask.b * coordinates[1].subs(parameter, 0)
+            + mask.c
+        )
+        if not _small_rational(slope) or not _small_rational(intercept):
+            return None
+        if slope == 0:
+            return "native_half_plane", (0, intercept, mask.closed)
+        threshold = -intercept / slope
+        if not _small_rational(threshold):
+            return None
+        return "native_half_plane", (1 if slope > 0 else -1, threshold, mask.closed)
+    except Exception:
+        return None
+
+
+def _half_plane_membership(polynomial, interval, domain):
+    direction, threshold, closed = domain
+    if direction == 0:
+        included = bool(threshold >= 0 if closed else threshold > 0)
+    else:
+        comparison = _compare_root(polynomial, interval, threshold)
+        if comparison is None:
+            return "unverified"
+        side = direction * comparison
+        included = side >= 0 if closed else side > 0
+    return "included" if included else "excluded"
 
 
 def _rectangle_membership(polynomial, interval, domain):
@@ -323,7 +380,7 @@ def find_polynomial_line_intersections(
     Float coefficients mean their exact stored binary values. Distinct model
     roots retain separate rational enclosures and multiplicities. Accepted
     float points meet an exact L-infinity enclosure bound and actual finite
-    residual checks. Native RectangleMask trims have exact model-root membership
+    residual checks. Native rectangle/half-plane trims have exact model-root membership
     proofs. Arbitrary trims require exactly representable roots; unresolved trim
     membership remains unverified. Every accepted float also needs actual true
     containment at every wrapper. No legacy fallback or scene mutation.
@@ -405,7 +462,7 @@ def find_polynomial_line_intersections(
     report.update(status="isolated_model", model_root_completeness=True)
     wrappers = [wrapper for captured in captures for wrapper in captured[3]]
     trim_states = [_trim_state(wrapper) for wrapper in wrappers]
-    domains = [_rectangle_domain(wrapper, coordinates, t) for wrapper in wrappers]
+    domains = [_native_trim_domain(wrapper, coordinates, t) for wrapper in wrappers]
     square_free = (
         restricted.sqf_part() if any(domain is not None for domain in domains) else None
     )
@@ -477,8 +534,13 @@ def find_polynomial_line_intersections(
                 if state is None:
                     status, kind = "unverified", "callback"
                 elif domain is not None:
-                    status = _rectangle_membership(square_free, (lower, upper), domain)
-                    kind = "native_rectangle"
+                    kind, predicate_domain = domain
+                    membership = (
+                        _rectangle_membership
+                        if kind == "native_rectangle"
+                        else _half_plane_membership
+                    )
+                    status = membership(square_free, (lower, upper), predicate_domain)
                 else:
                     status = (
                         "unverified"
