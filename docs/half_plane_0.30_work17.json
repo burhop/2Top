@@ -1,0 +1,980 @@
+{
+  "label": "0.30.0",
+  "python": "3.11.14",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "geometry_import": "C:\\Users\\markb\\Documents\\Codex\\2026-10-11\\task\\2Top-half-plane-0.30.0\\geometry\\__init__.py",
+  "native_half_plane": true,
+  "workloads": [
+    {
+      "workload": "oblique_irrational_contact",
+      "median_ms": 20.7047,
+      "samples_ms": [
+        20.7047,
+        19.3677,
+        22.2701,
+        23.9944,
+        16.3633
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            1.4142135622422969,
+            1.4142135622422969
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "model_root_excluded",
+            "accepted": false,
+            "reasons": [
+              "model_root_excluded_by_trim",
+              "representative_trim_not_accepted"
+            ]
+          },
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "closed_flat_boundary",
+      "median_ms": 8.5883,
+      "samples_ms": [
+        8.5883,
+        11.5054,
+        8.2773,
+        8.0853,
+        15.3129
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "exact_point_accepted",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "open_flat_boundary",
+      "median_ms": 12.4571,
+      "samples_ms": [
+        14.7808,
+        12.2476,
+        12.4571,
+        16.2606,
+        11.8677
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "exact_point_excluded",
+            "accepted": false,
+            "reasons": [
+              "exact_root_excluded_by_trim",
+              "representative_trim_not_accepted"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "negative_scaled_side",
+      "median_ms": 46.693,
+      "samples_ms": [
+        46.693,
+        39.9022,
+        35.5588,
+        48.7988,
+        83.412
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            -1.4142135622422969,
+            -1.4142135622422969
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          },
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "model_root_excluded",
+            "accepted": false,
+            "reasons": [
+              "model_root_excluded_by_trim",
+              "representative_trim_not_accepted"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "constant_on_line_closed",
+      "median_ms": 32.4165,
+      "samples_ms": [
+        24.3133,
+        33.7408,
+        29.2884,
+        38.2317,
+        32.4165
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            -1.4142135622422969,
+            1.7475468955756304
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "175424/100383",
+                "423511/242346"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              1.7475468955756304
+            ],
+            "position_bound": 1.8497656976527053e-10,
+            "position_bound_exact": "20906275801/113021210348583124992",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              1.6653345369377348e-16
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "-261947/242346",
+                "-108502/100383"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              -1.0808802289089636
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              -5.551115123125783e-17
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": false,
+            "reasons": [
+              "representative_trim_not_accepted"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "constant_on_line_open",
+      "median_ms": 33.172,
+      "samples_ms": [
+        33.172,
+        27.7775,
+        24.8225,
+        38.0497,
+        39.3375
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "175424/100383",
+                "423511/242346"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              1.7475468955756304
+            ],
+            "position_bound": 1.8497656976527053e-10,
+            "position_bound_exact": "20906275801/113021210348583124992",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              1.6653345369377348e-16
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "model_root_excluded",
+            "accepted": false,
+            "reasons": [
+              "model_root_excluded_by_trim"
+            ]
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "-261947/242346",
+                "-108502/100383"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              -1.0808802289089636
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              -5.551115123125783e-17
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "model_root_excluded",
+            "accepted": false,
+            "reasons": [
+              "model_root_excluded_by_trim",
+              "representative_trim_not_accepted"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "nested_rectangle",
+      "median_ms": 36.6872,
+      "samples_ms": [
+        40.487,
+        40.0109,
+        36.6872,
+        35.1264,
+        32.1498
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            1.4142135622422969,
+            1.4142135622422969
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              true,
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_rectangle",
+                "status": "included"
+              },
+              {
+                "kind": "native_half_plane",
+                "status": "excluded"
+              }
+            ],
+            "root_trim_membership": "model_root_excluded",
+            "accepted": false,
+            "reasons": [
+              "model_root_excluded_by_trim",
+              "representative_trim_not_accepted"
+            ]
+          },
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              true,
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_rectangle",
+                "status": "included"
+              },
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "degenerate_all",
+      "median_ms": 20.8197,
+      "samples_ms": [
+        18.4087,
+        22.6421,
+        24.0755,
+        20.8197,
+        20.1209
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            -1.4142135622422969,
+            -1.4142135622422969
+          ],
+          [
+            1.4142135622422969,
+            1.4142135622422969
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "native_half_plane",
+                "status": "included"
+              }
+            ],
+            "root_trim_membership": "model_root_included",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "opaque_callback",
+      "median_ms": 32.0304,
+      "samples_ms": [
+        32.0185,
+        30.5908,
+        32.0304,
+        35.6196,
+        44.4196
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "callback",
+                "status": "unverified"
+              }
+            ],
+            "root_trim_membership": "unverified",
+            "accepted": false,
+            "reasons": [
+              "root_trim_membership_unverified",
+              "representative_trim_not_accepted"
+            ]
+          },
+          {
+            "multiplicity": 4,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              1.8732125345046599e-38,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "callback",
+                "status": "unverified"
+              }
+            ],
+            "root_trim_membership": "unverified",
+            "accepted": false,
+            "reasons": [
+              "root_trim_membership_unverified"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "anchor_factory_chord",
+      "median_ms": 24.3953,
+      "samples_ms": [
+        24.3953,
+        19.1624,
+        21.9378,
+        27.1468,
+        27.5876
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              -1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "callback",
+                "status": "unverified"
+              }
+            ],
+            "root_trim_membership": "unverified",
+            "accepted": false,
+            "reasons": [
+              "root_trim_membership_unverified"
+            ]
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "47321/33461",
+                "114243/80782"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              1.4142135622422969
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_checks": [
+              {
+                "kind": "callback",
+                "status": "unverified"
+              }
+            ],
+            "root_trim_membership": "unverified",
+            "accepted": false,
+            "reasons": [
+              "root_trim_membership_unverified"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    }
+  ],
+  "array_masks": [
+    {
+      "workload": "mixed_signs",
+      "coordinates": 100000,
+      "median_ms": 83.6807,
+      "samples_ms": [
+        49.5997,
+        90.3796,
+        83.6807,
+        86.0061,
+        64.5347
+      ],
+      "accepted": 50000
+    },
+    {
+      "workload": "exact_boundary",
+      "coordinates": 1000,
+      "median_ms": 109.7101,
+      "samples_ms": [
+        136.7656,
+        80.5676,
+        84.3914,
+        109.7101,
+        131.2069
+      ],
+      "accepted": 1000
+    }
+  ],
+  "limits": "Five warm complete calls on shared Work17. Baseline uses exact-sign opaque callbacks for the same predicates; current uses declared native masks. This is an explicit API comparison,not automatic callback certification or a speedup claim. Boundary-heavy batches require exact fallback and can be slower. No universal latency or hard exact-arithmetic runtime bound. Actual float gates remain separate."
+}
