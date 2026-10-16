@@ -1,0 +1,457 @@
+{
+  "python": "3.11.14",
+  "platform": "Windows-10-10.0.26300-SP0",
+  "analytic_oracle": "y=0 implies x**8=0; only (0,0), multiplicity8",
+  "legacy": {
+    "points": [
+      [
+        -6.829726660065598e-25,
+        0.0
+      ],
+      [
+        0.04034497007056071,
+        3.5097360754451864e-12
+      ],
+      [
+        0.039130717428059125,
+        2.7486059581860673e-12
+      ],
+      [
+        -0.04250188382084752,
+        5.323967939926004e-12
+      ]
+    ],
+    "elapsed_ms": 506.5913,
+    "exact_binary_Linf_errors": [
+      "6.829726660065598356055695406868550550736677261932285201096324753732014212204148861928842961788177490234375E-25",
+      "0.040344970070560710884155497524261591024696826934814453125",
+      "0.039130717428059125229111714361351914703845977783203125",
+      "0.0425018838208475191464685849496163427829742431640625"
+    ]
+  },
+  "workloads": [
+    {
+      "workload": "flat_x8",
+      "median_ms": 2.6811,
+      "samples_ms": [
+        2.7978,
+        2.6811,
+        2.6837,
+        2.6187,
+        2.6321
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "scaled_flat_x8",
+      "median_ms": 3.0729,
+      "samples_ms": [
+        3.0133,
+        3.3934,
+        3.1337,
+        3.0729,
+        2.8881
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "near_miss",
+      "median_ms": 2.2442,
+      "samples_ms": [
+        2.4027,
+        2.2464,
+        2.2205,
+        2.2197,
+        2.2442
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "two_crossings",
+      "median_ms": 9.2746,
+      "samples_ms": [
+        9.2746,
+        9.0378,
+        9.3815,
+        9.2424,
+        9.9799
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            -0.00390625,
+            0.0
+          ],
+          [
+            0.00390625,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-1/256",
+                "-1/256"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              -0.00390625,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "1/256",
+                "1/256"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.00390625,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "irrational",
+      "median_ms": 3.6916,
+      "samples_ms": [
+        3.9319,
+        3.6916,
+        3.6259,
+        3.4404,
+        3.8664
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            -1.4142135622422969,
+            0.0
+          ],
+          [
+            1.4142135622422969,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "-114243/80782",
+                "-47321/33461"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              -1.4142135622422969,
+              0.0
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          },
+          {
+            "multiplicity": 1,
+            "coordinate_intervals": [
+              [
+                "47321/33461",
+                "114243/80782"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              1.4142135622422969,
+              0.0
+            ],
+            "position_bound": 1.8497651812698573e-10,
+            "position_bound_exact": "16824066827/90952446274560851968",
+            "representative_residuals": [
+              -3.699531792022981e-10,
+              0.0
+            ],
+            "representative_contains": [],
+            "root_trim_membership": "not_applicable",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "exact_trim",
+      "median_ms": 2.756,
+      "samples_ms": [
+        2.756,
+        2.7831,
+        2.7297,
+        2.8697,
+        2.7092
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [
+              true
+            ],
+            "root_trim_membership": "exact_point_accepted",
+            "accepted": true,
+            "reasons": []
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    },
+    {
+      "workload": "excluded_trim",
+      "median_ms": 2.6766,
+      "samples_ms": [
+        2.5646,
+        2.6527,
+        2.6766,
+        2.9234,
+        2.7141
+      ],
+      "report": {
+        "status": "isolated_model",
+        "model_scope": "exact_stored_coefficients_untrimmed",
+        "model_root_completeness": true,
+        "trimmed_root_completeness": false,
+        "position_metric": "L_infinity",
+        "position_tolerance": 1e-08,
+        "points": [],
+        "roots": [
+          {
+            "multiplicity": 8,
+            "coordinate_intervals": [
+              [
+                "0",
+                "0"
+              ],
+              [
+                "0",
+                "0"
+              ]
+            ],
+            "point": [
+              0.0,
+              0.0
+            ],
+            "position_bound": 0.0,
+            "position_bound_exact": "0",
+            "representative_residuals": [
+              0.0,
+              0.0
+            ],
+            "representative_contains": [
+              false
+            ],
+            "root_trim_membership": "exact_point_excluded",
+            "accepted": false,
+            "reasons": [
+              "exact_root_excluded_by_trim"
+            ]
+          }
+        ],
+        "reason": null,
+        "parameter_axis": "x"
+      }
+    }
+  ],
+  "limits": "Opt-in unchanged native degree<=8 polynomial plus affine line only. Rational coefficient model enclosures, not general callback certification. Timings are five warm calls on Work17, not wall-clock bounds or cross-machine guarantees. Legacy x8 comparison is one current call; no legacy behavior changed."
+}

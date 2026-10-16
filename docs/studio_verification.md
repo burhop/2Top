@@ -1,9 +1,18 @@
 # Tidal Atlas development verification
 
-Updated October 15, 2026 for version 0.27.0. Work17 executes the local application
+Updated October 16, 2026 for version 0.28.0. Work17 executes the local application
 checks below; CI verifies the exact feature commit before dev integration.
 
 ## Current milestone
+
+Version 0.28.0 adds [native polynomial/line isolation](polynomial_line_intersections.md).
+Independent analytic and 160-digit Decimal oracles cover flat contacts, field
+scaling, tangencies, close roots, near misses, float bounds and conservative trim
+membership. Full local, wheel, lint/JavaScript and exact feature/dev CI results
+are recorded in the milestone PR and Work17 handoff as they finish. Legacy
+solver behavior stays unchanged; native WebMCP host verification remains separate.
+
+## Previous milestone
 
 Version 0.27.0 adds [explicit intersection-position diagnostics](intersection_diagnostics.md).
 All **72 new diagnostic regressions** pass after independent review corrected
